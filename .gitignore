@@ -1,0 +1,23 @@
+## .NET / ASP.NET Core
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.swp
+
+## Publicação / artefatos
+publish/
+out/
+
+## Segredos — nunca versionar
+appsettings.Production.json
+appsettings.Secrets.json
+
+## Logs
+*.log
+logs/
+
+## Sistema operacional
+Thumbs.db
+.DS_Store

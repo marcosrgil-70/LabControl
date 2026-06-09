@@ -1,0 +1,160 @@
+@model LabControl.Models.RelAmostrasVM
+@{
+    ViewData["Title"] = "Relatório de Amostras";
+    var pesquisou = Model.Resultado != null;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-droplet me-2 text-primary"></i>Amostras por Período</h5>
+        <small class="text-muted">Amostras recebidas no intervalo selecionado</small>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Relatórios
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-3">
+    <div class="card-header fw-semibold"><i class="bi bi-funnel me-2"></i>Filtros</div>
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="dtInicio" class="form-control"
+                       value="@Model.Filtro.DtInicio?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="dtFim" class="form-control"
+                       value="@Model.Filtro.DtFim?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Status</label>
+                <select name="idStatus" class="form-select">
+                    <option value="">— Todos —</option>
+                    @foreach (var s in Model.StatusOpcoes)
+                    {
+                        if (Model.Filtro.IdStatus == s.Id)
+                        {
+                            <option value="@s.Id" selected>@s.Descricao</option>
+                        }
+                        else
+                        {
+                            <option value="@s.Id">@s.Descricao</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search me-1"></i>Consultar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Resultado -->
+@if (!pesquisou)
+{
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-search fs-1 d-block mb-3 opacity-25"></i>
+        Informe o período e clique em <strong>Consultar</strong>.
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small">
+            <strong>@Model.Resultado!.Count</strong> amostra(s) encontrada(s)
+            @if (Model.Filtro.DtInicio.HasValue && Model.Filtro.DtFim.HasValue)
+            {
+                <span>— de @Model.Filtro.DtInicio.Value.ToString("dd/MM/yyyy")
+                    até @Model.Filtro.DtFim.Value.ToString("dd/MM/yyyy")</span>
+            }
+        </span>
+        @if (Model.Resultado.Any())
+        {
+            <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i>Imprimir
+            </button>
+        }
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Cliente</th>
+                        <th>Tipo Amostra</th>
+                        <th>Tipo Análise</th>
+                        <th>Produto</th>
+                        <th>Lote</th>
+                        <th>Data Entrega</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-end">Saldo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Resultado.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                Nenhuma amostra encontrada no período.
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model.Resultado)
+                    {
+                        <tr>
+                            <td class="align-middle">
+                                <a asp-controller="HistAmostras" asp-action="Detalhes" asp-route-id="@item.Id"
+                                   class="fw-semibold text-decoration-none">
+                                    <code>@item.Codigo</code>
+                                </a>
+                            </td>
+                            <td class="align-middle">@item.Cliente</td>
+                            <td class="align-middle">@item.TipoAmostra</td>
+                            <td class="align-middle">@(item.TipoAnalise ?? "-")</td>
+                            <td class="align-middle">@(item.Produto ?? "-")</td>
+                            <td class="align-middle">@(item.NrLote ?? "-")</td>
+                            <td class="align-middle">
+                                @(item.DtEntrega?.ToString("dd/MM/yyyy HH:mm") ?? "-")
+                            </td>
+                            <td class="text-center align-middle">
+                                @if (!string.IsNullOrWhiteSpace(item.CorStatus))
+                                {
+                                    <span class="badge" style="background-color:@item.CorStatus">@item.Status</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@item.Status</span>
+                                }
+                            </td>
+                            <td class="text-end align-middle">
+                                @(item.Saldo?.ToString("N2") ?? "-")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.Resultado.Any())
+        {
+            <div class="card-footer text-muted small">
+                @Model.Resultado.Count amostra(s)
+            </div>
+        }
+    </div>
+}
+
+<style>
+@@media print {
+    .btn, form, nav, .topbar, .sidebar { display: none !important; }
+    .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+}
+</style>

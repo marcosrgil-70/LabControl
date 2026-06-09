@@ -1,0 +1,96 @@
+@model IEnumerable<LabControl.Models.Laboratorio.Produto>
+@{
+    ViewData["Title"] = "Produtos";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-box-seam me-2 text-primary"></i>Produtos</h5>
+        <small class="text-muted">Cadastro de produtos analisados no laboratório</small>
+    </div>
+    <a asp-action="Criar" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i>Novo Produto
+    </a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-auto">
+                <input type="text" name="busca" class="form-control form-control-sm"
+                       placeholder="Buscar por código ou descrição..." value="@ViewBag.Busca" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-search me-1"></i>Filtrar
+                </button>
+                @if (!string.IsNullOrEmpty(ViewBag.Busca as string))
+                {
+                    <a asp-action="Index" class="btn btn-link btn-sm text-muted">Limpar</a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Código</th>
+                    <th>Descrição</th>
+                    <th>Embalagem</th>
+                    <th>Qtde/Embalagem</th>
+                    <th>Unidade</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            Nenhum produto cadastrado ainda.
+                        </td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><code>@item.Codigo</code></td>
+                        <td class="fw-semibold">@item.Descricao</td>
+                        <td>@(item.EmbalagemTipo?.Descricao ?? "-")</td>
+                        <td>@(item.QtdeEmbalagem?.ToString("N2") ?? "-")</td>
+                        <td>
+                            @if (item.Unidade != null)
+                            {
+                                <span class="badge bg-light text-dark border">@item.Unidade.Sigla</span>
+                            }
+                            else { <span class="text-muted">-</span> }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Editar" asp-route-id="@item.Id"
+                               class="btn btn-outline-secondary btn-sm me-1">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Excluir" asp-route-id="@item.Id" method="post"
+                                  style="display:inline"
+                                  onsubmit="return confirm('Excluir produto @item.Descricao?')">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Any())
+    {
+        <div class="card-footer text-muted small">@Model.Count() produto(s)</div>
+    }
+</div>

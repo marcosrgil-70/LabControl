@@ -1,0 +1,233 @@
+@{
+    ViewData["Title"] = "Migração de Dados";
+    var fdbPath = ViewBag.FdbPath as string ?? "";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-database-up me-2 text-warning"></i>Migração de Dados</h5>
+        <small class="text-muted">Importar dados do banco Firebird (DBMAIS.FDB) para o MySQL</small>
+    </div>
+</div>
+
+<!-- Aviso -->
+<div class="alert alert-warning d-flex gap-2 mb-3">
+    <i class="bi bi-exclamation-triangle-fill fs-5 mt-1 flex-shrink-0"></i>
+    <div>
+        <strong>Atenção:</strong> Esta operação importa dados do sistema legado (Delphi/Firebird) para o LabControl.
+        Registros com o mesmo ID já existentes serão <strong>ignorados</strong>, a não ser que marque
+        <em>"Limpar tabelas antes de importar"</em>.
+        <br><strong>Requer que o Firebird Server esteja em execução</strong> (ou que as libs embedded estejam disponíveis).
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Configuração -->
+    <div class="col-md-5">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">
+                <i class="bi bi-gear me-2"></i>Configuração da Conexão
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Arquivo do banco Firebird</label>
+                    <input type="text" id="fdbPath" class="form-control form-control-sm font-monospace"
+                           value="@fdbPath" />
+                    <div class="form-text">Pode alterar em <code>appsettings.json → Firebird:DatabasePath</code></div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="chkLimpar" />
+                        <label class="form-check-label text-danger fw-semibold" for="chkLimpar">
+                            Limpar tabelas antes de importar
+                            <small class="d-block text-muted fw-normal">Remove os dados existentes no MySQL primeiro</small>
+                        </label>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnTestar">
+                        <i class="bi bi-plug me-1"></i>Testar Conexão
+                    </button>
+                    <button type="button" class="btn btn-warning btn-sm" id="btnExecutar" disabled>
+                        <i class="bi bi-play-fill me-1"></i>Executar Migração
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview de tabelas -->
+    <div class="col-md-7">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">
+                <i class="bi bi-table me-2"></i>Tabelas do Firebird
+                <span id="statusConexao" class="ms-2 small"></span>
+            </div>
+            <div class="card-body p-0" id="painelTabelas" style="display:none">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tabela</th>
+                            <th class="text-end">Registros no Firebird</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaTabelas"></tbody>
+                </table>
+            </div>
+            <div class="card-body text-center text-muted py-4" id="painelSemConexao">
+                <i class="bi bi-plug fs-2 d-block mb-2 opacity-25"></i>
+                Clique em <strong>Testar Conexão</strong> para verificar o banco Firebird.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log de migração -->
+<div class="card mt-3" id="painelLog" style="display:none">
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-journal-text me-2"></i>Resultado da Migração</span>
+        <span id="resumoLog" class="small text-muted"></span>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Tabela</th>
+                    <th class="text-end">Inseridos</th>
+                    <th class="text-end">Erros</th>
+                    <th>Detalhe</th>
+                </tr>
+            </thead>
+            <tbody id="listaLog"></tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const btnTestar  = document.getElementById('btnTestar');
+const btnExecutar = document.getElementById('btnExecutar');
+const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value
+    || '@Html.AntiForgeryToken()'.match(/value="([^"]+)"/)?.[1] || '';
+
+// ── Testar conexão ─────────────────────────���───────────────────────────────
+btnTestar.addEventListener('click', async () => {
+    btnTestar.disabled = true;
+    btnTestar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Testando...';
+    document.getElementById('statusConexao').innerHTML = '';
+
+    try {
+        const resp = await fetch('/Migracao/Testar', {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': getToken() }
+        });
+        const data = await resp.json();
+
+        const status = document.getElementById('statusConexao');
+        if (data.sucesso) {
+            status.innerHTML = '<span class="badge bg-success">Conectado</span>';
+            renderTabelas(data.tabelas);
+            btnExecutar.disabled = false;
+        } else {
+            status.innerHTML = `<span class="badge bg-danger">Falha</span>
+                <small class="text-danger ms-2">${data.mensagem}</small>`;
+            document.getElementById('painelTabelas').style.display = 'none';
+            document.getElementById('painelSemConexao').style.display = 'block';
+            document.getElementById('painelSemConexao').innerHTML = `
+                <i class="bi bi-x-circle fs-2 d-block mb-2 text-danger"></i>
+                <strong>Erro de conexão:</strong><br>
+                <code class="small">${data.mensagem}</code><br>
+                <small class="text-muted mt-2 d-block">
+                    Verifique se o Firebird Server está em execução<br>
+                    ou se as libs embedded estão disponíveis.
+                </small>`;
+        }
+    } catch(e) {
+        document.getElementById('statusConexao').innerHTML =
+            `<span class="badge bg-danger">Erro</span><small class="text-danger ms-2">${e.message}</small>`;
+    } finally {
+        btnTestar.disabled = false;
+        btnTestar.innerHTML = '<i class="bi bi-plug me-1"></i>Testar Conexão';
+    }
+});
+
+// ── Executar migração ──────────────────────────────────────────────────────
+btnExecutar.addEventListener('click', async () => {
+    if (!confirm('Confirma a execução da migração?\n\nEsta operação pode demorar alguns segundos.')) return;
+
+    btnExecutar.disabled = true;
+    btnExecutar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Migrando...';
+
+    const limpar = document.getElementById('chkLimpar').checked;
+    const form = new FormData();
+    form.append('limpar', limpar);
+    form.append('__RequestVerificationToken', getToken());
+
+    try {
+        const resp = await fetch('/Migracao/Executar', { method: 'POST', body: form });
+        const log  = await resp.json();
+        renderLog(log);
+    } catch(e) {
+        alert('Erro ao executar: ' + e.message);
+    } finally {
+        btnExecutar.disabled = false;
+        btnExecutar.innerHTML = '<i class="bi bi-play-fill me-1"></i>Executar Novamente';
+    }
+});
+
+// ── Renderizar tabelas ─────────────────────────────────────────────────────
+function renderTabelas(tabelas) {
+    const tbody = document.getElementById('listaTabelas');
+    tbody.innerHTML = tabelas.map(t => `
+        <tr>
+            <td>${t.nome}</td>
+            <td class="text-end">
+                ${t.existe
+                    ? `<span class="badge bg-${t.count > 0 ? 'primary' : 'secondary'}">${t.count.toLocaleString('pt-BR')}</span>`
+                    : `<span class="badge bg-light text-danger border border-danger">não encontrada</span>`
+                }
+            </td>
+        </tr>`).join('');
+    document.getElementById('painelTabelas').style.display = 'block';
+    document.getElementById('painelSemConexao').style.display = 'none';
+}
+
+// ── Renderizar log ─────────────────────────────────────────────────────────
+function renderLog(log) {
+    const painel = document.getElementById('painelLog');
+    painel.style.display = 'block';
+
+    const totalIns  = log.reduce((s,r) => s + (r.inseridos ?? 0), 0);
+    const totalErros = log.reduce((s,r) => s + (r.erros ?? 0), 0);
+    document.getElementById('resumoLog').textContent =
+        `${totalIns.toLocaleString('pt-BR')} inseridos · ${totalErros} erros`;
+
+    const tbody = document.getElementById('listaLog');
+    tbody.innerHTML = log.map(r => `
+        <tr class="${r.ok ? '' : (r.inseridos === 0 && r.erros === 0 ? 'table-danger' : 'table-warning')}">
+            <td class="fw-semibold">${r.tabela}</td>
+            <td class="text-end">
+                <span class="badge bg-${r.inseridos > 0 ? 'success' : 'secondary'}">${r.inseridos ?? 0}</span>
+            </td>
+            <td class="text-end">
+                ${(r.erros ?? 0) > 0
+                    ? `<span class="badge bg-danger">${r.erros}</span>`
+                    : `<span class="text-muted">—</span>`}
+            </td>
+            <td class="small text-muted">${r.detalhe ?? '—'}</td>
+        </tr>`).join('');
+
+    painel.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── Token CSRF ─────────────────────────────────────────────────────────────
+function getToken() {
+    return document.cookie.split(';')
+        .find(c => c.trim().startsWith('XSRF-TOKEN='))
+        ?.split('=')[1] ??
+        document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+}
+</script>
+}
+
+@Html.AntiForgeryToken()

@@ -1,0 +1,65 @@
+@{
+    ViewData["Title"] = "Relatórios";
+    var hoje = DateTime.Today;
+    var primeiroDiaMes = new DateTime(hoje.Year, hoje.Month, 1).ToString("yyyy-MM-dd");
+    var hojeStr = hoje.ToString("yyyy-MM-dd");
+}
+
+<div class="mb-3">
+    <h5 class="mb-0"><i class="bi bi-bar-chart me-2 text-primary"></i>Relatórios</h5>
+    <small class="text-muted">Selecione o relatório desejado</small>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3"
+                         style="width:50px;height:50px">
+                        <i class="bi bi-droplet fs-4 text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Amostras por Período</h6>
+                        <small class="text-muted">Lista de amostras recebidas no intervalo</small>
+                    </div>
+                </div>
+                <ul class="list-unstyled small text-muted mb-3">
+                    <li><i class="bi bi-check2 me-1 text-success"></i>Filtro por data de entrega</li>
+                    <li><i class="bi bi-check2 me-1 text-success"></i>Filtro por status</li>
+                    <li><i class="bi bi-check2 me-1 text-success"></i>Código, cliente, produto, saldo</li>
+                </ul>
+                <a asp-action="Amostras" asp-route-dtInicio="@primeiroDiaMes" asp-route-dtFim="@hojeStr"
+                   class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-arrow-right-circle me-1"></i>Abrir Relatório
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center me-3"
+                         style="width:50px;height:50px">
+                        <i class="bi bi-file-text fs-4 text-success"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Propostas por Período</h6>
+                        <small class="text-muted">Lista de propostas emitidas no intervalo</small>
+                    </div>
+                </div>
+                <ul class="list-unstyled small text-muted mb-3">
+                    <li><i class="bi bi-check2 me-1 text-success"></i>Filtro por data de solicitação</li>
+                    <li><i class="bi bi-check2 me-1 text-success"></i>Filtro por status</li>
+                    <li><i class="bi bi-check2 me-1 text-success"></i>Código, cliente, total, qtd itens</li>
+                </ul>
+                <a asp-action="Propostas" asp-route-dtInicio="@primeiroDiaMes" asp-route-dtFim="@hojeStr"
+                   class="btn btn-success btn-sm w-100">
+                    <i class="bi bi-arrow-right-circle me-1"></i>Abrir Relatório
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

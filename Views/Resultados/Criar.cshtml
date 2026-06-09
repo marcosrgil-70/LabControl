@@ -1,0 +1,133 @@
+@model LabControl.Models.Laboratorio.ResultadoAnalise
+@{
+    ViewData["Title"] = "Lançar Resultado";
+    var amostra = (LabControl.Models.Laboratorio.HistAmostra)ViewBag.Amostra;
+    var unidades = (List<LabControl.Models.Laboratorio.Unidade>)ViewBag.Unidades;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0">
+            <i class="bi bi-clipboard-plus me-2 text-primary"></i>
+            Lançar Resultado — Amostra <span class="text-primary">@amostra.CodigoFormatado</span>
+        </h5>
+        <small class="text-muted">@(amostra.Entidade?.Nome ?? "Sem cliente") • @(amostra.AnaliseTipo?.Descricao ?? "-")</small>
+    </div>
+    <a asp-controller="HistAmostras" asp-action="Detalhes" asp-route-id="@amostra.Id"
+       class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Voltar
+    </a>
+</div>
+
+<form asp-action="Criar" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="IdHistAmostra" />
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold py-2">
+            <i class="bi bi-list-check me-1"></i>Resultados por Parâmetro
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Parâmetro / Ensaio</th>
+                        <th style="width:130px">Tipo</th>
+                        <th style="width:150px">Resultado</th>
+                        <th style="width:120px">Unidade</th>
+                        <th style="width:110px">Satisfeito?</th>
+                        <th style="width:80px">Símbolo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!amostra.Testes.Any())
+                    {
+                        <!-- Sem testes vinculados: permite lançar 1 resultado livre -->
+                        <tr>
+                            <td>
+                                <input type="hidden" name="testeIds" value="" />
+                                <span class="text-muted fst-italic">Resultado geral da amostra</span>
+                            </td>
+                            <td>
+                                <select name="tiposResultado" class="form-select form-select-sm tipo-resultado">
+                                    <option value="N">Numérico</option>
+                                    <option value="S">Satisfeito/Insatisfeito</option>
+                                    <option value="E">Especial (texto)</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input name="valores" class="form-control form-control-sm" placeholder="Valor" />
+                            </td>
+                            <td>
+                                <select name="unidadeIds" class="form-select form-select-sm">
+                                    <option value="">-</option>
+                                    @foreach (var u in unidades)
+                                    {
+                                        <option value="@u.Id">@u.Sigla</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <select name="satisfeitos" class="form-select form-select-sm">
+                                    <option value="">-</option>
+                                    <option value="true">✓ Satisfeito</option>
+                                    <option value="false">✗ Insatisfeito</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input name="simbolos" class="form-control form-control-sm" placeholder="Ex: <" />
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var teste in amostra.Testes)
+                    {
+                        <tr>
+                            <td>
+                                <input type="hidden" name="testeIds" value="@teste.Id" />
+                                <div class="fw-semibold small">@(teste.AnaliseTipo?.Descricao ?? "-")</div>
+                                <div class="text-muted" style="font-size:0.78rem">@(teste.AnaliseMetodo?.Descricao ?? "")</div>
+                            </td>
+                            <td>
+                                <select name="tiposResultado" class="form-select form-select-sm tipo-resultado">
+                                    <option value="N">Numérico</option>
+                                    <option value="S">Satisfeito/Insatisfeito</option>
+                                    <option value="E">Especial (texto)</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input name="valores" class="form-control form-control-sm" placeholder="Valor" />
+                            </td>
+                            <td>
+                                <select name="unidadeIds" class="form-select form-select-sm">
+                                    <option value="">-</option>
+                                    @foreach (var u in unidades)
+                                    {
+                                        <option value="@u.Id">@u.Sigla</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <select name="satisfeitos" class="form-select form-select-sm">
+                                    <option value="">-</option>
+                                    <option value="true">✓ Satisfeito</option>
+                                    <option value="false">✗ Insatisfeito</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input name="simbolos" class="form-control form-control-sm" placeholder="Ex: <" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <a asp-controller="HistAmostras" asp-action="Detalhes" asp-route-id="@amostra.Id"
+           class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save me-1"></i>Salvar Resultado
+        </button>
+    </div>
+</form>

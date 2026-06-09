@@ -1,0 +1,108 @@
+@model LabControl.Models.Laboratorio.ResultadoAnalise
+@{
+    ViewData["Title"] = "Resultado";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0">
+            <i class="bi bi-clipboard-check me-2 text-primary"></i>
+            Resultado — Amostra <span class="text-primary">@Model.HistAmostra.CodigoFormatado</span>
+        </h5>
+        <small class="text-muted">
+            Rev. @Model.Revisao &bull;
+            @(Model.DtResultado?.ToString("dd/MM/yyyy HH:mm") ?? "-")
+        </small>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="HistAmostras" asp-action="Detalhes"
+           asp-route-id="@Model.IdHistAmostra" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Voltar à Amostra
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-list me-1"></i>Todos os Resultados
+        </a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header fw-semibold py-2"><i class="bi bi-info-circle me-1"></i>Dados do Resultado</div>
+    <div class="card-body">
+        <div class="row small">
+            <div class="col-md-4">
+                <span class="text-muted">Amostra:</span>
+                <strong class="ms-2">@Model.HistAmostra.CodigoFormatado</strong>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted">Cliente:</span>
+                <strong class="ms-2">@(Model.HistAmostra.Entidade?.Nome ?? "-")</strong>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted">Revisão:</span>
+                <span class="badge bg-secondary ms-2">Rev. @Model.Revisao</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-semibold py-2">
+        <i class="bi bi-table me-1"></i>Parâmetros Analisados
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Parâmetro</th>
+                    <th>Tipo</th>
+                    <th>Resultado</th>
+                    <th>Unidade</th>
+                    <th>Símbolo</th>
+                    <th>Situação</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Parametros.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-3">Nenhum parâmetro registrado.</td></tr>
+                }
+                @foreach (var p in Model.Parametros)
+                {
+                    <tr>
+                        <td>@(p.HistAmostraTeste?.AnaliseTipo?.Descricao ?? "Geral")</td>
+                        <td>
+                            @switch (p.TipoResultado)
+                            {
+                                case "N": <span class="badge bg-info-subtle text-info">Numérico</span>; break;
+                                case "S": <span class="badge bg-warning-subtle text-warning">Sat./Insat.</span>; break;
+                                case "E": <span class="badge bg-secondary">Especial</span>; break;
+                                default: <span>-</span>; break;
+                            }
+                        </td>
+                        <td class="fw-semibold">
+                            @(p.SimboloGrandeza ?? "") @(p.VrResultado ?? "-")
+                        </td>
+                        <td>@(p.Unidade?.Sigla ?? "-")</td>
+                        <td><code>@(p.SimboloGrandeza ?? "-")</code></td>
+                        <td>
+                            @if (p.VrSatisfeito.HasValue)
+                            {
+                                if (p.VrSatisfeito.Value)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Satisfeito</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Insatisfeito</span>
+                                }
+                            }
+                            else { <span class="text-muted">-</span> }
+                        </td>
+                        <td class="text-muted small">@(p.DtResultado?.ToString("dd/MM/yyyy") ?? "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

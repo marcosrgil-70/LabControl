@@ -1,0 +1,127 @@
+@model LabControl.Models.UsuarioEditVM
+@{
+    ViewData["Title"] = "Novo Usuário";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-person-plus me-2 text-primary"></i>Novo Usuário</h5>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Voltar
+    </a>
+</div>
+
+<form asp-action="Criar" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold"><i class="bi bi-person me-2"></i>Dados do Usuário</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Nome" class="form-label">Nome / Login</label>
+                    <input asp-for="Nome" class="form-control" placeholder="Nome de acesso ao sistema" />
+                    <span asp-validation-for="Nome" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="NovaSenha" class="form-label">Senha</label>
+                    <input asp-for="NovaSenha" type="password" class="form-control" />
+                    <span asp-validation-for="NovaSenha" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="ConfirmarSenha" class="form-label">Confirmar Senha</label>
+                    <input asp-for="ConfirmarSenha" type="password" class="form-control" />
+                    <span asp-validation-for="ConfirmarSenha" class="text-danger small"></span>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="IsAdmin" class="form-check-input" id="chkIsAdmin" />
+                        <label class="form-check-label" for="chkIsAdmin">
+                            <strong>Administrador</strong>
+                            <small class="text-muted ms-1">(acesso total — ignora permissões por módulo)</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3" id="painelPermissoes">
+        <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-shield-lock me-2"></i>Permissões por Módulo</span>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="marcarTodos(true)">
+                    <i class="bi bi-check-all me-1"></i>Marcar Todos
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="marcarTodos(false)">
+                    <i class="bi bi-x me-1"></i>Desmarcar Todos
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:35%">Módulo</th>
+                        <th class="text-center">Incluir</th>
+                        <th class="text-center">Alterar</th>
+                        <th class="text-center">Consultar</th>
+                        <th class="text-center">Excluir</th>
+                        <th class="text-center">Imprimir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Acoes.Count; i++)
+                    {
+                        <tr>
+                            <td class="align-middle">
+                                <input type="hidden" asp-for="Acoes[i].Form" />
+                                <input type="hidden" asp-for="Acoes[i].NomeForm" />
+                                @Model.Acoes[i].NomeForm
+                            </td>
+                            <td class="text-center align-middle">
+                                <input asp-for="Acoes[i].Incluir" type="checkbox" class="form-check-input cb-perm" />
+                            </td>
+                            <td class="text-center align-middle">
+                                <input asp-for="Acoes[i].Alterar" type="checkbox" class="form-check-input cb-perm" />
+                            </td>
+                            <td class="text-center align-middle">
+                                <input asp-for="Acoes[i].Consultar" type="checkbox" class="form-check-input cb-perm" />
+                            </td>
+                            <td class="text-center align-middle">
+                                <input asp-for="Acoes[i].Excluir" type="checkbox" class="form-check-input cb-perm" />
+                            </td>
+                            <td class="text-center align-middle">
+                                <input asp-for="Acoes[i].Imprimir" type="checkbox" class="form-check-input cb-perm" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i>Salvar
+        </button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+    const chkAdmin = document.getElementById('chkIsAdmin');
+    const painel   = document.getElementById('painelPermissoes');
+
+    function atualizarPainel() {
+        painel.style.display = chkAdmin.checked ? 'none' : 'block';
+    }
+
+    chkAdmin.addEventListener('change', atualizarPainel);
+    atualizarPainel();
+
+    function marcarTodos(valor) {
+        document.querySelectorAll('.cb-perm').forEach(cb => cb.checked = valor);
+    }
+</script>
+}

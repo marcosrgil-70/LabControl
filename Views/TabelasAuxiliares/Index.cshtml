@@ -1,0 +1,56 @@
+@{
+    ViewData["Title"] = "Tabelas Auxiliares";
+}
+
+<div class="mb-3">
+    <h5 class="mb-0"><i class="bi bi-tags me-2 text-primary"></i>Tabelas Auxiliares</h5>
+    <small class="text-muted">Cadastros de parametrização do sistema</small>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold py-2 bg-light">
+                <i class="bi bi-droplet me-1"></i>Amostras
+            </div>
+            <div class="list-group list-group-flush">
+                <a asp-action="AmostrasTipos" class="list-group-item list-group-item-action">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Tipos de Amostra
+                </a>
+                <a asp-action="AmostrasStatus" class="list-group-item list-group-item-action">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Status de Amostra
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold py-2 bg-light">
+                <i class="bi bi-clipboard me-1"></i>Análises
+            </div>
+            <div class="list-group list-group-flush">
+                <a asp-action="AnalisesTipos" class="list-group-item list-group-item-action">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Tipos de Análise
+                </a>
+                <a asp-action="AnalisesMetodos" class="list-group-item list-group-item-action">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Métodos de Análise
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold py-2 bg-light">
+                <i class="bi bi-sliders me-1"></i>Gerais
+            </div>
+            <div class="list-group list-group-flush">
+                <a asp-action="Prazos" class="list-group-item list-group-item-action">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Prazos de Entrega
+                </a>
+                <a asp-action="Unidades" class="list-group-item list-group-item-action">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Unidades de Medida
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

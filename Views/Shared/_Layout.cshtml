@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - LabControl</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        body { background-color: #f8f9fa; font-size: 0.92rem; }
+        .sidebar { min-height: calc(100vh - 56px); background: #1a2f4e; }
+        .sidebar .nav-link { color: #adb5bd; padding: 0.6rem 1rem; border-radius: 4px; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,0.1); }
+        .sidebar .nav-section { color: #6c757d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 1rem 1rem 0.3rem; }
+        .sidebar .nav-link i { width: 20px; }
+        .topbar { background: #1a2f4e; }
+        .topbar .navbar-brand { color: #fff; font-weight: 700; font-size: 1.2rem; }
+        .content-wrapper { padding: 1.5rem; }
+        .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        .table th { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6c757d; }
+        .badge-status { font-size: 0.78rem; padding: 0.35em 0.7em; }
+    </style>
+</head>
+<body>
+    <!-- Topbar -->
+    <nav class="navbar navbar-dark topbar px-3 py-2">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-flask me-2"></i>LabControl
+        </a>
+        <div class="ms-auto d-flex align-items-center gap-3">
+            <span class="text-white-50 small"><i class="bi bi-building me-1"></i>Empresa 001</span>
+            <span class="text-white-50 small"><i class="bi bi-person-circle me-1"></i>@(Context.Session.GetString("UsuarioNome") ?? "Visitante")</span>
+            <a asp-controller="Login" asp-action="Sair" class="text-white-50 small ms-2" title="Sair">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar" style="width: 230px; min-width: 230px;">
+            <nav class="d-flex flex-column py-2">
+                <span class="nav-section">Principal</span>
+                <a class="nav-link" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-house me-2"></i>Início
+                </a>
+
+                <span class="nav-section">Laboratório</span>
+                <a class="nav-link" asp-controller="HistAmostras" asp-action="Index">
+                    <i class="bi bi-droplet me-2"></i>Amostras
+                </a>
+                <a class="nav-link" asp-controller="Propostas" asp-action="Index">
+                    <i class="bi bi-file-text me-2"></i>Propostas
+                </a>
+                <a class="nav-link" asp-controller="Resultados" asp-action="Index">
+                    <i class="bi bi-clipboard-check me-2"></i>Resultados
+                </a>
+                <a class="nav-link" href="#">
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i>Laudos
+                </a>
+
+                <span class="nav-section">Cadastros</span>
+                <a class="nav-link" asp-controller="Clientes" asp-action="Index">
+                    <i class="bi bi-people me-2"></i>Clientes
+                </a>
+                <a class="nav-link" asp-controller="Produtos" asp-action="Index">
+                    <i class="bi bi-box-seam me-2"></i>Produtos
+                </a>
+                <a class="nav-link" asp-controller="Parametros" asp-action="Index">
+                    <i class="bi bi-sliders me-2"></i>Parâmetros
+                </a>
+                <a class="nav-link" asp-controller="TabelasAuxiliares" asp-action="Index">
+                    <i class="bi bi-tags me-2"></i>Tabelas Auxiliares
+                </a>
+
+                <span class="nav-section">Sistema</span>
+                <a class="nav-link" asp-controller="Usuarios" asp-action="Index">
+                    <i class="bi bi-people-fill me-2"></i>Usuários
+                </a>
+                <a class="nav-link" asp-controller="Relatorios" asp-action="Index">
+                    <i class="bi bi-bar-chart me-2"></i>Relatórios
+                </a>
+                <a class="nav-link" asp-controller="Migracao" asp-action="Index">
+                    <i class="bi bi-database-up me-2"></i>Migração de Dados
+                </a>
+            </nav>
+        </div>
+
+        <!-- Conteúdo -->
+        <div class="content-wrapper flex-grow-1">
+            @if (TempData["Sucesso"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>@TempData["Sucesso"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Erro"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Erro"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

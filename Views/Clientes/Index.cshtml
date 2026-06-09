@@ -1,0 +1,121 @@
+@model IEnumerable<LabControl.Models.Entidades.Entidade>
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-people me-2 text-primary"></i>Clientes</h5>
+        <small class="text-muted">Cadastro de clientes do laboratório</small>
+    </div>
+    <a asp-action="Criar" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i>Novo Cliente
+    </a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-auto">
+                <input type="text" class="form-control form-control-sm" name="busca"
+                       placeholder="Buscar por nome..." value="@ViewBag.Busca" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-search me-1"></i>Filtrar
+                </button>
+                @if (!string.IsNullOrEmpty(ViewBag.Busca as string))
+                {
+                    <a asp-action="Index" class="btn btn-link btn-sm text-muted ms-1">Limpar</a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Nome / Razão Social</th>
+                    <th>Tipo</th>
+                    <th>CPF / CNPJ</th>
+                    <th>Telefone</th>
+                    <th>Situação</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            Nenhum cliente cadastrado ainda.
+                        </td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <span class="fw-semibold">@item.Nome</span>
+                            @if (item.PessoaJuridica?.NomeFantasia != null)
+                            {
+                                <br /><small class="text-muted">@item.PessoaJuridica.NomeFantasia</small>
+                            }
+                        </td>
+                        <td>
+                            @if (item.Categoria == "F")
+                            {
+                                <span class="badge bg-info-subtle text-info">Pessoa Física</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-primary-subtle text-primary">Pessoa Jurídica</span>
+                            }
+                        </td>
+                        <td class="text-muted">
+                            @(item.Categoria == "F"
+                                ? item.PessoaFisica?.Cpf ?? "-"
+                                : item.PessoaJuridica?.Cnpj ?? "-")
+                        </td>
+                        <td class="text-muted">
+                            @{
+                                var fone = item.Fones.FirstOrDefault();
+                                if (fone != null)
+                                {
+                                    @($"({fone.Ddd}) {fone.Fone}")
+                                }
+                                else { @("-") }
+                            }
+                        </td>
+                        <td>
+                            @if (item.Inativo)
+                            {
+                                <span class="badge bg-secondary">Inativo</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Ativo</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Editar" asp-route-id="@item.Id"
+                               class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Any())
+    {
+        <div class="card-footer text-muted small">
+            Total: @Model.Count() cliente(s)
+        </div>
+    }
+</div>

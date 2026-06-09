@@ -1,0 +1,118 @@
+@model IEnumerable<LabControl.Models.Laboratorio.ParametroAnalise>
+@{
+    ViewData["Title"] = "Parâmetros de Análise";
+    var analisesTipos = (List<LabControl.Models.Laboratorio.AnaliseTipo>)ViewBag.AnalisesTipos;
+    int? filtroTipo = ViewBag.IdAnaliseTipo;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-sliders me-2 text-primary"></i>Parâmetros de Análise</h5>
+        <small class="text-muted">Parâmetros com valores unitários para composição de propostas</small>
+    </div>
+    <a asp-action="Criar" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i>Novo Parâmetro
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-auto">
+                <input type="text" name="busca" class="form-control form-control-sm"
+                       placeholder="Buscar descrição..." value="@ViewBag.Busca" />
+            </div>
+            <div class="col-auto">
+                <select name="idAnaliseTipo" class="form-select form-select-sm">
+                    <option value="">Todos os tipos</option>
+                    @foreach (var t in analisesTipos)
+                    {
+                        <option value="@t.Id" selected="@(filtroTipo == t.Id)">@t.Descricao</option>
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-search me-1"></i>Filtrar
+                </button>
+                @if (!string.IsNullOrEmpty(ViewBag.Busca as string) || filtroTipo.HasValue)
+                {
+                    <a asp-action="Index" class="btn btn-link btn-sm text-muted">Limpar</a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Descrição</th>
+                    <th>Tipo de Análise</th>
+                    <th class="text-end">Valor Unitário</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            Nenhum parâmetro cadastrado ainda.
+                        </td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="text-muted">@item.Id</td>
+                        <td class="fw-semibold">@item.Descricao</td>
+                        <td>
+                            @if (item.AnaliseTipo != null)
+                            {
+                                <span class="badge bg-info-subtle text-info border border-info-subtle">
+                                    @item.AnaliseTipo.Descricao
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td class="text-end fw-semibold text-success">
+                            R$ @item.VrUnitario.ToString("N2")
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Editar" asp-route-id="@item.Id"
+                               class="btn btn-outline-secondary btn-sm me-1">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Excluir" asp-route-id="@item.Id" method="post"
+                                  style="display:inline"
+                                  onsubmit="return confirm('Excluir parâmetro \'@item.Descricao\'?')">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Any())
+    {
+        <div class="card-footer text-muted small d-flex justify-content-between">
+            <span>@Model.Count() parâmetro(s)</span>
+            <span>
+                Valor médio: <strong>R$ @Model.Average(m => m.VrUnitario).ToString("N2")</strong>
+            </span>
+        </div>
+    }
+</div>

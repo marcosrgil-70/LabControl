@@ -1,0 +1,72 @@
+@{
+    ViewData["Title"] = "Início";
+}
+
+<div class="mb-4">
+    <h5 class="mb-0"><i class="bi bi-house me-2 text-primary"></i>Painel Principal</h5>
+    <small class="text-muted">Visão geral do sistema</small>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-center border-0 shadow-sm">
+            <div class="card-body py-4">
+                <i class="bi bi-droplet fs-2 text-primary mb-2 d-block"></i>
+                <h4 class="fw-bold mb-0">-</h4>
+                <small class="text-muted">Amostras em análise</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-0 shadow-sm">
+            <div class="card-body py-4">
+                <i class="bi bi-file-text fs-2 text-success mb-2 d-block"></i>
+                <h4 class="fw-bold mb-0">-</h4>
+                <small class="text-muted">Propostas em aberto</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-0 shadow-sm">
+            <div class="card-body py-4">
+                <i class="bi bi-clipboard-check fs-2 text-warning mb-2 d-block"></i>
+                <h4 class="fw-bold mb-0">-</h4>
+                <small class="text-muted">Resultados pendentes</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-0 shadow-sm">
+            <div class="card-body py-4">
+                <i class="bi bi-file-earmark-bar-graph fs-2 text-danger mb-2 d-block"></i>
+                <h4 class="fw-bold mb-0">-</h4>
+                <small class="text-muted">Laudos emitidos hoje</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header fw-semibold py-2">
+                <i class="bi bi-clock-history me-1"></i>Últimas Amostras
+            </div>
+            <div class="card-body text-center text-muted py-4">
+                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                <a asp-controller="HistAmostras" asp-action="Index">Ver todas as amostras</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header fw-semibold py-2">
+                <i class="bi bi-file-text me-1"></i>Últimas Propostas
+            </div>
+            <div class="card-body text-center text-muted py-4">
+                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                <a asp-controller="Propostas" asp-action="Index">Ver todas as propostas</a>
+            </div>
+        </div>
+    </div>
+</div>

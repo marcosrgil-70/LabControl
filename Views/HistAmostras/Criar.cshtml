@@ -1,0 +1,231 @@
+@model LabControl.Models.Laboratorio.HistAmostra
+@{
+    ViewData["Title"] = "Nova Amostra";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-droplet-fill me-2 text-primary"></i>Registrar Nova Amostra</h5>
+        <small class="text-muted">Preenchimento do recebimento de amostra</small>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Voltar
+    </a>
+</div>
+
+<form asp-action="Criar" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-3">
+        <!-- Identificação -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header fw-semibold py-2">
+                    <i class="bi bi-tag me-1"></i>Identificação da Amostra
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Tipo de Amostra <span class="text-danger">*</span></label>
+                            <select asp-for="IdAmostraTipo" class="form-select form-select-sm" required>
+                                <option value="">Selecione...</option>
+                                @foreach (var item in (List<LabControl.Models.Laboratorio.AmostraTipo>)ViewBag.AmostrasTipos)
+                                {
+                                    <option value="@item.Id">@item.Descricao</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tipo de Análise</label>
+                            <select asp-for="IdAnaliseTipo" class="form-select form-select-sm">
+                                <option value="">Selecione...</option>
+                                @foreach (var item in (List<LabControl.Models.Laboratorio.AnaliseTipo>)ViewBag.AnalisesTipos)
+                                {
+                                    <option value="@item.Id">@item.Descricao</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Ano <span class="text-danger">*</span></label>
+                            <input asp-for="AnoAmostra" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Status</label>
+                            <select asp-for="IdAmostraStatus" class="form-select form-select-sm">
+                                <option value="">Selecione...</option>
+                                @foreach (var item in (List<LabControl.Models.Laboratorio.AmostraStatus>)ViewBag.AmostrasStatus)
+                                {
+                                    <option value="@item.Id">@item.Descricao</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cliente e Proposta -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header fw-semibold py-2">
+                    <i class="bi bi-person me-1"></i>Cliente / Solicitante
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Cliente (ID)</label>
+                            <input asp-for="IdEntidade" class="form-control form-control-sm" placeholder="ID do cliente" />
+                            <small class="text-muted">Em breve: busca por nome</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Nome do Contato</label>
+                            <input asp-for="NomeContato" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Proposta (ID)</label>
+                            <input asp-for="IdProposta" class="form-control form-control-sm" placeholder="Vinc. a proposta" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recebimento -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header fw-semibold py-2">
+                    <i class="bi bi-calendar-check me-1"></i>Dados do Recebimento
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Data de Entrega</label>
+                            <input asp-for="DtEntrega" type="datetime-local" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Local de Recebimento</label>
+                            <input asp-for="LocalRecebimento" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Embalagem</label>
+                            <select asp-for="IdEmbalagemTipo" class="form-select form-select-sm">
+                                <option value="">Selecione...</option>
+                                @foreach (var item in (List<LabControl.Models.Laboratorio.EmbalagemTipo>)ViewBag.EmbalagensTopos)
+                                {
+                                    <option value="@item.Id">@item.Descricao</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Qtde. Embalagens Entregues</label>
+                            <input asp-for="QtdeEmbalagensEntregue" class="form-control form-control-sm" type="number" min="1" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produto / Amostra -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header fw-semibold py-2">
+                    <i class="bi bi-box-seam me-1"></i>Produto / Amostra
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Produto</label>
+                            <select asp-for="IdProduto" class="form-select form-select-sm">
+                                <option value="">Selecione...</option>
+                                @foreach (var item in (List<LabControl.Models.Laboratorio.Produto>)ViewBag.Produtos)
+                                {
+                                    <option value="@item.Id">@item.Descricao</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Nr. Lote</label>
+                            <input asp-for="NrLote" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Data de Fabricação</label>
+                            <input asp-for="DtFabricacao" type="date" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Data de Validade</label>
+                            <input asp-for="DtValidade" type="date" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Nota/Rótulo</label>
+                            <input asp-for="NotaRotulo" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Espécie</label>
+                            <input asp-for="EspecieAmostra" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Aspecto</label>
+                            <input asp-for="AspectoAmostra" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Cor</label>
+                            <input asp-for="Cor" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Outras Características</label>
+                            <input asp-for="OutrasCaracteristicas" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verificação -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header fw-semibold py-2">
+                    <i class="bi bi-check2-square me-1"></i>Verificação no Recebimento
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Qtde. da Amostra</label>
+                            <input asp-for="QtdeAmostraVerificacao" class="form-control form-control-sm" type="number" step="0.01" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Temperatura (°C)</label>
+                            <input asp-for="TemperaturaVerificacao" class="form-control form-control-sm" type="number" step="0.1" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label d-block">Documentos Acompanhantes</label>
+                            <div class="form-check form-check-inline">
+                                <input asp-for="AcompanhaFichaTecnica" class="form-check-input" type="checkbox" />
+                                <label class="form-check-label">Ficha Técnica</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input asp-for="AcompanhaPadraoAnalitico" class="form-check-input" type="checkbox" />
+                                <label class="form-check-label">Padrão Analítico</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input asp-for="AcompanhaCaCliente" class="form-check-input" type="checkbox" />
+                                <label class="form-check-label">CA do Cliente</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input asp-for="EnviarOutroLaboratorio" class="form-check-input" type="checkbox" />
+                                <label class="form-check-label">Enviar a outro laboratório</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões -->
+        <div class="col-12 d-flex justify-content-end gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i>Salvar Amostra
+            </button>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,97 @@
+@model LabControl.Controllers.ListaAuxiliar
+@{
+    ViewData["Title"] = Model.Titulo;
+    var actionSalvar = "Salvar" + Model.Entidade;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-tags me-2 text-primary"></i>@Model.Titulo</h5>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Voltar
+    </a>
+</div>
+
+<div class="row g-3">
+    <!-- Formulário de inclusão/edição -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header fw-semibold py-2">
+                <i class="bi bi-plus-circle me-1"></i>Novo Registro
+            </div>
+            <div class="card-body">
+                <form asp-action="@actionSalvar" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="editId" />
+                    <div class="mb-3">
+                        <label class="form-label">Descrição <span class="text-danger">*</span></label>
+                        <input name="descricao" id="editDescricao" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                            <i class="bi bi-save me-1"></i>Salvar
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="limparForm()">
+                            Novo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Descrição</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Itens.Any())
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-3">
+                                    Nenhum registro cadastrado.
+                                </td>
+                            </tr>
+                        }
+                        @foreach (dynamic item in Model.Itens)
+                        {
+                            <tr>
+                                <td class="text-muted">@item.Id</td>
+                                <td>@item.Descricao</td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-secondary btn-sm"
+                                            onclick="editar(@item.Id, '@item.Descricao')">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function editar(id, descricao) {
+        document.getElementById('editId').value = id;
+        document.getElementById('editDescricao').value = descricao;
+        document.getElementById('editDescricao').focus();
+    }
+    function limparForm() {
+        document.getElementById('editId').value = '';
+        document.getElementById('editDescricao').value = '';
+    }
+</script>
+}

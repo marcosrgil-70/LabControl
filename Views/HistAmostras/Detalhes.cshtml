@@ -1,0 +1,228 @@
+@model LabControl.Models.Laboratorio.HistAmostra
+@{
+    ViewData["Title"] = $"Amostra {Model.CodigoFormatado}";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0">
+            <i class="bi bi-droplet-fill me-2 text-primary"></i>
+            Amostra <span class="text-primary">@Model.CodigoFormatado</span>
+        </h5>
+        <small class="text-muted">
+            @(Model.AmostraStatus != null
+                ? Html.Raw($"<span class='badge' style='background-color:{Model.AmostraStatus.Cor ?? "#6c757d"}'>{Model.AmostraStatus.Descricao}</span>")
+                : Html.Raw(""))
+            &nbsp;Saldo atual:
+            <strong>@(Model.Saldo?.SaldoAtual.ToString("N2") ?? "0")</strong>
+        </small>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="Resultados" asp-action="Criar" asp-route-idAmostra="@Model.Id"
+           class="btn btn-success btn-sm">
+            <i class="bi bi-clipboard-plus me-1"></i>Lançar Resultado
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Identificação -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold py-2"><i class="bi bi-tag me-1"></i>Identificação</div>
+            <div class="card-body">
+                <dl class="row mb-0 small">
+                    <dt class="col-5 text-muted">Tipo de Amostra</dt>
+                    <dd class="col-7">@(Model.AmostraTipo?.Descricao ?? "-")</dd>
+
+                    <dt class="col-5 text-muted">Tipo de Análise</dt>
+                    <dd class="col-7">@(Model.AnaliseTipo?.Descricao ?? "-")</dd>
+
+                    <dt class="col-5 text-muted">Ano</dt>
+                    <dd class="col-7">@Model.AnoAmostra</dd>
+
+                    <dt class="col-5 text-muted">Cliente</dt>
+                    <dd class="col-7">@(Model.Entidade?.Nome ?? "-")</dd>
+
+                    <dt class="col-5 text-muted">Contato</dt>
+                    <dd class="col-7">@(Model.NomeContato ?? "-")</dd>
+
+                    <dt class="col-5 text-muted">Proposta</dt>
+                    <dd class="col-7">@(Model.Proposta?.CodigoFormatado ?? "-")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recebimento -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold py-2"><i class="bi bi-calendar-check me-1"></i>Recebimento</div>
+            <div class="card-body">
+                <dl class="row mb-0 small">
+                    <dt class="col-5 text-muted">Data / Hora</dt>
+                    <dd class="col-7">@(Model.DtEntrega?.ToString("dd/MM/yyyy HH:mm") ?? "-")</dd>
+
+                    <dt class="col-5 text-muted">Local</dt>
+                    <dd class="col-7">@(Model.LocalRecebimento ?? "-")</dd>
+
+                    <dt class="col-5 text-muted">Embalagem</dt>
+                    <dd class="col-7">@(Model.EmbalagemTipo?.Descricao ?? "-")</dd>
+
+                    <dt class="col-5 text-muted">Qtde. Embalagens</dt>
+                    <dd class="col-7">@(Model.QtdeEmbalagensEntregue?.ToString() ?? "-")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Produto -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold py-2"><i class="bi bi-box-seam me-1"></i>Produto / Amostra</div>
+            <div class="card-body">
+                <dl class="row mb-0 small">
+                    <dt class="col-5 text-muted">Produto</dt>
+                    <dd class="col-7">@(Model.Produto?.Descricao ?? "-")</dd>
+
+                    <dt class="col-5 text-muted">Nr. Lote</dt>
+                    <dd class="col-7">@(Model.NrLote ?? "-")</dd>
+
+                    <dt class="col-5 text-muted">Fabricação</dt>
+                    <dd class="col-7">@(Model.DtFabricacao?.ToString("dd/MM/yyyy") ?? "-")</dd>
+
+                    <dt class="col-5 text-muted">Validade</dt>
+                    <dd class="col-7">@(Model.DtValidade?.ToString("dd/MM/yyyy") ?? "-")</dd>
+
+                    <dt class="col-5 text-muted">Espécie / Aspecto</dt>
+                    <dd class="col-7">@(Model.EspecieAmostra ?? "-") / @(Model.AspectoAmostra ?? "-")</dd>
+
+                    <dt class="col-5 text-muted">Temperatura</dt>
+                    <dd class="col-7">@(Model.TemperaturaVerificacao?.ToString("N1") ?? "-") °C</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documentos -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold py-2"><i class="bi bi-file-earmark-check me-1"></i>Documentos Acompanhantes</div>
+            <div class="card-body">
+                <ul class="list-unstyled small mb-0">
+                    <li class="mb-1">
+                        <i class="bi @(Model.AcompanhaFichaTecnica ? "bi-check-circle-fill text-success" : "bi-x-circle text-muted") me-2"></i>
+                        Ficha Técnica
+                    </li>
+                    <li class="mb-1">
+                        <i class="bi @(Model.AcompanhaPadraoAnalitico ? "bi-check-circle-fill text-success" : "bi-x-circle text-muted") me-2"></i>
+                        Padrão Analítico
+                    </li>
+                    <li class="mb-1">
+                        <i class="bi @(Model.AcompanhaCaCliente ? "bi-check-circle-fill text-success" : "bi-x-circle text-muted") me-2"></i>
+                        CA do Cliente
+                    </li>
+                    <li class="mb-1">
+                        <i class="bi @(Model.EnviarOutroLaboratorio ? "bi-check-circle-fill text-warning" : "bi-x-circle text-muted") me-2"></i>
+                        Enviar a outro laboratório
+                        @if (Model.EnviarOutroLaboratorio && Model.QtdeEnvioOutroLaboratorio.HasValue)
+                        {
+                            <span class="text-muted">(Qtde: @Model.QtdeEnvioOutroLaboratorio)</span>
+                        }
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Testes -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header fw-semibold py-2 d-flex justify-content-between">
+                <span><i class="bi bi-clipboard me-1"></i>Testes / Ensaios</span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tipo de Análise</th>
+                            <th>Método</th>
+                            <th>Prazo</th>
+                            <th>Parâmetro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Testes.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">
+                                    Nenhum teste registrado.
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var teste in Model.Testes)
+                        {
+                            <tr>
+                                <td>@(teste.AnaliseTipo?.Descricao ?? "-")</td>
+                                <td>@(teste.AnaliseMetodo?.Descricao ?? "-")</td>
+                                <td>@(teste.Prazo?.Descricao ?? "-")</td>
+                                <td>@(teste.ParametroAnalise?.Descricao ?? "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movimentações -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header fw-semibold py-2 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-arrow-left-right me-1"></i>Movimentações</span>
+                <span class="badge bg-secondary">Saldo: @(Model.Saldo?.SaldoAtual.ToString("N2") ?? "0")</span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                            <th>Justificativa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Movimentacoes.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">Nenhuma movimentação.</td>
+                            </tr>
+                        }
+                        @foreach (var mov in Model.Movimentacoes.OrderByDescending(m => m.DataMov))
+                        {
+                            <tr>
+                                <td class="text-muted small">@mov.DataMov.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    @if (mov.EntradaSaida == "E")
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-arrow-down me-1"></i>Entrada</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-arrow-up me-1"></i>Saída</span>
+                                    }
+                                </td>
+                                <td class="fw-semibold">@mov.Qtde.ToString("N2")</td>
+                                <td class="text-muted small">@(mov.Justificativa ?? "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

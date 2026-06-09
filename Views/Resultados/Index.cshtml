@@ -1,0 +1,70 @@
+@model IEnumerable<LabControl.Models.Laboratorio.ResultadoAnalise>
+@{
+    ViewData["Title"] = "Resultados";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-clipboard-check me-2 text-primary"></i>Resultados de Análises</h5>
+        <small class="text-muted">Laudos e resultados lançados</small>
+    </div>
+    <a asp-controller="HistAmostras" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-droplet me-1"></i>Ver Amostras
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Amostra</th>
+                    <th>Cliente</th>
+                    <th>Tipo de Análise</th>
+                    <th>Data</th>
+                    <th>Revisão</th>
+                    <th>Parâmetros</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            Nenhum resultado lançado ainda.<br />
+                            <small>Acesse uma amostra e clique em "Lançar Resultado".</small>
+                        </td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="HistAmostras" asp-action="Detalhes"
+                               asp-route-id="@item.IdHistAmostra" class="fw-semibold text-primary text-decoration-none">
+                                @item.HistAmostra.CodigoFormatado
+                            </a>
+                        </td>
+                        <td>@(item.HistAmostra.Entidade?.Nome ?? "-")</td>
+                        <td>@(item.HistAmostra.AnaliseTipo?.Descricao ?? "-")</td>
+                        <td class="text-muted">@(item.DtResultado?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                        <td>
+                            <span class="badge bg-secondary">Rev. @item.Revisao</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-info-subtle text-info">@item.Parametros.Count parâm.</span>
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Detalhes" asp-route-id="@item.Id"
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
