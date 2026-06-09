@@ -45,6 +45,7 @@ public class Entidade
     public ICollection<EntidadeEndereco> Enderecos { get; set; } = [];
     public ICollection<EntidadeFone> Fones { get; set; } = [];
     public ICollection<EntidadeEmail> Emails { get; set; } = [];
+    public EntidadeObservacao? Observacao { get; set; }
 }
 
 [Table("ENTIDADES_PF")]
@@ -243,6 +244,20 @@ public class FoneTipo
     [Column("DESCRICAO")]
     [StringLength(50)]
     public string Descricao { get; set; } = string.Empty;
+}
+
+[Table("ENTIDADES_OBSERVACOES")]
+public class EntidadeObservacao
+{
+    [Key]
+    [ForeignKey(nameof(Entidade))]
+    [Column("ID_ENTIDADES")]
+    public int IdEntidade { get; set; }
+
+    [Column("OBSERVACAO")]
+    public string? Observacao { get; set; }
+
+    public Entidade Entidade { get; set; } = null!;
 }
 
 [Table("ENTIDADES_EMAILS")]

@@ -21,6 +21,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<EnderecoTipo> EnderecosTipos => Set<EnderecoTipo>();
     public DbSet<FoneTipo> FonesTipos => Set<FoneTipo>();
 
+    public DbSet<EntidadeObservacao> EntidadesObservacoes => Set<EntidadeObservacao>();
+
     // Segurança
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<AcaoUsuario> AcoesUsuarios => Set<AcaoUsuario>();
@@ -66,6 +68,12 @@ public class ApplicationDbContext : DbContext
         // Chave composta em AcaoUsuario
         modelBuilder.Entity<AcaoUsuario>()
             .HasKey(a => new { a.IdUsuario, a.Form });
+
+        // Relacionamento 1-1 Entidade -> Observacao
+        modelBuilder.Entity<EntidadeObservacao>()
+            .HasOne(o => o.Entidade)
+            .WithOne(e => e.Observacao)
+            .HasForeignKey<EntidadeObservacao>(o => o.IdEntidade);
 
         // Relacionamento 1-1 Entidade -> PF/PJ/Funcionario
         modelBuilder.Entity<EntidadePF>()

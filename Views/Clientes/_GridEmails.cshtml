@@ -1,0 +1,47 @@
+@model List<LabControl.Models.Entidades.EntidadeEmail>
+
+@if (!Model.Any())
+{
+    <p class="text-muted text-center py-3 mb-0"><i class="bi bi-envelope-x me-1"></i>Nenhum e-mail cadastrado.</p>
+}
+else
+{
+    <table class="table table-sm table-hover mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>E-mail</th>
+                <th class="text-center">Principal</th>
+                <th style="width:100px"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in Model)
+            {
+                <tr>
+                    <td class="align-middle">@e.Email</td>
+                    <td class="text-center align-middle">
+                        @if (e.Principal)
+                        {
+                            <span class="badge bg-success"><i class="bi bi-star-fill me-1"></i>Principal</span>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                    onclick="marcarPrincipal(@e.Id)"
+                                    title="Definir como principal">
+                                <i class="bi bi-star"></i>
+                            </button>
+                        }
+                    </td>
+                    <td class="text-end align-middle">
+                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                onclick="excluirEmail(@e.Id)"
+                                title="Excluir">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

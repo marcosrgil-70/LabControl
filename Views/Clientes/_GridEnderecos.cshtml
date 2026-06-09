@@ -1,0 +1,52 @@
+@model List<LabControl.Models.Entidades.EntidadeEndereco>
+
+@if (!Model.Any())
+{
+    <p class="text-muted text-center py-3 mb-0"><i class="bi bi-geo-alt me-1"></i>Nenhum endereço cadastrado.</p>
+}
+else
+{
+    <table class="table table-sm table-hover mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Tipo</th>
+                <th>Logradouro / Número</th>
+                <th>Bairro</th>
+                <th>Cidade / UF</th>
+                <th>CEP</th>
+                <th style="width:50px"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var en in Model)
+            {
+                <tr>
+                    <td class="align-middle">
+                        @if (en.EnderecoTipo != null)
+                        {
+                            <span class="badge bg-light text-dark border">@en.EnderecoTipo.Descricao</span>
+                        }
+                        else { <span class="text-muted">-</span> }
+                    </td>
+                    <td class="align-middle">
+                        @en.Logradouro@(en.Numero != null ? $", {en.Numero}" : "")
+                        @if (!string.IsNullOrWhiteSpace(en.Complemento))
+                        {
+                            <small class="text-muted d-block">@en.Complemento</small>
+                        }
+                    </td>
+                    <td class="align-middle">@(en.Bairro ?? "-")</td>
+                    <td class="align-middle">@(en.Cidade ?? "-")@(!string.IsNullOrWhiteSpace(en.Uf) ? $" / {en.Uf}" : "")</td>
+                    <td class="align-middle">@(en.Cep ?? "-")</td>
+                    <td class="text-end align-middle">
+                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                onclick="excluirEndereco(@en.Id)"
+                                title="Excluir">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

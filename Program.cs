@@ -41,4 +41,16 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+// Cria tabelas novas que podem não existir ainda no banco
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<LabControl.Data.ApplicationDbContext>();
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS ENTIDADES_OBSERVACOES (
+            ID_ENTIDADES INT NOT NULL PRIMARY KEY,
+            OBSERVACAO   TEXT NULL,
+            FOREIGN KEY (ID_ENTIDADES) REFERENCES ENTIDADES(ID_ENTIDADES) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+}
+
 app.Run();
