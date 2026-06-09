@@ -34,12 +34,13 @@ public class ClientesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Criar(Entidade model, string? cpf, string? cnpj,
-        string? nomeFantasia, string? inscEstadual, string? rg, DateTime? dataNascimento,
-        string? sexo, string? ddd, string? fone)
+    public async Task<IActionResult> Criar(Entidade model, string? fantasia, string? cpf,
+        string? cnpj, string? nomeFantasia, string? inscEstadual, string? rg,
+        DateTime? dataNascimento, string? sexo, string? ddd, string? fone)
     {
         model.TipoCliente  = true;
         model.DataCadastro = DateTime.Now;
+        model.Fantasia     = string.IsNullOrWhiteSpace(fantasia) ? null : fantasia.Trim();
         _db.Entidades.Add(model);
         await _db.SaveChangesAsync();
 
@@ -68,8 +69,8 @@ public class ClientesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Editar(int id, Entidade model, string? cpf, string? cnpj,
-        string? nomeFantasia, string? inscEstadual)
+    public async Task<IActionResult> Editar(int id, Entidade model, string? fantasia,
+        string? cpf, string? cnpj, string? nomeFantasia, string? inscEstadual)
     {
         var entidade = await _db.Entidades
             .Include(e => e.PessoaFisica)
@@ -77,8 +78,9 @@ public class ClientesController : Controller
             .FirstOrDefaultAsync(e => e.Id == id);
         if (entidade == null) return NotFound();
 
-        entidade.Nome    = model.Nome;
-        entidade.Inativo = model.Inativo;
+        entidade.Nome     = model.Nome;
+        entidade.Fantasia = string.IsNullOrWhiteSpace(fantasia) ? null : fantasia.Trim();
+        entidade.Inativo  = model.Inativo;
 
         if (entidade.Categoria == "F" && entidade.PessoaFisica != null)
             entidade.PessoaFisica.Cpf = cpf;

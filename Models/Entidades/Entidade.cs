@@ -21,6 +21,10 @@ public class Entidade
     [StringLength(150)]
     public string Nome { get; set; } = string.Empty;
 
+    [Column("FANTASIA")]
+    [StringLength(100)]
+    public string? Fantasia { get; set; }
+
     [Column("INATIVO")]
     public bool Inativo { get; set; } = false;
 

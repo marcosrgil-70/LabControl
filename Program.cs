@@ -45,6 +45,17 @@ app.MapControllerRoute(
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<LabControl.Data.ApplicationDbContext>();
+    // Adiciona coluna FANTASIA se ainda não existir (ignora erro se já existir)
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync(
+            "ALTER TABLE ENTIDADES ADD COLUMN FANTASIA VARCHAR(100) NULL AFTER NOME");
+    }
+    catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060"))
+    {
+        // Coluna já existe — ok
+    }
+
     await db.Database.ExecuteSqlRawAsync(@"
         CREATE TABLE IF NOT EXISTS ENTIDADES_OBSERVACOES (
             ID_ENTIDADES INT NOT NULL PRIMARY KEY,

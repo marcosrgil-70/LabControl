@@ -61,9 +61,9 @@
                     <tr>
                         <td>
                             <span class="fw-semibold">@item.Nome</span>
-                            @if (item.PessoaJuridica?.NomeFantasia != null)
+                            @if (!string.IsNullOrWhiteSpace(item.Fantasia))
                             {
-                                <br /><small class="text-muted">@item.PessoaJuridica.NomeFantasia</small>
+                                <br /><small class="text-muted">@item.Fantasia</small>
                             }
                         </td>
                         <td>
