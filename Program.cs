@@ -1,9 +1,13 @@
 using LabControl.Data;
+using LabControl.Filters;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<SessaoFilter>();
+});
 
 // MySQL via EF Core (Pomelo)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
