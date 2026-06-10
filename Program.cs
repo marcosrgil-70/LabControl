@@ -45,15 +45,15 @@ app.MapControllerRoute(
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<LabControl.Data.ApplicationDbContext>();
-    // Adiciona coluna FANTASIA se ainda não existir (ignora erro se já existir)
+    // Remove coluna FANTASIA da tabela ENTIDADES, caso exista (campo substituído por
+    // ENTIDADES_PJ.NOME_FANTASIA e ENTIDADES_PF.SOBRENOME)
     try
     {
-        await db.Database.ExecuteSqlRawAsync(
-            "ALTER TABLE ENTIDADES ADD COLUMN FANTASIA VARCHAR(100) NULL AFTER NOME");
+        await db.Database.ExecuteSqlRawAsync("ALTER TABLE ENTIDADES DROP COLUMN FANTASIA");
     }
-    catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060"))
+    catch (Exception ex) when (ex.Message.Contains("check that") || ex.Message.Contains("1091"))
     {
-        // Coluna já existe — ok
+        // Coluna já não existe — ok
     }
 
     await db.Database.ExecuteSqlRawAsync(@"

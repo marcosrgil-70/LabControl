@@ -79,18 +79,17 @@
                         <label class="form-check-label">Inativo</label>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Fantasia <small class="text-muted">(nome resumido / apelido)</small></label>
-                    <input name="fantasia" class="form-control form-control-sm"
-                           value="@Model.Fantasia" placeholder="Como o cliente é conhecido..." />
-                </div>
-
                 @if (Model.Categoria == "F")
                 {
                     <div class="col-md-3">
                         <label class="form-label">CPF</label>
                         <input name="cpf" class="form-control form-control-sm"
                                value="@Model.PessoaFisica?.Cpf" placeholder="000.000.000-00" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Sobrenome <small class="text-muted">(apelido)</small></label>
+                        <input name="sobrenome" class="form-control form-control-sm"
+                               value="@Model.PessoaFisica?.Sobrenome" placeholder="Como o cliente é conhecido..." />
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">RG</label>

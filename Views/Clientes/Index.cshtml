@@ -61,9 +61,14 @@
                     <tr>
                         <td>
                             <span class="fw-semibold">@item.Nome</span>
-                            @if (!string.IsNullOrWhiteSpace(item.Fantasia))
+                            @{
+                                var apelido = item.Categoria == "F"
+                                    ? item.PessoaFisica?.Sobrenome
+                                    : item.PessoaJuridica?.NomeFantasia;
+                            }
+                            @if (!string.IsNullOrWhiteSpace(apelido))
                             {
-                                <br /><small class="text-muted">@item.Fantasia</small>
+                                <br /><small class="text-muted">@apelido</small>
                             }
                         </td>
                         <td>

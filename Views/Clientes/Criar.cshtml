@@ -34,11 +34,6 @@
                             <label class="form-label">Nome / Razão Social <span class="text-danger">*</span></label>
                             <input asp-for="Nome" class="form-control form-control-sm" required />
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Fantasia <small class="text-muted">(nome resumido / apelido)</small></label>
-                            <input name="fantasia" class="form-control form-control-sm"
-                                   placeholder="Como o cliente é conhecido..." />
-                        </div>
                     </div>
                 </div>
             </div>
@@ -55,6 +50,11 @@
                         <div class="col-md-3">
                             <label class="form-label">CPF</label>
                             <input name="cpf" class="form-control form-control-sm" placeholder="000.000.000-00" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Sobrenome <small class="text-muted">(apelido)</small></label>
+                            <input name="sobrenome" class="form-control form-control-sm"
+                                   placeholder="Como o cliente é conhecido..." />
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">RG</label>
