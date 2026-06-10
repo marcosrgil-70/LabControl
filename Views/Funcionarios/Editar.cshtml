@@ -1,0 +1,452 @@
+@model LabControl.Models.Entidades.Entidade
+@using LabControl.Models.Entidades
+@{
+    ViewData["Title"] = "Editar Funcionário";
+    var fonesTipos     = ViewBag.FonesTipos     as List<FoneTipo>     ?? new();
+    var enderecosTipos = ViewBag.EnderecosTipos as List<EnderecoTipo> ?? new();
+    var tiposReg       = ViewBag.TiposRegProfissional as List<TipoRegProfissional> ?? new();
+    var cargos         = ViewBag.CargosFuncionarios   as List<CargoFuncionario>    ?? new();
+    var idEntidade     = Model.Id;
+    var assinatura     = Model.Funcionario?.Assinatura;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0">
+            <i class="bi bi-pencil-square me-2 text-primary"></i>Editar Funcionário
+            <span class="badge bg-secondary ms-2">ID @Model.Id</span>
+            @if (Model.Inativo)
+            { <span class="badge bg-danger ms-1">Inativo</span> }
+        </h5>
+        <small class="text-muted">@Model.Nome</small>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Voltar
+    </a>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-0" id="tabsFuncionario">
+    <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-dados">
+            <i class="bi bi-person me-1"></i>Dados Gerais
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-fones">
+            <i class="bi bi-telephone me-1"></i>Telefones
+            @if (Model.Fones.Any())
+            { <span class="badge bg-primary ms-1">@Model.Fones.Count</span> }
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-emails">
+            <i class="bi bi-envelope me-1"></i>E-mails
+            @if (Model.Emails.Any())
+            { <span class="badge bg-primary ms-1">@Model.Emails.Count</span> }
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-enderecos">
+            <i class="bi bi-geo-alt me-1"></i>Endereços
+            @if (Model.Enderecos.Any())
+            { <span class="badge bg-primary ms-1">@Model.Enderecos.Count</span> }
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-obs">
+            <i class="bi bi-chat-left-text me-1"></i>Observações
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-assinatura">
+            <i class="bi bi-pen me-1"></i>Assinatura
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content border border-top-0 rounded-bottom bg-white p-3 mb-3" id="tabsFuncionarioContent">
+
+    <!-- ── Tab: Dados Gerais ─────────────────────────────────────────────── -->
+    <div class="tab-pane fade show active" id="tab-dados">
+        <form asp-action="Editar" asp-route-id="@Model.Id" method="post">
+            @Html.AntiForgeryToken()
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Nome <span class="text-danger">*</span></label>
+                    <input asp-for="Nome" class="form-control form-control-sm" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Sobrenome</label>
+                    <input name="sobrenome" class="form-control form-control-sm" value="@Model.PessoaFisica?.Sobrenome" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end pb-1">
+                    <div class="form-check">
+                        <input asp-for="Inativo" class="form-check-input" />
+                        <label class="form-check-label">Inativo</label>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">CPF</label>
+                    <input name="cpf" class="form-control form-control-sm"
+                           value="@Model.PessoaFisica?.Cpf" placeholder="000.000.000-00" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">RG</label>
+                    <input name="rg" class="form-control form-control-sm" value="@Model.PessoaFisica?.Rg" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Data de Nascimento</label>
+                    <input name="dataNascimento" type="date" class="form-control form-control-sm"
+                           value="@Model.PessoaFisica?.DataNascimento?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sexo</label>
+                    <select name="sexo" class="form-select form-select-sm">
+                        <option value="">-</option>
+                        <option value="M" selected="@(Model.PessoaFisica?.Sexo == "M")">Masculino</option>
+                        <option value="F" selected="@(Model.PessoaFisica?.Sexo == "F")">Feminino</option>
+                    </select>
+                </div>
+
+                <div class="col-12"><hr class="my-1" /></div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Cargo</label>
+                    <select name="idCargoFuncionario" class="form-select form-select-sm">
+                        <option value="">— Selecione —</option>
+                        @foreach (var c in cargos)
+                        {
+                            <option value="@c.Id" selected="@(Model.Funcionario?.IdCargoFuncionario == c.Id)">@c.Descricao</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tipo de Registro Profissional</label>
+                    <select name="idTipoRegProfissional" class="form-select form-select-sm">
+                        <option value="">— Selecione —</option>
+                        @foreach (var t in tiposReg)
+                        {
+                            <option value="@t.Id" selected="@(Model.Funcionario?.IdTipoRegProfissional == t.Id)">@t.Descricao</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Nº Registro Profissional</label>
+                    <input name="nrRegistroProfissional" class="form-control form-control-sm"
+                           value="@Model.Funcionario?.NrRegistroProfissional" />
+                </div>
+
+                <div class="col-12 d-flex justify-content-end gap-2 pt-1">
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-save me-1"></i>Salvar Dados Gerais
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ── Tab: Telefones ────────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-fones">
+        <div id="grid-fones">
+            <partial name="~/Views/Clientes/_GridFones.cshtml" model="Model.Fones.ToList()" />
+        </div>
+
+        <hr class="my-3" />
+        <h6 class="text-muted mb-2"><i class="bi bi-plus-circle me-1"></i>Adicionar Telefone</h6>
+        <div class="row g-2 align-items-end">
+            <div class="col-2">
+                <label class="form-label form-label-sm">DDD</label>
+                <input type="text" id="fone-ddd" class="form-control form-control-sm" maxlength="3" placeholder="11" />
+            </div>
+            <div class="col-3">
+                <label class="form-label form-label-sm">Número <span class="text-danger">*</span></label>
+                <input type="text" id="fone-numero" class="form-control form-control-sm" placeholder="99999-9999" />
+            </div>
+            <div class="col-4">
+                <label class="form-label form-label-sm">Tipo</label>
+                <select id="fone-tipo" class="form-select form-select-sm">
+                    <option value="">— Tipo —</option>
+                    @foreach (var t in fonesTipos)
+                    { <option value="@t.Id">@t.Descricao</option> }
+                </select>
+            </div>
+            <div class="col-3">
+                <button type="button" class="btn btn-success btn-sm w-100" onclick="adicionarFone()">
+                    <i class="bi bi-plus-lg me-1"></i>Adicionar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Tab: E-mails ──────────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-emails">
+        <div id="grid-emails">
+            <partial name="~/Views/Clientes/_GridEmails.cshtml" model="Model.Emails.ToList()" />
+        </div>
+
+        <hr class="my-3" />
+        <h6 class="text-muted mb-2"><i class="bi bi-plus-circle me-1"></i>Adicionar E-mail</h6>
+        <div class="row g-2 align-items-end">
+            <div class="col-6">
+                <label class="form-label form-label-sm">E-mail <span class="text-danger">*</span></label>
+                <input type="email" id="email-addr" class="form-control form-control-sm" placeholder="exemplo@empresa.com" />
+            </div>
+            <div class="col-3 d-flex align-items-end pb-1">
+                <div class="form-check">
+                    <input type="checkbox" id="email-principal" class="form-check-input" />
+                    <label class="form-check-label form-label-sm">Principal</label>
+                </div>
+            </div>
+            <div class="col-3">
+                <button type="button" class="btn btn-success btn-sm w-100" onclick="adicionarEmail()">
+                    <i class="bi bi-plus-lg me-1"></i>Adicionar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Tab: Endereços ────────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-enderecos">
+        <div id="grid-enderecos">
+            <partial name="~/Views/Clientes/_GridEnderecos.cshtml" model="Model.Enderecos.ToList()" />
+        </div>
+
+        <hr class="my-3" />
+        <h6 class="text-muted mb-2"><i class="bi bi-plus-circle me-1"></i>Adicionar Endereço</h6>
+        <div class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">Tipo</label>
+                <select id="end-tipo" class="form-select form-select-sm">
+                    <option value="">— Tipo —</option>
+                    @foreach (var t in enderecosTipos)
+                    { <option value="@t.Id">@t.Descricao</option> }
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label form-label-sm">Logradouro</label>
+                <input type="text" id="end-logradouro" class="form-control form-control-sm" placeholder="Rua, Av., Trav..." />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">Número</label>
+                <input type="text" id="end-numero" class="form-control form-control-sm" placeholder="123" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">Complemento</label>
+                <input type="text" id="end-complemento" class="form-control form-control-sm" placeholder="Sala, Apto..." />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">Bairro</label>
+                <input type="text" id="end-bairro" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label form-label-sm">Cidade</label>
+                <input type="text" id="end-cidade" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">UF</label>
+                <input type="text" id="end-uf" class="form-control form-control-sm" maxlength="2" placeholder="SP" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">CEP</label>
+                <input type="text" id="end-cep" class="form-control form-control-sm" placeholder="00000-000" />
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+                <button type="button" class="btn btn-success btn-sm" onclick="adicionarEndereco()">
+                    <i class="bi bi-plus-lg me-1"></i>Adicionar Endereço
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Tab: Observações ──────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-obs">
+        <label class="form-label">Observações do funcionário</label>
+        <textarea id="obs-texto" class="form-control" rows="6"
+                  placeholder="Informações adicionais, notas, instruções especiais...">@(Model.Observacao?.Observacao)</textarea>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <span id="obs-msg" class="text-success small" style="display:none">
+                <i class="bi bi-check-circle me-1"></i>Observação salva!
+            </span>
+            <button type="button" class="btn btn-primary btn-sm ms-auto" onclick="salvarObservacao()">
+                <i class="bi bi-save me-1"></i>Salvar Observação
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Tab: Assinatura ───────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-assinatura">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <h6 class="text-muted mb-2"><i class="bi bi-image me-1"></i>Assinatura digital atual</h6>
+                @if (assinatura?.AssinaturaDigital != null)
+                {
+                    <div class="border rounded p-3 text-center mb-2">
+                        <img src="@Url.Action("Assinatura", new { id = idEntidade })" alt="Assinatura"
+                             style="max-width:100%; max-height:150px;" />
+                    </div>
+                    <form asp-action="RemoverAssinatura" asp-route-idEntidade="@idEntidade" method="post"
+                          onsubmit="return confirm('Remover a assinatura digital?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash me-1"></i>Remover Assinatura
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted"><i class="bi bi-image-alt me-1"></i>Nenhuma assinatura cadastrada.</p>
+                }
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted mb-2"><i class="bi bi-upload me-1"></i>Enviar nova assinatura</h6>
+                <form asp-action="EnviarAssinatura" asp-route-idEntidade="@idEntidade" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-2">
+                        <input type="file" name="arquivo" class="form-control form-control-sm" accept="image/*" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-upload me-1"></i>Enviar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const ID   = @idEntidade;
+const CSRF = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+async function ajax(url, dados) {
+    dados.append('__RequestVerificationToken', CSRF);
+    const r = await fetch(url, { method: 'POST', body: dados });
+    if (!r.ok) { alert('Erro: ' + await r.text()); return null; }
+    return r;
+}
+
+// ── Telefones ──────────────────────────────────────────────────────────────
+async function adicionarFone() {
+    const num = document.getElementById('fone-numero').value.trim();
+    if (!num) { alert('Informe o número do telefone.'); return; }
+    const fd = new FormData();
+    fd.append('idEntidade', ID);
+    fd.append('ddd',         document.getElementById('fone-ddd').value.trim());
+    fd.append('fone',        num);
+    fd.append('idFoneTipo',  document.getElementById('fone-tipo').value);
+    const r = await ajax('/Clientes/AdicionarFone', fd);
+    if (r) {
+        document.getElementById('grid-fones').innerHTML = await r.text();
+        document.getElementById('fone-ddd').value = '';
+        document.getElementById('fone-numero').value = '';
+        document.getElementById('fone-tipo').value = '';
+        atualizarBadge('tab-fones', 'grid-fones');
+    }
+}
+
+async function excluirFone(id) {
+    if (!confirm('Excluir este telefone?')) return;
+    const fd = new FormData();
+    fd.append('id', id);
+    fd.append('idEntidade', ID);
+    const r = await ajax('/Clientes/ExcluirFone', fd);
+    if (r) { document.getElementById('grid-fones').innerHTML = await r.text(); atualizarBadge('tab-fones', 'grid-fones'); }
+}
+
+// ── E-mails ────────────────────────────────────────────────────────────────
+async function adicionarEmail() {
+    const email = document.getElementById('email-addr').value.trim();
+    if (!email) { alert('Informe o endereço de e-mail.'); return; }
+    const fd = new FormData();
+    fd.append('idEntidade', ID);
+    fd.append('email',      email);
+    fd.append('principal',  document.getElementById('email-principal').checked);
+    const r = await ajax('/Clientes/AdicionarEmail', fd);
+    if (r) {
+        document.getElementById('grid-emails').innerHTML = await r.text();
+        document.getElementById('email-addr').value = '';
+        document.getElementById('email-principal').checked = false;
+        atualizarBadge('tab-emails', 'grid-emails');
+    }
+}
+
+async function excluirEmail(id) {
+    if (!confirm('Excluir este e-mail?')) return;
+    const fd = new FormData();
+    fd.append('id', id);
+    fd.append('idEntidade', ID);
+    const r = await ajax('/Clientes/ExcluirEmail', fd);
+    if (r) { document.getElementById('grid-emails').innerHTML = await r.text(); atualizarBadge('tab-emails', 'grid-emails'); }
+}
+
+async function marcarPrincipal(id) {
+    const fd = new FormData();
+    fd.append('id', id);
+    fd.append('idEntidade', ID);
+    const r = await ajax('/Clientes/MarcarEmailPrincipal', fd);
+    if (r) document.getElementById('grid-emails').innerHTML = await r.text();
+}
+
+// ── Endereços ──────────────────────────────────────────────────────────────
+async function adicionarEndereco() {
+    const fd = new FormData();
+    fd.append('idEntidade',    ID);
+    fd.append('idEnderecoTipo', document.getElementById('end-tipo').value);
+    fd.append('logradouro',    document.getElementById('end-logradouro').value.trim());
+    fd.append('numero',        document.getElementById('end-numero').value.trim());
+    fd.append('complemento',   document.getElementById('end-complemento').value.trim());
+    fd.append('bairro',        document.getElementById('end-bairro').value.trim());
+    fd.append('cidade',        document.getElementById('end-cidade').value.trim());
+    fd.append('uf',            document.getElementById('end-uf').value.trim());
+    fd.append('cep',           document.getElementById('end-cep').value.trim());
+    const r = await ajax('/Clientes/AdicionarEndereco', fd);
+    if (r) {
+        document.getElementById('grid-enderecos').innerHTML = await r.text();
+        ['end-tipo','end-logradouro','end-numero','end-complemento',
+         'end-bairro','end-cidade','end-uf','end-cep']
+            .forEach(id => document.getElementById(id).value = '');
+        atualizarBadge('tab-enderecos', 'grid-enderecos');
+    }
+}
+
+async function excluirEndereco(id) {
+    if (!confirm('Excluir este endereço?')) return;
+    const fd = new FormData();
+    fd.append('id', id);
+    fd.append('idEntidade', ID);
+    const r = await ajax('/Clientes/ExcluirEndereco', fd);
+    if (r) { document.getElementById('grid-enderecos').innerHTML = await r.text(); atualizarBadge('tab-enderecos', 'grid-enderecos'); }
+}
+
+// ── Observações ────────────────────────────────────────────────────────────
+async function salvarObservacao() {
+    const fd = new FormData();
+    fd.append('idEntidade', ID);
+    fd.append('observacao', document.getElementById('obs-texto').value);
+    const r = await ajax('/Clientes/SalvarObservacao', fd);
+    if (r) {
+        const msg = document.getElementById('obs-msg');
+        msg.style.display = 'inline';
+        setTimeout(() => msg.style.display = 'none', 3000);
+    }
+}
+
+// ── Helper: atualiza badge de contagem na aba ─────────────────────────────
+function atualizarBadge(tabId, gridId) {
+    const linhas = document.querySelectorAll(`#${gridId} tbody tr`).length;
+    const tab    = document.querySelector(`[data-bs-target="#${tabId}"]`);
+    let badge    = tab.querySelector('.badge');
+    if (linhas > 0) {
+        if (!badge) { badge = document.createElement('span'); badge.className = 'badge bg-primary ms-1'; tab.appendChild(badge); }
+        badge.textContent = linhas;
+    } else if (badge) {
+        badge.remove();
+    }
+}
+</script>
+}
+
+@Html.AntiForgeryToken()

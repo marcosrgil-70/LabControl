@@ -15,6 +15,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<EntidadePJ> EntidadesPJ => Set<EntidadePJ>();
     public DbSet<EntidadeFuncionario> EntidadesFuncionarios => Set<EntidadeFuncionario>();
     public DbSet<TipoRegProfissional> TiposRegProfissional => Set<TipoRegProfissional>();
+    public DbSet<CargoFuncionario> CargosFuncionarios => Set<CargoFuncionario>();
+    public DbSet<EntidadeFuncAssinatura> EntidadesFuncAssinaturas => Set<EntidadeFuncAssinatura>();
     public DbSet<EntidadeEndereco> EntidadesEnderecos => Set<EntidadeEndereco>();
     public DbSet<EntidadeFone> EntidadesFones => Set<EntidadeFone>();
     public DbSet<EntidadeEmail> EntidadesEmails => Set<EntidadeEmail>();
@@ -90,6 +92,11 @@ public class ApplicationDbContext : DbContext
             .HasOne(e => e.Entidade)
             .WithOne(e => e.Funcionario)
             .HasForeignKey<EntidadeFuncionario>(e => e.Id);
+
+        modelBuilder.Entity<EntidadeFuncAssinatura>()
+            .HasOne(a => a.Funcionario)
+            .WithOne(f => f.Assinatura)
+            .HasForeignKey<EntidadeFuncAssinatura>(a => a.IdEntidadeFunc);
 
         // Saldo: chave 1-1 com HistAmostra
         modelBuilder.Entity<HistAmostraSaldo>()

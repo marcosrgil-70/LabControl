@@ -1,0 +1,123 @@
+@model LabControl.Models.Entidades.Entidade
+@using LabControl.Models.Entidades
+@{
+    ViewData["Title"] = "Novo Funcionário";
+    var tiposReg = ViewBag.TiposRegProfissional as List<TipoRegProfissional> ?? new();
+    var cargos   = ViewBag.CargosFuncionarios as List<CargoFuncionario> ?? new();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-person-plus me-2 text-primary"></i>Novo Funcionário</h5>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Voltar
+    </a>
+</div>
+
+<form asp-action="Criar" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header fw-semibold py-2">
+                    <i class="bi bi-person me-1"></i>Dados Pessoais
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nome <span class="text-danger">*</span></label>
+                            <input asp-for="Nome" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Sobrenome</label>
+                            <input name="sobrenome" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">CPF</label>
+                            <input name="cpf" class="form-control form-control-sm" placeholder="000.000.000-00" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">RG</label>
+                            <input name="rg" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Data de Nascimento</label>
+                            <input name="dataNascimento" type="date" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Sexo</label>
+                            <select name="sexo" class="form-select form-select-sm">
+                                <option value="">-</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Feminino</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dados Funcionais -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header fw-semibold py-2">
+                    <i class="bi bi-briefcase me-1"></i>Dados Funcionais
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Cargo</label>
+                            <select name="idCargoFuncionario" class="form-select form-select-sm">
+                                <option value="">— Selecione —</option>
+                                @foreach (var c in cargos)
+                                { <option value="@c.Id">@c.Descricao</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo de Registro Profissional</label>
+                            <select name="idTipoRegProfissional" class="form-select form-select-sm">
+                                <option value="">— Selecione —</option>
+                                @foreach (var t in tiposReg)
+                                { <option value="@t.Id">@t.Descricao</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Nº Registro Profissional</label>
+                            <input name="nrRegistroProfissional" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contato -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header fw-semibold py-2">
+                    <i class="bi bi-telephone me-1"></i>Contato
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <label class="form-label">DDD</label>
+                            <input name="ddd" class="form-control form-control-sm" maxlength="3" placeholder="11" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Telefone</label>
+                            <input name="fone" class="form-control form-control-sm" placeholder="99999-9999" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 d-flex justify-content-end gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i>Salvar Funcionário
+            </button>
+        </div>
+    </div>
+</form>

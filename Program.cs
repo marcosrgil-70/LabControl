@@ -62,6 +62,39 @@ using (var scope = app.Services.CreateScope())
             OBSERVACAO   TEXT NULL,
             FOREIGN KEY (ID_ENTIDADES) REFERENCES ENTIDADES(ID_ENTIDADES) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Tabelas de apoio ao cadastro de Funcionários
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS CARGO_FUNCIONARIOS (
+            ID_CARGO_FUNCIONARIOS INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            DESCRICAO VARCHAR(50) NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        INSERT IGNORE INTO CARGO_FUNCIONARIOS (ID_CARGO_FUNCIONARIOS, DESCRICAO) VALUES
+        (1, 'Farmacêutica'), (2, 'Diretora Técnica'), (3, 'Diretor Geral'),
+        (4, 'Diretora Científica'), (5, 'Estagiário'), (6, 'Comercial'),
+        (7, 'Financeiro(a)'), (8, 'Técnico(a)'), (9, 'Analista de Laboratório')");
+
+    // Adiciona coluna ID_CARGO_FUNCIONARIOS em ENTIDADES_FUNCIONARIOS, caso não exista
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync(
+            "ALTER TABLE ENTIDADES_FUNCIONARIOS ADD COLUMN ID_CARGO_FUNCIONARIOS INT NULL, " +
+            "ADD FOREIGN KEY (ID_CARGO_FUNCIONARIOS) REFERENCES CARGO_FUNCIONARIOS(ID_CARGO_FUNCIONARIOS)");
+    }
+    catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060"))
+    {
+        // Coluna já existe — ok
+    }
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS ENTIDADES_FUNC_ASSINATURAS (
+            ID_ENTIDADES_FUNC INT NOT NULL PRIMARY KEY,
+            ASSINATURA_DIGITAL LONGBLOB NULL,
+            MD5_ASSINATURA VARCHAR(32) NULL,
+            FOREIGN KEY (ID_ENTIDADES_FUNC) REFERENCES ENTIDADES_FUNCIONARIOS(ID_ENTIDADES) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 }
 
 app.Run();

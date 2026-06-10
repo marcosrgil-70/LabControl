@@ -128,10 +128,47 @@ public class EntidadeFuncionario
     [StringLength(30)]
     public string? NrRegistroProfissional { get; set; }
 
+    [Column("ID_CARGO_FUNCIONARIOS")]
+    public int? IdCargoFuncionario { get; set; }
+
     public Entidade Entidade { get; set; } = null!;
 
     [ForeignKey(nameof(IdTipoRegProfissional))]
     public TipoRegProfissional? TipoRegProfissional { get; set; }
+
+    [ForeignKey(nameof(IdCargoFuncionario))]
+    public CargoFuncionario? CargoFuncionario { get; set; }
+
+    public EntidadeFuncAssinatura? Assinatura { get; set; }
+}
+
+[Table("CARGO_FUNCIONARIOS")]
+public class CargoFuncionario
+{
+    [Key]
+    [Column("ID_CARGO_FUNCIONARIOS")]
+    public int Id { get; set; }
+
+    [Column("DESCRICAO")]
+    [StringLength(50)]
+    public string Descricao { get; set; } = string.Empty;
+}
+
+[Table("ENTIDADES_FUNC_ASSINATURAS")]
+public class EntidadeFuncAssinatura
+{
+    [Key]
+    [Column("ID_ENTIDADES_FUNC")]
+    public int IdEntidadeFunc { get; set; }
+
+    [Column("ASSINATURA_DIGITAL")]
+    public byte[]? AssinaturaDigital { get; set; }
+
+    [Column("MD5_ASSINATURA")]
+    [StringLength(32)]
+    public string? Md5Assinatura { get; set; }
+
+    public EntidadeFuncionario Funcionario { get; set; } = null!;
 }
 
 [Table("TIPOS_REG_PROFISSIONAL")]
