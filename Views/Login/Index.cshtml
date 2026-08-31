@@ -1,6 +1,9 @@
+@using LabControl.Models
 @{
     ViewData["Title"] = "Login";
-    Layout = null; // Tela de login sem menu lateral
+    Layout = null;
+    var empresas     = ViewBag.Empresas     as List<Empresa> ?? [];
+    var multiEmpresa = (bool)(ViewBag.MultiEmpresa ?? false);
 }
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -19,7 +22,7 @@
             justify-content: center;
         }
         .login-card {
-            width: 380px;
+            width: 400px;
             border: none;
             border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.4);
@@ -34,6 +37,13 @@
         .login-header i { font-size: 2.5rem; opacity: 0.9; }
         .login-header h4 { margin: 0.5rem 0 0; font-weight: 700; letter-spacing: 0.05em; }
         .login-header small { opacity: 0.65; }
+        .empresa-badge {
+            background: rgba(255,255,255,0.12);
+            border-radius: 6px;
+            padding: 0.25rem 0.75rem;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
@@ -42,11 +52,18 @@
             <i class="bi bi-flask"></i>
             <h4>LabControl</h4>
             <small>Sistema de Gestão Laboratorial</small>
+            @if (!multiEmpresa && empresas.Count == 1)
+            {
+                <div class="empresa-badge">
+                    <i class="bi bi-building me-1"></i>@(empresas[0].Entidade?.Nome ?? empresas[0].Codigo)
+                </div>
+            }
         </div>
+
         <div class="card-body p-4">
             @if (ViewBag.Erro != null)
             {
-                <div class="alert alert-danger alert-sm py-2 small">
+                <div class="alert alert-danger py-2 small">
                     <i class="bi bi-exclamation-triangle me-1"></i>@ViewBag.Erro
                 </div>
             }
@@ -54,14 +71,37 @@
             <form asp-action="Index" asp-controller="Login" method="post">
                 @Html.AntiForgeryToken()
 
+                @if (multiEmpresa)
+                {
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Empresa</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-building text-muted"></i>
+                            </span>
+                            <select name="idEmpresa" class="form-select border-start-0" required>
+                                <option value="">— Selecione a empresa —</option>
+                                @foreach (var emp in empresas)
+                                {
+                                    <option value="@emp.Id">@(emp.Entidade?.Nome ?? emp.Codigo)</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                }
+                else if (empresas.Count == 1)
+                {
+                    <input type="hidden" name="idEmpresa" value="@empresas[0].Id" />
+                }
+
                 <div class="mb-3">
                     <label class="form-label fw-semibold small">Usuário</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0">
                             <i class="bi bi-person text-muted"></i>
                         </span>
-                        <input name="login" type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Nome de usuário" autofocus required />
+                        <input name="login" type="text" class="form-control border-start-0 ps-0 text-uppercase"
+                               placeholder="Código de acesso" autofocus required autocomplete="username" />
                     </div>
                 </div>
 
@@ -72,7 +112,7 @@
                             <i class="bi bi-lock text-muted"></i>
                         </span>
                         <input name="senha" type="password" class="form-control border-start-0 ps-0"
-                               placeholder="Senha" required />
+                               placeholder="Senha" required autocomplete="current-password" />
                     </div>
                 </div>
 
@@ -81,11 +121,20 @@
                 </button>
             </form>
         </div>
+
         <div class="card-footer text-center text-muted small py-2 bg-light rounded-bottom">
             LabControl &copy; @DateTime.Now.Year
         </div>
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Força maiúsculo no campo de usuário enquanto digita
+        document.querySelector('[name=login]').addEventListener('input', function () {
+            const pos = this.selectionStart;
+            this.value = this.value.toUpperCase();
+            this.setSelectionRange(pos, pos);
+        });
+    </script>
 </body>
 </html>

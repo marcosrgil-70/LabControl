@@ -96,6 +96,23 @@ using (var scope = app.Services.CreateScope())
             FOREIGN KEY (ID_ENTIDADES_FUNC) REFERENCES ENTIDADES_FUNCIONARIOS(ID_ENTIDADES) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
+    // ── Empresa padrão para instalações sem migração ──────────────────────────
+    var semEmpresas = await db.Database.ExecuteSqlRawAsync(@"
+        INSERT IGNORE INTO ENTIDADES (ID_ENTIDADES, CATEGORIA, ATIVO)
+        SELECT 1, 'J', 1 FROM DUAL
+        WHERE NOT EXISTS (SELECT 1 FROM EMPRESAS LIMIT 1)");
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        INSERT IGNORE INTO ENTIDADES_PJ (ID_ENTIDADES, NOME_FANTASIA)
+        SELECT 1, 'Minha Empresa'
+        WHERE EXISTS (SELECT 1 FROM ENTIDADES WHERE ID_ENTIDADES = 1)
+          AND NOT EXISTS (SELECT 1 FROM ENTIDADES_PJ WHERE ID_ENTIDADES = 1)");
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        INSERT IGNORE INTO EMPRESAS (ID_EMPRESAS, COD_EMPRESAS, ID_ENTIDADES)
+        SELECT 1, '001', 1
+        WHERE NOT EXISTS (SELECT 1 FROM EMPRESAS LIMIT 1)");
+
     // ── Sistema de Perfis e Permissões ────────────────────────────────────────
 
     // Adiciona coluna USULOG (código/login do usuário) em USUARIO

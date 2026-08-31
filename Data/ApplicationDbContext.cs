@@ -74,6 +74,12 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<AcaoUsuario>()
             .HasKey(a => new { a.IdUsuario, a.Form });
 
+        modelBuilder.Entity<Empresa>()
+            .HasOne(e => e.Entidade)
+            .WithMany()
+            .HasForeignKey(e => e.IdEntidade)
+            .OnDelete(DeleteBehavior.Restrict);
+
         modelBuilder.Entity<PerfilPermissao>()
             .HasKey(pp => new { pp.IdPerfil, pp.IdPermissao });
 

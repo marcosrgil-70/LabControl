@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using LabControl.Models.Entidades;
 
 namespace LabControl.Models;
 
@@ -145,4 +146,7 @@ public class Empresa
 
     [Column("ID_ENTIDADES")]
     public int IdEntidade { get; set; }
+
+    [ForeignKey(nameof(IdEntidade))]
+    public Entidade? Entidade { get; set; }
 }
