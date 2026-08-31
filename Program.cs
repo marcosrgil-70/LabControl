@@ -95,6 +95,79 @@ using (var scope = app.Services.CreateScope())
             MD5_ASSINATURA VARCHAR(32) NULL,
             FOREIGN KEY (ID_ENTIDADES_FUNC) REFERENCES ENTIDADES_FUNCIONARIOS(ID_ENTIDADES) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // ── Sistema de Perfis e Permissões ────────────────────────────────────────
+
+    // Adiciona coluna USULOG (código/login do usuário) em USUARIO
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync(
+            "ALTER TABLE USUARIO ADD COLUMN USULOG VARCHAR(30) NULL AFTER USUCOD");
+        // Popula a partir do nome existente (compatibilidade com usuários migrados)
+        await db.Database.ExecuteSqlRawAsync(
+            "UPDATE USUARIO SET USULOG = USUNOM WHERE USULOG IS NULL OR USULOG = ''");
+    }
+    catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060"))
+    {
+        await db.Database.ExecuteSqlRawAsync(
+            "UPDATE USUARIO SET USULOG = USUNOM WHERE USULOG IS NULL OR USULOG = ''");
+    }
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS PERMISSOES (
+            ID_PERMISSOES  INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            COD_PERMISSAO  VARCHAR(30) NOT NULL,
+            DSC_PERMISSAO  VARCHAR(100) NOT NULL,
+            UNIQUE KEY UK_COD_PERMISSAO (COD_PERMISSAO)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Seed das permissões (telas do sistema)
+    await db.Database.ExecuteSqlRawAsync(@"
+        INSERT IGNORE INTO PERMISSOES (COD_PERMISSAO, DSC_PERMISSAO) VALUES
+        ('Clientes',          'Clientes'),
+        ('Funcionarios',      'Funcionários'),
+        ('Produtos',          'Produtos'),
+        ('Parametros',        'Parâmetros de Análise'),
+        ('TabelasAuxiliares', 'Tabelas Auxiliares'),
+        ('HistAmostras',      'Amostras'),
+        ('Propostas',         'Propostas'),
+        ('Resultados',        'Resultados'),
+        ('Boletins',          'Boletins'),
+        ('Relatorios',        'Relatórios'),
+        ('Usuarios',          'Usuários'),
+        ('Perfis',            'Perfis'),
+        ('Permissoes',        'Permissões')");
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS PERFIS (
+            ID_PERFIS  INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            COD_PERFIL VARCHAR(20) NOT NULL,
+            DSC_PERFIL VARCHAR(80) NOT NULL,
+            UNIQUE KEY UK_COD_PERFIL (COD_PERFIL)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS PERFIS_PERMISSOES (
+            ID_PERFIS     INT NOT NULL,
+            ID_PERMISSOES INT NOT NULL,
+            INCLUIR       TINYINT(1) NOT NULL DEFAULT 0,
+            ALTERAR       TINYINT(1) NOT NULL DEFAULT 0,
+            CONSULTAR     TINYINT(1) NOT NULL DEFAULT 0,
+            EXCLUIR       TINYINT(1) NOT NULL DEFAULT 0,
+            IMPRIMIR      TINYINT(1) NOT NULL DEFAULT 0,
+            PRIMARY KEY (ID_PERFIS, ID_PERMISSOES),
+            FOREIGN KEY (ID_PERFIS)     REFERENCES PERFIS(ID_PERFIS)         ON DELETE CASCADE,
+            FOREIGN KEY (ID_PERMISSOES) REFERENCES PERMISSOES(ID_PERMISSOES) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS USUARIOS_PERFIS (
+            USUCOD    INT NOT NULL,
+            ID_PERFIS INT NOT NULL,
+            PRIMARY KEY (USUCOD, ID_PERFIS),
+            FOREIGN KEY (USUCOD)    REFERENCES USUARIO(USUCOD)    ON DELETE CASCADE,
+            FOREIGN KEY (ID_PERFIS) REFERENCES PERFIS(ID_PERFIS)  ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 }
 
 app.Run();

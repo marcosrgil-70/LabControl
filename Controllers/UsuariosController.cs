@@ -10,41 +10,34 @@ namespace LabControl.Controllers;
 public class UsuariosController : Controller
 {
     private readonly ApplicationDbContext _db;
-
-    private static readonly (string Form, string Nome)[] _formularios =
-    [
-        ("Clientes",          "Clientes"),
-        ("Produtos",          "Produtos"),
-        ("Parametros",        "Parâmetros de Análise"),
-        ("TabelasAuxiliares", "Tabelas Auxiliares"),
-        ("HistAmostras",      "Amostras"),
-        ("Propostas",         "Propostas"),
-        ("Resultados",        "Resultados"),
-        ("Usuarios",          "Usuários"),
-    ];
-
     public UsuariosController(ApplicationDbContext db) => _db = db;
 
     // ─── Index ───────────────────────────────────────────────────────────────
 
     public async Task<IActionResult> Index()
     {
-        var lista = await _db.Usuarios.OrderBy(u => u.Nome).ToListAsync();
+        var lista = await _db.Usuarios
+            .Include(u => u.UsuariosPerfis).ThenInclude(up => up.Perfil)
+            .OrderBy(u => u.Nome)
+            .ToListAsync();
         return View(lista);
     }
 
     // ─── Criar ───────────────────────────────────────────────────────────────
 
-    public IActionResult Criar() => View(NovoVM());
+    public async Task<IActionResult> Criar() => View(await NovoVM());
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar(UsuarioEditVM vm)
     {
+        if (string.IsNullOrWhiteSpace(vm.Codigo))
+            ModelState.AddModelError(nameof(vm.Codigo), "O código (login) é obrigatório.");
+        else if (await _db.Usuarios.AnyAsync(u => u.Codigo == vm.Codigo))
+            ModelState.AddModelError(nameof(vm.Codigo), "Já existe um usuário com este código.");
+
         if (string.IsNullOrWhiteSpace(vm.Nome))
             ModelState.AddModelError(nameof(vm.Nome), "O nome é obrigatório.");
-        else if (await _db.Usuarios.AnyAsync(u => u.Nome == vm.Nome))
-            ModelState.AddModelError(nameof(vm.Nome), "Já existe um usuário com este nome.");
 
         if (string.IsNullOrWhiteSpace(vm.NovaSenha))
             ModelState.AddModelError(nameof(vm.NovaSenha), "A senha é obrigatória para novos usuários.");
@@ -52,22 +45,22 @@ public class UsuariosController : Controller
             ModelState.AddModelError(nameof(vm.ConfirmarSenha), "As senhas não conferem.");
 
         if (!ModelState.IsValid)
-            return View(EnsureNomes(vm));
+            return View(await RecarregarPerfis(vm));
 
         var usuario = new Usuario
         {
-            Nome     = vm.Nome,
-            IsAdmin  = vm.IsAdmin,
-            Inativo  = vm.Inativo,
+            Codigo    = vm.Codigo.Trim().ToUpper(),
+            Nome      = vm.Nome.Trim(),
+            IsAdmin   = vm.IsAdmin,
+            Inativo   = vm.Inativo,
             SenhaHash = HashSha256(vm.NovaSenha!)
         };
         _db.Usuarios.Add(usuario);
         await _db.SaveChangesAsync();
 
-        SalvarAcoes(vm, usuario.Id);
-        await _db.SaveChangesAsync();
+        await SalvarPerfis(vm, usuario.Id);
 
-        TempData["Sucesso"] = $"Usuário \"{usuario.Nome}\" cadastrado!";
+        TempData["Sucesso"] = $"Usuário \"{usuario.Codigo}\" cadastrado!";
         return RedirectToAction(nameof(Index));
     }
 
@@ -78,27 +71,26 @@ public class UsuariosController : Controller
         var usuario = await _db.Usuarios.FindAsync(id);
         if (usuario == null) return NotFound();
 
-        var salvas = await _db.AcoesUsuarios.Where(a => a.IdUsuario == id).ToListAsync();
+        var perfisDoUsuario = await _db.UsuariosPerfis
+            .Where(up => up.IdUsuario == id)
+            .Select(up => up.IdPerfil)
+            .ToListAsync();
+
+        var todosPerfis = await _db.Perfis.OrderBy(p => p.Descricao).ToListAsync();
 
         var vm = new UsuarioEditVM
         {
             Id      = usuario.Id,
+            Codigo  = usuario.Codigo,
             Nome    = usuario.Nome,
             IsAdmin = usuario.IsAdmin,
             Inativo = usuario.Inativo,
-            Acoes   = _formularios.Select(f =>
+            Perfis  = todosPerfis.Select(p => new PerfilSelecaoVM
             {
-                var s = salvas.FirstOrDefault(a => a.Form == f.Form);
-                return new AcaoVM
-                {
-                    Form      = f.Form,
-                    NomeForm  = f.Nome,
-                    Incluir   = s?.Incluir   ?? false,
-                    Alterar   = s?.Alterar   ?? false,
-                    Consultar = s?.Consultar ?? false,
-                    Excluir   = s?.Excluir   ?? false,
-                    Imprimir  = s?.Imprimir  ?? false,
-                };
+                IdPerfil    = p.Id,
+                Codigo      = p.Codigo,
+                Descricao   = p.Descricao,
+                Selecionado = perfisDoUsuario.Contains(p.Id)
             }).ToList()
         };
         return View(vm);
@@ -111,31 +103,34 @@ public class UsuariosController : Controller
         var usuario = await _db.Usuarios.FindAsync(id);
         if (usuario == null) return NotFound();
 
+        if (string.IsNullOrWhiteSpace(vm.Codigo))
+            ModelState.AddModelError(nameof(vm.Codigo), "O código (login) é obrigatório.");
+        else if (await _db.Usuarios.AnyAsync(u => u.Codigo == vm.Codigo && u.Id != id))
+            ModelState.AddModelError(nameof(vm.Codigo), "Já existe um usuário com este código.");
+
         if (string.IsNullOrWhiteSpace(vm.Nome))
             ModelState.AddModelError(nameof(vm.Nome), "O nome é obrigatório.");
-        else if (await _db.Usuarios.AnyAsync(u => u.Nome == vm.Nome && u.Id != id))
-            ModelState.AddModelError(nameof(vm.Nome), "Já existe um usuário com este nome.");
 
         if (!string.IsNullOrWhiteSpace(vm.NovaSenha) && vm.NovaSenha != vm.ConfirmarSenha)
             ModelState.AddModelError(nameof(vm.ConfirmarSenha), "As senhas não conferem.");
 
         if (!ModelState.IsValid)
-            return View(EnsureNomes(vm));
+            return View(await RecarregarPerfis(vm));
 
-        usuario.Nome    = vm.Nome;
+        usuario.Codigo  = vm.Codigo.Trim().ToUpper();
+        usuario.Nome    = vm.Nome.Trim();
         usuario.IsAdmin = vm.IsAdmin;
         usuario.Inativo = vm.Inativo;
 
         if (!string.IsNullOrWhiteSpace(vm.NovaSenha))
             usuario.SenhaHash = HashSha256(vm.NovaSenha);
 
-        var existentes = await _db.AcoesUsuarios.Where(a => a.IdUsuario == id).ToListAsync();
-        _db.AcoesUsuarios.RemoveRange(existentes);
+        var existentes = await _db.UsuariosPerfis.Where(up => up.IdUsuario == id).ToListAsync();
+        _db.UsuariosPerfis.RemoveRange(existentes);
 
-        SalvarAcoes(vm, id);
-        await _db.SaveChangesAsync();
+        await SalvarPerfis(vm, id);
 
-        TempData["Sucesso"] = $"Usuário \"{usuario.Nome}\" atualizado!";
+        TempData["Sucesso"] = $"Usuário \"{usuario.Codigo}\" atualizado!";
         return RedirectToAction(nameof(Index));
     }
 
@@ -150,43 +145,53 @@ public class UsuariosController : Controller
             usuario.Inativo = !usuario.Inativo;
             await _db.SaveChangesAsync();
             TempData["Sucesso"] = usuario.Inativo
-                ? $"Usuário \"{usuario.Nome}\" desativado."
-                : $"Usuário \"{usuario.Nome}\" ativado.";
+                ? $"Usuário \"{usuario.Codigo}\" desativado."
+                : $"Usuário \"{usuario.Codigo}\" ativado.";
         }
         return RedirectToAction(nameof(Index));
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
-    private void SalvarAcoes(UsuarioEditVM vm, int idUsuario)
+    private async Task SalvarPerfis(UsuarioEditVM vm, int idUsuario)
     {
-        if (vm.IsAdmin) return;
-        foreach (var a in vm.Acoes)
+        foreach (var p in vm.Perfis.Where(p => p.Selecionado))
         {
-            _db.AcoesUsuarios.Add(new AcaoUsuario
+            _db.UsuariosPerfis.Add(new UsuarioPerfil
             {
                 IdUsuario = idUsuario,
-                Form      = a.Form,
-                Incluir   = a.Incluir,
-                Alterar   = a.Alterar,
-                Consultar = a.Consultar,
-                Excluir   = a.Excluir,
-                Imprimir  = a.Imprimir,
+                IdPerfil  = p.IdPerfil
             });
         }
+        await _db.SaveChangesAsync();
     }
 
-    private UsuarioEditVM NovoVM() => new()
+    private async Task<UsuarioEditVM> NovoVM()
     {
-        Acoes = _formularios.Select(f => new AcaoVM { Form = f.Form, NomeForm = f.Nome }).ToList()
-    };
+        var perfis = await _db.Perfis.OrderBy(p => p.Descricao).ToListAsync();
+        return new UsuarioEditVM
+        {
+            Perfis = perfis.Select(p => new PerfilSelecaoVM
+            {
+                IdPerfil  = p.Id,
+                Codigo    = p.Codigo,
+                Descricao = p.Descricao
+            }).ToList()
+        };
+    }
 
-    private static UsuarioEditVM EnsureNomes(UsuarioEditVM vm)
+    private async Task<UsuarioEditVM> RecarregarPerfis(UsuarioEditVM vm)
     {
-        var mapa = _formularios.ToDictionary(f => f.Form, f => f.Nome);
-        foreach (var a in vm.Acoes)
-            if (mapa.TryGetValue(a.Form, out var nome))
-                a.NomeForm = nome;
+        var todosPerfis = await _db.Perfis.OrderBy(p => p.Descricao).ToListAsync();
+        var selecionados = vm.Perfis.Where(p => p.Selecionado).Select(p => p.IdPerfil).ToHashSet();
+
+        vm.Perfis = todosPerfis.Select(p => new PerfilSelecaoVM
+        {
+            IdPerfil    = p.Id,
+            Codigo      = p.Codigo,
+            Descricao   = p.Descricao,
+            Selecionado = selecionados.Contains(p.Id)
+        }).ToList();
         return vm;
     }
 

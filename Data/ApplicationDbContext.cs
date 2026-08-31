@@ -28,6 +28,10 @@ public class ApplicationDbContext : DbContext
     // Segurança
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<AcaoUsuario> AcoesUsuarios => Set<AcaoUsuario>();
+    public DbSet<Permissao> Permissoes => Set<Permissao>();
+    public DbSet<Perfil> Perfis => Set<Perfil>();
+    public DbSet<PerfilPermissao> PerfisPermissoes => Set<PerfilPermissao>();
+    public DbSet<UsuarioPerfil> UsuariosPerfis => Set<UsuarioPerfil>();
     public DbSet<Empresa> Empresas => Set<Empresa>();
 
     // Tabelas auxiliares do laboratório
@@ -67,9 +71,14 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Chave composta em AcaoUsuario
         modelBuilder.Entity<AcaoUsuario>()
             .HasKey(a => new { a.IdUsuario, a.Form });
+
+        modelBuilder.Entity<PerfilPermissao>()
+            .HasKey(pp => new { pp.IdPerfil, pp.IdPermissao });
+
+        modelBuilder.Entity<UsuarioPerfil>()
+            .HasKey(up => new { up.IdUsuario, up.IdPerfil });
 
         // Relacionamento 1-1 Entidade -> Observacao
         modelBuilder.Entity<EntidadeObservacao>()

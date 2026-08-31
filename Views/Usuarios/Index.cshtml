@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h5 class="mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>Usuários</h5>
-        <small class="text-muted">Gestão de usuários e permissões do sistema</small>
+        <small class="text-muted">Gestão de usuários e seus perfis de acesso</small>
     </div>
     <a asp-action="Criar" class="btn btn-primary btn-sm">
         <i class="bi bi-person-plus me-1"></i>Novo Usuário
@@ -18,32 +18,49 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Nome / Login</th>
-                    <th class="text-center">Tipo</th>
-                    <th class="text-center">Status</th>
-                    <th></th>
+                    <th style="width:15%">Código</th>
+                    <th>Nome</th>
+                    <th>Perfis</th>
+                    <th class="text-center" style="width:10%">Tipo</th>
+                    <th class="text-center" style="width:8%">Status</th>
+                    <th style="width:80px"></th>
                 </tr>
             </thead>
             <tbody>
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-4">
-                            <i class="bi bi-people fs-4 d-block mb-2"></i>
-                            Nenhum usuário cadastrado.
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-people fs-4 d-block mb-2"></i>Nenhum usuário cadastrado.
                         </td>
                     </tr>
                 }
                 @foreach (var u in Model)
                 {
                     <tr class="@(u.Inativo ? "table-secondary text-muted" : "")">
-                        <td class="fw-semibold align-middle">
-                            <i class="bi bi-person-circle me-2 text-secondary"></i>@u.Nome
+                        <td class="align-middle fw-semibold">@u.Codigo</td>
+                        <td class="align-middle">@u.Nome</td>
+                        <td class="align-middle">
+                            @if (u.IsAdmin)
+                            {
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Acesso Total</span>
+                            }
+                            else if (u.UsuariosPerfis.Any())
+                            {
+                                @foreach (var up in u.UsuariosPerfis)
+                                {
+                                    <span class="badge bg-secondary me-1">@up.Perfil.Descricao</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted small">Sem perfil</span>
+                            }
                         </td>
                         <td class="text-center align-middle">
                             @if (u.IsAdmin)
                             {
-                                <span class="badge bg-danger">Administrador</span>
+                                <span class="badge bg-danger">Admin</span>
                             }
                             else
                             {
@@ -67,7 +84,7 @@
                             </a>
                             <form asp-action="AlternarStatus" asp-route-id="@u.Id" method="post"
                                   style="display:inline"
-                                  onsubmit="return confirm('@(u.Inativo ? "Ativar" : "Desativar") o usuário @u.Nome?')">
+                                  onsubmit="return confirm('@(u.Inativo ? "Ativar" : "Desativar") o usuário @u.Codigo?')">
                                 @Html.AntiForgeryToken()
                                 <button type="submit"
                                         class="btn btn-sm @(u.Inativo ? "btn-outline-success" : "btn-outline-warning")"

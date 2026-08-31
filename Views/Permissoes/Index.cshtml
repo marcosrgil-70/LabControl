@@ -1,0 +1,125 @@
+@model IEnumerable<LabControl.Models.Permissao>
+@{
+    ViewData["Title"] = "Permissões";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-key-fill me-2 text-primary"></i>Permissões</h5>
+        <small class="text-muted">Cadastro de permissões de acesso às telas do sistema</small>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="novaPermissao()">
+        <i class="bi bi-plus-lg me-1"></i>Nova Permissão
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0" id="tabela-permissoes">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:20%">Código</th>
+                    <th>Descrição</th>
+                    <th style="width:80px"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr id="row-@p.Id">
+                        <td class="align-middle fw-semibold text-monospace">@p.Codigo</td>
+                        <td class="align-middle">@p.Descricao</td>
+                        <td class="text-end align-middle">
+                            <button class="btn btn-outline-secondary btn-sm me-1"
+                                    onclick="editarPermissao(@p.Id, '@p.Codigo', '@Html.Raw(p.Descricao.Replace("'", "\\'"))')"
+                                    title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm"
+                                    onclick="excluirPermissao(@p.Id, '@Html.Raw(p.Descricao.Replace("'", "\\'"))')"
+                                    title="Excluir">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                <tr id="row-nova" style="display:none">
+                    <td><input id="inp-codigo" class="form-control form-control-sm" placeholder="CODIGO" maxlength="30" /></td>
+                    <td><input id="inp-descricao" class="form-control form-control-sm" placeholder="Descrição" maxlength="100" /></td>
+                    <td class="text-end">
+                        <button class="btn btn-success btn-sm me-1" onclick="confirmarSalvar()" title="Confirmar">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="cancelarEdicao()" title="Cancelar">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer text-muted small">@Model.Count() permissão(ões) cadastrada(s)</div>
+</div>
+
+@section Scripts {
+<script>
+    let idEditando = 0;
+    const rowNova = document.getElementById('row-nova');
+    const inpCod  = document.getElementById('inp-codigo');
+    const inpDsc  = document.getElementById('inp-descricao');
+
+    function novaPermissao() {
+        idEditando = 0;
+        inpCod.value = '';
+        inpDsc.value = '';
+        rowNova.style.display = '';
+        inpCod.focus();
+    }
+
+    function editarPermissao(id, cod, dsc) {
+        idEditando = id;
+        inpCod.value = cod;
+        inpDsc.value = dsc;
+        rowNova.style.display = '';
+        inpCod.focus();
+    }
+
+    function cancelarEdicao() {
+        rowNova.style.display = 'none';
+        idEditando = 0;
+    }
+
+    async function confirmarSalvar() {
+        const codigo    = inpCod.value.trim();
+        const descricao = inpDsc.value.trim();
+        if (!codigo || !descricao) { alert('Preencha código e descrição.'); return; }
+
+        const fd = new FormData();
+        fd.append('id', idEditando);
+        fd.append('codigo', codigo);
+        fd.append('descricao', descricao);
+
+        const r = await fetch('/Permissoes/Salvar', { method: 'POST', body: fd });
+        if (r.ok) {
+            location.reload();
+        } else {
+            const msg = await r.text();
+            alert(msg || 'Erro ao salvar.');
+        }
+    }
+
+    async function excluirPermissao(id, dsc) {
+        if (!confirm(`Excluir a permissão "${dsc}"?`)) return;
+
+        const fd = new FormData();
+        fd.append('id', id);
+        const r = await fetch('/Permissoes/Excluir', { method: 'POST', body: fd });
+        if (r.ok) {
+            document.getElementById('row-' + id)?.remove();
+        } else {
+            const msg = await r.text();
+            alert(msg || 'Erro ao excluir.');
+        }
+    }
+</script>
+}

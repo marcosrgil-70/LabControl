@@ -1,0 +1,241 @@
+@{
+    ViewData["Title"] = "Perfis de Usuário";
+    var perfis     = (IEnumerable<LabControl.Models.Perfil>)ViewBag.Perfis;
+    var permissoes = (IEnumerable<LabControl.Models.Permissao>)ViewBag.Permissoes;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-shield-lock-fill me-2 text-primary"></i>Perfis de Usuário</h5>
+        <small class="text-muted">Defina perfis e configure as permissões de cada um</small>
+    </div>
+</div>
+
+<div class="row g-3">
+
+    <!-- ── Painel superior: lista de perfis ─────────────────────────────── -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-person-badge me-2"></i>Perfis Cadastrados</span>
+                <button class="btn btn-primary btn-sm" onclick="novoPerfil()">
+                    <i class="bi bi-plus-lg me-1"></i>Novo Perfil
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:20%">Código</th>
+                            <th>Descrição</th>
+                            <th style="width:120px"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-perfis">
+                        @foreach (var p in perfis)
+                        {
+                            <tr id="perfil-@p.Id" class="perfil-row"
+                                data-id="@p.Id" data-cod="@p.Codigo" data-dsc="@p.Descricao"
+                                style="cursor:pointer" onclick="selecionarPerfil(this)">
+                                <td class="align-middle fw-semibold">@p.Codigo</td>
+                                <td class="align-middle">@p.Descricao</td>
+                                <td class="text-end align-middle" onclick="event.stopPropagation()">
+                                    <button class="btn btn-outline-secondary btn-sm me-1"
+                                            data-id="@p.Id" data-cod="@p.Codigo" data-dsc="@p.Descricao"
+                                            onclick="editarPerfil(this)" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm"
+                                            data-id="@p.Id" data-dsc="@p.Descricao"
+                                            onclick="excluirPerfil(this)" title="Excluir">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                        <tr id="row-novo-perfil" style="display:none">
+                            <td><input id="inp-cod-perfil" class="form-control form-control-sm" placeholder="CODIGO" maxlength="20" /></td>
+                            <td><input id="inp-dsc-perfil" class="form-control form-control-sm" placeholder="Descrição" maxlength="80" /></td>
+                            <td class="text-end">
+                                <button class="btn btn-success btn-sm me-1" onclick="confirmarSalvarPerfil()" title="Confirmar">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="cancelarPerfil()" title="Cancelar">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Painel inferior: permissões do perfil selecionado ────────────── -->
+    <div class="col-12" id="painel-permissoes" style="display:none">
+        <div class="card border-primary">
+            <div class="card-header fw-semibold bg-primary text-white d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-shield-check me-2"></i>Permissões do Perfil: <span id="nome-perfil-sel"></span></span>
+                <button class="btn btn-light btn-sm" id="btn-salvar-perm" onclick="salvarPermissoes()">
+                    <i class="bi bi-save me-1"></i>Salvar Permissões
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:35%">Permissão</th>
+                            <th class="text-center">Incluir</th>
+                            <th class="text-center">Alterar</th>
+                            <th class="text-center">Consultar</th>
+                            <th class="text-center">Excluir</th>
+                            <th class="text-center">Imprimir</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-permissoes">
+                        <tr><td colspan="6" class="text-center text-muted py-3">Selecione um perfil acima.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" onclick="marcarTodos(true)">
+                    <i class="bi bi-check-all me-1"></i>Marcar Todos
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="marcarTodos(false)">
+                    <i class="bi bi-x me-1"></i>Desmarcar Todos
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+    let idPerfilSel  = 0;
+    let idPerfilEdit = 0;
+    const rowNovoPerfil = document.getElementById('row-novo-perfil');
+    const inpCod = document.getElementById('inp-cod-perfil');
+    const inpDsc = document.getElementById('inp-dsc-perfil');
+
+    // ── Perfis ──────────────────────────────────────────────────────────────
+
+    function novoPerfil() {
+        idPerfilEdit = 0;
+        inpCod.value = '';
+        inpDsc.value = '';
+        rowNovoPerfil.style.display = '';
+        inpCod.focus();
+    }
+
+    function editarPerfil(btn) {
+        idPerfilEdit = parseInt(btn.dataset.id);
+        inpCod.value = btn.dataset.cod;
+        inpDsc.value = btn.dataset.dsc;
+        rowNovoPerfil.style.display = '';
+        inpCod.focus();
+    }
+
+    function cancelarPerfil() {
+        rowNovoPerfil.style.display = 'none';
+        idPerfilEdit = 0;
+    }
+
+    async function confirmarSalvarPerfil() {
+        const codigo    = inpCod.value.trim();
+        const descricao = inpDsc.value.trim();
+        if (!codigo || !descricao) { alert('Preencha código e descrição.'); return; }
+
+        const fd = new FormData();
+        fd.append('id', idPerfilEdit);
+        fd.append('codigo', codigo);
+        fd.append('descricao', descricao);
+
+        const r = await fetch('/Perfis/SalvarPerfil', { method: 'POST', body: fd });
+        if (r.ok) {
+            location.reload();
+        } else {
+            alert(await r.text() || 'Erro ao salvar.');
+        }
+    }
+
+    async function excluirPerfil(btn) {
+        const id  = parseInt(btn.dataset.id);
+        const dsc = btn.dataset.dsc;
+        if (!confirm(`Excluir o perfil "${dsc}"?`)) return;
+
+        const fd = new FormData();
+        fd.append('id', id);
+        const r = await fetch('/Perfis/ExcluirPerfil', { method: 'POST', body: fd });
+        if (r.ok) {
+            document.getElementById('perfil-' + id)?.remove();
+            if (idPerfilSel === id) {
+                idPerfilSel = 0;
+                document.getElementById('painel-permissoes').style.display = 'none';
+            }
+        } else {
+            alert(await r.text() || 'Erro ao excluir.');
+        }
+    }
+
+    // ── Seleção de perfil e permissões ──────────────────────────────────────
+
+    async function selecionarPerfil(row) {
+        idPerfilSel = parseInt(row.dataset.id);
+        const nome  = row.dataset.dsc;
+
+        document.querySelectorAll('.perfil-row').forEach(r => r.classList.remove('table-primary'));
+        row.classList.add('table-primary');
+        document.getElementById('nome-perfil-sel').textContent = nome;
+        document.getElementById('painel-permissoes').style.display = '';
+
+        const tbody = document.getElementById('tbody-permissoes');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-2">Carregando...</td></tr>';
+
+        const r    = await fetch(`/Perfis/PermissoesDoPerfil?idPerfil=${idPerfilSel}`);
+        const data = await r.json();
+
+        const cols = ['incluir','alterar','consultar','excluir','imprimir'];
+        tbody.innerHTML = data.map(p => `
+            <tr data-id="${p.idPermissao}">
+                <td class="align-middle">${p.descricao}</td>
+                ${cols.map(c => `
+                <td class="text-center align-middle">
+                    <input type="checkbox" class="form-check-input" data-campo="${c}" ${p[c] ? 'checked' : ''} />
+                </td>`).join('')}
+            </tr>`).join('');
+    }
+
+    function marcarTodos(valor) {
+        document.querySelectorAll('#tbody-permissoes input[type=checkbox]').forEach(cb => cb.checked = valor);
+    }
+
+    async function salvarPermissoes() {
+        if (!idPerfilSel) return;
+
+        const rows = document.querySelectorAll('#tbody-permissoes tr[data-id]');
+        const payload = Array.from(rows).map(row => ({
+            idPermissao: parseInt(row.dataset.id),
+            incluir:   row.querySelector('[data-campo=incluir]').checked,
+            alterar:   row.querySelector('[data-campo=alterar]').checked,
+            consultar: row.querySelector('[data-campo=consultar]').checked,
+            excluir:   row.querySelector('[data-campo=excluir]').checked,
+            imprimir:  row.querySelector('[data-campo=imprimir]').checked,
+        }));
+
+        const r = await fetch(`/Perfis/SalvarPermissoesPerfil?idPerfil=${idPerfilSel}`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload)
+        });
+
+        const btn = document.getElementById('btn-salvar-perm');
+        if (r.ok) {
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Salvo!';
+            setTimeout(() => btn.innerHTML = '<i class="bi bi-save me-1"></i>Salvar Permissões', 1500);
+        } else {
+            alert('Erro ao salvar permissões.');
+        }
+    }
+</script>
+}

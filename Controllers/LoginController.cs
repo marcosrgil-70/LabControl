@@ -26,7 +26,7 @@ public class LoginController : Controller
         var senhaHash = HashSha256(senha);
 
         var usuario = await _db.Usuarios
-            .FirstOrDefaultAsync(u => u.Nome == login && u.SenhaHash == senhaHash && !u.Inativo);
+            .FirstOrDefaultAsync(u => u.Codigo == login.ToUpper() && u.SenhaHash == senhaHash && !u.Inativo);
 
         if (usuario == null)
         {
