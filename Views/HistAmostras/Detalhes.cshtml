@@ -92,10 +92,24 @@
                     <dd class="col-7">@(Model.NrLote ?? "-")</dd>
 
                     <dt class="col-5 text-muted">Fabricação</dt>
-                    <dd class="col-7">@(Model.DtFabricacao?.ToString("dd/MM/yyyy") ?? "-")</dd>
+                    <dd class="col-7">
+                        @{
+                            var fab = (Model.FabricacaoDia.HasValue || Model.FabricacaoMes.HasValue || Model.FabricacaoAno.HasValue)
+                                ? $"{Model.FabricacaoDia?.ToString() ?? "?"}/{Model.FabricacaoMes?.ToString() ?? "?"}/{Model.FabricacaoAno?.ToString() ?? "?"}"
+                                : "-";
+                        }
+                        @fab
+                    </dd>
 
                     <dt class="col-5 text-muted">Validade</dt>
-                    <dd class="col-7">@(Model.DtValidade?.ToString("dd/MM/yyyy") ?? "-")</dd>
+                    <dd class="col-7">
+                        @{
+                            var val = (Model.ValidadeDia.HasValue || Model.ValidadeMes.HasValue || Model.ValidadeAno.HasValue)
+                                ? $"{Model.ValidadeDia?.ToString() ?? "?"}/{Model.ValidadeMes?.ToString() ?? "?"}/{Model.ValidadeAno?.ToString() ?? "?"}"
+                                : "-";
+                        }
+                        @val
+                    </dd>
 
                     <dt class="col-5 text-muted">Espécie / Aspecto</dt>
                     <dd class="col-7">@(Model.EspecieAmostra ?? "-") / @(Model.AspectoAmostra ?? "-")</dd>

@@ -57,11 +57,23 @@ public class HistAmostra
     [StringLength(50)]
     public string? NrLote { get; set; }
 
-    [Column("DT_FABRICACAO")]
-    public DateTime? DtFabricacao { get; set; }
+    [Column("FABRICACAO_DIA")]
+    public int? FabricacaoDia { get; set; }
 
-    [Column("DT_VALIDADE")]
-    public DateTime? DtValidade { get; set; }
+    [Column("FABRICACAO_MES")]
+    public int? FabricacaoMes { get; set; }
+
+    [Column("FABRICACAO_ANO")]
+    public int? FabricacaoAno { get; set; }
+
+    [Column("VALIDADE_DIA")]
+    public int? ValidadeDia { get; set; }
+
+    [Column("VALIDADE_MES")]
+    public int? ValidadeMes { get; set; }
+
+    [Column("VALIDADE_ANO")]
+    public int? ValidadeAno { get; set; }
 
     [Column("NOTA_ROTULO")]
     [StringLength(100)]
@@ -110,12 +122,37 @@ public class HistAmostra
     [Column("ID_ENTIDADES_FUNC_DIG")]
     public int? IdFuncionarioDigitador { get; set; }
 
+    [Column("ID_ENTIDADES_FUNC_RESP")]
+    public int? IdFuncionarioResp { get; set; }
+
+    [Column("PEDIDO_VENDA")]
+    [StringLength(50)]
+    public string? PedidoVenda { get; set; }
+
+    [Column("DT_HR_COLETA")]
+    public DateTime? DtHrColeta { get; set; }
+
+    [Column("NOME_COLETOR")]
+    [StringLength(100)]
+    public string? NomeColetor { get; set; }
+
+    [Column("TIPO_DOCUMENTO")]
+    [StringLength(20)]
+    public string TipoDocumento { get; set; } = "BOLETIM";
+
+    [Column("REVISAO")]
+    public int? Revisao { get; set; }
+
+    [Column("OBSERVACAO")]
+    public string? Observacao { get; set; }
+
     [Column("ID_EMPRESAS")]
     public int IdEmpresa { get; set; }
 
+    // Código formatado: TT-SSSSS-AA/YY  ex: 01-00001-02/26
     [NotMapped]
     public string CodigoFormatado =>
-        $"{IdAmostraTipo}{CodAmostra:D3}{IdAnaliseTipo}{AnoAmostra}";
+        $"{IdAmostraTipo:D2}-{CodAmostra:D5}-{(IdAnaliseTipo ?? 0):D2}/{AnoAmostra % 100:D2}";
 
     // Navegação — ForeignKey aponta para a propriedade escalar correspondente
     [ForeignKey(nameof(IdAmostraTipo))]

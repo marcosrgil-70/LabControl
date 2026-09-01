@@ -2,7 +2,7 @@
 @using LabControl.Models.Entidades
 @using LabControl.Models.Laboratorio
 @{
-    ViewData["Title"] = "Nova Amostra";
+    ViewData["Title"] = $"Editar Amostra {Model.CodigoFormatado}";
     var clientes     = ViewBag.Clientes    as List<Entidade>             ?? [];
     var propostas    = ViewBag.Propostas   as List<Proposta>             ?? [];
     var produtos     = ViewBag.Produtos    as List<Produto>              ?? [];
@@ -20,12 +20,17 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h5 class="mb-0"><i class="bi bi-droplet-fill me-2 text-primary"></i>Registrar Nova Amostra</h5>
-        <small class="text-muted">Preenchimento do recebimento de amostra</small>
+        <h5 class="mb-0"><i class="bi bi-droplet-fill me-2 text-warning"></i>Editar Amostra</h5>
+        <small class="text-muted">Alteração dos dados de recebimento</small>
     </div>
-    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i>Voltar
-    </a>
+    <div class="d-flex gap-2">
+        <a asp-action="Detalhes" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-eye me-1"></i>Detalhes
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+    </div>
 </div>
 
 @if (!ViewData.ModelState.IsValid)
@@ -39,15 +44,19 @@
     </div>
 }
 
-<form asp-action="Criar" method="post">
+<form asp-action="Editar" asp-route-id="@Model.Id" method="post">
     @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="CodAmostra" />
+    <input type="hidden" asp-for="IdEmpresa" />
+    <input type="hidden" asp-for="IdFuncionarioDigitador" />
 
     <!-- Código da amostra (read-only) -->
     <div class="card mb-3">
         <div class="card-body py-2 d-flex align-items-center gap-3">
             <span class="fw-semibold text-muted small">Código da Amostra:</span>
-            <span id="lblCodAmostra" class="fs-5 fw-bold text-primary font-monospace">INCLUSÃO</span>
-            <span class="text-muted small ms-auto">O código será gerado automaticamente ao salvar.</span>
+            <span class="fs-5 fw-bold text-primary font-monospace">@Model.CodigoFormatado</span>
+            <span class="text-muted small ms-3">Revisão: @(Model.Revisao ?? 0)</span>
         </div>
     </div>
 
@@ -71,7 +80,6 @@
         <div class="tab-pane fade show active" id="tabGeral">
             <div class="row g-3">
 
-                <!-- Cliente / Proposta -->
                 <div class="col-md-5">
                     <label class="form-label">Cliente <span class="text-danger">*</span></label>
                     <select id="selCliente" name="IdEntidade" class="form-select form-select-sm" required>
@@ -97,7 +105,6 @@
                     <input asp-for="NomeContato" class="form-control form-control-sm" />
                 </div>
 
-                <!-- Data/Hora Entrega -->
                 <div class="col-md-2">
                     <label class="form-label">Data de Entrega <span class="text-danger">*</span></label>
                     <input asp-for="DtEntrega" type="date" class="form-control form-control-sm"
@@ -120,7 +127,6 @@
                     <input asp-for="TipoDocumento" class="form-control form-control-sm" />
                 </div>
 
-                <!-- Embalagem / Responsável / Status -->
                 <div class="col-md-3">
                     <label class="form-label">Tipo de Embalagem <span class="text-danger">*</span></label>
                     <select asp-for="IdEmbalagemTipo" class="form-select form-select-sm" required>
@@ -151,12 +157,11 @@
                         <option value="">— Selecione —</option>
                         @foreach (var s in statusLista)
                         {
-                            <option value="@s.Id" selected="@(Model.IdAmostraStatus == s.Id || (Model.IdAmostraStatus == null && s.Id == 1))">@s.Descricao</option>
+                            <option value="@s.Id">@s.Descricao</option>
                         }
                     </select>
                 </div>
 
-                <!-- Produto / Tipos -->
                 <div class="col-md-4">
                     <label class="form-label">Produto</label>
                     <select id="selProduto" name="IdProduto" class="form-select form-select-sm">
@@ -188,7 +193,6 @@
                     </select>
                 </div>
 
-                <!-- Campos do produto/amostra -->
                 <div class="col-md-2">
                     <label class="form-label">Nº Lote</label>
                     <input asp-for="NrLote" class="form-control form-control-sm" />
@@ -272,7 +276,6 @@
                     </div>
                 </div>
 
-                <!-- Verificação no recebimento -->
                 <div class="col-md-2">
                     <label class="form-label">Qtde Amostra Verificação</label>
                     <input asp-for="QtdeAmostraVerificacao" class="form-control form-control-sm" type="number" step="0.01" />
@@ -290,7 +293,6 @@
                     <input asp-for="NomeColetor" class="form-control form-control-sm" />
                 </div>
 
-                <!-- Documentos acompanhantes -->
                 <div class="col-12">
                     <label class="form-label d-block">Documentos Acompanhantes</label>
                     <div class="d-flex flex-wrap gap-4">
@@ -322,18 +324,17 @@
                 <div class="col-12">
                     <label class="form-label">Observação da Verificação</label>
                     <textarea asp-for="Observacao" class="form-control" rows="12"
-                              placeholder="Observações sobre a verificação da amostra no recebimento..."></textarea>
+                              placeholder="Observações sobre a verificação da amostra..."></textarea>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- Botões -->
     <div class="d-flex justify-content-end gap-2">
-        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
-        <button type="submit" class="btn btn-primary">
-            <i class="bi bi-save me-1"></i>Salvar Amostra
+        <a asp-action="Detalhes" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-warning">
+            <i class="bi bi-save me-1"></i>Salvar Alterações
         </button>
     </div>
 </form>
