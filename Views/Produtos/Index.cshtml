@@ -1,6 +1,7 @@
 @model IEnumerable<LabControl.Models.Laboratorio.Produto>
 @{
     ViewData["Title"] = "Produtos";
+    bool mostrarInativos = ViewBag.MostrarInativos ?? false;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -21,10 +22,17 @@
                        placeholder="Buscar por código ou descrição..." value="@ViewBag.Busca" />
             </div>
             <div class="col-auto">
+                <div class="form-check form-check-inline mb-0">
+                    <input class="form-check-input" type="checkbox" name="mostrarInativos" value="true"
+                           id="chkInativos" @(mostrarInativos ? "checked" : "") />
+                    <label class="form-check-label small" for="chkInativos">Mostrar inativos</label>
+                </div>
+            </div>
+            <div class="col-auto">
                 <button type="submit" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-search me-1"></i>Filtrar
                 </button>
-                @if (!string.IsNullOrEmpty(ViewBag.Busca as string))
+                @if (!string.IsNullOrEmpty(ViewBag.Busca as string) || mostrarInativos)
                 {
                     <a asp-action="Index" class="btn btn-link btn-sm text-muted">Limpar</a>
                 }
@@ -43,6 +51,7 @@
                     <th>Embalagem</th>
                     <th>Qtde/Embalagem</th>
                     <th>Unidade</th>
+                    <th class="text-center">Situação</th>
                     <th></th>
                 </tr>
             </thead>
@@ -50,7 +59,7 @@
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">
+                        <td colspan="7" class="text-center text-muted py-4">
                             <i class="bi bi-inbox fs-4 d-block mb-2"></i>
                             Nenhum produto cadastrado ainda.
                         </td>
@@ -58,7 +67,7 @@
                 }
                 @foreach (var item in Model)
                 {
-                    <tr>
+                    <tr class="@(item.Inativo ? "table-secondary" : "")">
                         <td><code>@item.Codigo</code></td>
                         <td class="fw-semibold">@item.Descricao</td>
                         <td>@(item.EmbalagemTipo?.Descricao ?? "-")</td>
@@ -69,6 +78,16 @@
                                 <span class="badge bg-light text-dark border">@item.Unidade.Sigla</span>
                             }
                             else { <span class="text-muted">-</span> }
+                        </td>
+                        <td class="text-center">
+                            @if (item.Inativo)
+                            {
+                                <span class="badge bg-danger">Inativo</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Ativo</span>
+                            }
                         </td>
                         <td class="text-end">
                             <a asp-action="Editar" asp-route-id="@item.Id"
@@ -91,6 +110,8 @@
     </div>
     @if (Model.Any())
     {
-        <div class="card-footer text-muted small">@Model.Count() produto(s)</div>
+        <div class="card-footer text-muted small">
+            @Model.Count() produto(s) @(mostrarInativos ? "" : "ativos")
+        </div>
     }
 </div>

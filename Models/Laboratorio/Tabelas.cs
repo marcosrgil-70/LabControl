@@ -118,6 +118,7 @@ public class Produto
     [Column("ID_UNIDADES")] public int? IdUnidade { get; set; }
     [Column("ID_EMBALAGENS_TIPOS")] public int? IdEmbalagemTipo { get; set; }
     [Column("QTDE_EMBALAGEM")] public decimal? QtdeEmbalagem { get; set; }
+    [Column("INATIVO")] public bool Inativo { get; set; } = false;
 
     [ForeignKey(nameof(IdUnidade))]
     public Unidade? Unidade { get; set; }
@@ -131,9 +132,15 @@ public class ParametroAnalise
 {
     [Key] [Column("ID_LAB_PARAMETROS_ANALISES")] public int Id { get; set; }
     [Column("DESCRICAO")] [StringLength(150)] public string Descricao { get; set; } = string.Empty;
+    [Column("DESC_REDUZIDA")] [StringLength(80)] public string? DescReduzida { get; set; }
     [Column("ID_ANALISES_TIPO")] public int? IdAnaliseTipo { get; set; }
+    [Column("ID_ANALISES_METODOS")] public int? IdAnaliseMetodo { get; set; }
     [Column("VR_UNITARIO", TypeName = "decimal(15,4)")] public decimal VrUnitario { get; set; }
+    [Column("AUDITADO")] public bool Auditado { get; set; } = false;
 
     [ForeignKey(nameof(IdAnaliseTipo))]
     public AnaliseTipo? AnaliseTipo { get; set; }
+
+    [ForeignKey(nameof(IdAnaliseMetodo))]
+    public AnaliseMetodo? AnaliseMetodo { get; set; }
 }

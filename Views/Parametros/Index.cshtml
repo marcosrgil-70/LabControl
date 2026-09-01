@@ -52,7 +52,10 @@
                 <tr>
                     <th>#</th>
                     <th>Descrição</th>
+                    <th>Desc. Reduzida</th>
                     <th>Tipo de Análise</th>
+                    <th>Método</th>
+                    <th class="text-center">Auditado</th>
                     <th class="text-end">Valor Unitário</th>
                     <th></th>
                 </tr>
@@ -61,7 +64,7 @@
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">
+                        <td colspan="8" class="text-center text-muted py-4">
                             <i class="bi bi-inbox fs-4 d-block mb-2"></i>
                             Nenhum parâmetro cadastrado ainda.
                         </td>
@@ -72,12 +75,24 @@
                     <tr>
                         <td class="text-muted">@item.Id</td>
                         <td class="fw-semibold">@item.Descricao</td>
+                        <td class="text-muted small">@(item.DescReduzida ?? "-")</td>
                         <td>
                             @if (item.AnaliseTipo != null)
                             {
                                 <span class="badge bg-info-subtle text-info border border-info-subtle">
                                     @item.AnaliseTipo.Descricao
                                 </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td class="small">@(item.AnaliseMetodo?.Descricao ?? "-")</td>
+                        <td class="text-center">
+                            @if (item.Auditado)
+                            {
+                                <i class="bi bi-patch-check-fill text-success" title="Auditado"></i>
                             }
                             else
                             {

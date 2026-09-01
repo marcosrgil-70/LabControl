@@ -10,18 +10,20 @@ public class ParametrosController : Controller
     private readonly ApplicationDbContext _db;
     public ParametrosController(ApplicationDbContext db) => _db = db;
 
-    public async Task<IActionResult> Index(string? busca, int? idAnaliseTipo)
+    public async Task<IActionResult> Index(string? busca, int? idAnaliseTipo, bool? soAtivos)
     {
         ViewBag.Busca = busca;
         ViewBag.IdAnaliseTipo = idAnaliseTipo;
+        ViewBag.SoAtivos = soAtivos ?? true;
         ViewBag.AnalisesTipos = await _db.AnalisesTipos.OrderBy(a => a.Descricao).ToListAsync();
 
         var query = _db.ParametrosAnalises
             .Include(p => p.AnaliseTipo)
+            .Include(p => p.AnaliseMetodo)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(busca))
-            query = query.Where(p => p.Descricao.Contains(busca));
+            query = query.Where(p => p.Descricao.Contains(busca) || (p.DescReduzida != null && p.DescReduzida.Contains(busca)));
 
         if (idAnaliseTipo.HasValue)
             query = query.Where(p => p.IdAnaliseTipo == idAnaliseTipo);
@@ -52,6 +54,7 @@ public class ParametrosController : Controller
     {
         var param = await _db.ParametrosAnalises
             .Include(p => p.AnaliseTipo)
+            .Include(p => p.AnaliseMetodo)
             .FirstOrDefaultAsync(p => p.Id == id);
         if (param == null) return NotFound();
         await CarregarFormulario();
@@ -66,8 +69,11 @@ public class ParametrosController : Controller
         if (param == null) return NotFound();
 
         param.Descricao = model.Descricao;
+        param.DescReduzida = model.DescReduzida;
         param.IdAnaliseTipo = model.IdAnaliseTipo;
+        param.IdAnaliseMetodo = model.IdAnaliseMetodo;
         param.VrUnitario = model.VrUnitario;
+        param.Auditado = model.Auditado;
 
         await _db.SaveChangesAsync();
         TempData["Sucesso"] = $"Parâmetro \"{param.Descricao}\" atualizado!";
@@ -102,5 +108,6 @@ public class ParametrosController : Controller
     private async Task CarregarFormulario()
     {
         ViewBag.AnalisesTipos = await _db.AnalisesTipos.OrderBy(a => a.Descricao).ToListAsync();
+        ViewBag.AnalisesMetodos = await _db.AnalisesMetodos.OrderBy(a => a.Descricao).ToListAsync();
     }
 }

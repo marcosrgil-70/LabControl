@@ -249,6 +249,27 @@ using (var scope = app.Services.CreateScope())
         catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060")) { }
     }
 
+    // ── Novos campos em PRODUTOS ─────────────────────────────────────────────
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync(
+            "ALTER TABLE PRODUTOS ADD COLUMN INATIVO TINYINT(1) NOT NULL DEFAULT 0");
+    }
+    catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060")) { }
+
+    // ── Novos campos em LAB_PARAMETROS_ANALISES ───────────────────────────────
+    var colunasParametros = new[]
+    {
+        "ALTER TABLE LAB_PARAMETROS_ANALISES ADD COLUMN DESC_REDUZIDA VARCHAR(80) NULL",
+        "ALTER TABLE LAB_PARAMETROS_ANALISES ADD COLUMN AUDITADO TINYINT(1) NOT NULL DEFAULT 0",
+        "ALTER TABLE LAB_PARAMETROS_ANALISES ADD COLUMN ID_ANALISES_METODOS INT NULL",
+    };
+    foreach (var sql in colunasParametros)
+    {
+        try { await db.Database.ExecuteSqlRawAsync(sql); }
+        catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060")) { }
+    }
+
     // ── Nomenclatura (DESCRICAO_REGISTRO) em TIPOS_REG_PROFISSIONAL ──────────
     try
     {

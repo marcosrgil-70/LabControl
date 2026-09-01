@@ -10,13 +10,17 @@ public class ProdutosController : Controller
     private readonly ApplicationDbContext _db;
     public ProdutosController(ApplicationDbContext db) => _db = db;
 
-    public async Task<IActionResult> Index(string? busca)
+    public async Task<IActionResult> Index(string? busca, bool mostrarInativos = false)
     {
         ViewBag.Busca = busca;
+        ViewBag.MostrarInativos = mostrarInativos;
         var query = _db.Produtos
             .Include(p => p.Unidade)
             .Include(p => p.EmbalagemTipo)
             .AsQueryable();
+
+        if (!mostrarInativos)
+            query = query.Where(p => !p.Inativo);
 
         if (!string.IsNullOrWhiteSpace(busca))
             query = query.Where(p => p.Descricao.Contains(busca) || p.Codigo.Contains(busca));
@@ -79,6 +83,7 @@ public class ProdutosController : Controller
         produto.IdUnidade = model.IdUnidade;
         produto.IdEmbalagemTipo = model.IdEmbalagemTipo;
         produto.QtdeEmbalagem = model.QtdeEmbalagem;
+        produto.Inativo = model.Inativo;
 
         await _db.SaveChangesAsync();
         TempData["Sucesso"] = $"Produto \"{produto.Descricao}\" atualizado!";
