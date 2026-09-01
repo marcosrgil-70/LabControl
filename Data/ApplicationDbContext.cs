@@ -136,6 +136,10 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<PropostaAnalise>()
             .Property(p => p.VrUnitario).HasColumnType("decimal(15,4)");
         modelBuilder.Entity<PropostaAnalise>()
+            .Property(p => p.VrSubtotal).HasColumnType("decimal(15,4)");
+        modelBuilder.Entity<PropostaAnalise>()
+            .Property(p => p.PorcDesconto).HasColumnType("decimal(5,2)");
+        modelBuilder.Entity<PropostaAnalise>()
             .Property(p => p.VrDesconto).HasColumnType("decimal(15,4)");
         modelBuilder.Entity<PropostaAnalise>()
             .Property(p => p.VrTotal).HasColumnType("decimal(15,4)");

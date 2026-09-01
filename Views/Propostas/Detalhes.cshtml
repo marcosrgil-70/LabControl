@@ -1,7 +1,14 @@
 @model LabControl.Models.Laboratorio.Proposta
+@using LabControl.Models.Laboratorio
 @{
     ViewData["Title"] = $"Proposta {Model.CodigoFormatado}";
-    var moedaSigla = Model.Moeda?.Sigla ?? "R$";
+    var moedaSigla   = Model.Moeda?.Sigla ?? "R$";
+    var produtos     = ViewBag.Produtos       as List<Produto>             ?? [];
+    var tiposAnalise = ViewBag.AnalisesTipos  as List<AnaliseTipo>         ?? [];
+    var metodos      = ViewBag.AnalisesMetodos as List<AnaliseMetodo>      ?? [];
+    var prazos       = ViewBag.Prazos         as List<Prazo>              ?? [];
+    var idiomas      = ViewBag.Idiomas        as List<Idioma>             ?? [];
+    var parametros   = ViewBag.Parametros     as List<ParametroAnalise>    ?? [];
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -17,9 +24,14 @@
             }
         </small>
     </div>
-    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i>Voltar
-    </a>
+    <div class="d-flex gap-2">
+        <a asp-action="Editar" asp-route-id="@Model.Id" class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-pencil me-1"></i>Editar
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+    </div>
 </div>
 
 <div class="row g-3">
@@ -32,11 +44,20 @@
                     <dt class="col-4 text-muted">Cliente</dt>
                     <dd class="col-8 fw-semibold">@Model.Entidade?.Nome</dd>
 
+                    <dt class="col-4 text-muted">Contato</dt>
+                    <dd class="col-8">@(Model.NomeContato ?? "-")</dd>
+
                     <dt class="col-4 text-muted">Solicitação</dt>
                     <dd class="col-8">@Model.DtSolicitacao.ToString("dd/MM/yyyy")</dd>
 
                     <dt class="col-4 text-muted">Validade</dt>
                     <dd class="col-8">@(Model.DtValidade?.ToString("dd/MM/yyyy") ?? "-")</dd>
+
+                    <dt class="col-4 text-muted">Autorização</dt>
+                    <dd class="col-8">@(Model.DtAutorizacao?.ToString("dd/MM/yyyy") ?? "-")</dd>
+
+                    <dt class="col-4 text-muted">Envio ao Cliente</dt>
+                    <dd class="col-8">@(Model.DtEnvioCliente?.ToString("dd/MM/yyyy") ?? "-")</dd>
 
                     <dt class="col-4 text-muted">Cond. Pagamento</dt>
                     <dd class="col-8">@(Model.CondicaoPagamento?.Descricao ?? "-")</dd>
@@ -53,28 +74,44 @@
         <div class="card h-100">
             <div class="card-header fw-semibold py-2"><i class="bi bi-calculator me-1"></i>Totais</div>
             <div class="card-body">
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Subtotal</span>
-                    <span>@moedaSigla @(Model.Analises.Sum(a => a.VrTotal).ToString("N2"))</span>
+                @{
+                    var subtotalItens = Model.Analises.Sum(a => a.VrSubtotal);
+                    var descontoItens = Model.Analises.Sum(a => a.VrDesconto);
+                    var totalItens    = Model.Analises.Sum(a => a.VrTotal);
+                }
+                <div class="d-flex justify-content-between mb-1 small">
+                    <span class="text-muted">Subtotal dos itens</span>
+                    <span>@moedaSigla @subtotalItens.ToString("N2")</span>
+                </div>
+                @if (descontoItens > 0)
+                {
+                    <div class="d-flex justify-content-between mb-1 small text-danger">
+                        <span>Desconto por item</span>
+                        <span>- @moedaSigla @descontoItens.ToString("N2")</span>
+                    </div>
+                }
+                <div class="d-flex justify-content-between mb-1 small">
+                    <span class="text-muted">Total dos itens</span>
+                    <span>@moedaSigla @totalItens.ToString("N2")</span>
                 </div>
                 @if (Model.PorcDesconto.HasValue && Model.PorcDesconto > 0)
                 {
-                    <div class="d-flex justify-content-between mb-2 text-danger">
-                        <span>Desconto (@Model.PorcDesconto.Value.ToString("N1")%)</span>
+                    <div class="d-flex justify-content-between mb-1 small text-danger">
+                        <span>Desconto global (@Model.PorcDesconto.Value.ToString("N1")%)</span>
                         <span>- @moedaSigla @(Model.VrDesconto?.ToString("N2") ?? "0,00")</span>
                     </div>
                 }
                 <hr class="my-2" />
                 <div class="d-flex justify-content-between fw-bold fs-5">
-                    <span>Total</span>
+                    <span>Total da Proposta</span>
                     <span class="text-primary">@moedaSigla @Model.VrTotal.ToString("N2")</span>
                 </div>
 
-                <!-- Aplicar desconto -->
+                <!-- Desconto global -->
                 <form asp-action="AplicarDesconto" asp-route-id="@Model.Id" method="post" class="mt-3">
                     @Html.AntiForgeryToken()
                     <div class="input-group input-group-sm">
-                        <span class="input-group-text">Desconto %</span>
+                        <span class="input-group-text">Desconto global %</span>
                         <input type="number" name="porcDesconto" step="0.1" min="0" max="100"
                                class="form-control" value="@(Model.PorcDesconto ?? 0)" />
                         <button type="submit" class="btn btn-outline-primary">Aplicar</button>
@@ -84,7 +121,7 @@
         </div>
     </div>
 
-    <!-- Itens da proposta -->
+    <!-- Itens de análise -->
     <div class="col-12">
         <div class="card">
             <div class="card-header fw-semibold py-2 d-flex justify-content-between align-items-center">
@@ -94,20 +131,30 @@
                 </button>
             </div>
 
-            <!-- Formulário inline de adição de item -->
+            <!-- Formulário de adição de item -->
             <div class="collapse" id="formItem">
                 <div class="card-body border-bottom bg-light">
                     <form asp-action="AdicionarItem" method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="idProposta" value="@Model.Id" />
                         <div class="row g-2 align-items-end">
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="form-label form-label-sm">Produto</label>
                                 <select name="idProduto" class="form-select form-select-sm">
                                     <option value="">-</option>
-                                    @foreach (var p in (List<LabControl.Models.Laboratorio.Produto>)ViewBag.Produtos)
+                                    @foreach (var p in produtos)
                                     {
                                         <option value="@p.Id">@p.Descricao</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label form-label-sm">Parâmetro de Análise</label>
+                                <select name="idParametro" id="selParam" class="form-select form-select-sm">
+                                    <option value="">-</option>
+                                    @foreach (var p in parametros)
+                                    {
+                                        <option value="@p.Id" data-vr="@p.VrUnitario.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)">@p.Descricao</option>
                                     }
                                 </select>
                             </div>
@@ -115,7 +162,7 @@
                                 <label class="form-label form-label-sm">Tipo de Análise</label>
                                 <select name="idAnaliseTipo" class="form-select form-select-sm">
                                     <option value="">-</option>
-                                    @foreach (var a in (List<LabControl.Models.Laboratorio.AnaliseTipo>)ViewBag.AnalisesTipos)
+                                    @foreach (var a in tiposAnalise)
                                     {
                                         <option value="@a.Id">@a.Descricao</option>
                                     }
@@ -125,27 +172,61 @@
                                 <label class="form-label form-label-sm">Método</label>
                                 <select name="idAnaliseMetodo" class="form-select form-select-sm">
                                     <option value="">-</option>
-                                    @foreach (var m in (List<LabControl.Models.Laboratorio.AnaliseMetodo>)ViewBag.AnalisesMetodos)
+                                    @foreach (var m in metodos)
                                     {
                                         <option value="@m.Id">@m.Descricao</option>
                                     }
                                 </select>
                             </div>
                             <div class="col-md-1">
+                                <label class="form-label form-label-sm">Prazo</label>
+                                <select name="idPrazo" class="form-select form-select-sm">
+                                    <option value="">-</option>
+                                    @foreach (var p in prazos)
+                                    {
+                                        <option value="@p.Id">@p.Descricao</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label form-label-sm">Idioma</label>
+                                <select name="idIdioma" class="form-select form-select-sm">
+                                    <option value="">-</option>
+                                    @foreach (var i in idiomas)
+                                    {
+                                        <option value="@i.Id">@i.Descricao</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label form-label-sm">Tipo Doc.</label>
+                                <input name="tipoDocumento" class="form-control form-control-sm" value="BOLETIM" />
+                            </div>
+                        </div>
+                        <div class="row g-2 align-items-end mt-1">
+                            <div class="col-md-1">
                                 <label class="form-label form-label-sm">Qtde</label>
-                                <input name="qtde" type="number" min="1" value="1" class="form-control form-control-sm" />
+                                <input id="inpQtde" name="qtde" type="number" min="1" value="1" class="form-control form-control-sm" />
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label form-label-sm">Vr. Unitário</label>
-                                <input name="vrUnitario" type="number" step="0.01" min="0" value="0" class="form-control form-control-sm" />
+                                <input id="inpVrUnit" name="vrUnitario" type="number" step="0.01" min="0" value="0" class="form-control form-control-sm" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm">Subtotal</label>
+                                <input id="inpSubtotal" type="number" step="0.01" class="form-control form-control-sm bg-light" readonly value="0" />
                             </div>
                             <div class="col-md-1">
-                                <label class="form-label form-label-sm">Desconto</label>
-                                <input name="vrDesconto" type="number" step="0.01" min="0" value="0" class="form-control form-control-sm" />
+                                <label class="form-label form-label-sm">% Desconto</label>
+                                <input id="inpPorcDesc" name="porcDesconto" type="number" step="0.01" min="0" max="100" value="0" class="form-control form-control-sm" />
                             </div>
-                            <div class="col-md-1">
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm">Vr. Total</label>
+                                <input id="inpVrTotal" type="number" step="0.01" class="form-control form-control-sm bg-light" readonly value="0" />
+                            </div>
+                            <div class="col-md-2">
                                 <button type="submit" class="btn btn-success btn-sm w-100">
-                                    <i class="bi bi-plus"></i> Add
+                                    <i class="bi bi-plus-circle me-1"></i>Adicionar
                                 </button>
                             </div>
                         </div>
@@ -159,11 +240,13 @@
                     <thead class="table-light">
                         <tr>
                             <th>Produto</th>
-                            <th>Tipo de Análise</th>
+                            <th>Parâmetro / Análise</th>
                             <th>Método</th>
+                            <th>Doc.</th>
                             <th class="text-center">Qtde</th>
                             <th class="text-end">Vr. Unit.</th>
-                            <th class="text-end">Desconto</th>
+                            <th class="text-end">Subtotal</th>
+                            <th class="text-end">Desc.</th>
                             <th class="text-end">Total</th>
                             <th></th>
                         </tr>
@@ -172,8 +255,8 @@
                         @if (!Model.Analises.Any())
                         {
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-3">
-                                    Nenhum item adicionado. Clique em "Adicionar Item".
+                                <td colspan="10" class="text-center text-muted py-3">
+                                    Nenhum item adicionado.
                                 </td>
                             </tr>
                         }
@@ -181,11 +264,15 @@
                         {
                             <tr>
                                 <td>@(item.Produto?.Descricao ?? "-")</td>
-                                <td>@(item.AnaliseTipo?.Descricao ?? "-")</td>
+                                <td>
+                                    @(item.ParametroAnalise?.Descricao ?? item.AnaliseTipo?.Descricao ?? "-")
+                                </td>
                                 <td>@(item.AnaliseMetodo?.Descricao ?? "-")</td>
+                                <td><span class="badge bg-secondary">@(item.TipoDocumento ?? "-")</span></td>
                                 <td class="text-center">@item.QtdeAmostras</td>
-                                <td class="text-end">@moedaSigla @item.VrUnitario.ToString("N2")</td>
-                                <td class="text-end text-danger">@moedaSigla @item.VrDesconto.ToString("N2")</td>
+                                <td class="text-end">@item.VrUnitario.ToString("N2")</td>
+                                <td class="text-end">@item.VrSubtotal.ToString("N2")</td>
+                                <td class="text-end text-danger">@item.VrDesconto.ToString("N2")</td>
                                 <td class="text-end fw-semibold">@moedaSigla @item.VrTotal.ToString("N2")</td>
                                 <td class="text-end">
                                     <form asp-action="RemoverItem" method="post" style="display:inline"
@@ -203,10 +290,10 @@
                     </tbody>
                     @if (Model.Analises.Any())
                     {
-                        <tfoot class="table-light">
+                        <tfoot class="table-light fw-semibold">
                             <tr>
-                                <td colspan="6" class="text-end fw-semibold">Total da Proposta:</td>
-                                <td class="text-end fw-bold text-primary">@moedaSigla @Model.VrTotal.ToString("N2")</td>
+                                <td colspan="8" class="text-end">Total da Proposta:</td>
+                                <td class="text-end text-primary">@moedaSigla @Model.VrTotal.ToString("N2")</td>
                                 <td></td>
                             </tr>
                         </tfoot>
@@ -219,6 +306,26 @@
 
 @section Scripts {
 <script>
-    // Popular ViewBag.Produtos etc. no formulário de item
+    // Preenche Vr. Unitário ao selecionar parâmetro
+    document.getElementById('selParam').addEventListener('change', function () {
+        const vr = this.options[this.selectedIndex]?.dataset.vr ?? '0';
+        document.getElementById('inpVrUnit').value = vr;
+        recalcular();
+    });
+
+    function recalcular() {
+        const qtde     = parseFloat(document.getElementById('inpQtde').value) || 0;
+        const vrUnit   = parseFloat(document.getElementById('inpVrUnit').value) || 0;
+        const porcDesc = parseFloat(document.getElementById('inpPorcDesc').value) || 0;
+        const subtotal = qtde * vrUnit;
+        const desc     = Math.round(subtotal * porcDesc / 100 * 100) / 100;
+        const total    = Math.round((subtotal - desc) * 100) / 100;
+        document.getElementById('inpSubtotal').value = subtotal.toFixed(2);
+        document.getElementById('inpVrTotal').value  = total.toFixed(2);
+    }
+
+    ['inpQtde', 'inpVrUnit', 'inpPorcDesc'].forEach(id =>
+        document.getElementById(id).addEventListener('input', recalcular)
+    );
 </script>
 }

@@ -2,7 +2,7 @@
 @using LabControl.Models.Entidades
 @using LabControl.Models.Laboratorio
 @{
-    ViewData["Title"] = "Nova Proposta";
+    ViewData["Title"] = $"Editar Proposta {Model.CodigoFormatado}";
     var clientes     = ViewBag.Clientes         as List<Entidade>             ?? [];
     var funcionarios = ViewBag.Funcionarios      as List<EntidadeFuncionario>  ?? [];
     var statusLista  = ViewBag.PropostasStatus   as List<PropostaStatus>       ?? [];
@@ -12,12 +12,17 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h5 class="mb-0"><i class="bi bi-file-plus me-2 text-primary"></i>Nova Proposta</h5>
-        <small class="text-muted">Proposta de análise laboratorial</small>
+        <h5 class="mb-0"><i class="bi bi-pencil me-2 text-warning"></i>Editar Proposta</h5>
+        <small class="text-muted">Alteração dos dados da proposta</small>
     </div>
-    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i>Voltar
-    </a>
+    <div class="d-flex gap-2">
+        <a asp-action="Detalhes" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-eye me-1"></i>Detalhes
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+    </div>
 </div>
 
 @if (!ViewData.ModelState.IsValid)
@@ -31,39 +36,36 @@
     </div>
 }
 
-<form asp-action="Criar" method="post">
+<form asp-action="Editar" asp-route-id="@Model.Id" method="post">
     @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="CodProposta" />
+    <input type="hidden" asp-for="RevProposta" />
+    <input type="hidden" asp-for="IdEmpresa" />
+    <input type="hidden" asp-for="IdFuncionario" />
 
     <!-- Número da proposta (read-only) -->
     <div class="card mb-3">
         <div class="card-body py-2 d-flex align-items-center gap-3">
             <span class="fw-semibold text-muted small">Nº da Proposta:</span>
-            <span class="fs-5 fw-bold text-primary font-monospace">INCLUSÃO</span>
-            <span class="text-muted small ms-auto">O número será gerado automaticamente ao salvar.</span>
+            <span class="fs-5 fw-bold text-primary font-monospace">@Model.CodigoFormatado</span>
+            <span class="text-muted small ms-3">Revisão: @Model.RevProposta</span>
         </div>
     </div>
 
     <!-- Abas -->
-    <ul class="nav nav-tabs mb-0" id="tabsProposta">
+    <ul class="nav nav-tabs mb-0">
         <li class="nav-item">
             <a class="nav-link active" data-bs-toggle="tab" href="#tabProposta">
                 <i class="bi bi-file-text me-1"></i>Proposta
             </a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="tab" href="#tabInfoGerais">
-                <i class="bi bi-info-circle me-1"></i>Informações Gerais
-            </a>
-        </li>
     </ul>
 
     <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white mb-3">
-
-        <!-- ABA: Proposta -->
         <div class="tab-pane fade show active" id="tabProposta">
             <div class="row g-3">
 
-                <!-- Cliente -->
                 <div class="col-md-6">
                     <label class="form-label">Cliente <span class="text-danger">*</span></label>
                     <select asp-for="IdEntidade" class="form-select form-select-sm" required>
@@ -76,7 +78,7 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Nome do Contato</label>
-                    <input asp-for="NomeContato" class="form-control form-control-sm" placeholder="Contato na empresa" />
+                    <input asp-for="NomeContato" class="form-control form-control-sm" />
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Status <span class="text-danger">*</span></label>
@@ -84,16 +86,14 @@
                         <option value="">— Selecione —</option>
                         @foreach (var s in statusLista)
                         {
-                            <option value="@s.Id" selected="@(s.Id == 1)">@s.Descricao</option>
+                            <option value="@s.Id">@s.Descricao</option>
                         }
                     </select>
                 </div>
 
-                <!-- Data de solicitação e validade -->
                 <div class="col-md-3">
                     <label class="form-label">Data de Solicitação</label>
-                    <input asp-for="DtSolicitacao" type="date" class="form-control form-control-sm"
-                           value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    <input asp-for="DtSolicitacao" type="date" class="form-control form-control-sm" />
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Validade da Proposta</label>
@@ -108,17 +108,6 @@
                     <input asp-for="DtEnvioCliente" type="date" class="form-control form-control-sm" />
                 </div>
 
-                <!-- Responsável e Comercial -->
-                <div class="col-md-4">
-                    <label class="form-label">Funcionário Responsável</label>
-                    <select asp-for="IdFuncionario" class="form-select form-select-sm">
-                        <option value="">— Selecione —</option>
-                        @foreach (var f in funcionarios)
-                        {
-                            <option value="@f.Id">@f.Entidade?.Nome</option>
-                        }
-                    </select>
-                </div>
                 <div class="col-md-4">
                     <label class="form-label">Funcionário Comercial</label>
                     <select asp-for="IdFuncionarioComercial" class="form-select form-select-sm">
@@ -129,8 +118,6 @@
                         }
                     </select>
                 </div>
-
-                <!-- Financeiro -->
                 <div class="col-md-4">
                     <label class="form-label">Condição de Pagamento</label>
                     <select asp-for="IdCondicaoPagamento" class="form-select form-select-sm">
@@ -141,37 +128,30 @@
                         }
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">Moeda</label>
                     <select asp-for="IdMoeda" class="form-select form-select-sm">
                         <option value="">— Selecione —</option>
                         @foreach (var m in moedas)
                         {
-                            <option value="@m.Id">@m.Sigla — @m.Descricao</option>
+                            <option value="@m.Id">@m.Sigla</option>
                         }
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">% Desconto Global</label>
                     <input asp-for="PorcDesconto" type="number" step="0.01" min="0" max="100"
-                           class="form-control form-control-sm" placeholder="0,00" />
+                           class="form-control form-control-sm" />
                 </div>
 
             </div>
         </div>
-
-        <!-- ABA: Informações Gerais -->
-        <div class="tab-pane fade" id="tabInfoGerais">
-            <p class="text-muted small">Campos de endereço de laudo, NF e cobrança — disponíveis após criar a proposta.</p>
-        </div>
-
     </div>
 
-    <!-- Botões -->
     <div class="d-flex justify-content-end gap-2">
-        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
-        <button type="submit" class="btn btn-primary">
-            <i class="bi bi-save me-1"></i>Criar Proposta
+        <a asp-action="Detalhes" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-warning">
+            <i class="bi bi-save me-1"></i>Salvar Alterações
         </button>
     </div>
 </form>

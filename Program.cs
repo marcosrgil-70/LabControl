@@ -186,6 +186,46 @@ using (var scope = app.Services.CreateScope())
             FOREIGN KEY (ID_PERFIS) REFERENCES PERFIS(ID_PERFIS)  ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
+    // ── Novos campos em LAB_PROPOSTAS ────────────────────────────────────────────
+    var colunasPropostas = new[]
+    {
+        "ALTER TABLE LAB_PROPOSTAS ADD COLUMN NOME_CONTATO         VARCHAR(100) NULL",
+        "ALTER TABLE LAB_PROPOSTAS ADD COLUMN ID_ENTIDADES_COMERC  INT NULL",
+        "ALTER TABLE LAB_PROPOSTAS ADD COLUMN ID_ENT_END_LAUDO     INT NULL",
+        "ALTER TABLE LAB_PROPOSTAS ADD COLUMN ID_ENT_END_NF        INT NULL",
+        "ALTER TABLE LAB_PROPOSTAS ADD COLUMN ID_ENT_CONTATO_RESULTADO INT NULL",
+        "ALTER TABLE LAB_PROPOSTAS ADD COLUMN ID_ENT_CONTATO_NF    INT NULL",
+        "ALTER TABLE LAB_PROPOSTAS ADD COLUMN ID_ENT_COBRANCA      INT NULL",
+        "ALTER TABLE LAB_PROPOSTAS ADD COLUMN ID_END_ENT_COBRANCA  INT NULL",
+        "ALTER TABLE LAB_PROPOSTAS ADD COLUMN DT_ENVIO_CLIENTE     DATE NULL",
+        "ALTER TABLE LAB_PROPOSTAS ADD COLUMN ID_PEDIDOS_VENDAS    INT NULL",
+        "ALTER TABLE LAB_PROPOSTAS ADD COLUMN NR_PEDIDO_VENDA      VARCHAR(30) NULL",
+    };
+    foreach (var sql in colunasPropostas)
+    {
+        try { await db.Database.ExecuteSqlRawAsync(sql); }
+        catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060")) { }
+    }
+
+    // ── Novos campos em LAB_PROPOSTAS_ANALISES ────────────────────────────────
+    var colunasAnalises = new[]
+    {
+        "ALTER TABLE LAB_PROPOSTAS_ANALISES ADD COLUMN VR_SUBTOTAL    DECIMAL(15,4) NOT NULL DEFAULT 0",
+        "ALTER TABLE LAB_PROPOSTAS_ANALISES ADD COLUMN PORC_DESCONTO  DECIMAL(5,2) NULL",
+        "ALTER TABLE LAB_PROPOSTAS_ANALISES ADD COLUMN TIPO_DOCUMENTO VARCHAR(20) NULL",
+    };
+    foreach (var sql in colunasAnalises)
+    {
+        try { await db.Database.ExecuteSqlRawAsync(sql); }
+        catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060")) { }
+    }
+
+    // Sincronizar VR_SUBTOTAL dos itens já existentes (retroativo)
+    await db.Database.ExecuteSqlRawAsync(@"
+        UPDATE LAB_PROPOSTAS_ANALISES
+        SET VR_SUBTOTAL = COALESCE(QTDE_AMOSTRAS, 1) * COALESCE(VR_UNITARIO, 0)
+        WHERE VR_SUBTOTAL = 0 AND COALESCE(VR_UNITARIO, 0) > 0");
+
     // ── Novos campos em LAB_HIST_AMOSTRAS (campos do Delphi que faltavam) ────────
     var colunasAmostra = new[]
     {
