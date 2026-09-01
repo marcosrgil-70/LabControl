@@ -23,6 +23,14 @@ public class ApplicationDbContext : DbContext
     public DbSet<EnderecoTipo> EnderecosTipos => Set<EnderecoTipo>();
     public DbSet<FoneTipo> FonesTipos => Set<FoneTipo>();
 
+    // Geográficos
+    public DbSet<Pais> Paises => Set<Pais>();
+    public DbSet<Estado> Estados => Set<Estado>();
+    public DbSet<Cidade> Cidades => Set<Cidade>();
+    public DbSet<Bairro> Bairros => Set<Bairro>();
+    public DbSet<TipoLogradouro> TiposLogradouros => Set<TipoLogradouro>();
+    public DbSet<Logradouro> Logradouros => Set<Logradouro>();
+
     public DbSet<EntidadeObservacao> EntidadesObservacoes => Set<EntidadeObservacao>();
 
     // Segurança

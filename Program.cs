@@ -248,6 +248,58 @@ using (var scope = app.Services.CreateScope())
         try { await db.Database.ExecuteSqlRawAsync(sql); }
         catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060")) { }
     }
+
+    // ── Nomenclatura (DESCRICAO_REGISTRO) em TIPOS_REG_PROFISSIONAL ──────────
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync(
+            "ALTER TABLE TIPOS_REG_PROFISSIONAL ADD COLUMN DESCRICAO_REGISTRO VARCHAR(100) NULL");
+    }
+    catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060")) { }
+
+    // ── Tabelas geográficas ───────────────────────────────────────────────────
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS PAISES (
+            ID_PAISES  INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            NOME       VARCHAR(50) NOT NULL,
+            SIGLA      VARCHAR(3) NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS ESTADOS (
+            ID_ESTADOS INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            NOME       VARCHAR(50) NOT NULL,
+            UF         VARCHAR(2) NULL,
+            ID_PAISES  INT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS CIDADES (
+            ID_CIDADES INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            NOME       VARCHAR(80) NOT NULL,
+            ID_ESTADOS INT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS BAIRROS (
+            ID_BAIRROS INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            NOME       VARCHAR(80) NOT NULL,
+            ID_CIDADES INT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS TIPOS_LOGRADOUROS (
+            ID_TIPOS_LOGRADOUROS INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            DESCRICAO VARCHAR(30) NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS LOGRADOUROS (
+            ID_LOGRADOUROS       INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            NOME                 VARCHAR(80) NOT NULL,
+            ID_TIPOS_LOGRADOUROS INT NULL,
+            ID_BAIRROS           INT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 }
 
 app.Run();

@@ -1,0 +1,81 @@
+@model IEnumerable<LabControl.Models.Entidades.TipoRegProfissional>
+@{
+    ViewData["Title"] = "Registros Profissionais";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-patch-check me-2 text-primary"></i>Registros Profissionais</h5>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header fw-semibold py-2"><i class="bi bi-plus-circle me-1"></i>Novo Registro</div>
+            <div class="card-body">
+                <form asp-action="SalvarTipoRegProfissional" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="editId" />
+                    <div class="mb-3">
+                        <label class="form-label">Sigla / Código <span class="text-danger">*</span></label>
+                        <input name="descricao" id="editDescricao" class="form-control form-control-sm" maxlength="50" required placeholder="Ex: CRF, CRM, CREA" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nome Completo</label>
+                        <input name="nomenclatura" id="editNomenclatura" class="form-control form-control-sm" maxlength="100" placeholder="Ex: Conselho Regional de Farmácia" />
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i class="bi bi-save me-1"></i>Salvar</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="limparForm()">Novo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>#</th><th>Sigla</th><th>Nome Completo</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr><td colspan="4" class="text-center text-muted py-3">Nenhum registro cadastrado.</td></tr>
+                        }
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="text-muted">@item.Id</td>
+                                <td><strong>@item.Descricao</strong></td>
+                                <td>@(item.Nomenclatura ?? "-")</td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-secondary btn-sm"
+                                            onclick="editar(@item.Id, '@item.Descricao', '@(item.Nomenclatura ?? "")')">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function editar(id, descricao, nomenclatura) {
+        document.getElementById('editId').value = id;
+        document.getElementById('editDescricao').value = descricao;
+        document.getElementById('editNomenclatura').value = nomenclatura;
+    }
+    function limparForm() {
+        document.getElementById('editId').value = '';
+        document.getElementById('editDescricao').value = '';
+        document.getElementById('editNomenclatura').value = '';
+    }
+</script>
+}

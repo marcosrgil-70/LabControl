@@ -181,6 +181,10 @@ public class TipoRegProfissional
     [Column("DESCRICAO_REG_PROFISSIONAL")]
     [StringLength(50)]
     public string Descricao { get; set; } = string.Empty;
+
+    [Column("DESCRICAO_REGISTRO")]
+    [StringLength(100)]
+    public string? Nomenclatura { get; set; }
 }
 
 [Table("ENTIDADES_ENDERECOS")]

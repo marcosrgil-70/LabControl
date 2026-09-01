@@ -8,49 +8,148 @@
 </div>
 
 <div class="row g-3">
+
+    <!-- Cadastros Básicos -->
+    <div class="col-12">
+        <h6 class="text-muted fw-semibold border-bottom pb-1 mb-2">
+            <i class="bi bi-folder me-1"></i>Cadastros Básicos
+        </h6>
+    </div>
+
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-header fw-semibold py-2 bg-light">
-                <i class="bi bi-droplet me-1"></i>Amostras
+                <i class="bi bi-geo-alt me-1"></i>Endereços
             </div>
             <div class="list-group list-group-flush">
-                <a asp-action="AmostrasTipos" class="list-group-item list-group-item-action">
-                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Tipos de Amostra
+                <a asp-action="Paises" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Países
                 </a>
-                <a asp-action="AmostrasStatus" class="list-group-item list-group-item-action">
-                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Status de Amostra
+                <a asp-action="Estados" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Estados
+                </a>
+                <a asp-action="Cidades" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Cidades
+                </a>
+                <a asp-action="Bairros" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Bairros
+                </a>
+                <a asp-action="TiposLogradouros" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Tipos de Logradouro
+                </a>
+                <a asp-action="Logradouros" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Logradouros
+                </a>
+                <a asp-action="EnderecosTipos" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Tipos de Endereço
                 </a>
             </div>
         </div>
     </div>
+
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-header fw-semibold py-2 bg-light">
-                <i class="bi bi-clipboard me-1"></i>Análises
+                <i class="bi bi-person-badge me-1"></i>Pessoal
             </div>
             <div class="list-group list-group-flush">
-                <a asp-action="AnalisesTipos" class="list-group-item list-group-item-action">
-                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Tipos de Análise
+                <a asp-action="RegistrosProfissionais" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Registros Profissionais
                 </a>
-                <a asp-action="AnalisesMetodos" class="list-group-item list-group-item-action">
-                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Métodos de Análise
+                <a asp-action="CargosFuncionarios" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Cargos de Funcionários
                 </a>
             </div>
         </div>
     </div>
+
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-header fw-semibold py-2 bg-light">
                 <i class="bi bi-sliders me-1"></i>Gerais
             </div>
             <div class="list-group list-group-flush">
-                <a asp-action="Prazos" class="list-group-item list-group-item-action">
+                <a asp-action="Idiomas" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Idiomas
+                </a>
+                <a asp-action="Unidades" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Unidades de Medida
+                </a>
+                <a asp-action="EmbalagensTopos" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Tipos de Embalagem
+                </a>
+                <a asp-action="TiposResultados" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Tipos de Resultado
+                </a>
+                <a asp-action="CondicoesPagamentos" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Condições de Pagamento
+                </a>
+                <a asp-action="Prazos" class="list-group-item list-group-item-action py-2">
                     <i class="bi bi-chevron-right me-2 text-muted small"></i>Prazos de Entrega
                 </a>
-                <a asp-action="Unidades" class="list-group-item list-group-item-action">
-                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Unidades de Medida
+                <a asp-action="Moedas" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Moedas
                 </a>
             </div>
         </div>
     </div>
+
+    <!-- Laboratório -->
+    <div class="col-12 mt-2">
+        <h6 class="text-muted fw-semibold border-bottom pb-1 mb-2">
+            <i class="bi bi-droplet me-1"></i>Laboratório
+        </h6>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold py-2 bg-light">
+                <i class="bi bi-droplet me-1"></i>Amostras
+            </div>
+            <div class="list-group list-group-flush">
+                <a asp-action="AmostrasTipos" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Tipos de Amostra
+                </a>
+                <a asp-action="AmostrasStatus" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Status de Amostra
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold py-2 bg-light">
+                <i class="bi bi-clipboard me-1"></i>Análises
+            </div>
+            <div class="list-group list-group-flush">
+                <a asp-action="AnalisesTipos" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Tipos de Análise
+                </a>
+                <a asp-action="AnalisesStatus" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Status de Análise
+                </a>
+                <a asp-action="AnalisesMetodos" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Métodos de Análise
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold py-2 bg-light">
+                <i class="bi bi-file-earmark-text me-1"></i>Boletins e Propostas
+            </div>
+            <div class="list-group list-group-flush">
+                <a asp-action="BoletinsStatus" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Status de Boletim
+                </a>
+                <a asp-action="PropostasStatus" class="list-group-item list-group-item-action py-2">
+                    <i class="bi bi-chevron-right me-2 text-muted small"></i>Status de Proposta
+                </a>
+            </div>
+        </div>
+    </div>
+
 </div>
