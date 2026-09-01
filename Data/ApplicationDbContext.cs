@@ -69,6 +69,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<HistAmostraTeste> HistAmostrasTestess => Set<HistAmostraTeste>();
     public DbSet<HistAmostraSaldo> HistAmostrasaldos => Set<HistAmostraSaldo>();
     public DbSet<MovAmostra> MovAmostras => Set<MovAmostra>();
+    public DbSet<MovAmostraParam> MovAmostrasParam => Set<MovAmostraParam>();
     public DbSet<LocalAmostra> LocalAmostras => Set<LocalAmostra>();
 
     // Resultados

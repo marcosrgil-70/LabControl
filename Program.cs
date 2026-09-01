@@ -278,6 +278,59 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060")) { }
 
+    // ── LAB_MOV_AMOSTRAS: corrige tipo de AMOSTRA_COMPLEMENTAR (bool→char) ─────
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync(
+            "ALTER TABLE LAB_MOV_AMOSTRAS MODIFY COLUMN AMOSTRA_COMPLEMENTAR VARCHAR(1) NULL");
+        // Migra dados existentes baseados em E_S
+        await db.Database.ExecuteSqlRawAsync(@"
+            UPDATE LAB_MOV_AMOSTRAS
+            SET AMOSTRA_COMPLEMENTAR = CASE
+                WHEN E_S = 'E' THEN 'C'
+                WHEN E_S = 'S' THEN 'M'
+                ELSE NULL
+            END
+            WHERE AMOSTRA_COMPLEMENTAR IN ('0','1') OR AMOSTRA_COMPLEMENTAR IS NULL");
+    }
+    catch { /* já corrigido */ }
+
+    // ── LAB_LOCAL_AMOSTRAS: adiciona colunas do Delphi ───────────────────────
+    var colunasLocal = new[]
+    {
+        "ALTER TABLE LAB_LOCAL_AMOSTRAS ADD COLUMN STATUS       TINYINT NOT NULL DEFAULT 0",
+        "ALTER TABLE LAB_LOCAL_AMOSTRAS ADD COLUMN DT_HR_ARQUIVO DATETIME NULL",
+        "ALTER TABLE LAB_LOCAL_AMOSTRAS ADD COLUMN NR_ARMARIO   VARCHAR(30) NULL",
+        "ALTER TABLE LAB_LOCAL_AMOSTRAS ADD COLUMN NR_PRATELEIRA VARCHAR(30) NULL",
+        "ALTER TABLE LAB_LOCAL_AMOSTRAS ADD COLUMN NR_CAIXA     VARCHAR(30) NULL",
+        "ALTER TABLE LAB_LOCAL_AMOSTRAS ADD COLUMN OBSERVACAO   VARCHAR(200) NULL",
+    };
+    foreach (var sql in colunasLocal)
+    {
+        try { await db.Database.ExecuteSqlRawAsync(sql); }
+        catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060")) { }
+    }
+    // Remove coluna LOCAL legada (era string genérica do C#, substituída pelas 3 acima)
+    try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE LAB_LOCAL_AMOSTRAS DROP COLUMN LOCAL"); }
+    catch { /* coluna não existe ou já removida */ }
+
+    // ── LAB_MOV_AMOSTRAS_PARAM: parâmetros vinculados à movimentação ──────────
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS LAB_MOV_AMOSTRAS_PARAM (
+            ID_LAB_MOV_AMOSTRAS_PARAM  INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            ID_EMPRESAS                INT NOT NULL,
+            ID_LAB_MOV_AMOSTRAS        INT NOT NULL,
+            ID_LAB_HIST_AMOSTRAS_TESTES INT NULL,
+            ID_LAB_PARAMETROS_ANALISES INT NULL,
+            FOREIGN KEY (ID_LAB_MOV_AMOSTRAS) REFERENCES LAB_MOV_AMOSTRAS(ID_LAB_MOV_AMOSTRAS) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // ── Seed permissões novas ────────────────────────────────────────────────
+    await db.Database.ExecuteSqlRawAsync(@"
+        INSERT IGNORE INTO PERMISSOES (COD_PERMISSAO, DSC_PERMISSAO) VALUES
+        ('Movimentacao',   'Movimentação de Amostras'),
+        ('LocalAmostras',  'Localização de Amostras')");
+
     // ── Tabelas geográficas ───────────────────────────────────────────────────
     await db.Database.ExecuteSqlRawAsync(@"
         CREATE TABLE IF NOT EXISTS PAISES (

@@ -22,6 +22,14 @@
            class="btn btn-success btn-sm">
             <i class="bi bi-clipboard-plus me-1"></i>Lançar Resultado
         </a>
+        <a asp-controller="Movimentacao" asp-action="Movimentar" asp-route-id="@Model.Id"
+           class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-arrow-left-right me-1"></i>Movimentar
+        </a>
+        <a asp-controller="LocalAmostras" asp-action="Editar" asp-route-id="@Model.Id"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-geo-alt me-1"></i>Localização
+        </a>
         <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left me-1"></i>Voltar
         </a>

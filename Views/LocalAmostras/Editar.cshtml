@@ -1,0 +1,162 @@
+@model LabControl.Models.Laboratorio.HistAmostra
+@{
+    ViewData["Title"] = $"Localização — {Model.CodigoFormatado}";
+    var loc = Model.LocalizacaoAtual;
+    bool localVazio = ViewBag.LocalVazio == true;
+    bool descartada = loc?.Status == 1;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0">
+            <i class="bi bi-geo-alt-fill me-2 text-primary"></i>
+            Localização — <span class="text-primary">@Model.CodigoFormatado</span>
+        </h5>
+        <small class="text-muted">@(Model.Entidade?.Nome ?? "—") &middot; @(Model.Produto?.Descricao ?? "—")</small>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Voltar
+    </a>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show py-2">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-3">
+
+    <!-- ─── Identificação da Amostra (read-only) ──────────────────────────── -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header fw-semibold py-2"><i class="bi bi-droplet me-1"></i>Amostra</div>
+            <div class="card-body">
+                <dl class="row mb-0 small">
+                    <dt class="col-5 text-muted">Código</dt>
+                    <dd class="col-7 fw-semibold text-primary">@Model.CodigoFormatado</dd>
+                    <dt class="col-5 text-muted">Cliente</dt>
+                    <dd class="col-7">@(Model.Entidade?.Nome ?? "-")</dd>
+                    <dt class="col-5 text-muted">Produto</dt>
+                    <dd class="col-7">@(Model.Produto?.Descricao ?? "-")</dd>
+                    <dt class="col-5 text-muted">Nr. Lote</dt>
+                    <dd class="col-7">@(Model.NrLote ?? "-")</dd>
+                    <dt class="col-5 text-muted">Tipo Amostra</dt>
+                    <dd class="col-7">@(Model.AmostraTipo?.Descricao ?? "-")</dd>
+                    <dt class="col-5 text-muted">Status</dt>
+                    <dd class="col-7">
+                        @if (loc == null)
+                        {
+                            <span class="badge bg-secondary">Não arquivada</span>
+                        }
+                        else if (descartada)
+                        {
+                            <span class="badge bg-danger">Descartada</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-info text-dark">Arquivada</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Arquivo Físico ────────────────────────────────────────────────── -->
+    <div class="col-md-8">
+        <div class="card @(descartada ? "border-danger" : "")">
+            <div class="card-header fw-semibold py-2 @(descartada ? "bg-danger text-white" : "")">
+                <i class="bi bi-archive me-1"></i>
+                @(descartada ? "Amostra Descartada" : localVazio ? "Arquivar Amostra" : "Localização no Arquivo")
+            </div>
+            <div class="card-body">
+
+                @if (descartada)
+                {
+                    <!-- Modo descartada: só mostra info + botão para desfazer -->
+                    <div class="alert alert-danger py-2 mb-3">
+                        <i class="bi bi-trash-fill me-2"></i>
+                        Esta amostra foi descartada em
+                        <strong>@loc!.DtHrDescarte?.ToString("dd/MM/yyyy HH:mm")</strong>
+                        @if (!string.IsNullOrWhiteSpace(ViewBag.NomeFuncionarioDescarte as string))
+                        {
+                            <span>por <strong>@ViewBag.NomeFuncionarioDescarte</strong></span>
+                        }
+                    </div>
+                    <form asp-action="DesfazerDescarte" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="idHistAmostra" value="@Model.Id" />
+                        <button type="submit" class="btn btn-warning"
+                                onclick="return confirm('Desfazer o descarte desta amostra?')">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Desfazer Descarte
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <!-- Modo edição normal: formulário de arquivamento -->
+                    <form asp-action="SalvarLocalizacao" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="idHistAmostra" value="@Model.Id" />
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Data de Entrada no Arquivo</label>
+                                <input type="datetime-local" name="dtHrArquivo" class="form-control form-control-sm"
+                                       value="@(loc?.DtHrArquivo?.ToString("yyyy-MM-ddTHH:mm") ?? DateTime.Now.ToString("yyyy-MM-ddTHH:mm"))" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Nr. Armário</label>
+                                <input type="text" name="nrArmario" class="form-control form-control-sm"
+                                       value="@(loc?.NrArmario ?? "")" placeholder="Ex: A-01" maxlength="30" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Prateleira</label>
+                                <input type="text" name="nrPrateleira" class="form-control form-control-sm"
+                                       value="@(loc?.NrPrateleira ?? "")" placeholder="Ex: P-02" maxlength="30" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Nr. Caixa</label>
+                                <input type="text" name="nrCaixa" class="form-control form-control-sm"
+                                       value="@(loc?.NrCaixa ?? "")" placeholder="Ex: CX-003" maxlength="30" />
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Observação</label>
+                                <input type="text" name="observacao" class="form-control form-control-sm"
+                                       value="@(loc?.Observacao ?? "")" maxlength="200"
+                                       placeholder="Observações sobre o arquivamento..." />
+                            </div>
+                            <input type="hidden" name="status" value="0" />
+
+                            <div class="col-12 d-flex justify-content-between align-items-center">
+                                <div>
+                                    @if (loc != null)
+                                    {
+                                        <!-- Só mostra botão Descartar se já tem localização -->
+                                        <form asp-action="Descartar" method="post" style="display:inline"
+                                              onsubmit="return confirm('Marcar esta amostra como descartada? Esta ação registra a data e o responsável.')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="idHistAmostra" value="@Model.Id" />
+                                            <button type="submit" class="btn btn-outline-danger">
+                                                <i class="bi bi-trash me-1"></i>Marcar como Descartada
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save me-1"></i>
+                                    @(localVazio ? "Arquivar Amostra" : "Salvar Localização")
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                }
+
+            </div>
+        </div>
+    </div>
+
+</div>

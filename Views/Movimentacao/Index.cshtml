@@ -1,0 +1,156 @@
+@model IEnumerable<LabControl.Models.Laboratorio.HistAmostra>
+@using LabControl.Models.Entidades
+@using LabControl.Models.Laboratorio
+@{
+    ViewData["Title"] = "Movimentação de Amostras";
+    var clientes      = ViewBag.Clientes      as List<Entidade>    ?? new();
+    var analisesTipos = ViewBag.AnalisesTipos as List<AnaliseTipo> ?? new();
+    var amostrasTipos = ViewBag.AmostrasTipos as List<AmostraTipo> ?? new();
+    int? idCliente    = ViewBag.IdCliente;
+    int? idAnalise    = ViewBag.IdAnaliseTipo;
+    int? idAmostra    = ViewBag.IdAmostraTipo;
+    int? anoAmostra   = ViewBag.AnoAmostra;
+    string? nrAmostra = ViewBag.NrAmostra;
+    string? nrProp    = ViewBag.NrProposta;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-arrow-left-right me-2 text-primary"></i>Movimentação de Amostras</h5>
+        <small class="text-muted">Registre entradas e saídas de amostras pelo laboratório</small>
+    </div>
+</div>
+
+<!-- Painel de busca -->
+<div class="card mb-3">
+    <div class="card-header fw-semibold py-2">
+        <i class="bi bi-search me-1"></i>Localizar Amostras
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label form-label-sm">Cliente</label>
+                <select name="idCliente" class="form-select form-select-sm">
+                    <option value="">— Todos —</option>
+                    @foreach (var c in clientes)
+                    {
+                        <option value="@c.Id" selected="@(idCliente == c.Id)">@c.Nome</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">Tipo de Amostra</label>
+                <select name="idAmostraTipo" class="form-select form-select-sm">
+                    <option value="">— Todos —</option>
+                    @foreach (var t in amostrasTipos)
+                    {
+                        <option value="@t.Id" selected="@(idAmostra == t.Id)">@t.Descricao</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">Tipo de Análise</label>
+                <select name="idAnaliseTipo" class="form-select form-select-sm">
+                    <option value="">— Todos —</option>
+                    @foreach (var t in analisesTipos)
+                    {
+                        <option value="@t.Id" selected="@(idAnalise == t.Id)">@t.Descricao</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label form-label-sm">Nr. Amostra</label>
+                <input type="text" name="nrAmostra" class="form-control form-control-sm"
+                       value="@nrAmostra" placeholder="00001" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label form-label-sm">Nr. Proposta</label>
+                <input type="text" name="nrProposta" class="form-control form-control-sm"
+                       value="@nrProp" placeholder="001" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label form-label-sm">Ano</label>
+                <input type="number" name="anoAmostra" class="form-control form-control-sm"
+                       value="@anoAmostra" placeholder="@(DateTime.Now.Year % 100)" />
+            </div>
+            <div class="col-md-1 d-flex gap-1">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-search"></i>
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Resultado da busca -->
+@if (Model.Any())
+{
+    <div class="card">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Cliente</th>
+                        <th>Produto</th>
+                        <th>Nr. Lote</th>
+                        <th>Tipo Amostra</th>
+                        <th>Tipo Análise</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-end">Saldo</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold text-primary">@a.CodigoFormatado</td>
+                            <td class="small">@(a.Entidade?.Nome ?? "-")</td>
+                            <td class="small">@(a.Produto?.Descricao ?? "-")</td>
+                            <td class="text-muted small">@(a.NrLote ?? "-")</td>
+                            <td class="small">@(a.AmostraTipo?.Descricao ?? "-")</td>
+                            <td class="small">@(a.AnaliseTipo?.Descricao ?? "-")</td>
+                            <td class="text-center">
+                                @if (a.AmostraStatus != null)
+                                {
+                                    <span class="badge" style="background-color:@(a.AmostraStatus.Cor ?? "#6c757d")">
+                                        @a.AmostraStatus.Descricao
+                                    </span>
+                                }
+                                else { <span class="text-muted">-</span> }
+                            </td>
+                            <td class="text-end fw-semibold @(a.Saldo?.SaldoAtual > 0 ? "text-success" : "text-danger")">
+                                @(a.Saldo?.SaldoAtual.ToString("N2") ?? "0,00")
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Movimentar" asp-route-id="@a.Id"
+                                   class="btn btn-primary btn-sm">
+                                    <i class="bi bi-arrow-left-right me-1"></i>Movimentar
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-muted small">@Model.Count() amostra(s) encontrada(s)</div>
+    </div>
+}
+else if (ViewBag.IdCliente != null || ViewBag.IdAnaliseTipo != null || ViewBag.IdAmostraTipo != null
+      || ViewBag.AnoAmostra != null || !string.IsNullOrWhiteSpace(nrAmostra) || !string.IsNullOrWhiteSpace(nrProp))
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>Nenhuma amostra encontrada para os filtros informados.
+    </div>
+}
+else
+{
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-search fs-1 d-block mb-3 opacity-25"></i>
+        Use os filtros acima para localizar as amostras que deseja movimentar.
+    </div>
+}

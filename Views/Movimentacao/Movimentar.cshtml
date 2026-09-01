@@ -1,0 +1,296 @@
+@model LabControl.Models.Laboratorio.HistAmostra
+@{
+    ViewData["Title"] = $"Movimentar — {Model.CodigoFormatado}";
+    var saldo = Model.Saldo?.SaldoAtual ?? 0;
+    var movs = Model.Movimentacoes.OrderByDescending(m => m.DataMov).ToList();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0">
+            <i class="bi bi-arrow-left-right me-2 text-primary"></i>
+            Movimentar — <span class="text-primary">@Model.CodigoFormatado</span>
+        </h5>
+        <small class="text-muted">
+            @(Model.Entidade?.Nome ?? "—") &middot; @(Model.Produto?.Descricao ?? "—")
+            &nbsp;|&nbsp;
+            <strong>Saldo atual: <span id="saldo-atual" class="@(saldo > 0 ? "text-success" : "text-danger")">@saldo.ToString("N2")</span></strong>
+        </small>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Voltar
+    </a>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show py-2">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Sucesso"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show py-2">
+        <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Erro"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-3">
+
+    <!-- ─── Dados da Amostra (read-only) ───────────────────────────────────── -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-semibold py-2">
+                <i class="bi bi-info-circle me-1"></i>Dados da Amostra
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0 small">
+                    <dt class="col-6 text-muted">Código</dt>
+                    <dd class="col-6 fw-semibold text-primary">@Model.CodigoFormatado</dd>
+
+                    <dt class="col-6 text-muted">Cliente</dt>
+                    <dd class="col-6">@(Model.Entidade?.Nome ?? "-")</dd>
+
+                    <dt class="col-6 text-muted">Produto</dt>
+                    <dd class="col-6">@(Model.Produto?.Descricao ?? "-")</dd>
+
+                    <dt class="col-6 text-muted">Nr. Lote</dt>
+                    <dd class="col-6">@(Model.NrLote ?? "-")</dd>
+
+                    <dt class="col-6 text-muted">Fabricação</dt>
+                    <dd class="col-6">
+                        @{
+                            var fab = (Model.FabricacaoDia.HasValue || Model.FabricacaoMes.HasValue || Model.FabricacaoAno.HasValue)
+                                ? $"{Model.FabricacaoDia?.ToString() ?? "?"}/{Model.FabricacaoMes?.ToString() ?? "?"}/{Model.FabricacaoAno?.ToString() ?? "?"}"
+                                : "-";
+                        }
+                        @fab
+                    </dd>
+
+                    <dt class="col-6 text-muted">Validade</dt>
+                    <dd class="col-6">
+                        @{
+                            var val = (Model.ValidadeDia.HasValue || Model.ValidadeMes.HasValue || Model.ValidadeAno.HasValue)
+                                ? $"{Model.ValidadeDia?.ToString() ?? "?"}/{Model.ValidadeMes?.ToString() ?? "?"}/{Model.ValidadeAno?.ToString() ?? "?"}"
+                                : "-";
+                        }
+                        @val
+                    </dd>
+
+                    <dt class="col-6 text-muted">Tipo Amostra</dt>
+                    <dd class="col-6">@(Model.AmostraTipo?.Descricao ?? "-")</dd>
+
+                    <dt class="col-6 text-muted">Tipo Análise</dt>
+                    <dd class="col-6">@(Model.AnaliseTipo?.Descricao ?? "-")</dd>
+
+                    <dt class="col-6 text-muted">Status</dt>
+                    <dd class="col-6">
+                        @if (Model.AmostraStatus != null)
+                        {
+                            <span class="badge" style="background-color:@(Model.AmostraStatus.Cor ?? "#6c757d")">
+                                @Model.AmostraStatus.Descricao
+                            </span>
+                        }
+                        else { <span class="text-muted">-</span> }
+                    </dd>
+
+                    <dt class="col-6 text-muted fw-bold">Saldo Atual</dt>
+                    <dd class="col-6 fw-bold @(saldo > 0 ? "text-success" : "text-danger") fs-6">@saldo.ToString("N2")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Formulário de Nova Movimentação ────────────────────────────────── -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header fw-semibold py-2">
+                <i class="bi bi-plus-circle me-1 text-primary"></i>Nova Movimentação
+            </div>
+            <div class="card-body">
+                <form asp-action="SalvarMovimentacao" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="idHistAmostra" value="@Model.Id" />
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Data / Hora <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="dataMov" class="form-control form-control-sm"
+                                   value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-3 mt-1">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="entradaSaida"
+                                           id="rdEntrada" value="E" required />
+                                    <label class="form-check-label" for="rdEntrada">
+                                        <i class="bi bi-arrow-down-circle-fill text-success me-1"></i>Entrada
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="entradaSaida"
+                                           id="rdSaida" value="S" checked />
+                                    <label class="form-check-label" for="rdSaida">
+                                        <i class="bi bi-arrow-up-circle-fill text-warning me-1"></i>Saída
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Quantidade <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" name="qtde" class="form-control"
+                                       step="0.01" min="0.01" required
+                                       placeholder="0.00" id="inpQtde" />
+                                <span class="input-group-text text-muted small" id="saldo-info">
+                                    Saldo: @saldo.ToString("N2")
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Justificativa</label>
+                            <input type="text" name="justificativa" class="form-control form-control-sm"
+                                   placeholder="Motivo da movimentação (opcional)" maxlength="200" />
+                        </div>
+
+                        @if (Model.Testes.Any(t => t.IdParametroAnalise.HasValue))
+                        {
+                            <div class="col-12">
+                                <label class="form-label">Parâmetros desta Movimentação</label>
+                                <div class="border rounded p-2" style="max-height:180px;overflow-y:auto;">
+                                    @foreach (var teste in Model.Testes.Where(t => t.IdParametroAnalise.HasValue).DistinctBy(t => t.IdParametroAnalise))
+                                    {
+                                        var jaTemMov = Model.Movimentacoes.Any(m =>
+                                            m.Params.Any(p => p.IdParametroAnalise == teste.IdParametroAnalise));
+                                        <div class="form-check form-check-sm">
+                                            <input class="form-check-input" type="checkbox"
+                                                   name="parametrosIds" value="@teste.IdParametroAnalise"
+                                                   id="param_@teste.IdParametroAnalise" />
+                                            <label class="form-check-label small" for="param_@teste.IdParametroAnalise">
+                                                @(teste.ParametroAnalise?.Descricao ?? $"#{teste.IdParametroAnalise}")
+                                                @if (jaTemMov)
+                                                {
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle ms-1">já movimentado</span>
+                                                }
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                                <small class="text-muted">Selecione os parâmetros que serão testados nesta movimentação.</small>
+                            </div>
+                        }
+
+                        <div class="col-12 d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Registrar Movimentação
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Histórico de Movimentações ────────────────────────────────────── -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header fw-semibold py-2 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history me-1"></i>Histórico de Movimentações</span>
+                <span class="badge bg-secondary">@movs.Count registro(s)</span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data / Hora</th>
+                            <th class="text-center">Tipo</th>
+                            <th class="text-end">Quantidade</th>
+                            <th>Justificativa</th>
+                            <th>Parâmetros</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!movs.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-3">
+                                    <i class="bi bi-inbox me-2"></i>Nenhuma movimentação registrada.
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var m in movs)
+                        {
+                            <tr>
+                                <td class="text-muted small">@m.DataMov.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-center">
+                                    @if (m.EntradaSaida == "E")
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-arrow-down me-1"></i>Entrada</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-arrow-up me-1"></i>Saída</span>
+                                    }
+                                </td>
+                                <td class="text-end fw-semibold">@m.Qtde.ToString("N2")</td>
+                                <td class="small text-muted">@(m.Justificativa ?? "-")</td>
+                                <td class="small">
+                                    @if (m.Params.Any())
+                                    {
+                                        <span class="text-muted">@string.Join(", ", m.Params.Select(p => p.ParametroAnalise?.Descricao ?? $"#{p.IdParametroAnalise}"))</span>
+                                    }
+                                    else { <span class="text-muted">-</span> }
+                                </td>
+                                <td class="text-end">
+                                    <form asp-action="ExcluirMovimentacao" asp-route-id="@m.Id" method="post" style="display:inline"
+                                          onsubmit="return confirm('Excluir esta movimentação? O saldo será recalculado.')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+// Aviso visual quando quantidade de saída excede saldo
+const rdSaida = document.getElementById('rdSaida');
+const rdEntrada = document.getElementById('rdEntrada');
+const inpQtde = document.getElementById('inpQtde');
+const saldoAtual = @saldo;
+
+function validarQtde() {
+    if (!rdSaida || !rdSaida.checked) return;
+    const qtde = parseFloat(inpQtde.value) || 0;
+    if (qtde > saldoAtual) {
+        inpQtde.classList.add('is-invalid');
+        inpQtde.setCustomValidity(`Saldo insuficiente (${saldoAtual.toFixed(2)})`);
+    } else {
+        inpQtde.classList.remove('is-invalid');
+        inpQtde.setCustomValidity('');
+    }
+}
+
+inpQtde?.addEventListener('input', validarQtde);
+rdSaida?.addEventListener('change', validarQtde);
+rdEntrada?.addEventListener('change', () => {
+    inpQtde?.classList.remove('is-invalid');
+    inpQtde?.setCustomValidity('');
+});
+</script>
+}

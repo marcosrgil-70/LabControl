@@ -279,10 +279,13 @@ public class MovAmostra
     public string? Justificativa { get; set; }
 
     [Column("AMOSTRA_COMPLEMENTAR")]
-    public bool AmostraComplementar { get; set; } = false;
+    [StringLength(1)]
+    public string? AmostraComplementar { get; set; }
 
     [ForeignKey(nameof(IdHistAmostra))]
     public HistAmostra HistAmostra { get; set; } = null!;
+
+    public ICollection<MovAmostraParam> Params { get; set; } = [];
 }
 
 [Table("LAB_LOCAL_AMOSTRAS")]
@@ -298,9 +301,28 @@ public class LocalAmostra
     [Column("ID_EMPRESAS")]
     public int IdEmpresa { get; set; }
 
-    [Column("LOCAL")]
-    [StringLength(100)]
-    public string? Local { get; set; }
+    // 0 = Arquivada, 1 = Descartada (igual ao Delphi)
+    [Column("STATUS")]
+    public int Status { get; set; } = 0;
+
+    [Column("DT_HR_ARQUIVO")]
+    public DateTime? DtHrArquivo { get; set; }
+
+    [Column("NR_ARMARIO")]
+    [StringLength(30)]
+    public string? NrArmario { get; set; }
+
+    [Column("NR_PRATELEIRA")]
+    [StringLength(30)]
+    public string? NrPrateleira { get; set; }
+
+    [Column("NR_CAIXA")]
+    [StringLength(30)]
+    public string? NrCaixa { get; set; }
+
+    [Column("OBSERVACAO")]
+    [StringLength(200)]
+    public string? Observacao { get; set; }
 
     [Column("ID_FUNCIONARIO_DESCARTE")]
     public int? IdFuncionarioDescarte { get; set; }
@@ -310,4 +332,33 @@ public class LocalAmostra
 
     [ForeignKey(nameof(IdHistAmostra))]
     public HistAmostra HistAmostra { get; set; } = null!;
+}
+
+[Table("LAB_MOV_AMOSTRAS_PARAM")]
+public class MovAmostraParam
+{
+    [Key]
+    [Column("ID_LAB_MOV_AMOSTRAS_PARAM")]
+    public int Id { get; set; }
+
+    [Column("ID_EMPRESAS")]
+    public int IdEmpresa { get; set; }
+
+    [Column("ID_LAB_MOV_AMOSTRAS")]
+    public int IdMovAmostra { get; set; }
+
+    [Column("ID_LAB_HIST_AMOSTRAS_TESTES")]
+    public int? IdHistAmostraTeste { get; set; }
+
+    [Column("ID_LAB_PARAMETROS_ANALISES")]
+    public int? IdParametroAnalise { get; set; }
+
+    [ForeignKey(nameof(IdMovAmostra))]
+    public MovAmostra MovAmostra { get; set; } = null!;
+
+    [ForeignKey(nameof(IdParametroAnalise))]
+    public ParametroAnalise? ParametroAnalise { get; set; }
+
+    [ForeignKey(nameof(IdHistAmostraTeste))]
+    public HistAmostraTeste? HistAmostraTeste { get; set; }
 }

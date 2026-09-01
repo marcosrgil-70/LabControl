@@ -1,0 +1,143 @@
+@model IEnumerable<LabControl.Models.Laboratorio.HistAmostra>
+@using LabControl.Models.Entidades
+@using LabControl.Models.Laboratorio
+@{
+    ViewData["Title"] = "Localização de Amostras";
+    var clientes   = ViewBag.Clientes  as List<Entidade> ?? new();
+    var produtos   = ViewBag.Produtos  as List<Produto>  ?? new();
+    int? idCliente = ViewBag.IdCliente;
+    int? idProduto = ViewBag.IdProduto;
+    string? cod    = ViewBag.CodAmostra;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-0"><i class="bi bi-geo-alt me-2 text-primary"></i>Localização de Amostras</h5>
+        <small class="text-muted">Gerencie o arquivo físico e o descarte de amostras</small>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-3">
+    <div class="card-header fw-semibold py-2">
+        <i class="bi bi-search me-1"></i>Localizar Amostra
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label form-label-sm">Cliente</label>
+                <select name="idCliente" class="form-select form-select-sm">
+                    <option value="">— Todos —</option>
+                    @foreach (var c in clientes)
+                    {
+                        <option value="@c.Id" selected="@(idCliente == c.Id)">@c.Nome</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label form-label-sm">Produto</label>
+                <select name="idProduto" class="form-select form-select-sm">
+                    <option value="">— Todos —</option>
+                    @foreach (var p in produtos)
+                    {
+                        <option value="@p.Id" selected="@(idProduto == p.Id)">@p.Descricao</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label form-label-sm">Código / Nr. Lote</label>
+                <input type="text" name="codAmostra" class="form-control form-control-sm"
+                       value="@cod" placeholder="Ex: 01-00001" />
+            </div>
+            <div class="col-auto d-flex gap-1">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-search me-1"></i>Localizar
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x me-1"></i>Limpar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Resultados -->
+@if (Model.Any())
+{
+    <div class="card">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Cliente</th>
+                        <th>Produto</th>
+                        <th>Nr. Lote</th>
+                        <th class="text-center">Status Arquivo</th>
+                        <th>Local (Armário/Prat./Caixa)</th>
+                        <th class="text-center">Descarte</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model)
+                    {
+                        var loc = a.LocalizacaoAtual;
+                        <tr>
+                            <td class="fw-semibold text-primary">@a.CodigoFormatado</td>
+                            <td class="small">@(a.Entidade?.Nome ?? "-")</td>
+                            <td class="small">@(a.Produto?.Descricao ?? "-")</td>
+                            <td class="text-muted small">@(a.NrLote ?? "-")</td>
+                            <td class="text-center">
+                                @if (loc == null)
+                                {
+                                    <span class="badge bg-secondary">Não arquivada</span>
+                                }
+                                else if (loc.Status == 1)
+                                {
+                                    <span class="badge bg-danger">Descartada</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info text-dark">Arquivada</span>
+                                }
+                            </td>
+                            <td class="small text-muted">
+                                @if (loc != null)
+                                {
+                                    var partes = new[] { loc.NrArmario, loc.NrPrateleira, loc.NrCaixa }
+                                        .Where(p => !string.IsNullOrWhiteSpace(p));
+                                    @string.Join(" / ", partes)
+                                }
+                                else { @Html.Raw("—") }
+                            </td>
+                            <td class="text-center small text-muted">
+                                @(loc?.DtHrDescarte?.ToString("dd/MM/yyyy") ?? "-")
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Editar" asp-route-id="@a.Id"
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-geo-alt me-1"></i>Localização
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-muted small">@Model.Count() amostra(s)</div>
+    </div>
+}
+else if (idCliente.HasValue || idProduto.HasValue || !string.IsNullOrWhiteSpace(cod))
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>Nenhuma amostra encontrada.
+    </div>
+}
+else
+{
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-geo-alt fs-1 d-block mb-3 opacity-25"></i>
+        Use os filtros acima para localizar a amostra.
+    </div>
+}
