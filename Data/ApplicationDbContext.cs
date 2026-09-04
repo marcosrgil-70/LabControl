@@ -92,8 +92,28 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<PerfilPermissao>()
             .HasKey(pp => new { pp.IdPerfil, pp.IdPermissao });
 
+        modelBuilder.Entity<PerfilPermissao>()
+            .HasOne(pp => pp.Perfil)
+            .WithMany(p => p.Permissoes)
+            .HasForeignKey(pp => pp.IdPerfil);
+
+        modelBuilder.Entity<PerfilPermissao>()
+            .HasOne(pp => pp.Permissao)
+            .WithMany(p => p.PerfilPermissoes)
+            .HasForeignKey(pp => pp.IdPermissao);
+
         modelBuilder.Entity<UsuarioPerfil>()
             .HasKey(up => new { up.IdUsuario, up.IdPerfil });
+
+        modelBuilder.Entity<UsuarioPerfil>()
+            .HasOne(up => up.Usuario)
+            .WithMany(u => u.UsuariosPerfis)
+            .HasForeignKey(up => up.IdUsuario);
+
+        modelBuilder.Entity<UsuarioPerfil>()
+            .HasOne(up => up.Perfil)
+            .WithMany(p => p.UsuariosPerfis)
+            .HasForeignKey(up => up.IdPerfil);
 
         // Relacionamento 1-1 Entidade -> Observacao
         modelBuilder.Entity<EntidadeObservacao>()

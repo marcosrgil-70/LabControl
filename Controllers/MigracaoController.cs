@@ -329,6 +329,292 @@ public class MigracaoController : Controller
                 // (substitui ENTIDADES_TIPOS que não existia neste FDB)
                 log.Add(await InferirTipos(mysql, tx));
 
+                // ── Pré-limpar tabelas LAB (ordem inversa de FK) se solicitado ─
+                if (limpar)
+                {
+                    using var fkOff = mysql.CreateCommand();
+                    fkOff.Transaction = tx;
+                    fkOff.CommandText = "SET FOREIGN_KEY_CHECKS=0";
+                    await fkOff.ExecuteNonQueryAsync();
+
+                    foreach (var tLab in new[] {
+                        "LAB_LOCAL_AMOSTRAS","LAB_MOV_AMOSTRAS_PARAM","LAB_MOV_AMOSTRAS",
+                        "LAB_HIST_AMOSTRAS_SALDO","LAB_HIST_AMOSTRAS_TESTES","LAB_HIST_AMOSTRAS",
+                        "LAB_PROPOSTAS_ANALISES","LAB_PROPOSTAS",
+                        "LAB_PARAMETROS_ANALISES","PRODUTOS","CONDICOES_PAGTOS","PRAZOS" })
+                    {
+                        using var del = mysql.CreateCommand();
+                        del.Transaction = tx;
+                        del.CommandText = $"DELETE FROM {tLab}";
+                        try { await del.ExecuteNonQueryAsync(); } catch { }
+                    }
+
+                    using var fkOn = mysql.CreateCommand();
+                    fkOn.Transaction = tx;
+                    fkOn.CommandText = "SET FOREIGN_KEY_CHECKS=1";
+                    await fkOn.ExecuteNonQueryAsync();
+                }
+
+                // ── Condições de Pagamento ─────────────────────────────────────
+                log.Add(await Mig(fb, mysql, tx, "Condições Pagamento", "CONDICOES_PAGTOS",
+                    "SELECT ID_CONDICOES_PAGTOS,CODIGO,DESCRICAO FROM CONDICOES_PAGTOS", false,
+                    "INSERT IGNORE INTO CONDICOES_PAGTOS (ID_CONDICOES_PAGTOS,CODIGO,DESCRICAO) VALUES (@p0,@p1,@p2)",
+                    r => new object?[] { r.GetInt32(0), S(r,1), S(r,2) }));
+
+                // ── Prazos ────────────────────────────────────────────────────
+                log.Add(await Mig(fb, mysql, tx, "Prazos", "PRAZOS",
+                    "SELECT ID_PRAZOS,DESCRICAO,QTDE FROM PRAZOS", false,
+                    "INSERT IGNORE INTO PRAZOS (ID_PRAZOS,DESCRICAO,QTDE) VALUES (@p0,@p1,@p2)",
+                    r => new object?[] { r.GetInt32(0), S(r,1), r.IsDBNull(2)?0:r.GetInt32(2) }));
+
+                // ── Produtos ──────────────────────────────────────────────────
+                log.Add(await Mig(fb, mysql, tx, "Produtos", "PRODUTOS",
+                    "SELECT ID_PRODUTOS,CODIGO,DESCRICAO,ID_EMBALAGENS_TIPOS,ID_UNIDADES,QTDE_EMBALAGEM,INATIVO FROM PRODUTOS",
+                    false,
+                    "INSERT IGNORE INTO PRODUTOS (ID_PRODUTOS,CODIGO,DESCRICAO,ID_EMBALAGENS_TIPOS,ID_UNIDADES,QTDE_EMBALAGEM,INATIVO) VALUES (@p0,@p1,@p2,@p3,@p4,@p5,@p6)",
+                    r => new object?[] {
+                        r.GetInt32(0), S(r,1), S(r,2),
+                        r.IsDBNull(3)?null:(object)r.GetInt32(3),
+                        r.IsDBNull(4)?null:(object)r.GetInt32(4),
+                        r.IsDBNull(5)?null:(object)(decimal)r.GetDouble(5),
+                        (!r.IsDBNull(6) && r.GetString(6).Trim()=="S")?1:0
+                    }));
+
+                // ── Parâmetros de Análise ─────────────────────────────────────
+                log.Add(await Mig(fb, mysql, tx, "Parâmetros Análises", "LAB_PARAMETROS_ANALISES",
+                    "SELECT ID_LAB_PARAMETROS_ANALISES,DESCRICAO,ID_ANALISES_TIPO,VR_UNITARIO,DESC_REDUZIDA,AUDITADO,ID_ANALISES_METODOS FROM LAB_PARAMETROS_ANALISES",
+                    false,
+                    "INSERT IGNORE INTO LAB_PARAMETROS_ANALISES (ID_LAB_PARAMETROS_ANALISES,DESCRICAO,ID_ANALISES_TIPO,VR_UNITARIO,DESC_REDUZIDA,AUDITADO,ID_ANALISES_METODOS) VALUES (@p0,@p1,@p2,@p3,@p4,@p5,@p6)",
+                    r => new object?[] {
+                        r.GetInt32(0), S(r,1),
+                        r.IsDBNull(2)?null:(object)r.GetInt32(2),
+                        r.IsDBNull(3)?(object)0m:(decimal)r.GetDouble(3),
+                        N(r,4),
+                        (!r.IsDBNull(5) && r.GetInt32(5)!=0)?1:0,
+                        r.IsDBNull(6)?null:(object)r.GetInt32(6)
+                    }));
+
+                // ── Propostas ─────────────────────────────────────────────────
+                // ID_STATUS_PROPOSTAS no Firebird → ID_LAB_PROPOSTAS_STATUS no MySQL
+                log.Add(await Mig(fb, mysql, tx, "Propostas", "LAB_PROPOSTAS",
+                    @"SELECT ID_LAB_PROPOSTAS,ID_ENTIDADES,ID_EMPRESAS,COD_PROPOSTA,ANO_PROPOSTA,REV_PROPOSTA,
+                             DT_SOLICITACAO,DT_VALIDADE,ID_STATUS_PROPOSTAS,VR_TOTAL_PROPOSTA,PORC_DESCONTO,VR_DESCONTO,
+                             ID_ENTIDADES_FUNC,ID_CONDICOES_PAGTOS,DT_AUTORIZACAO,ID_MOEDAS,ID_ENTIDADES_COMERC,
+                             ID_ENT_END_LAUDO,ID_ENT_END_NF,DT_ENVIO_CLIENTE,ID_ENT_CONTATO_NF,
+                             ID_ENT_CONTATO_RESULTADO,ID_ENT_COBRANCA,ID_END_ENT_COBRANCA
+                      FROM LAB_PROPOSTAS", false,
+                    @"INSERT IGNORE INTO LAB_PROPOSTAS
+                        (ID_LAB_PROPOSTAS,ID_ENTIDADES,ID_EMPRESAS,COD_PROPOSTA,ANO_PROPOSTA,REV_PROPOSTA,
+                         DT_SOLICITACAO,DT_VALIDADE,ID_LAB_PROPOSTAS_STATUS,VR_TOTAL_PROPOSTA,PORC_DESCONTO,VR_DESCONTO,
+                         ID_ENTIDADES_FUNC,ID_CONDICOES_PAGTOS,DT_AUTORIZACAO,ID_MOEDAS,ID_ENTIDADES_COMERC,
+                         ID_ENT_END_LAUDO,ID_ENT_END_NF,DT_ENVIO_CLIENTE,ID_ENT_CONTATO_NF,
+                         ID_ENT_CONTATO_RESULTADO,ID_ENT_COBRANCA,ID_END_ENT_COBRANCA)
+                      VALUES (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15,@p16,@p17,@p18,@p19,@p20,@p21,@p22,@p23)",
+                    r => new object?[] {
+                        r.GetInt32(0), r.GetInt32(1), r.GetInt32(2), r.GetInt32(3), r.GetInt32(4), r.GetInt32(5),
+                        r.IsDBNull(6)?null:(object)r.GetDateTime(6),
+                        r.IsDBNull(7)?null:(object)r.GetDateTime(7),
+                        r.IsDBNull(8)?null:(object)r.GetInt32(8),
+                        r.IsDBNull(9)?(object)0m:(decimal)r.GetDouble(9),
+                        r.IsDBNull(10)?null:(object)(decimal)r.GetDouble(10),
+                        r.IsDBNull(11)?null:(object)(decimal)r.GetDouble(11),
+                        r.IsDBNull(12)?null:(object)r.GetInt32(12),
+                        r.IsDBNull(13)?null:(object)r.GetInt32(13),
+                        r.IsDBNull(14)?null:(object)r.GetDateTime(14),
+                        r.IsDBNull(15)?null:(object)r.GetInt32(15),
+                        r.IsDBNull(16)?null:(object)r.GetInt32(16),
+                        r.IsDBNull(17)?null:(object)r.GetInt32(17),
+                        r.IsDBNull(18)?null:(object)r.GetInt32(18),
+                        r.IsDBNull(19)?null:(object)r.GetDateTime(19),
+                        r.IsDBNull(20)?null:(object)r.GetInt32(20),
+                        r.IsDBNull(21)?null:(object)r.GetInt32(21),
+                        r.IsDBNull(22)?null:(object)r.GetInt32(22),
+                        r.IsDBNull(23)?null:(object)r.GetInt32(23)
+                    }));
+
+                // ── Propostas Análises (PRODANALISES + join PRODUTOS) ─────────
+                log.Add(await Mig(fb, mysql, tx, "Propostas Análises", "LAB_PROPOSTAS_ANALISES",
+                    @"SELECT pa.ID_LAB_PROPOSTAS_PRODANALISES, pa.ID_LAB_PROPOSTAS, pp.ID_PRODUTOS,
+                             pa.ID_ANALISES_METODOS, pa.ID_LAB_PARAMETROS_ANALISES, pa.ID_IDIOMAS,
+                             pa.QTDE_AMOSTRAS, pa.VR_UNITARIO, pa.VR_SUBTOTAL,
+                             pa.PORC_DESCONTO, pa.VR_DESCONTO, pa.VR_TOTAL, pa.ID_PRAZOS, pa.TIPO_DOCUMENTO
+                      FROM LAB_PROPOSTAS_PRODANALISES pa
+                      LEFT JOIN LAB_PROPOSTAS_PRODUTOS pp
+                             ON pp.ID_LAB_PROPOSTAS_PRODUTOS = pa.ID_LAB_PROPOSTAS_PRODUTOS
+                            AND pp.ID_LAB_PROPOSTAS = pa.ID_LAB_PROPOSTAS", false,
+                    @"INSERT IGNORE INTO LAB_PROPOSTAS_ANALISES
+                        (ID_LAB_PROPOSTAS_ANALISES,ID_LAB_PROPOSTAS,ID_PRODUTOS,
+                         ID_ANALISES_METODOS,ID_LAB_PARAMETROS_ANALISES,ID_IDIOMAS,
+                         QTDE_AMOSTRAS,VR_UNITARIO,VR_SUBTOTAL,
+                         PORC_DESCONTO,VR_DESCONTO,VR_TOTAL,ID_PRAZOS,TIPO_DOCUMENTO)
+                      VALUES (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13)",
+                    r => new object?[] {
+                        r.GetInt32(0), r.GetInt32(1),
+                        r.IsDBNull(2)?null:(object)r.GetInt32(2),
+                        r.IsDBNull(3)?null:(object)r.GetInt32(3),
+                        r.IsDBNull(4)?null:(object)r.GetInt32(4),
+                        r.IsDBNull(5)?null:(object)r.GetInt32(5),
+                        r.IsDBNull(6)?1:r.GetInt32(6),
+                        r.IsDBNull(7)?(object)0m:(decimal)r.GetDouble(7),
+                        r.IsDBNull(8)?null:(object)(decimal)r.GetDouble(8),
+                        r.IsDBNull(9)?null:(object)(decimal)r.GetDouble(9),
+                        r.IsDBNull(10)?null:(object)(decimal)r.GetDouble(10),
+                        r.IsDBNull(11)?(object)0m:(decimal)r.GetDouble(11),
+                        r.IsDBNull(12)?null:(object)r.GetInt32(12),
+                        N(r,13)
+                    }));
+
+                // ── Histórico de Amostras ─────────────────────────────────────
+                // Mapeamentos: COLETOR→NOME_COLETOR, DATAHORACOLETA→DT_HR_COLETA,
+                //              TEMPERATURA_VERFIFICACAO→TEMPERATURA_VERIFICACAO,
+                //              ACOMPANHA_PADRA_ANALITICO→ACOMPANHA_PADRAO_ANALITICO,
+                //              HR_ENTREGA TIMESTAMP→VARCHAR "HH:mm"
+                log.Add(await Mig(fb, mysql, tx, "Hist. Amostras", "LAB_HIST_AMOSTRAS",
+                    @"SELECT ID_LAB_HIST_AMOSTRAS,ID_AMOSTRAS_TIPO,COD_AMOSTRA,ID_ANALISES_TIPO,ANO_AMOSTRA,
+                             ID_ENTIDADES,NOME_CONTATO,ID_LAB_PROPOSTAS,DT_ENTREGA,HR_ENTREGA,
+                             LOCAL_RECEBIMENTO,ID_EMBALAGENS_TIPOS,QTDE_EMBALAGENS_ENTREGUE,ID_PRODUTOS,NR_LOTE,
+                             FABRICACAO_DIA,FABRICACAO_MES,FABRICACAO_ANO,VALIDADE_DIA,VALIDADE_MES,VALIDADE_ANO,
+                             NOTA_ROTULO,ESPECIE_AMOSTRA,ASPECTO_AMOSTRA,COR,OUTRAS_CARACTERISTICAS,
+                             QTDE_AMOSTRA_VERIFICACAO,TEMPERATURA_VERFIFICACAO,
+                             ACOMPANHA_FICHA_TECNICA,ACOMPANHA_PADRA_ANALITICO,ACOMPANHA_CA_CLIENTE,
+                             ENVIAR_OUTRO_LABORATORIO,QTDE_ENVIO_OUTRO_LABORATORIO,
+                             ID_AMOSTRAS_STATUS,ID_EMPRESAS,ID_ENTIDADES_FUNC_RESP,ID_ENTIDADES_FUNC_DIG,
+                             REVISAO,COLETOR,DATAHORACOLETA,TIPO_DOCUMENTO
+                      FROM LAB_HIST_AMOSTRAS", false,
+                    @"INSERT IGNORE INTO LAB_HIST_AMOSTRAS
+                        (ID_LAB_HIST_AMOSTRAS,ID_AMOSTRAS_TIPO,COD_AMOSTRA,ID_ANALISES_TIPO,ANO_AMOSTRA,
+                         ID_ENTIDADES,NOME_CONTATO,ID_LAB_PROPOSTAS,DT_ENTREGA,HR_ENTREGA,
+                         LOCAL_RECEBIMENTO,ID_EMBALAGENS_TIPOS,QTDE_EMBALAGENS_ENTREGUE,ID_PRODUTOS,NR_LOTE,
+                         FABRICACAO_DIA,FABRICACAO_MES,FABRICACAO_ANO,VALIDADE_DIA,VALIDADE_MES,VALIDADE_ANO,
+                         NOTA_ROTULO,ESPECIE_AMOSTRA,ASPECTO_AMOSTRA,COR,OUTRAS_CARACTERISTICAS,
+                         QTDE_AMOSTRA_VERIFICACAO,TEMPERATURA_VERIFICACAO,
+                         ACOMPANHA_FICHA_TECNICA,ACOMPANHA_PADRAO_ANALITICO,ACOMPANHA_CA_CLIENTE,
+                         ENVIAR_OUTRO_LABORATORIO,QTDE_ENVIO_OUTRO_LABORATORIO,
+                         ID_AMOSTRAS_STATUS,ID_EMPRESAS,ID_ENTIDADES_FUNC_RESP,ID_ENTIDADES_FUNC_DIG,
+                         REVISAO,NOME_COLETOR,DT_HR_COLETA,TIPO_DOCUMENTO)
+                      VALUES (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15,@p16,@p17,@p18,@p19,@p20,@p21,@p22,@p23,@p24,@p25,@p26,@p27,@p28,@p29,@p30,@p31,@p32,@p33,@p34,@p35,@p36,@p37,@p38,@p39,@p40)",
+                    r =>
+                    {
+                        var hrEntrega = r.IsDBNull(9) ? null : r.GetDateTime(9).ToString("HH:mm");
+                        return new object?[] {
+                            r.GetInt32(0), r.GetInt32(1), r.GetInt32(2),
+                            r.IsDBNull(3)?null:(object)r.GetInt32(3),
+                            r.GetInt32(4),
+                            r.IsDBNull(5)?null:(object)r.GetInt32(5),
+                            N(r,6),
+                            r.IsDBNull(7)?null:(object)r.GetInt32(7),
+                            r.IsDBNull(8)?null:(object)r.GetDateTime(8),
+                            hrEntrega,
+                            N(r,10),
+                            r.IsDBNull(11)?null:(object)r.GetInt32(11),
+                            r.IsDBNull(12)?(object)0m:(decimal)r.GetDouble(12),
+                            r.IsDBNull(13)?null:(object)r.GetInt32(13),
+                            N(r,14),
+                            r.IsDBNull(15)?null:(object)r.GetInt32(15),
+                            r.IsDBNull(16)?null:(object)r.GetInt32(16),
+                            r.IsDBNull(17)?null:(object)r.GetInt32(17),
+                            r.IsDBNull(18)?null:(object)r.GetInt32(18),
+                            r.IsDBNull(19)?null:(object)r.GetInt32(19),
+                            r.IsDBNull(20)?null:(object)r.GetInt32(20),
+                            N(r,21), N(r,22), N(r,23), N(r,24), N(r,25),
+                            r.IsDBNull(26)?null:(object)(decimal)r.GetDouble(26),
+                            r.IsDBNull(27)?null:(object)(decimal)r.GetDouble(27),
+                            B(r,28)?1:0, B(r,29)?1:0, B(r,30)?1:0,
+                            B(r,31)?1:0,
+                            r.IsDBNull(32)?null:(object)(decimal)r.GetDouble(32),
+                            r.IsDBNull(33)?null:(object)r.GetInt32(33),
+                            r.GetInt32(34),
+                            r.IsDBNull(35)?null:(object)r.GetInt32(35),
+                            r.IsDBNull(36)?null:(object)r.GetInt32(36),
+                            r.IsDBNull(37)?null:(object)r.GetInt32(37),
+                            N(r,38),
+                            r.IsDBNull(39)?null:(object)r.GetDateTime(39),
+                            N(r,40) ?? "BOLETIM"
+                        };
+                    }));
+
+                // ── Hist. Amostras Testes ─────────────────────────────────────
+                log.Add(await Mig(fb, mysql, tx, "Hist. Testes", "LAB_HIST_AMOSTRAS_TESTES",
+                    @"SELECT ID_LAB_HIST_AMOSTRAS_TESTES,ID_LAB_HIST_AMOSTRAS,ID_ANALISES_TIPO,
+                             ID_ANALISES_METODOS,ID_IDIOMAS,ID_PRAZOS,ID_ENTIDADES,ID_LAB_PARAMETROS_ANALISES
+                      FROM LAB_HIST_AMOSTRAS_TESTES", false,
+                    @"INSERT IGNORE INTO LAB_HIST_AMOSTRAS_TESTES
+                        (ID_LAB_HIST_AMOSTRAS_TESTES,ID_LAB_HIST_AMOSTRAS,ID_ANALISES_TIPO,
+                         ID_ANALISES_METODOS,ID_IDIOMAS,ID_PRAZOS,ID_ENTIDADES,ID_LAB_PARAMETROS_ANALISES)
+                      VALUES (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7)",
+                    r => new object?[] {
+                        r.GetInt32(0), r.GetInt32(1),
+                        r.IsDBNull(2)?null:(object)r.GetInt32(2),
+                        r.IsDBNull(3)?null:(object)r.GetInt32(3),
+                        r.IsDBNull(4)?null:(object)r.GetInt32(4),
+                        r.IsDBNull(5)?null:(object)r.GetInt32(5),
+                        r.IsDBNull(6)?null:(object)r.GetInt32(6),
+                        r.IsDBNull(7)?null:(object)r.GetInt32(7)
+                    }));
+
+                // ── Hist. Amostras Saldo (se existir no Firebird) ─────────────
+                if (await TabelaExisteAsync(fb, "LAB_HIST_AMOSTRAS_SALDO"))
+                {
+                    log.Add(await Mig(fb, mysql, tx, "Hist. Saldo", "LAB_HIST_AMOSTRAS_SALDO",
+                        "SELECT ID_LAB_HIST_AMOSTRAS,ID_EMPRESAS,SALDO_ATUAL,DATA_ATUALIZACAO FROM LAB_HIST_AMOSTRAS_SALDO",
+                        false,
+                        "INSERT IGNORE INTO LAB_HIST_AMOSTRAS_SALDO (ID_LAB_HIST_AMOSTRAS,ID_EMPRESAS,SALDO_ATUAL,DATA_ATUALIZACAO) VALUES (@p0,@p1,@p2,@p3)",
+                        r => new object?[] {
+                            r.GetInt32(0), r.GetInt32(1),
+                            r.IsDBNull(2)?(object)0m:(decimal)r.GetDouble(2),
+                            r.IsDBNull(3)?DateTime.Now:(object)r.GetDateTime(3)
+                        }));
+                }
+
+                // ── Movimentações de Amostras ─────────────────────────────────
+                log.Add(await Mig(fb, mysql, tx, "Movimentações", "LAB_MOV_AMOSTRAS",
+                    @"SELECT ID_LAB_MOV_AMOSTRAS,ID_EMPRESAS,ID_LAB_HIST_AMOSTRAS,DATA_MOV,
+                             QTDE,E_S,JUSTIFICATIVA,AMOSTRA_COMPLEMENTAR,ID_ENTIDADES_FUNC
+                      FROM LAB_MOV_AMOSTRAS", false,
+                    @"INSERT IGNORE INTO LAB_MOV_AMOSTRAS
+                        (ID_LAB_MOV_AMOSTRAS,ID_EMPRESAS,ID_LAB_HIST_AMOSTRAS,DATA_MOV,
+                         QTDE,E_S,JUSTIFICATIVA,AMOSTRA_COMPLEMENTAR,ID_ENTIDADES_FUNC)
+                      VALUES (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8)",
+                    r => new object?[] {
+                        r.GetInt32(0), r.GetInt32(1), r.GetInt32(2),
+                        r.IsDBNull(3)?DateTime.Now:(object)r.GetDateTime(3),
+                        r.IsDBNull(4)?(object)0m:(decimal)r.GetDouble(4),
+                        N(r,5)??"E", N(r,6), N(r,7),
+                        r.IsDBNull(8)?null:(object)r.GetInt32(8)
+                    }));
+
+                // ── Movimentações Parâmetros ──────────────────────────────────
+                log.Add(await Mig(fb, mysql, tx, "Mov. Parâmetros", "LAB_MOV_AMOSTRAS_PARAM",
+                    @"SELECT ID_LAB_MOV_AMOSTRAS_PARAM,ID_EMPRESAS,ID_LAB_MOV_AMOSTRAS,ID_LAB_HIST_AMOSTRAS_TESTES
+                      FROM LAB_MOV_AMOSTRAS_PARAM", false,
+                    @"INSERT IGNORE INTO LAB_MOV_AMOSTRAS_PARAM
+                        (ID_LAB_MOV_AMOSTRAS_PARAM,ID_EMPRESAS,ID_LAB_MOV_AMOSTRAS,
+                         ID_LAB_HIST_AMOSTRAS_TESTES,ID_LAB_PARAMETROS_ANALISES)
+                      VALUES (@p0,@p1,@p2,@p3,NULL)",
+                    r => new object?[] {
+                        r.GetInt32(0), r.GetInt32(1), r.GetInt32(2),
+                        r.IsDBNull(3)?null:(object)r.GetInt32(3)
+                    }));
+
+                // ── Localização de Amostras ───────────────────────────────────
+                // DT_HR_DESCATE (typo Firebird) → DT_HR_DESCARTE (MySQL)
+                log.Add(await Mig(fb, mysql, tx, "Localização Amostras", "LAB_LOCAL_AMOSTRAS",
+                    @"SELECT ID_LAB_LOCAL_AMOSTRAS,ID_LAB_HIST_AMOSTRAS,ID_EMPRESAS,STATUS,DT_HR_ARQUIVO,
+                             NR_ARMARIO,NR_PRATELEIRA,NR_CAIXA,OBSERVACAO,ID_FUNCIONARIO_DESCARTE,DT_HR_DESCATE
+                      FROM LAB_LOCAL_AMOSTRAS", false,
+                    @"INSERT IGNORE INTO LAB_LOCAL_AMOSTRAS
+                        (ID_LAB_LOCAL_AMOSTRAS,ID_LAB_HIST_AMOSTRAS,ID_EMPRESAS,STATUS,DT_HR_ARQUIVO,
+                         NR_ARMARIO,NR_PRATELEIRA,NR_CAIXA,OBSERVACAO,ID_FUNCIONARIO_DESCARTE,DT_HR_DESCARTE)
+                      VALUES (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10)",
+                    r => new object?[] {
+                        r.GetInt32(0), r.GetInt32(1), r.GetInt32(2),
+                        r.IsDBNull(3)?0:r.GetInt32(3),
+                        r.IsDBNull(4)?null:(object)r.GetDateTime(4),
+                        N(r,5), N(r,6), N(r,7), N(r,8),
+                        r.IsDBNull(9)?null:(object)r.GetInt32(9),
+                        r.IsDBNull(10)?null:(object)r.GetDateTime(10)
+                    }));
+
                 await tx.CommitAsync();
             }
             catch
