@@ -159,6 +159,11 @@ public class MigracaoController : Controller
                     "INSERT INTO CARGO_FUNCIONARIOS (ID_CARGO_FUNCIONARIOS,DESCRICAO) VALUES (@p0,@p1) ON DUPLICATE KEY UPDATE DESCRICAO=VALUES(DESCRICAO)",
                     r => new object?[] { r.GetInt32(0), S(r,1) }));
 
+                log.Add(await Mig(fb, mysql, tx, "Tipos Reg. Profissional", "TIPOS_REG_PROFISSIONAL",
+                    "SELECT ID_TIPOS_REG_PROFISSIONAL,DESCRICAO_REG_PROFISSIONAL FROM TIPOS_REG_PROFISSIONAL", limpar,
+                    "INSERT IGNORE INTO TIPOS_REG_PROFISSIONAL (ID_TIPOS_REG_PROFISSIONAL,DESCRICAO_REG_PROFISSIONAL) VALUES (@p0,@p1)",
+                    r => new object?[] { r.GetInt32(0), S(r,1) }));
+
                 log.Add(await Mig(fb, mysql, tx, "Moedas", "MOEDAS",
                     "SELECT ID_MOEDAS,DESCRICAO,SIGLA FROM MOEDAS", limpar,
                     "INSERT IGNORE INTO MOEDAS (ID_MOEDAS,DESCRICAO,SIGLA) VALUES (@p0,@p1,@p2)",
