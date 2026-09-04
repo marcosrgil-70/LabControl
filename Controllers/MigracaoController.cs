@@ -153,6 +153,22 @@ public class MigracaoController : Controller
             try
             {
                 // ── Tabelas de lookup ──────────────────────────────────────────
+
+                log.Add(await Mig(fb, mysql, tx, "Cargos Funcionários", "CARGO_FUNCIONARIOS",
+                    "SELECT ID_CARGO_FUNCIONARIOS,DESCRICAO FROM CARGO_FUNCIONARIOS", limpar,
+                    "INSERT INTO CARGO_FUNCIONARIOS (ID_CARGO_FUNCIONARIOS,DESCRICAO) VALUES (@p0,@p1) ON DUPLICATE KEY UPDATE DESCRICAO=VALUES(DESCRICAO)",
+                    r => new object?[] { r.GetInt32(0), S(r,1) }));
+
+                log.Add(await Mig(fb, mysql, tx, "Moedas", "MOEDAS",
+                    "SELECT ID_MOEDAS,DESCRICAO,SIGLA FROM MOEDAS", limpar,
+                    "INSERT IGNORE INTO MOEDAS (ID_MOEDAS,DESCRICAO,SIGLA) VALUES (@p0,@p1,@p2)",
+                    r => new object?[] { r.GetInt32(0), S(r,1), S(r,2) }));
+
+                log.Add(await Mig(fb, mysql, tx, "Propostas Status", "LAB_PROPOSTAS_STATUS",
+                    "SELECT ID_LAB_PROPOSTAS_STATUS,DESCRICAO,COR FROM LAB_PROPOSTAS_STATUS", limpar,
+                    "INSERT IGNORE INTO LAB_PROPOSTAS_STATUS (ID_LAB_PROPOSTAS_STATUS,DESCRICAO,COR) VALUES (@p0,@p1,@p2)",
+                    r => new object?[] { r.GetInt32(0), S(r,1), N(r,2) }));
+
                 log.Add(await Mig(fb, mysql, tx, "Amostras Status", "AMOSTRAS_STATUS",
                     "SELECT ID_AMOSTRAS_STATUS,DESCRICAO,COR FROM AMOSTRAS_STATUS", limpar,
                     "INSERT IGNORE INTO AMOSTRAS_STATUS (ID_AMOSTRAS_STATUS,DESCRICAO,COR) VALUES (@p0,@p1,@p2)",
@@ -211,7 +227,7 @@ public class MigracaoController : Controller
                 // ── Entidades (base) ───────────────────────────────────────────
                 log.Add(await Mig(fb, mysql, tx, "Entidades", "ENTIDADES",
                     "SELECT ID_ENTIDADES,CATEGORIA,DATA_CADASTRO,NOME,INATIVO FROM ENTIDADES", limpar,
-                    "INSERT IGNORE INTO ENTIDADES (ID_ENTIDADES,CATEGORIA,DATA_CADASTRO,NOME,INATIVO,TIPO_CLIENTE,TIPO_FORNECEDOR,TIPO_VENDEDOR,TIPO_FUNCIONARIO,TIPO_EMPRESA_USUARIA) VALUES (@p0,@p1,@p2,@p3,@p4,0,0,0,0,0)",
+                    "INSERT INTO ENTIDADES (ID_ENTIDADES,CATEGORIA,DATA_CADASTRO,NOME,INATIVO,TIPO_CLIENTE,TIPO_FORNECEDOR,TIPO_VENDEDOR,TIPO_FUNCIONARIO,TIPO_EMPRESA_USUARIA) VALUES (@p0,@p1,@p2,@p3,@p4,0,0,0,0,0) ON DUPLICATE KEY UPDATE NOME=VALUES(NOME),CATEGORIA=VALUES(CATEGORIA)",
                     r => new object?[] {
                         r.GetInt32(0), S(r,1),
                         r.IsDBNull(2) ? DateTime.Now : r.GetDateTime(2),
@@ -240,6 +256,12 @@ public class MigracaoController : Controller
                     log.Add(new MigResult { Tabela = "Tipos de Entidade", Inseridos = 0,
                         Detalhe = "Tabela não encontrada no banco original (tipos serão configurados manualmente)" });
                 }
+
+                // ── Empresas ───────────────────────────────────────────────────
+                log.Add(await Mig(fb, mysql, tx, "Empresas", "EMPRESAS",
+                    "SELECT ID_EMPRESAS,COD_EMPRESAS,ID_ENTIDADES FROM EMPRESAS", limpar,
+                    "INSERT INTO EMPRESAS (ID_EMPRESAS,COD_EMPRESAS,ID_ENTIDADES) VALUES (@p0,@p1,@p2) ON DUPLICATE KEY UPDATE COD_EMPRESAS=VALUES(COD_EMPRESAS),ID_ENTIDADES=VALUES(ID_ENTIDADES)",
+                    r => new object?[] { r.GetInt32(0), S(r,1), r.GetInt32(2) }));
 
                 // ── Pessoas Físicas ────────────────────────────────────────────
                 log.Add(await Mig(fb, mysql, tx, "Entidades PF", "ENTIDADES_PF",
@@ -314,13 +336,13 @@ public class MigracaoController : Controller
                 log.Add(await Mig(fb, mysql, tx, "Usuários", "USUARIO",
                     "SELECT USUCOD,USUNOM,USUADM FROM USUARIO",
                     limpar,
-                    "INSERT IGNORE INTO USUARIO (USUCOD,USUNOM,USUSEN,USUADM,INATIVO) VALUES (@p0,@p1,@p2,@p3,0)",
+                    "INSERT INTO USUARIO (USUCOD,USULOG,USUNOM,USUSEN,USUADM,INATIVO) VALUES (@p0,@p1,@p2,@p3,@p4,0) ON DUPLICATE KEY UPDATE USULOG=VALUES(USULOG),USUNOM=VALUES(USUNOM),USUADM=VALUES(USUADM)",
                     r =>
                     {
                         var nome  = S(r, 1);
                         var senha = Sha256(nome.ToLower()); // senha = nome em minúsculas
                         return new object?[] {
-                            r.GetInt32(0), nome, senha,
+                            r.GetInt32(0), nome, nome, senha,
                             (!r.IsDBNull(2) && r.GetInt32(2) != 0) ? 1 : 0
                         };
                     }));
