@@ -45,16 +45,16 @@ app.MapControllerRoute(
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<LabControl.Data.ApplicationDbContext>();
-    // Remove coluna FANTASIA da tabela ENTIDADES, caso exista (campo substituído por
-    // ENTIDADES_PJ.NOME_FANTASIA e ENTIDADES_PF.SOBRENOME)
+
+    // Garante que todas as tabelas do modelo existam (instalação nova)
+    await db.Database.EnsureCreatedAsync();
+
+    // Remove coluna FANTASIA da tabela ENTIDADES, caso exista
     try
     {
         await db.Database.ExecuteSqlRawAsync("ALTER TABLE ENTIDADES DROP COLUMN FANTASIA");
     }
-    catch (Exception ex) when (ex.Message.Contains("check that") || ex.Message.Contains("1091"))
-    {
-        // Coluna já não existe — ok
-    }
+    catch { /* coluna não existe ou já removida — ok */ }
 
     await db.Database.ExecuteSqlRawAsync(@"
         CREATE TABLE IF NOT EXISTS ENTIDADES_OBSERVACOES (
@@ -80,13 +80,15 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await db.Database.ExecuteSqlRawAsync(
-            "ALTER TABLE ENTIDADES_FUNCIONARIOS ADD COLUMN ID_CARGO_FUNCIONARIOS INT NULL, " +
-            "ADD FOREIGN KEY (ID_CARGO_FUNCIONARIOS) REFERENCES CARGO_FUNCIONARIOS(ID_CARGO_FUNCIONARIOS)");
+            "ALTER TABLE ENTIDADES_FUNCIONARIOS ADD COLUMN ID_CARGO_FUNCIONARIOS INT NULL");
     }
-    catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060"))
+    catch { /* coluna já existe — ok */ }
+    try
     {
-        // Coluna já existe — ok
+        await db.Database.ExecuteSqlRawAsync(
+            "ALTER TABLE ENTIDADES_FUNCIONARIOS ADD FOREIGN KEY (ID_CARGO_FUNCIONARIOS) REFERENCES CARGO_FUNCIONARIOS(ID_CARGO_FUNCIONARIOS)");
     }
+    catch { /* FK já existe — ok */ }
 
     await db.Database.ExecuteSqlRawAsync(@"
         CREATE TABLE IF NOT EXISTS ENTIDADES_FUNC_ASSINATURAS (
@@ -97,9 +99,9 @@ using (var scope = app.Services.CreateScope())
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     // ── Empresa padrão para instalações sem migração ──────────────────────────
-    var semEmpresas = await db.Database.ExecuteSqlRawAsync(@"
-        INSERT IGNORE INTO ENTIDADES (ID_ENTIDADES, CATEGORIA, ATIVO)
-        SELECT 1, 'J', 1 FROM DUAL
+    await db.Database.ExecuteSqlRawAsync(@"
+        INSERT IGNORE INTO ENTIDADES (ID_ENTIDADES, CATEGORIA, NOME, INATIVO, TIPO_EMPRESA_USUARIA, DATA_CADASTRO)
+        SELECT 1, 'J', 'Minha Empresa', 0, 1, NOW()
         WHERE NOT EXISTS (SELECT 1 FROM EMPRESAS LIMIT 1)");
 
     await db.Database.ExecuteSqlRawAsync(@"
@@ -120,15 +122,17 @@ using (var scope = app.Services.CreateScope())
     {
         await db.Database.ExecuteSqlRawAsync(
             "ALTER TABLE USUARIO ADD COLUMN USULOG VARCHAR(30) NULL AFTER USUCOD");
-        // Popula a partir do nome existente (compatibilidade com usuários migrados)
-        await db.Database.ExecuteSqlRawAsync(
-            "UPDATE USUARIO SET USULOG = USUNOM WHERE USULOG IS NULL OR USULOG = ''");
     }
-    catch (Exception ex) when (ex.Message.Contains("Duplicate column") || ex.Message.Contains("1060"))
-    {
-        await db.Database.ExecuteSqlRawAsync(
-            "UPDATE USUARIO SET USULOG = USUNOM WHERE USULOG IS NULL OR USULOG = ''");
-    }
+    catch { /* coluna já existe — ok */ }
+    // Popula USULOG a partir do nome existente (compatibilidade com usuários migrados)
+    await db.Database.ExecuteSqlRawAsync(
+        "UPDATE USUARIO SET USULOG = USUNOM WHERE USULOG IS NULL OR USULOG = ''");
+
+    // ── Usuário administrador padrão (instalação nova sem migração) ───────────
+    await db.Database.ExecuteSqlRawAsync(@"
+        INSERT IGNORE INTO USUARIO (USULOG, USUNOM, USUSEN, USUADM, INATIVO)
+        SELECT 'ADMINISTRADOR', 'Administrador', SHA2('administrador', 256), 1, 0
+        WHERE NOT EXISTS (SELECT 1 FROM USUARIO LIMIT 1)");
 
     await db.Database.ExecuteSqlRawAsync(@"
         CREATE TABLE IF NOT EXISTS PERMISSOES (
