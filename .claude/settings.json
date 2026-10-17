@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git show *)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet run *)",
+      "Bash(dotnet test *)",
+      "PowerShell(git status *)",
+      "PowerShell(git log *)",
+      "PowerShell(git diff *)",
+      "PowerShell(git show *)",
+      "PowerShell(dotnet build *)",
+      "PowerShell(dotnet run *)",
+      "PowerShell(dotnet test *)",
+      "PowerShell(& \"C:\\Program Files (x86)\\Firebird\\Firebird_2_5\\bin\\isql.exe\" *)"
+    ],
+    "ask": [
+      "Bash(mysqlsh *--file*)",
+      "PowerShell(*mysqlsh*--file*)"
+    ]
+  }
+}
