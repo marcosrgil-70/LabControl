@@ -2,6 +2,13 @@
 
 **Fase:** 1 · **Legado:** `un_Menu.pas` (MDI com `TAdvMainMenu`) · **Arquivo:** `Views/Shared/_Layout.cshtml`
 
+## Referências cruzadas
+- **Delphi:** `un_Menu.pas`/`.dfm` (TAdvMainMenu, MDI), `un_About.pas` (Sobre o sistema)
+- **Objetos do banco:** [`VW_LAB_TESTES_PENDENTES`](../banco/objetos/views/VW_LAB_TESTES_PENDENTES.md), [`VW_LAB_BOLETINS`](../banco/objetos/views/VW_LAB_BOLETINS.md), [`VW_LAB_AMOSTRAS`](../banco/objetos/views/VW_LAB_AMOSTRAS.md), [`VW_LAB_PROPOSTAS`](../banco/objetos/views/VW_LAB_PROPOSTAS.md), [`PERMISSOES`](../banco/objetos/tabelas/PERMISSOES.md)
+- **Processos:** [P02 Autenticação e permissões](../processos/P02-autenticacao-permissoes.md) · [P01 Multiempresa](../processos/P01-multiempresa.md)
+- **Regras de negócio:** [RN-02 Segurança](../regras/RN-02-seguranca.md)
+- **Plano:** [00-PLANO-EXECUCAO.md](../00-PLANO-EXECUCAO.md)
+
 ## Menu (espelha o Delphi, reorganizado)
 
 | Seção | Itens (rota) | Permissão |

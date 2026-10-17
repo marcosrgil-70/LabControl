@@ -4,6 +4,13 @@
 **Legado:** não existe no LabControl.exe — era o lançador externo `MAIS_Acesso` que chamava o EXE com `ParamStr(1)=funcionário, (2)=empresa, (3)=usuário`. Troca de empresa: menu *Utilitários → Ativar Empresa*.
 **Tabelas:** `USUARIOS`, `USUARIOS_EMPRESAS`, `EMPRESAS`, `USUARIOS_PERFIS`, `PERFIS_PERMISSOES`, `PERMISSOES`.
 
+## Referências cruzadas
+- **Delphi:** não existe no LabControl.exe (lançador externo `MAIS_Acesso`); `uAcesso.pas` só valida os parâmetros recebidos
+- **Objetos do banco:** [`USUARIOS`](../banco/objetos/tabelas/USUARIOS.md), [`USUARIOS_EMPRESAS`](../banco/objetos/tabelas/USUARIOS_EMPRESAS.md), [`EMPRESAS`](../banco/objetos/tabelas/EMPRESAS.md), [`USUARIOS_PERFIS`](../banco/objetos/tabelas/USUARIOS_PERFIS.md), [`PERFIS_PERMISSOES`](../banco/objetos/tabelas/PERFIS_PERMISSOES.md), [`PERMISSOES`](../banco/objetos/tabelas/PERMISSOES.md), [`AUDITORIA`](../banco/objetos/tabelas/AUDITORIA.md)
+- **Processos:** [P02 Autenticação e permissões](../processos/P02-autenticacao-permissoes.md) · [P01 Multiempresa](../processos/P01-multiempresa.md)
+- **Regras de negócio:** [RN-02 Segurança](../regras/RN-02-seguranca.md) · [RN-01 Gerais e multiempresa](../regras/RN-01-gerais-multiempresa.md)
+- **Plano:** [00-PLANO-EXECUCAO.md](../00-PLANO-EXECUCAO.md)
+
 ## Fluxo
 1. **Login**: campos `Login` (30) e `Senha`. Valida `ATIVO = 1`, `BLOQUEADO_ATE < agora`, senha via `PasswordHasher.VerifyHashedPassword`.
    - Falha: `TENTATIVAS_FALHAS + 1`; na 5ª, `BLOQUEADO_ATE = agora + 15 min`. Mensagem única "Usuário ou senha inválidos".

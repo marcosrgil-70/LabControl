@@ -4,6 +4,13 @@
 **Legado:** `un_CadBoletim.pas` (menu *Boletim*, form "Manutenção de Boletim") + `undm_Boletim.pas` + relatório `frxRboletin` (`Layout_ImpBoletim.fr3`). `un_Boletim.pas` é uma versão antiga não usada no menu.
 **Tabelas:** `LAB_BOLETIM_ANALISES` (cabeçalho + textos), `LAB_BOLETIM_PARAMETROS` (parâmetros escolhidos); views `VW_LAB_BOLETINS`, `VW_LAB_RESULTADOS`; funções `FN_OBS_METODOS`, `FN_ACREDITADO`; rotinas `SP_EMITIR_BOLETIM`, `SP_GERAR_REVISAO_BOLETIM`, `SP_EXCLUIR_REVISAO_BOLETIM`.
 
+## Referências cruzadas
+- **Delphi:** `LabControl/un_CadBoletim.pas` (1.278 linhas) + `undm_Boletim.pas` (503); `un_Boletim.pas` é versão antiga fora do menu
+- **Objetos do banco:** [`LAB_BOLETIM_ANALISES`](../banco/objetos/tabelas/LAB_BOLETIM_ANALISES.md), [`LAB_BOLETIM_PARAMETROS`](../banco/objetos/tabelas/LAB_BOLETIM_PARAMETROS.md), [`VW_LAB_BOLETINS`](../banco/objetos/views/VW_LAB_BOLETINS.md), [`VW_LAB_RESULTADOS`](../banco/objetos/views/VW_LAB_RESULTADOS.md), [`SP_EMITIR_BOLETIM`](../banco/objetos/rotinas/SP_EMITIR_BOLETIM.md), [`SP_GERAR_REVISAO_BOLETIM`](../banco/objetos/rotinas/SP_GERAR_REVISAO_BOLETIM.md), [`SP_EXCLUIR_REVISAO_BOLETIM`](../banco/objetos/rotinas/SP_EXCLUIR_REVISAO_BOLETIM.md), [`FN_OBS_METODOS`](../banco/objetos/rotinas/FN_OBS_METODOS.md), [`FN_ACREDITADO`](../banco/objetos/rotinas/FN_ACREDITADO.md), [`TG_BOLETIM_BI`](../banco/objetos/triggers/TG_BOLETIM_BI.md), [`TG_BOLETIM_BU`](../banco/objetos/triggers/TG_BOLETIM_BU.md), [`TG_BOLETIM_BD`](../banco/objetos/triggers/TG_BOLETIM_BD.md), [`TG_BOLPAR_BI`](../banco/objetos/triggers/TG_BOLPAR_BI.md)
+- **Processos:** [P16 Montagem do boletim](../processos/P16-montagem-boletim.md) · [P17 Emissão](../processos/P17-emissao-boletim.md) · [P18 Revisão de boletim](../processos/P18-revisao-boletim.md)
+- **Regras de negócio:** [RN-08 Boletim](../regras/RN-08-boletim.md)
+- **Plano:** [00-PLANO-EXECUCAO.md](../00-PLANO-EXECUCAO.md)
+
 ## 1. Cabeçalho (grupo "Amostra")
 | Campo | Coluna | Regra |
 |---|---|---|

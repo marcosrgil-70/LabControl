@@ -3,6 +3,13 @@
 **Fase:** 3 · **Rota:** `/ParametrosAnalise` · **Permissão:** `PARAMETROS_ANALISE.*` · **Tabela:** `LAB_PARAMETROS_ANALISES`
 **Legado:** `un_ParametrosAnalises.pas` (Código, Parâmetro, Valor unitário, Tipo de análise, Descrição reduzida, **INMETRO** (`AUDITADO`), Método, Descrição do método).
 
+## Referências cruzadas
+- **Delphi:** `LabControl/un_ParametrosAnalises.pas` (menu *Cadastros → Parâmetros para Análises*)
+- **Objetos do banco:** [`LAB_PARAMETROS_ANALISES`](../banco/objetos/tabelas/LAB_PARAMETROS_ANALISES.md), [`ANALISES_TIPO`](../banco/objetos/tabelas/ANALISES_TIPO.md), [`ANALISES_METODOS`](../banco/objetos/tabelas/ANALISES_METODOS.md), [`FN_ACREDITADO`](../banco/objetos/rotinas/FN_ACREDITADO.md), [`FN_OBS_METODOS`](../banco/objetos/rotinas/FN_OBS_METODOS.md)
+- **Processos:** [P16 Montagem do boletim](../processos/P16-montagem-boletim.md) · [P06 Valores da proposta](../processos/P06-valores-proposta.md)
+- **Regras de negócio:** [RN-03 Cadastros](../regras/RN-03-cadastros.md) · [RN-08 Boletim](../regras/RN-08-boletim.md)
+- **Plano:** [00-PLANO-EXECUCAO.md](../00-PLANO-EXECUCAO.md)
+
 ## Campos
 | Campo | Coluna | Regra / uso |
 |---|---|---|

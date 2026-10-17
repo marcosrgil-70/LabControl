@@ -4,6 +4,13 @@
 **Legado:** não havia tabela. Na proposta, o botão **Ped.Venda** (`Btn_PedVendaClick`) exigia **Data de Autorização** e gravava `ID_PEDIDOS_VENDAS = SP_GET_ULT_PED_VENDA` (sequência por empresa, **não anual**); a amostra copiava o número (`ID_LAB_PEDIDOS_VENDAS`) e o boletim o imprime (`PEDIDO_VENDA` 9 dígitos). Impressão: `frx_PedVenda`.
 **Tabelas:** `PEDIDOS_VENDA`, `PEDIDOS_VENDA_ITENS`; views `VW_PEDIDOS_VENDA_SALDO`, `VW_LAB_PROPOSTAS`; rotinas `SP_GERAR_PEDIDO_VENDA`, `SP_ATUALIZAR_PEDIDO_REVISAO`.
 
+## Referências cruzadas
+- **Delphi:** `Btn_PedVendaClick` de `un_Propostas.pas` + `frx_PedVenda`
+- **Objetos do banco:** [`PEDIDOS_VENDA`](../banco/objetos/tabelas/PEDIDOS_VENDA.md), [`PEDIDOS_VENDA_ITENS`](../banco/objetos/tabelas/PEDIDOS_VENDA_ITENS.md), [`VW_PEDIDOS_VENDA_SALDO`](../banco/objetos/views/VW_PEDIDOS_VENDA_SALDO.md), [`SP_GERAR_PEDIDO_VENDA`](../banco/objetos/rotinas/SP_GERAR_PEDIDO_VENDA.md), [`SP_ATUALIZAR_PEDIDO_REVISAO`](../banco/objetos/rotinas/SP_ATUALIZAR_PEDIDO_REVISAO.md), [`TG_PEDVEN_BI`](../banco/objetos/triggers/TG_PEDVEN_BI.md)
+- **Processos:** [P08 Pedido de venda](../processos/P08-pedido-venda.md)
+- **Regras de negócio:** [RN-04 Propostas e pedidos](../regras/RN-04-propostas-pedidos.md)
+- **Plano:** [00-PLANO-EXECUCAO.md](../00-PLANO-EXECUCAO.md)
+
 ## Gerar pedido (a partir da proposta)
 Modal aberto pelo botão "Gerar Pedido" da T20 ou pela própria T21 ("Novo pedido" → escolher proposta):
 | Campo | Regra |

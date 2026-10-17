@@ -5,6 +5,13 @@
 **Legado:** `un_Propostas.pas` (2.138 linhas) + `undm_Propostas.pas`; relatórios `Layout_ImpProposta.fr3` e `Layout_ImpPedVenda.fr3`.
 **Tabelas:** `LAB_PROPOSTAS`, `LAB_PROPOSTAS_TEXTOS`, `LAB_PROPOSTAS_PRODUTOS`, `LAB_PROPOSTAS_PRODANALISES`; views `VW_LAB_PROPOSTAS`, `VW_LAB_PROPOSTAS_ANALISES`; rotinas `SP_GERAR_REVISAO_PROPOSTA`, `SP_RECALCULAR_PROPOSTA` (trigger), `SP_TROCAR_PRODUTO_PROPOSTA`.
 
+## Referências cruzadas
+- **Delphi:** `LabControl/un_Propostas.pas` (2.138 linhas) + `undm_Propostas.pas` (1.094) + `Layout_ImpProposta.fr3`
+- **Objetos do banco:** [`LAB_PROPOSTAS`](../banco/objetos/tabelas/LAB_PROPOSTAS.md), [`LAB_PROPOSTAS_TEXTOS`](../banco/objetos/tabelas/LAB_PROPOSTAS_TEXTOS.md), [`LAB_PROPOSTAS_PRODUTOS`](../banco/objetos/tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`LAB_PROPOSTAS_PRODANALISES`](../banco/objetos/tabelas/LAB_PROPOSTAS_PRODANALISES.md), [`VW_LAB_PROPOSTAS`](../banco/objetos/views/VW_LAB_PROPOSTAS.md), [`VW_LAB_PROPOSTAS_ANALISES`](../banco/objetos/views/VW_LAB_PROPOSTAS_ANALISES.md), [`SP_GERAR_REVISAO_PROPOSTA`](../banco/objetos/rotinas/SP_GERAR_REVISAO_PROPOSTA.md), [`SP_RECALCULAR_PROPOSTA`](../banco/objetos/rotinas/SP_RECALCULAR_PROPOSTA.md), [`SP_TROCAR_PRODUTO_PROPOSTA`](../banco/objetos/rotinas/SP_TROCAR_PRODUTO_PROPOSTA.md), [`TG_PROPOSTAS_BI`](../banco/objetos/triggers/TG_PROPOSTAS_BI.md), [`TG_PROPOSTAS_BU`](../banco/objetos/triggers/TG_PROPOSTAS_BU.md), [`TG_PRODAN_BI`](../banco/objetos/triggers/TG_PRODAN_BI.md), [`TG_PROPPROD_AU`](../banco/objetos/triggers/TG_PROPPROD_AU.md)
+- **Processos:** [P05 Ciclo da proposta](../processos/P05-ciclo-proposta.md) · [P06 Valores da proposta](../processos/P06-valores-proposta.md) · [P07 Revisão da proposta](../processos/P07-revisao-proposta.md) · [P08 Pedido de venda](../processos/P08-pedido-venda.md)
+- **Regras de negócio:** [RN-04 Propostas e pedidos](../regras/RN-04-propostas-pedidos.md)
+- **Plano:** [00-PLANO-EXECUCAO.md](../00-PLANO-EXECUCAO.md)
+
 ## 1. Cabeçalho — aba "Proposta"
 
 ### Grupo "Proposta nº" (Delphi `grp_1`)

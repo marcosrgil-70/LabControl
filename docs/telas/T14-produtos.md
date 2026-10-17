@@ -3,6 +3,13 @@
 **Fase:** 3 · **Rota:** `/Produtos` · **Permissão:** `PRODUTOS.*` · **Tabela:** `PRODUTOS`
 **Legado:** `Standards/un_Produtos.pas` (abas Principal, Dados Fiscais, Apresentação, Fornecedores, Fabricantes). Só a aba **Principal** foi usada (as tabelas das outras estão vazias). No laboratório, "produto" = **nome da amostra** do cliente (ex.: "QUEIJO MINAS").
 
+## Referências cruzadas
+- **Delphi:** `Standards/un_Produtos.pas` (1.144 linhas) + `unDM_Produtos.pas`
+- **Objetos do banco:** [`PRODUTOS`](../banco/objetos/tabelas/PRODUTOS.md), [`TG_PRODUTOS_BI`](../banco/objetos/triggers/TG_PRODUTOS_BI.md), [`SP_PROXIMO_NUMERO`](../banco/objetos/rotinas/SP_PROXIMO_NUMERO.md), [`SP_TROCAR_PRODUTO_PROPOSTA`](../banco/objetos/rotinas/SP_TROCAR_PRODUTO_PROPOSTA.md), [`UNIDADES`](../banco/objetos/tabelas/UNIDADES.md), [`EMBALAGENS_TIPOS`](../banco/objetos/tabelas/EMBALAGENS_TIPOS.md)
+- **Processos:** [P03 Numeração](../processos/P03-numeracao-documentos.md)
+- **Regras de negócio:** [RN-03 Cadastros](../regras/RN-03-cadastros.md)
+- **Plano:** [00-PLANO-EXECUCAO.md](../00-PLANO-EXECUCAO.md)
+
 ## Campos
 | Campo | Coluna | Regra |
 |---|---|---|

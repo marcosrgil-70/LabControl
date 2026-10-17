@@ -4,6 +4,13 @@
 **Legado:** `un_Resultados.pas` + `unDM_Resultados.pas` (grid `TDBCtrlGrid` com um "cartão" por parâmetro).
 **Tabelas:** `LAB_RESULTADOS_ANALISES` (cabeçalho: amostra + revisão), `LAB_RESULTADOS_PARAM` (1 linha por teste), `LAB_HIST_AMOSTRAS_TESTES`, `UNIDADES`, `LAB_TIPOS_RESULTADOS`; views `VW_LAB_RESULTADOS`, `VW_LAB_TESTES_PENDENTES`; rotinas `SP_GERAR_REVISAO_RESULTADO`, `SP_EXCLUIR_REVISAO_RESULTADO`; triggers `TG_RESULT_*`, `TG_RESPAR_*`.
 
+## Referências cruzadas
+- **Delphi:** `LabControl/un_Resultados.pas` (634 linhas) + `unDM_Resultados.pas`
+- **Objetos do banco:** [`LAB_RESULTADOS_ANALISES`](../banco/objetos/tabelas/LAB_RESULTADOS_ANALISES.md), [`LAB_RESULTADOS_PARAM`](../banco/objetos/tabelas/LAB_RESULTADOS_PARAM.md), [`LAB_HIST_AMOSTRAS_TESTES`](../banco/objetos/tabelas/LAB_HIST_AMOSTRAS_TESTES.md), [`VW_LAB_RESULTADOS`](../banco/objetos/views/VW_LAB_RESULTADOS.md), [`VW_LAB_TESTES_PENDENTES`](../banco/objetos/views/VW_LAB_TESTES_PENDENTES.md), [`SP_GERAR_REVISAO_RESULTADO`](../banco/objetos/rotinas/SP_GERAR_REVISAO_RESULTADO.md), [`SP_EXCLUIR_REVISAO_RESULTADO`](../banco/objetos/rotinas/SP_EXCLUIR_REVISAO_RESULTADO.md), [`FN_FORMATA_RESULTADO`](../banco/objetos/rotinas/FN_FORMATA_RESULTADO.md), [`TG_RESPAR_BI`](../banco/objetos/triggers/TG_RESPAR_BI.md), [`TG_RESPAR_BU`](../banco/objetos/triggers/TG_RESPAR_BU.md), [`TG_RESPAR_BD`](../banco/objetos/triggers/TG_RESPAR_BD.md), [`TG_RESULT_BD`](../banco/objetos/triggers/TG_RESULT_BD.md)
+- **Processos:** [P14 Lançamento de resultados](../processos/P14-lancamento-resultados.md) · [P15 Revisão de resultado](../processos/P15-revisao-resultado.md)
+- **Regras de negócio:** [RN-07 Resultados](../regras/RN-07-resultados.md)
+- **Plano:** [00-PLANO-EXECUCAO.md](../00-PLANO-EXECUCAO.md)
+
 ## 1. Cabeçalho (grupo "Amostra")
 | Campo | Regra |
 |---|---|

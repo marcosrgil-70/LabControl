@@ -4,6 +4,13 @@
 **Legado:** `Standards/un_Entidades.pas` + `undm_Entidades` (mesmo form para Clientes, Funcionários e Empresa, conforme `TipoCadEnt`).
 **Tabelas:** `ENTIDADES`, `ENTIDADES_ENDERECOS`, `ENTIDADES_FONES`, `ENTIDADES_EMAILS`. Views: `VW_CLIENTES`, `VW_ENTIDADES_ENDERECOS`.
 
+## Referências cruzadas
+- **Delphi:** `Standards/un_Entidades.pas` (1.475 linhas) + `undm_Entidades.pas` + `unfr_Entidades_Observacoes.pas`
+- **Objetos do banco:** [`ENTIDADES`](../banco/objetos/tabelas/ENTIDADES.md), [`ENTIDADES_ENDERECOS`](../banco/objetos/tabelas/ENTIDADES_ENDERECOS.md), [`ENTIDADES_FONES`](../banco/objetos/tabelas/ENTIDADES_FONES.md), [`ENTIDADES_EMAILS`](../banco/objetos/tabelas/ENTIDADES_EMAILS.md), [`VW_CLIENTES`](../banco/objetos/views/VW_CLIENTES.md), [`VW_ENTIDADES_ENDERECOS`](../banco/objetos/views/VW_ENTIDADES_ENDERECOS.md), [`TG_ENTEND_BI`](../banco/objetos/triggers/TG_ENTEND_BI.md), [`TG_ENTFON_BI`](../banco/objetos/triggers/TG_ENTFON_BI.md), [`TG_ENTEML_BI`](../banco/objetos/triggers/TG_ENTEML_BI.md)
+- **Processos:** [P01 Multiempresa](../processos/P01-multiempresa.md)
+- **Regras de negócio:** [RN-03 Cadastros](../regras/RN-03-cadastros.md)
+- **Plano:** [00-PLANO-EXECUCAO.md](../00-PLANO-EXECUCAO.md)
+
 ## Abas e campos (mesma estrutura do Delphi)
 
 ### Dados básicos

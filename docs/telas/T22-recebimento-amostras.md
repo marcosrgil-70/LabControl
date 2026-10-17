@@ -5,6 +5,13 @@
 **Tabelas:** `LAB_HIST_AMOSTRAS`, `LAB_HIST_AMOSTRAS_TESTES`, `LAB_MOV_AMOSTRAS` (entrada automática), `LAB_HIST_AMOSTRAS_SALDO`, `LAB_HIST_AMOSTRAS_LOG`; view `VW_LAB_AMOSTRAS`; rotinas `SP_AMOSTRA_GERAR_TESTES`, `SP_GERAR_REVISAO_AMOSTRA`; triggers `TG_AMOSTRAS_*`.
 **Pré-requisito:** usuário com profissional vinculado (T13); proposta do cliente (T20, versão mínima na fase 4).
 
+## Referências cruzadas
+- **Delphi:** `LabControl/un_MovHistAmostras.pas` (1.095 linhas) + `undm_HistAmostras.pas` + `Layout_ImpHistAmostra.fr3`
+- **Objetos do banco:** [`LAB_HIST_AMOSTRAS`](../banco/objetos/tabelas/LAB_HIST_AMOSTRAS.md), [`LAB_HIST_AMOSTRAS_TESTES`](../banco/objetos/tabelas/LAB_HIST_AMOSTRAS_TESTES.md), [`LAB_MOV_AMOSTRAS`](../banco/objetos/tabelas/LAB_MOV_AMOSTRAS.md), [`LAB_HIST_AMOSTRAS_SALDO`](../banco/objetos/tabelas/LAB_HIST_AMOSTRAS_SALDO.md), [`LAB_HIST_AMOSTRAS_LOG`](../banco/objetos/tabelas/LAB_HIST_AMOSTRAS_LOG.md), [`VW_LAB_AMOSTRAS`](../banco/objetos/views/VW_LAB_AMOSTRAS.md), [`SP_AMOSTRA_GERAR_TESTES`](../banco/objetos/rotinas/SP_AMOSTRA_GERAR_TESTES.md), [`SP_GERAR_REVISAO_AMOSTRA`](../banco/objetos/rotinas/SP_GERAR_REVISAO_AMOSTRA.md), [`SP_PROXIMO_NUMERO`](../banco/objetos/rotinas/SP_PROXIMO_NUMERO.md), [`FN_NR_AMOSTRA_ID`](../banco/objetos/rotinas/FN_NR_AMOSTRA_ID.md), [`TG_AMOSTRAS_BI`](../banco/objetos/triggers/TG_AMOSTRAS_BI.md), [`TG_AMOSTRAS_BU`](../banco/objetos/triggers/TG_AMOSTRAS_BU.md), [`TG_AMOSTRAS_BD`](../banco/objetos/triggers/TG_AMOSTRAS_BD.md), [`TG_AMOSTRAS_AI`](../banco/objetos/triggers/TG_AMOSTRAS_AI.md), [`TG_TESTES_BI`](../banco/objetos/triggers/TG_TESTES_BI.md)
+- **Processos:** [P04 Número da amostra](../processos/P04-numero-amostra-ano.md) · [P09 Recebimento](../processos/P09-recebimento-amostra.md) · [P10 Datas parciais](../processos/P10-datas-parciais.md) · [P11 Revisão da amostra](../processos/P11-revisao-amostra.md) · [P12 Estoque](../processos/P12-estoque-amostras.md)
+- **Regras de negócio:** [RN-05 Amostras](../regras/RN-05-amostras.md)
+- **Plano:** [00-PLANO-EXECUCAO.md](../00-PLANO-EXECUCAO.md)
+
 ## 1. Número da amostra — `TT-CCCCC-AA/YY [Rnn]` (junção de 3 códigos + ano)
 
 | Parte | Origem | Observação |
