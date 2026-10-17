@@ -3,6 +3,12 @@
 > **Leia este arquivo no início de toda sessão.** Ele diz onde paramos e o que vem a seguir.
 > Ao terminar uma tarefa: marque `[x]` aqui **e** no arquivo da fase, atualize o "Status" do MD da tela, a [matriz Delphi → C#](plano/MATRIZ-DELPHI-CSHARP.md) e registre no §8 (Diário).
 
+## ▶ PONTO DE RETORNO (pausa em 17/10/2026)
+- **Concluído:** análise + documentação completa (banco, telas, processos, regras, plano). Nada de código v2 iniciado.
+- **Próxima tarefa:** **Fase 0 → 0.1 Criar o banco `labcontrol_v2`** ([F0-fundacao](plano/F0-fundacao.md#01-criar-o-banco-labcontrol_v2)) — usar 🔵 Opus em ✋ modo padrão.
+- **Antes de começar:** ter a senha do `root` do MySQL local à mão (não fica no git) e fazer backup do banco `labcontrol` (v1).
+- Ao retomar, apague/atualize este bloco.
+
 ## 1. Ponto de partida (17/10/2026)
 
 - ✅ Análise do Firebird, das procedures e das telas Delphi concluída.
@@ -181,3 +187,4 @@ Status do MD da tela e a matriz Delphi → C#, e escreva uma linha no Diário (�
 |---|---|---|---|
 | 16/10/2026 | Análise | Análise completa do Firebird/Delphi, script MySQL v2 validado, MDs de banco, telas e este plano | Opus 5.5 |
 | 17/10/2026 | Documentação | Projeto unificado em `C:\Project\LabControl`; MDs de **cada objeto do banco** (138, gerados dos scripts + regras de negócio), **54 telas** (auxiliares, geografia, relatórios e telas de sistema separadas), **24 processos + 18 etapas de migração**, **catálogo de regras RN-01…RN-09**, plano detalhado por fase e matriz Delphi → C#. Achados novos no legado: relatório de parâmetros analisados com JOIN errado, faturamento duplicando pedidos de revisões, `ID_LAB_PROPOSTAS_STATUS_ENVCLI` nulo (data de envio nunca gravada), etiquetas EPL2 com Code 39, desfazer descarte sem voltar o status, pesquisa de amostras e combo do RE sem filtro de empresa | Opus 5.5 |
+| 17/10/2026 | Pausa | Ponto de retorno marcado no topo deste arquivo; próxima tarefa: 0.1 | Opus 5.5 |
