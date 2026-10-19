@@ -8,6 +8,7 @@
 ---
 
 ### 0.1 Criar o banco `labcontrol_v2`
+> ✅ **Concluída em 19/10/2026** — contagens conferem; roteiro `Scripts/v2/teste/roteiro_12_7.sql` 39/39 OK; v1 intacto (checksums); backup em `C:\Project\backup\labcontrol_v1_20261019.sql`.
 - **Passos:** (1) `mysqldump` do banco `labcontrol` atual (v1) como backup; (2) executar `01_schema.sql` → `05_seed.sql` em ordem com `mysqlsh --sql … --file`; (3) conferir 59 tabelas + 10 views, 8 funções, 19 procedures, 42 triggers, 109 permissões; (4) executar o roteiro do [doc 12 §7](../banco/12-PROCEDURES-REVISOES.md) num banco temporário.
 - **Arquivos:** nenhum (só banco).
 - **Aceite:** contagens conferem; roteiro 12 §7 100% ok; banco antigo intacto.

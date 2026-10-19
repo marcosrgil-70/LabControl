@@ -112,6 +112,9 @@ UPDATE ... SET ULTIMO_NUMERO = n;
 
 ## 7. Roteiro de teste (executado em 16/10/2026 — reexecutar após qualquer mudança)
 
+> Automatizado em [`Scripts/v2/teste/roteiro_12_7.sql`](../../Scripts/v2/teste/roteiro_12_7.sql) (39 verificações; termina com erro se alguma falhar). Rodar **só num banco temporário** criado pelos scripts 01..05. Última execução: **19/10/2026 — 39/39 OK**.
+> No passo 12 o script confere "último número + 1" (as recusas do passo 11 **não** consomem número): na execução de 19/10 a amostra retroativa recebeu a sequência **2**.
+
 1. `SP_INICIALIZAR_EMPRESA(1)` → status/idiomas/moedas/perfil criados.
 2. Proposta com 2 análises (100×2 e 50×2, 10% de desconto geral) → `NR_PROPOSTA = 000001/26-R0`, total das análises 300,00, desconto 30,00, total 270,00. ✅
 3. Produto com código vazio → `000001`. ✅

@@ -3,10 +3,10 @@
 > **Leia este arquivo no início de toda sessão.** Ele diz onde paramos e o que vem a seguir.
 > Ao terminar uma tarefa: marque `[x]` aqui **e** no arquivo da fase, atualize o "Status" do MD da tela, a [matriz Delphi → C#](plano/MATRIZ-DELPHI-CSHARP.md) e registre no §8 (Diário).
 
-## ▶ PONTO DE RETORNO (pausa em 17/10/2026)
-- **Concluído:** análise + documentação completa (banco, telas, processos, regras, plano). Nada de código v2 iniciado.
-- **Próxima tarefa:** **Fase 0 → 0.1 Criar o banco `labcontrol_v2`** ([F0-fundacao](plano/F0-fundacao.md#01-criar-o-banco-labcontrol_v2)) — usar 🔵 Opus em ✋ modo padrão.
-- **Antes de começar:** ter a senha do `root` do MySQL local à mão (não fica no git) e fazer backup do banco `labcontrol` (v1).
+## ▶ PONTO DE RETORNO (19/10/2026)
+- **Concluído:** 0.1 — banco `labcontrol_v2` criado no MySQL local; roteiro 12 §7 automatizado em `Scripts/v2/teste/roteiro_12_7.sql` (39/39 OK); backup do v1 em `C:\Project\backup\labcontrol_v1_20261019.sql`.
+- **Próxima tarefa:** **Fase 0 → 0.2 `Scripts/v2/README.md` + `recriar.ps1`** ([F0-fundacao](plano/F0-fundacao.md#02-scriptsv2readmemd--script-de-recriação)) — o `recriar.ps1` deve também criar o banco temporário (trocando `labcontrol_v2` no texto dos scripts) e rodar o roteiro.
+- ⚠️ A senha do `root` ainda está em `appsettings.json` (no git) — sai de lá na 0.3 (user-secrets).
 - Ao retomar, apague/atualize este bloco.
 
 ## 1. Ponto de partida (17/10/2026)
@@ -77,7 +77,7 @@ Caminho crítico: **0 → 1 → 2 → 3 → 4 → 5** (pedido do usuário). As f
 Legenda: 🔵 Opus · 🟢 Sonnet · ⚪ Haiku · 📐 Plan mode · ✋ modo padrão · ⚡ accept edits
 
 ### Fase 0 — Fundação 🔵 ✋ — [detalhes](plano/F0-fundacao.md)
-- [ ] 0.1 Criar o banco `labcontrol_v2` (backup do `labcontrol` antes) e rodar o roteiro do doc 12 §7.
+- [x] 0.1 Criar o banco `labcontrol_v2` (backup do `labcontrol` antes) e rodar o roteiro do doc 12 §7.
 - [ ] 0.2 `Scripts/v2/README.md` + `recriar.ps1`.
 - [ ] 0.3 📐 `LabDbContext` v2 (Fluent API por tabela, sem migrations); remover patches do `Program.cs`; segredos em user-secrets.
 - [ ] 0.4 `IEmpresaContexto` + Global Query Filter + preenchimento de `ID_EMPRESAS`.
@@ -188,3 +188,4 @@ Status do MD da tela e a matriz Delphi → C#, e escreva uma linha no Diário (�
 | 16/10/2026 | Análise | Análise completa do Firebird/Delphi, script MySQL v2 validado, MDs de banco, telas e este plano | Opus 5.5 |
 | 17/10/2026 | Documentação | Projeto unificado em `C:\Project\LabControl`; MDs de **cada objeto do banco** (138, gerados dos scripts + regras de negócio), **54 telas** (auxiliares, geografia, relatórios e telas de sistema separadas), **24 processos + 18 etapas de migração**, **catálogo de regras RN-01…RN-09**, plano detalhado por fase e matriz Delphi → C#. Achados novos no legado: relatório de parâmetros analisados com JOIN errado, faturamento duplicando pedidos de revisões, `ID_LAB_PROPOSTAS_STATUS_ENVCLI` nulo (data de envio nunca gravada), etiquetas EPL2 com Code 39, desfazer descarte sem voltar o status, pesquisa de amostras e combo do RE sem filtro de empresa | Opus 5.5 |
 | 17/10/2026 | Pausa | Ponto de retorno marcado no topo deste arquivo; próxima tarefa: 0.1 | Opus 5.5 |
+| 19/10/2026 | 0.1 | Backup do `labcontrol` (v1, 52 tabelas) em `C:\Project\backup\`; `labcontrol_v2` criado pelos scripts 01..05 — 59 tabelas, 10 views, 8 funções, 19 procedures, 42 triggers, 109 permissões; roteiro 12 §7 virou script reexecutável (`Scripts/v2/teste/roteiro_12_7.sql`, 39 verificações) e passou 39/39 num banco temporário (removido depois); checksums do v1 iguais antes/depois | Opus 5.5 |
