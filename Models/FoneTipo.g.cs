@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>FONES_TIPOS</c>
 /// </summary>
-public partial class FoneTipo
+public partial class FoneTipo : IPorEmpresa
 {
     public int IdFonesTipos { get; set; }
     public int IdEmpresas { get; set; }

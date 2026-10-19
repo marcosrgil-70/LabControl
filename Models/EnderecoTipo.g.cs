@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>ENDERECOS_TIPOS</c>
 /// </summary>
-public partial class EnderecoTipo
+public partial class EnderecoTipo : IPorEmpresa
 {
     public int IdEnderecosTipos { get; set; }
     public int IdEmpresas { get; set; }

@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>EMPRESAS_PARAMETROS</c> — 2. PARÂMETROS DA EMPRESA
 /// </summary>
-public partial class EmpresaParametros
+public partial class EmpresaParametros : IPorEmpresa
 {
     public int IdEmpresas { get; set; }
     /// <summary><c>ID_LAB_PROPOSTAS_STATUS_INICIAL</c> — Status da proposta nova (Em elaboração)</summary>

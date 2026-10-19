@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// View <c>VW_LAB_TESTES_PENDENTES</c> — Fila de análises: testes da última revisão da amostra sem resultado na última revisão do resultado
 /// </summary>
-public partial class VwLabTestePendente
+public partial class VwLabTestePendente : IFiltradoPorEmpresa
 {
     public int IdEmpresas { get; set; }
     public int IdLabHistAmostras { get; set; }

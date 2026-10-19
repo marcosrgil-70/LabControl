@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_HIST_AMOSTRAS_SALDO</c> — Saldo mantido por trigger de LAB_MOV_AMOSTRAS (tabela separada porque o MySQL não permite que a trigger de MOV altere LAB_HIST_AMOSTRAS dentro da trigger dela).
 /// </summary>
-public partial class LabHistAmostraSaldo
+public partial class LabHistAmostraSaldo : IPorEmpresa
 {
     public int IdLabHistAmostras { get; set; }
     public int IdEmpresas { get; set; }

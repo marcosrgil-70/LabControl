@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_HIST_AMOSTRAS_LOG</c> — Log de alterações da amostra (antiga LAB_HIST_AMOSTRAS_LOG com 45 colunas → JSON)
 /// </summary>
-public partial class LabHistAmostraLog
+public partial class LabHistAmostraLog : IPorEmpresa
 {
     public long IdLabHistAmostrasLog { get; set; }
     public int IdEmpresas { get; set; }

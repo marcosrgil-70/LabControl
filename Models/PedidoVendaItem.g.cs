@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>PEDIDOS_VENDA_ITENS</c>
 /// </summary>
-public partial class PedidoVendaItem
+public partial class PedidoVendaItem : IPorEmpresa
 {
     public int IdPedidosVendaItens { get; set; }
     public int IdEmpresas { get; set; }

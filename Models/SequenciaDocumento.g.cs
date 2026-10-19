@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>SEQUENCIAS_DOCUMENTOS</c> — Numeração de documentos por empresa/tipo/ano (substitui EMPRESAS_PARAMETROS.ULT_*, SYS_TABELAS_ID e os SP_GET_COD_*). ANO = 0 para numeração não anual.
 /// </summary>
-public partial class SequenciaDocumento
+public partial class SequenciaDocumento : IPorEmpresa
 {
     public int IdEmpresas { get; set; }
     /// <summary><c>TIPO_DOCUMENTO</c> — AMOSTRA, PROPOSTA, PEDIDO_VENDA, RELATORIO_ENSAIO, PRODUTO</summary>

@@ -23,6 +23,7 @@ Depois: `dotnet build` e `dotnet test tests/LabControl.Tests` (o teste `ModeloTe
 ## Convenções
 - Classe no **singular** (mapa `CLASSES` em `gerar.mjs`); DbSet = tabela em PascalCase (`LAB_HIST_AMOSTRAS` → `LabHistAmostra` / `db.LabHistAmostras`); propriedade = coluna em PascalCase (`ID_LAB_HIST_AMOSTRAS` → `IdLabHistAmostras`).
 - Navegação: FK com o mesmo nome da PK do alvo → nome da classe (`IdEmpresas` → `Empresa`); senão a coluna sem `Id` (`IdEntidadesFuncResp` → `EntidadesFuncResp`). Sem coleções inversas: adicione à mão quando uma tela precisar.
+- Multiempresa: tabela com `ID_EMPRESAS NOT NULL` → `: IPorEmpresa`; view ou `ID_EMPRESAS` anulável → `: IFiltradoPorEmpresa`; exceções em `SEM_FILTRO_EMPRESA` (ver [P01](../../docs/processos/P01-multiempresa.md)).
 - `ENUM` → enum de `Models/Enums.cs` (mapa `ENUMS`), valor do banco em `[ValorBanco]`.
 - `DEFAULT` constante → inicializador na propriedade (ex.: `UltimaRevisao = true`), para o EF não gravar o padrão do tipo.
 - Colunas preenchidas por trigger (mapa `GERADAS`):

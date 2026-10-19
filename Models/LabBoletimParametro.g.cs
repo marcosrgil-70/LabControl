@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_BOLETIM_PARAMETROS</c> — Parâmetros ESCOLHIDOS para o boletim (subconjunto dos resultados) com o texto congelado.
 /// </summary>
-public partial class LabBoletimParametro
+public partial class LabBoletimParametro : IPorEmpresa
 {
     public int IdLabBoletimParametros { get; set; }
     public int IdEmpresas { get; set; }

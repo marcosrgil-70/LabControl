@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>ENTIDADES</c> — 4. ENTIDADES (clientes, fornecedores, profissionais, comerciais)    ENTIDADES_PF e ENTIDADES_PJ do Firebird foram incorporadas aqui.
 /// </summary>
-public partial class Entidade
+public partial class Entidade : IPorEmpresa
 {
     public int IdEntidades { get; set; }
     public int IdEmpresas { get; set; }

@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// View <c>VW_LAB_BOLETINS</c> — Boletins (consulta da tela de Boletim)
 /// </summary>
-public partial class VwLabBoletim
+public partial class VwLabBoletim : IFiltradoPorEmpresa
 {
     public int IdEmpresas { get; set; }
     public int IdLabBoletimAnalises { get; set; }

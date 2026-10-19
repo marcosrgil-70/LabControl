@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_PROPOSTAS_TEXTOS</c> — Une LAB_PROPOSTAS_ITENS_SOL, _ITENS_ADQ, _OBSERVACAO, _CONTRATOS e _AUTORIZACAO (1:1)
 /// </summary>
-public partial class LabPropostaTextos
+public partial class LabPropostaTextos : IPorEmpresa
 {
     public int IdLabPropostas { get; set; }
     public int IdEmpresas { get; set; }

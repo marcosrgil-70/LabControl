@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_RELATORIO_ENSAIO</c> — Relatório de Ensaio (documento livre, alternativo ao boletim — TIPO_DOCUMENTO = RELATORIO)
 /// </summary>
-public partial class LabRelatorioEnsaio
+public partial class LabRelatorioEnsaio : IPorEmpresa
 {
     public int IdLabRelatorioEnsaio { get; set; }
     public int IdEmpresas { get; set; }

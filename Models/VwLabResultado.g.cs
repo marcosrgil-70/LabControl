@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// View <c>VW_LAB_RESULTADOS</c> — Resultados com textos prontos (base da tela de seleção de parâmetros do boletim — qry_Param do legado)
 /// </summary>
-public partial class VwLabResultado
+public partial class VwLabResultado : IFiltradoPorEmpresa
 {
     public int IdEmpresas { get; set; }
     public int IdLabResultadosAnalises { get; set; }

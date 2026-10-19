@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_MOV_AMOSTRAS</c> — Movimentação física (estoque) — sempre na amostra RAIZ (revisão 0)
 /// </summary>
-public partial class LabMovAmostra
+public partial class LabMovAmostra : IPorEmpresa
 {
     public int IdLabMovAmostras { get; set; }
     public int IdEmpresas { get; set; }

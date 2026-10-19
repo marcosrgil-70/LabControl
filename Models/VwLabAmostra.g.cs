@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// View <c>VW_LAB_AMOSTRAS</c> — Amostras (VW_LAB_HIST_AMOSTRA do legado, corrigida):   * sem INNER JOIN com testes (duplicava linhas: 6.287 linhas para 5.770 amostras)   * endereço de correspondência por LEFT JOIN (o legado exigia ID_ENDERECOS_TIPOS = 2)
 /// </summary>
-public partial class VwLabAmostra
+public partial class VwLabAmostra : IFiltradoPorEmpresa
 {
     public int IdEmpresas { get; set; }
     public int IdLabHistAmostras { get; set; }

@@ -13,12 +13,13 @@ public class GravacaoTests
     [Fact]
     public async Task Colunas_preenchidas_pelo_banco_sao_relidas_apos_gravar()
     {
-        await using var db = BancoTeste.NovoContexto();
+        var ativa = new EmpresaFixa();
+        await using var db = BancoTeste.NovoContexto(ativa);
         await using var tx = await db.Database.BeginTransactionAsync();
         var hoje = await db.Database.SqlQueryRaw<DateOnly>("SELECT CURDATE() AS Value").SingleAsync();
         var aa = (hoje.Year % 100).ToString("00");
 
-        // empresa: CRIADO_EM (default do banco) e ATIVA (default 1 → inicializador true)
+        // empresa (global): CRIADO_EM (default do banco) e ATIVA (default 1 → inicializador true)
         var emp = new Empresa { CodEmpresa = "T99", RazaoSocial = "EMPRESA DE TESTE" };
         db.Add(emp);
         await db.SaveChangesAsync();
@@ -26,6 +27,7 @@ public class GravacaoTests
         Assert.NotEqual(default, emp.CriadoEm);
         await db.Database.ExecuteSqlInterpolatedAsync($"CALL SP_INICIALIZAR_EMPRESA({emp.IdEmpresas})");
         var e = emp.IdEmpresas;
+        ativa.EmpresaId = e;
 
         // produto com código vazio → 000001 (TG_PRODUTOS_BI)
         var uni = new Unidade { IdEmpresas = e, Descricao = "UFC POR GRAMA", Sigla = "UFC/g" };

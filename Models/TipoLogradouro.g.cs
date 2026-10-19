@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>TIPOS_LOGRADOURO</c> — 3. CADASTROS AUXILIARES (todos por empresa)
 /// </summary>
-public partial class TipoLogradouro
+public partial class TipoLogradouro : IPorEmpresa
 {
     public int IdTiposLogradouro { get; set; }
     public int IdEmpresas { get; set; }

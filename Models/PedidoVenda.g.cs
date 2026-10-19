@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>PEDIDOS_VENDA</c> — 7. PEDIDOS DE VENDA (novo: no Firebird era só um número na proposta)
 /// </summary>
-public partial class PedidoVenda
+public partial class PedidoVenda : IPorEmpresa
 {
     public int IdPedidosVenda { get; set; }
     public int IdEmpresas { get; set; }

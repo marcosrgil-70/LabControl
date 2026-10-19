@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>AMOSTRAS_TIPO</c> — CODIGO compõe o número da amostra (TT de TT-CCCCC-AA/YY). Imutável após uso.
 /// </summary>
-public partial class AmostraTipo
+public partial class AmostraTipo : IPorEmpresa
 {
     public int IdAmostrasTipo { get; set; }
     public int IdEmpresas { get; set; }

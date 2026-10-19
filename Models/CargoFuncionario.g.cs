@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>CARGOS_FUNCIONARIOS</c>
 /// </summary>
-public partial class CargoFuncionario
+public partial class CargoFuncionario : IPorEmpresa
 {
     public int IdCargosFuncionarios { get; set; }
     public int IdEmpresas { get; set; }

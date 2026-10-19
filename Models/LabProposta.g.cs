@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_PROPOSTAS</c> — 6. PROPOSTAS
 /// </summary>
-public partial class LabProposta
+public partial class LabProposta : IPorEmpresa
 {
     public int IdLabPropostas { get; set; }
     public int IdEmpresas { get; set; }

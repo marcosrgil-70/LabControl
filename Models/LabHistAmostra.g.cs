@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_HIST_AMOSTRAS</c> — 8. AMOSTRAS (Histórico de Amostras / Recebimento) Número: TT-CCCCC-AA/YY [Rnn]   TT = AMOSTRAS_TIPO.CODIGO | CCCCC = COD_AMOSTRA (sequencial anual)   AA = ANALISES_TIPO.CODIGO | YY = ANO_AMOSTRA mod 100 | Rnn = REVISAO
 /// </summary>
-public partial class LabHistAmostra
+public partial class LabHistAmostra : IPorEmpresa
 {
     public int IdLabHistAmostras { get; set; }
     public int IdEmpresas { get; set; }

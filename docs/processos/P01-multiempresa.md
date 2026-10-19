@@ -29,16 +29,16 @@ Garantir que cada request trabalhe com **uma** empresa (a ativa) e que nenhum da
 - SQL cru (Dapper/`FromSql`) sempre com `WHERE ID_EMPRESAS = @empresa`.
 - Procedures recebem IDs; elas mesmas validam a empresa pelos registros (ex.: `PR_REVISAO_BOLETIM` "Resultado do boletim não encontrado nesta empresa").
 
-## Implementação no C#
-```csharp
-modelBuilder.Entity<Amostra>().HasQueryFilter(a => a.IdEmpresas == _empresa.EmpresaId);
-// ...gerado por convenção para toda entidade que implementa IPorEmpresa
-public override Task<int> SaveChangesAsync(...) {
-    foreach (var e in ChangeTracker.Entries<IPorEmpresa>().Where(x => x.State == EntityState.Added))
-        e.Entity.IdEmpresas = _empresa.EmpresaId;
-    ...
-}
-```
+## Implementação no C# (feita na tarefa 0.4)
+- `Infra/EmpresaContexto.cs`: `IEmpresaContexto` (scoped) lê as claims `LabClaims.*` (`EmpresaId`, `UsuarioId`, `ProfissionalId`, `AdminGlobal`). `TemPermissao()` entra na Fase 1 (T04).
+- O gerador marca as entidades: **`IPorEmpresa`** (tabela com `ID_EMPRESAS NOT NULL`: filtro + `SaveChanges`) ou **`IFiltradoPorEmpresa`** (views e `AUDITORIA`, cujo `ID_EMPRESAS` é anulável: só filtro).
+- `LabDbContext.OnModelCreating`: `e => (int?)e.IdEmpresas == EmpresaAtivaId` em toda `IFiltradoPorEmpresa`; filhos sem `ID_EMPRESAS` filtram pelo pai (`CONDICOES_PAGTOS_PARC` → `CONDICOES_PAGTOS`, `PERFIS_PERMISSOES` → `PERFIS`).
+- **Sem filtro** (lista `SEM_FILTRO_EMPRESA` do gerador): `EMPRESAS` (global) e os vínculos do usuário global `USUARIOS_EMPRESAS` / `USUARIOS_PERFIS` (o login lista as empresas do usuário; os serviços de login/usuários filtram explicitamente).
+- `SaveChanges`: inclusão recebe a empresa ativa (ou é recusada se vier outra); alteração/exclusão só de registro da empresa ativa e sem trocar `ID_EMPRESAS`; **sem empresa ativa nada é lido nem gravado** (fail-closed).
+- Alterar = carregar pela consulta filtrada e copiar os campos do formulário; **nunca** `db.Update(entidadeDoFormulario)` (o `UPDATE … WHERE ID = x` não leva a empresa).
+- `Infra/ExigirEmpresaMiddleware.cs`: usuário autenticado sem empresa → `/Conta/Empresa` (actions MVC, exceto o controller `Conta`).
+- Migração (F3) grava várias empresas: usará um contexto/modo próprio (a decidir na 3.5), nunca `?? 1`.
+- Testes: `tests/LabControl.Tests/MultiempresaTests.cs` (2 empresas) e `ExigirEmpresaMiddlewareTests.cs`.
 
 ## Cenários de teste
 - Usuário com acesso às empresas 1 e 2: dados criados na 1 não aparecem na 2 (listas, combos, views, relatórios, PDFs).

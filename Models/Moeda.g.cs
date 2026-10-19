@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>MOEDAS</c>
 /// </summary>
-public partial class Moeda
+public partial class Moeda : IPorEmpresa
 {
     public int IdMoedas { get; set; }
     public int IdEmpresas { get; set; }

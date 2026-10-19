@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// View <c>VW_PROFISSIONAIS</c> — Profissionais (VW_FUNCIONARIO do legado — que exigia ENTIDADES_PF e escondia inativos)
 /// </summary>
-public partial class VwProfissional
+public partial class VwProfissional : IFiltradoPorEmpresa
 {
     public int IdEmpresas { get; set; }
     public int IdEntidades { get; set; }

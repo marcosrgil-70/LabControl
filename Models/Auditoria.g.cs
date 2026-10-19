@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>AUDITORIA</c> — Auditoria genérica gravada pela aplicação (antes/depois em JSON)
 /// </summary>
-public partial class Auditoria
+public partial class Auditoria : IFiltradoPorEmpresa
 {
     public long IdAuditoria { get; set; }
     public int? IdEmpresas { get; set; }

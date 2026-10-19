@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>AMOSTRAS_STATUS</c>
 /// </summary>
-public partial class AmostraStatus
+public partial class AmostraStatus : IPorEmpresa
 {
     public int IdAmostrasStatus { get; set; }
     public int IdEmpresas { get; set; }

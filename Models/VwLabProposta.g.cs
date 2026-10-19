@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// View <c>VW_LAB_PROPOSTAS</c> — Propostas (VW_LAB_PROPOSTAS do legado — que fazia INNER JOIN na cobrança e sumia propostas)
 /// </summary>
-public partial class VwLabProposta
+public partial class VwLabProposta : IFiltradoPorEmpresa
 {
     public int IdEmpresas { get; set; }
     public int IdLabPropostas { get; set; }

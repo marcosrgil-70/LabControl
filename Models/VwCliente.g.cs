@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// View <c>VW_CLIENTES</c> — Clientes (VW_CLIENTES do legado, sem UNION PF/PJ)
 /// </summary>
-public partial class VwCliente
+public partial class VwCliente : IFiltradoPorEmpresa
 {
     public int IdEmpresas { get; set; }
     public int IdEntidades { get; set; }

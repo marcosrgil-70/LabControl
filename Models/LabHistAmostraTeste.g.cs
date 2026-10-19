@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_HIST_AMOSTRAS_TESTES</c> — Testes (parâmetros) solicitados para a amostra, copiados da proposta.
 /// </summary>
-public partial class LabHistAmostraTeste
+public partial class LabHistAmostraTeste : IPorEmpresa
 {
     public int IdLabHistAmostrasTestes { get; set; }
     public int IdEmpresas { get; set; }

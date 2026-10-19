@@ -33,6 +33,7 @@
 - **Esforço:** G · **Depende de:** 0.1
 
 ### 0.4 Contexto da empresa + Global Query Filter
+> ✅ **Concluída em 19/10/2026** — ver [P01 › Implementação](../processos/P01-multiempresa.md#implementação-no-c-feita-na-tarefa-04); aceite coberto por `tests/LabControl.Tests/MultiempresaTests.cs`.
 - **Passos:** `Infra/EmpresaContexto.cs` (`IEmpresaContexto` scoped lendo as claims); interface `IPorEmpresa`; `HasQueryFilter` por convenção para toda entidade com `ID_EMPRESAS` (exceto globais); preenchimento no `SaveChanges`; middleware que exige empresa nas rotas autenticadas.
 - **Aceite:** teste com 2 empresas: consultas não vazam; inclusão grava a empresa ativa; trocar `ID_EMPRESAS` num update é recusado.
 - **Esforço:** M · **Depende de:** 0.3

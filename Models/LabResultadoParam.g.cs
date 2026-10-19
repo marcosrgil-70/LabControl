@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_RESULTADOS_PARAM</c> — Um resultado por TESTE da amostra. TIPO_RESULTADO: 1 = numérico (símbolo + valor × 10^exp + unidade) | 0 = descritivo (LAB_TIPOS_RESULTADOS) Mesma regra para a ESPECIFICAÇÃO (*_ESPECIF).
 /// </summary>
-public partial class LabResultadoParam
+public partial class LabResultadoParam : IPorEmpresa
 {
     public int IdLabResultadosParam { get; set; }
     public int IdEmpresas { get; set; }

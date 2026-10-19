@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_PARAMETROS_ANALISES</c>
 /// </summary>
-public partial class LabParametroAnalise
+public partial class LabParametroAnalise : IPorEmpresa
 {
     public int IdLabParametrosAnalises { get; set; }
     public int IdEmpresas { get; set; }

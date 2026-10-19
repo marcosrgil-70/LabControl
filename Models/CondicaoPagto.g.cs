@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>CONDICOES_PAGTOS</c>
 /// </summary>
-public partial class CondicaoPagto
+public partial class CondicaoPagto : IPorEmpresa
 {
     public int IdCondicoesPagtos { get; set; }
     public int IdEmpresas { get; set; }

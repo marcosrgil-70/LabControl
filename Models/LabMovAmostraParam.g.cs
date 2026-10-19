@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_MOV_AMOSTRAS_PARAM</c> — Parâmetros (testes) a que se destina uma saída de amostra
 /// </summary>
-public partial class LabMovAmostraParam
+public partial class LabMovAmostraParam : IPorEmpresa
 {
     public int IdLabMovAmostrasParam { get; set; }
     public int IdEmpresas { get; set; }

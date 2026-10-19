@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>PERFIS</c>
 /// </summary>
-public partial class Perfil
+public partial class Perfil : IPorEmpresa
 {
     public int IdPerfis { get; set; }
     public int IdEmpresas { get; set; }

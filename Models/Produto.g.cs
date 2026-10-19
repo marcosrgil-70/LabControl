@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>PRODUTOS</c> — 5. PRODUTOS E PARÂMETROS DE ANÁLISE
 /// </summary>
-public partial class Produto
+public partial class Produto : IPorEmpresa
 {
     public int IdProdutos { get; set; }
     public int IdEmpresas { get; set; }

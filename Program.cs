@@ -1,4 +1,5 @@
 using LabControl.Data;
+using LabControl.Infra;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,8 @@ if (string.IsNullOrWhiteSpace(connectionString))
         "ConnectionStrings:LabControl não configurada. Rode: dotnet user-secrets set \"ConnectionStrings:LabControl\" " +
         "\"Server=localhost;Port=3306;Database=labcontrol_v2;User=root;Password=<senha>\"");
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IEmpresaContexto, EmpresaContexto>();
 builder.Services.AddDbContext<LabDbContext>(options =>
     options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 46))));
 
@@ -36,6 +39,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseSession();
 app.UseAuthorization();
+app.UseMiddleware<ExigirEmpresaMiddleware>();
 app.MapStaticAssets();
 
 app.MapControllerRoute(

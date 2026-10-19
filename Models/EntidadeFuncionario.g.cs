@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>ENTIDADES_FUNCIONARIOS</c> — Profissionais (funcionários): registro profissional, cargo e assinatura do laudo.
 /// </summary>
-public partial class EntidadeFuncionario
+public partial class EntidadeFuncionario : IPorEmpresa
 {
     public int IdEntidades { get; set; }
     public int IdEmpresas { get; set; }

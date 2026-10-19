@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// View <c>VW_ENTIDADES_ENDERECOS</c> — Endereços completos (substitui VW_ENDERECOS e VW_CLIENTES_ENDERECOS)
 /// </summary>
-public partial class VwEntidadeEndereco
+public partial class VwEntidadeEndereco : IFiltradoPorEmpresa
 {
     public int IdEmpresas { get; set; }
     public int IdEntidades { get; set; }

@@ -1,4 +1,5 @@
 using LabControl.Data;
+using LabControl.Infra;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -24,8 +25,18 @@ public static class BancoTeste
             ?? throw new InvalidOperationException("Defina LABCONTROL_TESTE_CS ou o user-secret ConnectionStrings:LabControl.");
     }
 
-    public static LabDbContext NovoContexto() =>
+    /// <summary>Contexto com a empresa ativa de <paramref name="empresa"/> (sem empresa se omitido).</summary>
+    public static LabDbContext NovoContexto(EmpresaFixa? empresa = null) =>
         new(new DbContextOptionsBuilder<LabDbContext>()
             .UseMySql(ConnectionString, new MySqlServerVersion(new Version(8, 0, 46)))
-            .Options);
+            .Options, empresa ?? new EmpresaFixa());
+}
+
+/// <summary>Empresa ativa controlada pelo teste (pode ser trocada no meio do teste).</summary>
+public sealed class EmpresaFixa : IEmpresaContexto
+{
+    public int? EmpresaId { get; set; }
+    public int? UsuarioId { get; set; }
+    public int? ProfissionalId { get; set; }
+    public bool AdminGlobal { get; set; }
 }

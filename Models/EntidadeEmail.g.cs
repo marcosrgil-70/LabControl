@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>ENTIDADES_EMAILS</c> — E-mails também são os CONTATOS usados na proposta (contato comercial, contato do resultado/laudo, contato da NF).
 /// </summary>
-public partial class EntidadeEmail
+public partial class EntidadeEmail : IPorEmpresa
 {
     public int IdEntidadesEmails { get; set; }
     public int IdEmpresas { get; set; }

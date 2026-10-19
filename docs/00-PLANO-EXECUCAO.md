@@ -4,8 +4,8 @@
 > Ao terminar uma tarefa: marque `[x]` aqui **e** no arquivo da fase, atualize o "Status" do MD da tela, a [matriz Delphi → C#](plano/MATRIZ-DELPHI-CSHARP.md) e registre no §8 (Diário).
 
 ## ▶ PONTO DE RETORNO (19/10/2026)
-- **Concluído:** 0.1, 0.2 e 0.3 — `labcontrol_v2` recriável (`.\Scripts\v2\recriar.ps1`); `LabDbContext` com 69 entidades geradas de `Scripts/v2` (`node tools/gerador-csharp/gerar.mjs`); código v1 em `Legacy/`; connection string em user-secrets; `dotnet test tests/LabControl.Tests` 3/3.
-- **Próxima tarefa:** **Fase 0 → 0.4 `IEmpresaContexto` + Global Query Filter** ([F0-fundacao](plano/F0-fundacao.md#04-contexto-da-empresa--global-query-filter)) — o gerador pode marcar as entidades com `ID_EMPRESAS` com `IPorEmpresa`.
+- **Concluído:** 0.1 a 0.4 — `labcontrol_v2` recriável (`.\Scripts\v2\recriar.ps1`); `LabDbContext` com 69 entidades geradas de `Scripts/v2` (`node tools/gerador-csharp/gerar.mjs`); filtro da empresa ativa + trava no `SaveChanges`; código v1 em `Legacy/`; connection string em user-secrets; `dotnet test tests/LabControl.Tests` 9/9.
+- **Próxima tarefa:** **Fase 0 → 0.5 Sessão MySQL, erros de negócio e chamadas de procedure** ([F0-fundacao](plano/F0-fundacao.md#05-sessão-mysql-erros-de-negócio-e-chamadas-de-procedure)).
 - ⚠️ A senha `root` do MySQL ficou no histórico do git (`appsettings.json` até a 0.3): trocar a senha do MySQL e atualizar o user-secret.
 - Ao retomar, apague/atualize este bloco.
 
@@ -80,7 +80,7 @@ Legenda: 🔵 Opus · 🟢 Sonnet · ⚪ Haiku · 📐 Plan mode · ✋ modo pad
 - [x] 0.1 Criar o banco `labcontrol_v2` (backup do `labcontrol` antes) e rodar o roteiro do doc 12 §7.
 - [x] 0.2 `Scripts/v2/README.md` + `recriar.ps1`.
 - [x] 0.3 📐 `LabDbContext` v2 (Fluent API por tabela, sem migrations); remover patches do `Program.cs`; segredos em user-secrets.
-- [ ] 0.4 `IEmpresaContexto` + Global Query Filter + preenchimento de `ID_EMPRESAS`.
+- [x] 0.4 `IEmpresaContexto` + Global Query Filter + preenchimento de `ID_EMPRESAS`.
 - [ ] 0.5 `SessaoMySqlInterceptor`, `Resultado<T>`, tradução de erros MySQL (45000, 1062, 1451, 1452), helpers de procedure.
 - [ ] 0.6 `AuditoriaInterceptor` + `IAuditoria`.
 - [ ] 0.7 Projeto xUnit com banco de teste recriado pelos scripts + roteiro 12 §7 automatizado.
@@ -191,3 +191,4 @@ Status do MD da tela e a matriz Delphi → C#, e escreva uma linha no Diário (�
 | 19/10/2026 | 0.1 | Backup do `labcontrol` (v1, 52 tabelas) em `C:\Project\backup\`; `labcontrol_v2` criado pelos scripts 01..05 — 59 tabelas, 10 views, 8 funções, 19 procedures, 42 triggers, 109 permissões; roteiro 12 §7 virou script reexecutável (`Scripts/v2/teste/roteiro_12_7.sql`, 39 verificações) e passou 39/39 num banco temporário (removido depois); checksums do v1 iguais antes/depois | Opus 5.5 |
 | 19/10/2026 | 0.2 | `Scripts/v2/recriar.ps1` (apaga/recria o banco trocando o nome nos scripts, para no 1º erro, confere contagens, recusa `labcontrol`; `-Teste` cria `labcontrol_teste_<id>`, roda o roteiro e apaga) + `Scripts/v2/README.md`. Testado: `-Teste` 39/39, recriação do `labcontrol_v2`, recusa do v1 e senha errada (exit 1) | Opus 5.5 |
 | 19/10/2026 | 0.3 | Gerador `tools/gerador-csharp` (reusa o parser do gerador de docs): 59 tabelas + 10 views → `Models/*.g.cs`, `Data/Configurations/*.g.cs`, DbSets; enums com `[ValorBanco]`; colunas de trigger `CalculadaPeloBanco`/`PreenchidaPeloBancoNaInclusao` (confirmado no MySQL strict: INSERT omitindo coluna NOT NULL preenchida pela trigger funciona). `Program.cs` sem `EnsureCreated`/patches; connection string em user-secrets; v1 movida para `Legacy/` (decisão do usuário); `tests/LabControl.Tests`: modelo × `information_schema`, leitura de cada DbSet, gravação com triggers — 3/3; build 0 avisos; Home 200 | Opus 5.5 |
+| 19/10/2026 | 0.4 | `IEmpresaContexto`/`EmpresaContexto` (claims `LabClaims`), interfaces `IPorEmpresa`/`IFiltradoPorEmpresa` marcadas pelo gerador, filtro global por convenção (+ filhos `CONDICOES_PAGTOS_PARC`/`PERFIS_PERMISSOES` pelo pai; sem filtro: `EMPRESAS`, `USUARIOS_EMPRESAS`, `USUARIOS_PERFIS`), `SaveChanges` grava/confere a empresa (fail-closed sem empresa), `ExigirEmpresaMiddleware`. Testes 9/9 (2 empresas: sem vazamento em tabelas, filhos e views; inclusão em outra empresa, troca de empresa e alteração/exclusão de outra empresa recusadas) | Opus 5.5 |

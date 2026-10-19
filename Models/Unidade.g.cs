@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>UNIDADES</c>
 /// </summary>
-public partial class Unidade
+public partial class Unidade : IPorEmpresa
 {
     public int IdUnidades { get; set; }
     public int IdEmpresas { get; set; }

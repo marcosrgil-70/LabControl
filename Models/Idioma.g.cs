@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>IDIOMAS</c>
 /// </summary>
-public partial class Idioma
+public partial class Idioma : IPorEmpresa
 {
     public int IdIdiomas { get; set; }
     public int IdEmpresas { get; set; }

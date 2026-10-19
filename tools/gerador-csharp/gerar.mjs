@@ -87,6 +87,10 @@ const GERADAS = {
   LAB_BOLETIM_ANALISES: { COD_BOLETIM: 'add', DT_BOLETIM: 'add' },
   LAB_RELATORIO_ENSAIO: { NR_RELATORIO: 'fixo', ANO_RELATORIO: 'fixo' },
 };
+// Têm ID_EMPRESAS mas NÃO recebem o filtro da empresa ativa (docs/processos/P01-multiempresa.md):
+// EMPRESAS é global; os vínculos do usuário (global) são lidos no login/admin para todas as empresas.
+const SEM_FILTRO_EMPRESA = new Set(['EMPRESAS', 'USUARIOS_EMPRESAS', 'USUARIOS_PERFIS']);
+
 // set pela trigger, mas deliberadamente normais (conferido à mão)
 const NORMAIS = new Set(['ID_EMPRESAS', 'ID_LAB_PROPOSTAS', 'ID_AMOSTRA_RAIZ', 'ID_AMOSTRA_ORIGEM', 'DT_ENVIO_CLIENTE',
   'VR_DESCONTO', 'ID_LAB_HIST_AMOSTRAS', 'VALIDADE_DIA', 'VALIDADE_MES', 'VALIDADE_ANO', 'FABRICACAO_DIA',
@@ -227,7 +231,10 @@ function classeCs(e) {
   L.push('/// <summary>');
   L.push(`/// ${e.view ? 'View' : 'Tabela'} <c>${e.tabela}</c>${e.comment ? ' — ' + xml(e.comment) : ''}`);
   L.push('/// </summary>');
-  L.push(`public partial class ${e.classe}`);
+  const emp = e.props.find(p => p.col === 'ID_EMPRESAS');
+  const iface = !emp || SEM_FILTRO_EMPRESA.has(e.tabela) ? ''
+    : !e.view && !emp.nullable ? ' : IPorEmpresa' : ' : IFiltradoPorEmpresa';
+  L.push(`public partial class ${e.classe}${iface}`);
   L.push('{');
   for (const p of e.props) {
     const notas = [];

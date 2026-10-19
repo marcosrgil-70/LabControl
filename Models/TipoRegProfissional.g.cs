@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>TIPOS_REG_PROFISSIONAL</c>
 /// </summary>
-public partial class TipoRegProfissional
+public partial class TipoRegProfissional : IPorEmpresa
 {
     public int IdTiposRegProfissional { get; set; }
     public int IdEmpresas { get; set; }

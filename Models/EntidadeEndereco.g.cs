@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>ENTIDADES_ENDERECOS</c> — Endereço desnormalizado (logradouro/bairro em texto + cidade IBGE). Substitui LOGRADOUROS/CIDADES_BAIRROS do Firebird (ver doc 11, decisão D-07).
 /// </summary>
-public partial class EntidadeEndereco
+public partial class EntidadeEndereco : IPorEmpresa
 {
     public int IdEntidadesEnderecos { get; set; }
     public int IdEmpresas { get; set; }

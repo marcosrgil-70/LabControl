@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>PRAZOS</c>
 /// </summary>
-public partial class Prazo
+public partial class Prazo : IPorEmpresa
 {
     public int IdPrazos { get; set; }
     public int IdEmpresas { get; set; }

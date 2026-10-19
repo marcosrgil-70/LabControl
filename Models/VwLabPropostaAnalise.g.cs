@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// View <c>VW_LAB_PROPOSTAS_ANALISES</c> — Itens de análise da proposta (grid de análises / impressão da proposta e do pedido)
 /// </summary>
-public partial class VwLabPropostaAnalise
+public partial class VwLabPropostaAnalise : IFiltradoPorEmpresa
 {
     public int IdEmpresas { get; set; }
     public int IdLabPropostas { get; set; }

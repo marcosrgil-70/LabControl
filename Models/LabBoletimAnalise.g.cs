@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// Tabela <c>LAB_BOLETIM_ANALISES</c> — 10. BOLETINS (LAB_BOLETIM_OBS incorporada ao cabeçalho)
 /// </summary>
-public partial class LabBoletimAnalise
+public partial class LabBoletimAnalise : IPorEmpresa
 {
     public int IdLabBoletimAnalises { get; set; }
     public int IdEmpresas { get; set; }

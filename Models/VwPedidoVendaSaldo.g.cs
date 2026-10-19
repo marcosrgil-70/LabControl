@@ -9,7 +9,7 @@ namespace LabControl.Models;
 /// <summary>
 /// View <c>VW_PEDIDOS_VENDA_SALDO</c> — Pedido de venda: contratado x recebido por item (casamento por proposta + ITEM, todas as revisões)
 /// </summary>
-public partial class VwPedidoVendaSaldo
+public partial class VwPedidoVendaSaldo : IFiltradoPorEmpresa
 {
     public int? IdEmpresas { get; set; }
     public int? IdPedidosVenda { get; set; }
