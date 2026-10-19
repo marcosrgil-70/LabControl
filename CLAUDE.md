@@ -25,4 +25,5 @@ Reescrita do sistema de laboratório **Delphi 7 + Firebird** (`C:\Project\Labora
 - Recriar banco: `.\Scripts\v2\recriar.ps1` (pede a senha; `-Teste` = banco temporário + roteiro do doc 12 §7). Detalhes em `Scripts/v2/README.md`.
 - Firebird legado: `"C:\Program Files (x86)\Firebird\Firebird_2_5\bin\isql.exe" -user SYSDBA -password masterkey localhost:C:\Project\Laboratorio\DBMAIS.FDB`.
 - Executar: `dotnet run` (ou `rodar.bat`). Connection string em user-secrets: `dotnet user-secrets set "ConnectionStrings:LabControl" "Server=localhost;Port=3306;Database=labcontrol_v2;User=root;Password=<senha>"`.
-- Gerar entidades: `node tools/gerador-csharp/gerar.mjs`. Testes: `dotnet test tests/LabControl.Tests`.
+- Gerar entidades: `node tools/gerador-csharp/gerar.mjs`. Testes: `dotnet test tests/LabControl.Tests` (usam o banco `labcontrol_teste`, recriado sozinho quando `Scripts/v2` muda — a 1ª execução leva ~3 min).
+- Serviços: retornar `Resultado`/`Resultado<T>`; procedures só por `Infra/Procedures.cs`; erros MySQL por `ErrosMySql` (ver `docs/processos/P22-erros-transacoes.md`).

@@ -14,7 +14,8 @@ public class ModeloTests
         await db.Database.SqlQueryRaw<ColunaBanco>(
                 "SELECT UPPER(TABLE_NAME) AS Tabela, COLUMN_NAME AS Coluna, DATA_TYPE AS Tipo, " +
                 "COLUMN_TYPE AS TipoCompleto, IS_NULLABLE = 'YES' AS Nula " +
-                "FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()")
+                "FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() " +
+                "AND TABLE_NAME NOT LIKE '\\_TESTE%'") // controle do banco de testes (BancoTeste)
             .ToListAsync();
 
     // tipo CLR (sem Nullable<>) esperado para cada DATA_TYPE do MySQL
@@ -37,7 +38,7 @@ public class ModeloTests
     [Fact]
     public async Task Cada_tabela_e_view_do_banco_tem_entidade_com_as_mesmas_colunas_e_tipos()
     {
-        await using var db = BancoTeste.NovoContexto();
+        await using var db = await BancoTeste.NovoContextoAsync();
         var colunas = await ColunasDoBancoAsync(db);
         var erros = new List<string>();
 
@@ -77,7 +78,7 @@ public class ModeloTests
     [Fact]
     public async Task Cada_DbSet_executa_consulta_no_banco()
     {
-        await using var db = BancoTeste.NovoContexto();
+        await using var db = await BancoTeste.NovoContextoAsync();
         var ler = typeof(ModeloTests).GetMethod(nameof(LerUmAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
         var erros = new List<string>();
         foreach (var e in db.Model.GetEntityTypes())

@@ -15,20 +15,33 @@
 | `SP_GERAR_REVISAO_*`, `SP_EXCLUIR_REVISAO_*`, `SP_EMITIR_BOLETIM`, `SP_GERAR_PEDIDO_VENDA`, `SP_ATUALIZAR_PEDIDO_REVISAO`, `SP_TROCAR_PRODUTO_PROPOSTA` | **própria** (`START TRANSACTION … COMMIT`, `ROLLBACK + RESIGNAL` no erro) | **fora** de `BeginTransaction` do EF — um `START TRANSACTION` dentro de outra faz commit implícito da transação da aplicação |
 | `SP_AMOSTRA_GERAR_TESTES`, `SP_RECALCULAR_PROPOSTA`, `SP_INICIALIZAR_EMPRESA`, `PR_*`, `SP_PROXIMO_NUMERO` | sem transação | podem (e às vezes devem) rodar dentro da transação da aplicação |
 
+## Implementação (tarefa 0.5)
+| Peça | Arquivo | O que faz |
+|---|---|---|
+| Conexão | `Data/ConexaoMySql.cs` | `options.Configurar(cs, empresa)`: força `AllowUserVariables=True` (sem ele o MySqlConnector trata `@LC_*` como parâmetro) e `ConnectionReset=True`; registra o interceptor |
+| Sessão | `Data/Interceptors/SessaoMySqlInterceptor.cs` | em toda abertura: `SET @LC_ID_USUARIOS = <usuário do request>, @LC_MIGRACAO = 0, @LC_PERMITE_RETROATIVO = 0, @LC_DESFAZENDO = NULL` |
+| Resultado | `Infra/Resultado.cs` | `Resultado.Ok()`, `Resultado.Ok(valor)`, `Resultado.Erro(msg, campo?)` (serve para `Resultado` e `Resultado<T>`) |
+| Erros | `Infra/ErrosMySql.cs` | `MensagemDeNegocio(ex)` (45000 = texto da trigger; 1062 por constraint; 1451; 1452), `CapturarAsync(...)` |
+| Procedures | `Infra/Procedures.cs` (scoped) | um método por `SP_*`; confere que a origem é da empresa ativa; usuário/profissional do contexto; lê OUT params; 45000 → `Resultado.Erro`; **recusa** procedure com transação própria dentro de `BeginTransaction`; `DefinirPermiteRetroativoAsync` só dentro de transação |
+| MVC | `Infra/ResultadoMvc.cs` | `this.AplicarNoFormulario(r)` (ModelState) / `this.AplicarNoTempData(r)`; `ErroNegocioFilter` global: erro de negócio que escapou vira mensagem (TempData + volta à página; AJAX → 422 `{ erro }`) em vez de página 500 |
+
+⚠️ Fora de transação o EF abre/fecha a conexão a cada comando, e cada abertura **zera** as variáveis: `SET @LC_PERMITE_RETROATIVO = 1` só vale dentro da transação da gravação.
+Testes: `tests/LabControl.Tests/SessaoErrosProceduresTests.cs`.
+
 ## Padrão de serviço (C#)
 ```csharp
 public async Task<Resultado<int>> IncluirAmostra(AmostraVM vm) {
     var erro = Validar(vm); if (erro != null) return Resultado.Erro(erro);       // validações de tela
+    var amostra = Mapear(vm);
     await using var tx = await db.Database.BeginTransactionAsync();
     try {
-        if (vm.RetroativaAutorizada) await db.Database.ExecuteSqlRawAsync("SET @LC_PERMITE_RETROATIVO = 1");
-        db.Amostras.Add(map(vm)); await db.SaveChangesAsync();                       // trigger numera
-        await db.Database.ExecuteSqlInterpolatedAsync($"CALL SP_AMOSTRA_GERAR_TESTES({id})");
+        if (vm.RetroativaAutorizada) await procedures.DefinirPermiteRetroativoAsync(true);
+        db.LabHistAmostras.Add(amostra); await db.SaveChangesAsync();               // trigger numera; EF relê NR/COD/ANO
+        var testes = await procedures.AmostraGerarTestesAsync(amostra.IdLabHistAmostras);
+        if (!testes.Sucesso) { await tx.RollbackAsync(); return Resultado.Erro(testes.Mensagem!); }
         await tx.CommitAsync();
-    } catch (MySqlException ex) when (ex.SqlState == "45000") { await tx.RollbackAsync(); return Resultado.Erro(ex.Message); }
-    finally { await db.Database.ExecuteSqlRawAsync("SET @LC_PERMITE_RETROATIVO = 0"); }
-    await db.Entry(amostra).ReloadAsync();                                         // número gerado pelo banco
-    return Resultado.Ok(amostra.Id);
+    } catch (Exception ex) when (ErrosMySql.MensagemDeNegocio(ex) is { } msg) { await tx.RollbackAsync(); return Resultado.Erro(msg); }
+    return Resultado.Ok(amostra.IdLabHistAmostras);
 }
 ```
 

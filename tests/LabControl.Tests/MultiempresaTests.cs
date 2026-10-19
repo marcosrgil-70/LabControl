@@ -13,7 +13,7 @@ public class MultiempresaTests
     public async Task Duas_empresas_nao_se_enxergam_e_nao_gravam_uma_na_outra()
     {
         var ativa = new EmpresaFixa();
-        await using var db = BancoTeste.NovoContexto(ativa);
+        await using var db = await BancoTeste.NovoContextoAsync(ativa);
         await using var tx = await db.Database.BeginTransactionAsync();
 
         // empresas são globais: criadas sem empresa ativa

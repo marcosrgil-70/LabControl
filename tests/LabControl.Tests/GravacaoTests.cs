@@ -14,7 +14,7 @@ public class GravacaoTests
     public async Task Colunas_preenchidas_pelo_banco_sao_relidas_apos_gravar()
     {
         var ativa = new EmpresaFixa();
-        await using var db = BancoTeste.NovoContexto(ativa);
+        await using var db = await BancoTeste.NovoContextoAsync(ativa);
         await using var tx = await db.Database.BeginTransactionAsync();
         var hoje = await db.Database.SqlQueryRaw<DateOnly>("SELECT CURDATE() AS Value").SingleAsync();
         var aa = (hoje.Year % 100).ToString("00");

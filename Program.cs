@@ -1,10 +1,13 @@
 using LabControl.Data;
 using LabControl.Infra;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    // erro de negócio do MySQL (45000/1062/1451/1452) que escapar do serviço vira mensagem, não página 500
+    options.Filters.Add<ErroNegocioFilter>();
+});
 
 // MySQL v2 via EF Core (Pomelo). O schema é de Scripts/v2/*.sql: sem migrations, sem EnsureCreated.
 // A connection string fica em user-secrets (ver Scripts/v2/README.md), nunca no appsettings.json.
@@ -16,8 +19,10 @@ if (string.IsNullOrWhiteSpace(connectionString))
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IEmpresaContexto, EmpresaContexto>();
-builder.Services.AddDbContext<LabDbContext>(options =>
-    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 46))));
+// interceptor de sessão MySQL (@LC_*) por request: recebe o IEmpresaContexto do escopo
+builder.Services.AddDbContext<LabDbContext>((sp, options) =>
+    options.Configurar(connectionString, sp.GetRequiredService<IEmpresaContexto>()));
+builder.Services.AddScoped<Procedures>();
 
 // Sessão: ainda lida pelo _Layout (nome da empresa/usuário). Sai na Fase 1 (cookie authentication).
 builder.Services.AddSession(options =>

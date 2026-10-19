@@ -39,6 +39,7 @@
 - **Esforço:** M · **Depende de:** 0.3
 
 ### 0.5 Sessão MySQL, erros de negócio e chamadas de procedure
+> ✅ **Concluída em 19/10/2026** — ver [P22 › Implementação](../processos/P22-erros-transacoes.md#implementação-tarefa-05); aceite em `tests/LabControl.Tests/SessaoErrosProceduresTests.cs`. Os testes passaram a usar o banco `labcontrol_teste` (adianta parte da 0.7).
 - **Passos:** `Data/Interceptors/SessaoMySqlInterceptor.cs` (`SET @LC_ID_USUARIOS, @LC_MIGRACAO = 0, @LC_PERMITE_RETROATIVO = 0` em toda conexão aberta); `Infra/Resultado.cs` (`Resultado`/`Resultado<T>`); `Infra/ErrosMySql.cs` (45000 → mensagem; 1062/1451/1452 → mensagens amigáveis); `Infra/Procedures.cs` com helpers para `SP_*` com OUT params (padrão do [P22](../processos/P22-erros-transacoes.md) e dos MDs de [rotinas](../banco/objetos/README.md#funções-e-procedures)); filtro MVC que converte `Resultado.Erro` em `ModelState`/`TempData`.
 - **Aceite:** teste: trigger que recusa (ex.: data de entrega futura) devolve a mensagem exata; helper de `SP_GERAR_REVISAO_*` lê os OUT params; conexão do pool não herda variáveis de outro request.
 - **Esforço:** M · **Depende de:** 0.3
