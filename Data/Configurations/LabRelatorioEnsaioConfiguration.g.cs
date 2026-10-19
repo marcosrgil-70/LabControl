@@ -18,8 +18,8 @@ public partial class LabRelatorioEnsaioConfiguration : IEntityTypeConfiguration<
         b.HasKey(e => e.IdLabRelatorioEnsaio);
         b.Property(e => e.IdLabRelatorioEnsaio).HasColumnName("ID_LAB_RELATORIO_ENSAIO");
         b.Property(e => e.IdEmpresas).HasColumnName("ID_EMPRESAS");
-        b.Property(e => e.NrRelatorio).HasColumnName("NR_RELATORIO").PreenchidaPeloBancoNaInclusao(alteravel: false);
-        b.Property(e => e.AnoRelatorio).HasColumnName("ANO_RELATORIO").PreenchidaPeloBancoNaInclusao(alteravel: false);
+        b.Property(e => e.NrRelatorio).HasColumnName("NR_RELATORIO").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
+        b.Property(e => e.AnoRelatorio).HasColumnName("ANO_RELATORIO").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
         b.Property(e => e.IdLabHistAmostras).HasColumnName("ID_LAB_HIST_AMOSTRAS");
         b.Property(e => e.DhGeracao).HasColumnName("DH_GERACAO").HasColumnType("datetime").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
         b.Property(e => e.DhEmissao).HasColumnName("DH_EMISSAO").HasColumnType("datetime");

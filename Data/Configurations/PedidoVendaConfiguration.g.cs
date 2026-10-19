@@ -18,7 +18,7 @@ public partial class PedidoVendaConfiguration : IEntityTypeConfiguration<PedidoV
         b.HasKey(e => e.IdPedidosVenda);
         b.Property(e => e.IdPedidosVenda).HasColumnName("ID_PEDIDOS_VENDA");
         b.Property(e => e.IdEmpresas).HasColumnName("ID_EMPRESAS");
-        b.Property(e => e.NrPedido).HasColumnName("NR_PEDIDO").PreenchidaPeloBancoNaInclusao(alteravel: false);
+        b.Property(e => e.NrPedido).HasColumnName("NR_PEDIDO").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
         b.Property(e => e.DtPedido).HasColumnName("DT_PEDIDO");
         b.Property(e => e.IdLabPropostas).HasColumnName("ID_LAB_PROPOSTAS");
         b.Property(e => e.CodProposta).HasColumnName("COD_PROPOSTA");

@@ -18,8 +18,8 @@ public partial class LabPropostaConfiguration : IEntityTypeConfiguration<LabProp
         b.HasKey(e => e.IdLabPropostas);
         b.Property(e => e.IdLabPropostas).HasColumnName("ID_LAB_PROPOSTAS");
         b.Property(e => e.IdEmpresas).HasColumnName("ID_EMPRESAS");
-        b.Property(e => e.CodProposta).HasColumnName("COD_PROPOSTA").PreenchidaPeloBancoNaInclusao(alteravel: false);
-        b.Property(e => e.AnoProposta).HasColumnName("ANO_PROPOSTA").PreenchidaPeloBancoNaInclusao(alteravel: false);
+        b.Property(e => e.CodProposta).HasColumnName("COD_PROPOSTA").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
+        b.Property(e => e.AnoProposta).HasColumnName("ANO_PROPOSTA").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
         b.Property(e => e.RevProposta).HasColumnName("REV_PROPOSTA");
         b.Property(e => e.NrProposta).HasColumnName("NR_PROPOSTA").HasMaxLength(20).IsRequired().CalculadaPeloBanco();
         b.Property(e => e.IdLabPropostasOrigem).HasColumnName("ID_LAB_PROPOSTAS_ORIGEM");

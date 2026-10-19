@@ -29,10 +29,10 @@ Depois: `dotnet build` e `dotnet test tests/LabControl.Tests` (o teste `ModeloTe
 - Colunas preenchidas por trigger (mapa `GERADAS`):
   - `calc` → `.CalculadaPeloBanco()`: nunca enviada, relida após INSERT/UPDATE (`NR_AMOSTRA`, `RESULTADO_FORMATADO`, totais da proposta, `ALTERADO_EM`…);
   - `add` → `.PreenchidaPeloBancoNaInclusao()`: omitida no INSERT quando vazia e relida (`CODIGO` do produto, `ITEM`, `DT_SOLICITACAO`…);
-  - `fixo` → idem, mas nunca enviada em UPDATE (`COD_AMOSTRA`, `ANO_AMOSTRA`, `COD_PROPOSTA`, `NR_PEDIDO`…).
+  - `fixo` → `.PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false)`: número/ano do documento (`COD_AMOSTRA`, `ANO_AMOSTRA`, `COD_PROPOSTA`, `NR_PEDIDO`, `NR_RELATORIO`…) nunca é enviado (nem no INSERT, mesmo preenchido) e é relido após incluir — a aplicação não consegue impor um número (as triggers da proposta, do pedido e do relatório guardariam um valor ≠ 0).
   O gerador avisa quando uma trigger passa a atribuir uma coluna que não está em `GERADAS` nem em `NORMAIS`.
 - Valores alterados por trigger **AFTER** de outra tabela (ex.: totais da proposta ao incluir análise) não voltam sozinhos: `await db.Entry(x).ReloadAsync()`.
-- Migração (`@LC_MIGRACAO = 1`): colunas `calc` não são enviadas pelo EF — a carga do legado grava essas colunas por SQL.
+- Migração (`@LC_MIGRACAO = 1`): colunas `calc` e `fixo` não são enviadas pelo EF — a carga do legado grava essas colunas por SQL.
 
 ## Ajustes manuais
 Nunca edite `*.g.cs`. Use os arquivos parciais sem `.g`:

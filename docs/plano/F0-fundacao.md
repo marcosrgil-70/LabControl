@@ -51,6 +51,7 @@
 - **Esforço:** S · **Depende de:** 0.4
 
 ### 0.7 Projeto de testes
+> ✅ **Concluída em 19/10/2026** — `tests/LabControl.Tests` 27/27; roteiro do doc 12 §7 pela aplicação em `RoteiroTests.cs`. **Decisão:** em vez de um `labcontrol_teste_{guid}` por execução, banco **persistente** `labcontrol_teste`, recriado por `recriar.ps1` só quando o hash de `Scripts/v2/0*.sql` muda (1ª execução ~3 min, depois segundos); isolamento por empresa (cada teste cria a sua). O roteiro em SQL puro continua em `recriar.ps1 -Teste`. Achado: colunas de número/ano do documento passaram a nunca ser enviadas pelo EF (ver Diário).
 - **Passos:** `LabControl.Tests` (xUnit); fixture que cria um banco `labcontrol_teste_{guid}` pelos scripts e apaga ao final; testes do roteiro do [doc 12 §7](../banco/12-PROCEDURES-REVISOES.md) chamando o banco **pelos helpers C#**; testes de 0.4–0.6.
 - **Aceite:** `dotnet test` verde, sem depender de dados manuais.
 - **Esforço:** M · **Depende de:** 0.5

@@ -93,6 +93,9 @@ public sealed class Cenario : IAsyncDisposable
         await Db.SaveChangesAsync();
     }
 
+    /// <summary>Data do servidor MySQL (a que as triggers usam).</summary>
+    public Task<DateOnly> HojeAsync() => Db.Database.SqlQueryRaw<DateOnly>("SELECT CURDATE() AS Value").SingleAsync();
+
     /// <summary>Amostra nova (ainda não gravada) do item da proposta.</summary>
     public LabHistAmostra NovaAmostra(DateOnly entrega) => new()
     {

@@ -24,7 +24,7 @@ public static class ConfiguracaoExtensions
     /// Preenchida pelo banco na inclusão quando vier vazia (ex.: COD_AMOSTRA = 0, CODIGO do produto vazio):
     /// o EF omite a coluna no INSERT quando o valor é o padrão do tipo e relê o valor gerado.
     /// <paramref name="alteravel"/> = false: o EF não envia a coluna em UPDATE (número/ano do documento).
-    /// <paramref name="enviar"/> = false: nunca é enviada no INSERT (ex.: CRIADO_EM).
+    /// <paramref name="enviar"/> = false: nunca é enviada no INSERT (ex.: CRIADO_EM, número/ano do documento).
     /// </summary>
     public static PropertyBuilder<T> PreenchidaPeloBancoNaInclusao<T>(this PropertyBuilder<T> p, bool alteravel = true, bool enviar = true)
     {

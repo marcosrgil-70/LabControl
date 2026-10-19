@@ -13,9 +13,9 @@ public partial class LabProposta : IPorEmpresa
 {
     public int IdLabPropostas { get; set; }
     public int IdEmpresas { get; set; }
-    /// <summary><c>COD_PROPOSTA</c> — Sequencial anual por empresa · Preenchida pelo banco quando vazia: relida após incluir.</summary>
+    /// <summary><c>COD_PROPOSTA</c> — Sequencial anual por empresa · Número/ano do documento, sempre gerado pelo banco: não é enviado; relido após incluir.</summary>
     public int CodProposta { get; set; }
-    /// <summary><c>ANO_PROPOSTA</c> — Ano com 4 dígitos (exibição YY) · Preenchida pelo banco quando vazia: relida após incluir.</summary>
+    /// <summary><c>ANO_PROPOSTA</c> — Ano com 4 dígitos (exibição YY) · Número/ano do documento, sempre gerado pelo banco: não é enviado; relido após incluir.</summary>
     public short AnoProposta { get; set; }
     public int RevProposta { get; set; }
     /// <summary><c>NR_PROPOSTA</c> — 000123/26-R0 (preenchido por trigger) · Calculada pelo banco (trigger/default): não é enviada; relida após gravar.</summary>

@@ -64,7 +64,8 @@ public static class BancoTeste
                 db.ChangeTracker.Clear(); // código já usado por outra execução
             }
         }
-        await db.Database.ExecuteSqlInterpolatedAsync($"CALL SP_INICIALIZAR_EMPRESA({emp.IdEmpresas})");
+        var ini = await new Procedures(db, ativa, new ServicoAuditoria(db, ativa)).InicializarEmpresaAsync(emp.IdEmpresas);
+        if (!ini.Sucesso) throw new InvalidOperationException(ini.Mensagem);
         ativa.EmpresaId = emp.IdEmpresas;
 
         var func = new Entidade { Categoria = Categoria.Fisica, Nome = "PROFISSIONAL TESTE", TipoFuncionario = true };

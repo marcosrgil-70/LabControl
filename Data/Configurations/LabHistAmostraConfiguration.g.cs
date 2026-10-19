@@ -18,8 +18,8 @@ public partial class LabHistAmostraConfiguration : IEntityTypeConfiguration<LabH
         b.HasKey(e => e.IdLabHistAmostras);
         b.Property(e => e.IdLabHistAmostras).HasColumnName("ID_LAB_HIST_AMOSTRAS");
         b.Property(e => e.IdEmpresas).HasColumnName("ID_EMPRESAS");
-        b.Property(e => e.AnoAmostra).HasColumnName("ANO_AMOSTRA").PreenchidaPeloBancoNaInclusao(alteravel: false);
-        b.Property(e => e.CodAmostra).HasColumnName("COD_AMOSTRA").PreenchidaPeloBancoNaInclusao(alteravel: false);
+        b.Property(e => e.AnoAmostra).HasColumnName("ANO_AMOSTRA").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
+        b.Property(e => e.CodAmostra).HasColumnName("COD_AMOSTRA").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
         b.Property(e => e.Revisao).HasColumnName("REVISAO");
         b.Property(e => e.IdAmostrasTipo).HasColumnName("ID_AMOSTRAS_TIPO");
         b.Property(e => e.IdAnalisesTipo).HasColumnName("ID_ANALISES_TIPO");

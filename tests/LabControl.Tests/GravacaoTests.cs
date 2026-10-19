@@ -63,6 +63,7 @@ public class GravacaoTests
             IdEntEndLaudo = end.IdEntidadesEnderecos, IdEntContatoResultado = eml.IdEntidadesEmails,
             IdEntCobranca = cli.IdEntidades, IdLabPropostasStatus = par.IdLabPropostasStatusInicial!.Value,
             IdCondicoesPagtos = cpg.IdCondicoesPagtos, PorcDesconto = 10,
+            CodProposta = 555, AnoProposta = 1999, // ignorados: número/ano sempre do banco
         };
         db.Add(prop);
         await db.SaveChangesAsync();

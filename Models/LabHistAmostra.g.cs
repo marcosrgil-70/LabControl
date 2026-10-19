@@ -13,9 +13,9 @@ public partial class LabHistAmostra : IPorEmpresa
 {
     public int IdLabHistAmostras { get; set; }
     public int IdEmpresas { get; set; }
-    /// <summary><c>ANO_AMOSTRA</c> — Ano do SERVIDOR na inclusão (trigger) · Preenchida pelo banco quando vazia: relida após incluir.</summary>
+    /// <summary><c>ANO_AMOSTRA</c> — Ano do SERVIDOR na inclusão (trigger) · Número/ano do documento, sempre gerado pelo banco: não é enviado; relido após incluir.</summary>
     public short AnoAmostra { get; set; }
-    /// <summary><c>COD_AMOSTRA</c> — Sequencial por empresa/ano (trigger) · Preenchida pelo banco quando vazia: relida após incluir.</summary>
+    /// <summary><c>COD_AMOSTRA</c> — Sequencial por empresa/ano (trigger) · Número/ano do documento, sempre gerado pelo banco: não é enviado; relido após incluir.</summary>
     public int CodAmostra { get; set; }
     public int Revisao { get; set; }
     public int IdAmostrasTipo { get; set; }

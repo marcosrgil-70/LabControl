@@ -69,7 +69,8 @@ const MEMBROS = {
 // nos MDs de docs/banco/objetos/tabelas.
 //   calc  = sempre calculada pelo banco: o EF nunca envia e relê após INSERT/UPDATE
 //   add   = o banco preenche se vier vazia: o EF omite quando vazia e relê após o INSERT
-//   fixo  = como "add", mas não pode ser alterada depois (número/ano do documento)
+//   fixo  = número/ano do documento: o EF nunca envia (nem no INSERT) e relê após incluir;
+//           assim a aplicação não consegue impor um número (o trigger guardaria um valor <> 0)
 // Colunas set pela trigger que NÃO estão aqui são normais (a aplicação envia):
 // ID_EMPRESAS herdado, normalização 0 -> NULL, limpeza de campos incompatíveis.
 // ---------------------------------------------------------------------
@@ -240,7 +241,8 @@ function classeCs(e) {
     const notas = [];
     if (p.comment) notas.push(xml(p.comment));
     if (p.geracao === 'calc') notas.push('Calculada pelo banco (trigger/default): não é enviada; relida após gravar.');
-    if (p.geracao === 'add' || p.geracao === 'fixo') notas.push('Preenchida pelo banco quando vazia: relida após incluir.');
+    if (p.geracao === 'add') notas.push('Preenchida pelo banco quando vazia: relida após incluir.');
+    if (p.geracao === 'fixo') notas.push('Número/ano do documento, sempre gerado pelo banco: não é enviado; relido após incluir.');
     if (p.geracao === 'criacao') notas.push('Preenchida pelo banco na inclusão.');
     if (notas.length) L.push(`    /// <summary><c>${p.col}</c> — ${notas.join(' · ')}</summary>`);
     L.push(`    public ${tipoCs(p)} ${p.prop} { get; set; }${p.init}`);
@@ -276,7 +278,7 @@ function configCs(e) {
     if (p.pk && !p.ai && e.pk.length === 1 && p.tp.cs === 'int') s += '.ValueGeneratedNever()';
     if (p.geracao === 'calc') s += '.CalculadaPeloBanco()';
     if (p.geracao === 'add') s += '.PreenchidaPeloBancoNaInclusao()';
-    if (p.geracao === 'fixo') s += '.PreenchidaPeloBancoNaInclusao(alteravel: false)';
+    if (p.geracao === 'fixo') s += '.PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false)';
     if (p.geracao === 'criacao') s += '.PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false)';
     L.push(s + ';');
   }

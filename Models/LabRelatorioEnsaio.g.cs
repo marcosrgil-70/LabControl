@@ -13,9 +13,9 @@ public partial class LabRelatorioEnsaio : IPorEmpresa
 {
     public int IdLabRelatorioEnsaio { get; set; }
     public int IdEmpresas { get; set; }
-    /// <summary><c>NR_RELATORIO</c> — Preenchida pelo banco quando vazia: relida após incluir.</summary>
+    /// <summary><c>NR_RELATORIO</c> — Número/ano do documento, sempre gerado pelo banco: não é enviado; relido após incluir.</summary>
     public int NrRelatorio { get; set; }
-    /// <summary><c>ANO_RELATORIO</c> — Preenchida pelo banco quando vazia: relida após incluir.</summary>
+    /// <summary><c>ANO_RELATORIO</c> — Número/ano do documento, sempre gerado pelo banco: não é enviado; relido após incluir.</summary>
     public short AnoRelatorio { get; set; }
     public int IdLabHistAmostras { get; set; }
     /// <summary><c>DH_GERACAO</c> — Preenchida pelo banco na inclusão.</summary>

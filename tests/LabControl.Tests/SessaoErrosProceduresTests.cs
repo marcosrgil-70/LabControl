@@ -7,9 +7,6 @@ namespace LabControl.Tests;
 /// <summary>Aceite da 0.5 (docs/processos/P22-erros-transacoes.md).</summary>
 public class SessaoErrosProceduresTests
 {
-    private static async Task<DateOnly> HojeAsync(Cenario c) =>
-        await c.Db.Database.SqlQueryRaw<DateOnly>("SELECT CURDATE() AS Value").SingleAsync();
-
     private sealed record Sessao(long? Usuario, long? Migracao, long? Retroativo, long Conexao, string Isolamento);
 
     private static Task<Sessao> LerSessaoAsync(Data.LabDbContext db) =>
@@ -50,7 +47,7 @@ public class SessaoErrosProceduresTests
     public async Task Trigger_que_recusa_devolve_a_mensagem_exata()
     {
         await using var c = await Cenario.CriarAsync();
-        var hoje = await HojeAsync(c);
+        var hoje = await c.HojeAsync();
 
         c.Db.Add(c.NovaAmostra(hoje.AddDays(1)));
         var r = await ErrosMySql.CapturarAsync(() => c.Db.SaveChangesAsync());
@@ -79,7 +76,7 @@ public class SessaoErrosProceduresTests
     public async Task Data_retroativa_so_com_liberacao_na_mesma_transacao()
     {
         await using var c = await Cenario.CriarAsync();
-        var hoje = await HojeAsync(c);
+        var hoje = await c.HojeAsync();
 
         // fora de transação o helper recusa (outra conexão perderia a variável)
         await Assert.ThrowsAsync<InvalidOperationException>(() => c.Procedures.DefinirPermiteRetroativoAsync(true));
@@ -108,7 +105,7 @@ public class SessaoErrosProceduresTests
     public async Task Helpers_de_procedure_leem_os_OUT_params_e_devolvem_mensagens_45000()
     {
         await using var c = await Cenario.CriarAsync();
-        var hoje = await HojeAsync(c);
+        var hoje = await c.HojeAsync();
 
         var pedido = await c.Procedures.GerarPedidoVendaAsync(c.Proposta.IdLabPropostas, hoje, "RESPONSÁVEL", null);
         Assert.True(pedido.Sucesso, pedido.Mensagem);
@@ -179,7 +176,7 @@ public class SessaoErrosProceduresTests
         Assert.Equal(1, await a.Db.LabPropostas.CountAsync()); // nada foi criado na empresa A
 
         // usuário sem profissional vinculado: mensagem clara em vez de erro técnico (p_id_func obrigatório)
-        var hoje = await HojeAsync(b);
+        var hoje = await b.HojeAsync();
         var amo = b.NovaAmostra(hoje);
         b.Db.Add(amo);
         await b.Db.SaveChangesAsync();

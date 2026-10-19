@@ -13,7 +13,7 @@ public partial class PedidoVenda : IPorEmpresa
 {
     public int IdPedidosVenda { get; set; }
     public int IdEmpresas { get; set; }
-    /// <summary><c>NR_PEDIDO</c> — Sequencial por empresa (não anual, como no legado) · Preenchida pelo banco quando vazia: relida após incluir.</summary>
+    /// <summary><c>NR_PEDIDO</c> — Sequencial por empresa (não anual, como no legado) · Número/ano do documento, sempre gerado pelo banco: não é enviado; relido após incluir.</summary>
     public int NrPedido { get; set; }
     public DateOnly DtPedido { get; set; }
     /// <summary><c>ID_LAB_PROPOSTAS</c> — Revisão da proposta vigente no pedido</summary>

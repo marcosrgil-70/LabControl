@@ -113,7 +113,7 @@ SELECT ULTIMO_NUMERO INTO n ...;
 
 ## 7. Roteiro de teste (executado em 16/10/2026 — reexecutar após qualquer mudança)
 
-> Automatizado em [`Scripts/v2/teste/roteiro_12_7.sql`](../../Scripts/v2/teste/roteiro_12_7.sql) (39 verificações; termina com erro se alguma falhar). Rodar **só num banco temporário** criado pelos scripts 01..05. Última execução: **19/10/2026 — 39/39 OK**.
+> Automatizado em [`Scripts/v2/teste/roteiro_12_7.sql`](../../Scripts/v2/teste/roteiro_12_7.sql) (39 verificações; termina com erro se alguma falhar). Rodar **só num banco temporário** criado pelos scripts 01..05. O mesmo roteiro **pela aplicação** (EF + `Infra/Procedures.cs`) está em [`tests/LabControl.Tests/RoteiroTests.cs`](../../tests/LabControl.Tests/RoteiroTests.cs) (`dotnet test`). Última execução: **19/10/2026 — 39/39 OK**.
 > No passo 12 o script confere "último número + 1" (as recusas do passo 11 **não** consomem número): na execução de 19/10 a amostra retroativa recebeu a sequência **2**.
 
 1. `SP_INICIALIZAR_EMPRESA(1)` → status/idiomas/moedas/perfil criados.
