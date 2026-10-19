@@ -21,6 +21,7 @@
 - **Esforço:** S · **Depende de:** 0.1
 
 ### 0.3 Novo `LabDbContext` (schema v2, sem migrations)
+> ✅ **Concluída em 19/10/2026** — entidades e configurações **geradas** por `node tools/gerador-csharp/gerar.mjs` ([README](../../tools/gerador-csharp/README.md)); classes no singular, DbSet = tabela em PascalCase; v1 movida para `Legacy/` (antecipa o isolamento da 0.8); `tests/LabControl.Tests` 3/3 (modelo × `information_schema`, leitura de cada DbSet, gravação com triggers); build sem avisos.
 - **Passos:**
   1. Criar `Data/LabDbContext.cs` e `Data/Configurations/*.cs` (uma `IEntityTypeConfiguration` por tabela, nomes das colunas do Firebird preservados — ver "Implementação no C#" de cada MD em [objetos/tabelas](../banco/objetos/README.md#tabelas)).
   2. Entidades em `Models/` (uma classe por tabela), enums para `ENUM` (`CATEGORIA`, `TIPO_DOCUMENTO`, `SITUACAO`, `STATUS`, `E_S`, `FINALIDADE`), `DateOnly`/`TimeOnly`, `bool` para `TINYINT(1)`.

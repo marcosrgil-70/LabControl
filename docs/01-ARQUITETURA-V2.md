@@ -66,7 +66,8 @@ Erros SQLSTATE `45000` das triggers/procedures são **mensagens de negócio**: c
 
 ## 7. Convenções de código
 
-- C#: classes PascalCase mapeando as colunas com `[Column("NOME_FB")]` ou Fluent API; uma configuração por tabela.
+- C#: entidades e configurações Fluent (uma por tabela/view) **geradas** de `Scripts/v2` por `node tools/gerador-csharp/gerar.mjs` (`*.g.cs`, não editar; ajustes em parciais). Classe no singular (`LabHistAmostra`), DbSet = tabela em PascalCase (`LabHistAmostras`), propriedade = coluna em PascalCase (`IdLabHistAmostras`). Ver [tools/gerador-csharp/README.md](../tools/gerador-csharp/README.md).
+- Connection string só em **user-secrets** (`ConnectionStrings:LabControl`), nunca no `appsettings.json`.
 - Services retornam `Resultado<T>` (sucesso/erro com mensagem); controllers não têm regra de negócio.
 - Datas: `DateOnly` para `DATE`, `TimeOnly` para `TIME`.
 - Nada de SQL concatenado: parâmetros sempre.

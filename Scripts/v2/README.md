@@ -55,4 +55,5 @@ O roteiro cria uma empresa e cadastros de teste, então **nunca** rode no `labco
 1. Altere o script (01..05);
 2. atualize o [doc 11](../../docs/banco/11-MODELO-MYSQL.md) e o MD do objeto em `docs/banco/objetos/`;
 3. rode `.\Scripts\v2\recriar.ps1 -Teste` (e acrescente verificações ao roteiro se a regra for nova);
-4. recrie o `labcontrol_v2` local.
+4. recrie o `labcontrol_v2` local;
+5. regenere as entidades C#: `node tools/gerador-csharp/gerar.mjs` (view mudou? antes atualize `views.json` — ver [tools/gerador-csharp/README.md](../../tools/gerador-csharp/README.md)) e rode `dotnet test tests/LabControl.Tests`.

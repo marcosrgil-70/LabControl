@@ -4,19 +4,20 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>labcontrol-v2-0b6c1d2e</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- EF Core 9.x alinhado com Pomelo 9.x -->
+    <!-- Legacy/ = código v1 (referência para reescrever as telas); tests/ e tools/ têm projeto/ferramenta próprios -->
+    <Compile Remove="Legacy/**;tests/**;tools/**" />
+    <Content Remove="Legacy/**;tests/**;tools/**" />
+    <None Remove="Legacy/**;tests/**;tools/**" />
+    <EmbeddedResource Remove="Legacy/**;tests/**;tools/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- EF Core 9.x alinhado com Pomelo 9.x. Sem migrations: o schema é Scripts/v2/*.sql -->
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="10.3.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.5">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.5">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
   </ItemGroup>
 

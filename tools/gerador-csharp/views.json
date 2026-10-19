@@ -1,0 +1,1822 @@
+[
+  {
+    "col": "ID_EMPRESAS",
+    "pos": 1,
+    "type": "int",
+    "view": "vw_clientes",
+    "nullable": false
+  },
+  {
+    "col": "ID_ENTIDADES",
+    "pos": 2,
+    "type": "int",
+    "view": "vw_clientes",
+    "nullable": false
+  },
+  {
+    "col": "CATEGORIA",
+    "pos": 3,
+    "type": "enum('F','J')",
+    "view": "vw_clientes",
+    "nullable": false
+  },
+  {
+    "col": "CPF_CNPJ",
+    "pos": 4,
+    "type": "varchar(18)",
+    "view": "vw_clientes",
+    "nullable": true
+  },
+  {
+    "col": "NOME",
+    "pos": 5,
+    "type": "varchar(150)",
+    "view": "vw_clientes",
+    "nullable": false
+  },
+  {
+    "col": "NOME_FANTASIA",
+    "pos": 6,
+    "type": "varchar(150)",
+    "view": "vw_clientes",
+    "nullable": true
+  },
+  {
+    "col": "RG_IE",
+    "pos": 7,
+    "type": "varchar(20)",
+    "view": "vw_clientes",
+    "nullable": true
+  },
+  {
+    "col": "INSC_MUNICIPAL",
+    "pos": 8,
+    "type": "varchar(20)",
+    "view": "vw_clientes",
+    "nullable": true
+  },
+  {
+    "col": "INSC_SUFRAMA",
+    "pos": 9,
+    "type": "varchar(20)",
+    "view": "vw_clientes",
+    "nullable": true
+  },
+  {
+    "col": "DATA_CADASTRO",
+    "pos": 10,
+    "type": "date",
+    "view": "vw_clientes",
+    "nullable": false
+  },
+  {
+    "col": "INATIVO",
+    "pos": 11,
+    "type": "tinyint(1)",
+    "view": "vw_clientes",
+    "nullable": false
+  },
+  {
+    "col": "FONE_PRINCIPAL",
+    "pos": 12,
+    "type": "varchar(26)",
+    "view": "vw_clientes",
+    "nullable": true
+  },
+  {
+    "col": "EMAIL_PRINCIPAL",
+    "pos": 13,
+    "type": "varchar(150)",
+    "view": "vw_clientes",
+    "nullable": true
+  },
+  {
+    "col": "ID_EMPRESAS",
+    "pos": 1,
+    "type": "int",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "ID_ENTIDADES",
+    "pos": 2,
+    "type": "int",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "ID_ENTIDADES_ENDERECOS",
+    "pos": 3,
+    "type": "int",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "ID_ENDERECOS_TIPOS",
+    "pos": 4,
+    "type": "int",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "ENDERECO_TIPO",
+    "pos": 5,
+    "type": "varchar(30)",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "FINALIDADE",
+    "pos": 6,
+    "type": "enum('GERAL','NOTA_FISCAL','CORRESPONDENCIA','ENTREGA','COBRANCA')",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "TIPO_LOGRADOURO",
+    "pos": 7,
+    "type": "varchar(10)",
+    "view": "vw_entidades_enderecos",
+    "nullable": true
+  },
+  {
+    "col": "LOGRADOURO",
+    "pos": 8,
+    "type": "varchar(150)",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "NUMERO",
+    "pos": 9,
+    "type": "varchar(20)",
+    "view": "vw_entidades_enderecos",
+    "nullable": true
+  },
+  {
+    "col": "COMPLEMENTO",
+    "pos": 10,
+    "type": "varchar(50)",
+    "view": "vw_entidades_enderecos",
+    "nullable": true
+  },
+  {
+    "col": "BAIRRO",
+    "pos": 11,
+    "type": "varchar(80)",
+    "view": "vw_entidades_enderecos",
+    "nullable": true
+  },
+  {
+    "col": "CEP",
+    "pos": 12,
+    "type": "varchar(10)",
+    "view": "vw_entidades_enderecos",
+    "nullable": true
+  },
+  {
+    "col": "ID_CIDADES",
+    "pos": 13,
+    "type": "int",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "CIDADE",
+    "pos": 14,
+    "type": "varchar(150)",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "IBGE_CIDADE",
+    "pos": 15,
+    "type": "varchar(7)",
+    "view": "vw_entidades_enderecos",
+    "nullable": true
+  },
+  {
+    "col": "UF",
+    "pos": 16,
+    "type": "char(2)",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "ESTADO",
+    "pos": 17,
+    "type": "varchar(100)",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "PAIS",
+    "pos": 18,
+    "type": "varchar(80)",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "INATIVO",
+    "pos": 19,
+    "type": "tinyint(1)",
+    "view": "vw_entidades_enderecos",
+    "nullable": false
+  },
+  {
+    "col": "ENDERECO_LINHA1",
+    "pos": 20,
+    "type": "varchar(235)",
+    "view": "vw_entidades_enderecos",
+    "nullable": true
+  },
+  {
+    "col": "ENDERECO_LINHA2",
+    "pos": 21,
+    "type": "varchar(249)",
+    "view": "vw_entidades_enderecos",
+    "nullable": true
+  },
+  {
+    "col": "ID_EMPRESAS",
+    "pos": 1,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_HIST_AMOSTRAS",
+    "pos": 2,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "NR_AMOSTRA",
+    "pos": 3,
+    "type": "varchar(25)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "ANO_AMOSTRA",
+    "pos": 4,
+    "type": "smallint",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "COD_AMOSTRA",
+    "pos": 5,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "REVISAO",
+    "pos": 6,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "ULTIMA_REVISAO",
+    "pos": 7,
+    "type": "tinyint(1)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "MOTIVO_REVISAO",
+    "pos": 8,
+    "type": "varchar(500)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "ID_AMOSTRA_RAIZ",
+    "pos": 9,
+    "type": "bigint",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "ID_AMOSTRAS_TIPO",
+    "pos": 10,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "COD_TIPO_AMOSTRA",
+    "pos": 11,
+    "type": "smallint",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "TIPO_AMOSTRA",
+    "pos": 12,
+    "type": "varchar(60)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "ID_ANALISES_TIPO",
+    "pos": 13,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "COD_TIPO_ANALISE",
+    "pos": 14,
+    "type": "smallint",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "TIPO_ANALISE",
+    "pos": 15,
+    "type": "varchar(60)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "TIPO_DOCUMENTO",
+    "pos": 16,
+    "type": "enum('BOLETIM','RELATORIO')",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "ID_ENTIDADES",
+    "pos": 17,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "CLIENTE_NOME",
+    "pos": 18,
+    "type": "varchar(150)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "CLIENTE_FANTASIA",
+    "pos": 19,
+    "type": "varchar(150)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "CLIENTE_CPF_CNPJ",
+    "pos": 20,
+    "type": "varchar(18)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "NOME_CONTATO",
+    "pos": 21,
+    "type": "varchar(100)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "ID_LAB_PROPOSTAS",
+    "pos": 22,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "NR_PROPOSTA",
+    "pos": 23,
+    "type": "varchar(20)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_PROPOSTAS_PRODUTOS",
+    "pos": 24,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "ITEM_PROPOSTA",
+    "pos": 25,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "ID_PEDIDOS_VENDA",
+    "pos": 26,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "NR_PEDIDO_FMT",
+    "pos": 27,
+    "type": "varchar(9)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "ID_PRODUTOS",
+    "pos": 28,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "PRODUTO_CODIGO",
+    "pos": 29,
+    "type": "varchar(10)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "PRODUTO_DESCRICAO",
+    "pos": 30,
+    "type": "varchar(150)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "DT_ENTREGA",
+    "pos": 31,
+    "type": "date",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "HR_ENTREGA",
+    "pos": 32,
+    "type": "time",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "LOCAL_RECEBIMENTO",
+    "pos": 33,
+    "type": "varchar(50)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "ID_EMBALAGENS_TIPOS",
+    "pos": 34,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "EMBALAGEM",
+    "pos": 35,
+    "type": "varchar(40)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "QTDE_EMBALAGENS_ENTREGUE",
+    "pos": 36,
+    "type": "decimal(15,4)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "NR_LOTE",
+    "pos": 37,
+    "type": "varchar(30)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "FABRICACAO",
+    "pos": 38,
+    "type": "varchar(10)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "VALIDADE",
+    "pos": 39,
+    "type": "varchar(10)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "NOTA_ROTULO",
+    "pos": 40,
+    "type": "varchar(255)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "ESPECIE_AMOSTRA",
+    "pos": 41,
+    "type": "varchar(50)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "ASPECTO_AMOSTRA",
+    "pos": 42,
+    "type": "varchar(50)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "COR",
+    "pos": 43,
+    "type": "varchar(20)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "OUTRAS_CARACTERISTICAS",
+    "pos": 44,
+    "type": "varchar(100)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "TEMPERATURA_VERIFICACAO",
+    "pos": 45,
+    "type": "decimal(7,2)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "OBSERVACAO_VERIFICACAO",
+    "pos": 46,
+    "type": "varchar(255)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "NOME_COLETOR",
+    "pos": 47,
+    "type": "varchar(60)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "DT_HR_COLETA",
+    "pos": 48,
+    "type": "datetime",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "ID_AMOSTRAS_STATUS",
+    "pos": 49,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "STATUS_AMOSTRA",
+    "pos": 50,
+    "type": "varchar(60)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "COR_STATUS",
+    "pos": 51,
+    "type": "varchar(7)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "PERMITE_RESULTADO",
+    "pos": 52,
+    "type": "tinyint(1)",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "ID_ENTIDADES_FUNC_RESP",
+    "pos": 53,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "RESPONSAVEL_NOME",
+    "pos": 54,
+    "type": "varchar(150)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "ENDERECO_LINHA1",
+    "pos": 55,
+    "type": "varchar(235)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "ENDERECO_LINHA2",
+    "pos": 56,
+    "type": "varchar(249)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "TIPO_ACREDITACAO",
+    "pos": 57,
+    "type": "tinyint",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "SALDO_ATUAL",
+    "pos": 58,
+    "type": "decimal(15,4)",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "SITUACAO_ARQUIVO",
+    "pos": 59,
+    "type": "enum('ARQUIVADA','DESCARTADA')",
+    "view": "vw_lab_amostras",
+    "nullable": true
+  },
+  {
+    "col": "TEM_RESULTADO",
+    "pos": 60,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "TEM_BOLETIM_EMITIDO",
+    "pos": 61,
+    "type": "int",
+    "view": "vw_lab_amostras",
+    "nullable": false
+  },
+  {
+    "col": "ID_EMPRESAS",
+    "pos": 1,
+    "type": "int",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_BOLETIM_ANALISES",
+    "pos": 2,
+    "type": "int",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "COD_BOLETIM",
+    "pos": 3,
+    "type": "varchar(30)",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "REVISAO",
+    "pos": 4,
+    "type": "int",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "ULTIMA_REVISAO",
+    "pos": 5,
+    "type": "tinyint(1)",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "MOTIVO_REVISAO",
+    "pos": 6,
+    "type": "varchar(500)",
+    "view": "vw_lab_boletins",
+    "nullable": true
+  },
+  {
+    "col": "DT_BOLETIM",
+    "pos": 7,
+    "type": "date",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "DH_GERACAO",
+    "pos": 8,
+    "type": "datetime",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "DH_EMISSAO",
+    "pos": 9,
+    "type": "datetime",
+    "view": "vw_lab_boletins",
+    "nullable": true
+  },
+  {
+    "col": "EMITIDO",
+    "pos": 10,
+    "type": "int",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "ID_BOLETINS_STATUS",
+    "pos": 11,
+    "type": "int",
+    "view": "vw_lab_boletins",
+    "nullable": true
+  },
+  {
+    "col": "STATUS_BOLETIM",
+    "pos": 12,
+    "type": "varchar(60)",
+    "view": "vw_lab_boletins",
+    "nullable": true
+  },
+  {
+    "col": "COR_STATUS",
+    "pos": 13,
+    "type": "varchar(7)",
+    "view": "vw_lab_boletins",
+    "nullable": true
+  },
+  {
+    "col": "ID_LAB_HIST_AMOSTRAS",
+    "pos": 14,
+    "type": "int",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "NR_AMOSTRA",
+    "pos": 15,
+    "type": "varchar(25)",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "NR_LOTE",
+    "pos": 16,
+    "type": "varchar(30)",
+    "view": "vw_lab_boletins",
+    "nullable": true
+  },
+  {
+    "col": "ID_ENTIDADES",
+    "pos": 17,
+    "type": "int",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "CLIENTE_NOME",
+    "pos": 18,
+    "type": "varchar(150)",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "PRODUTO_DESCRICAO",
+    "pos": 19,
+    "type": "varchar(150)",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_RESULTADOS_ANALISES",
+    "pos": 20,
+    "type": "int",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "REVISAO_RESULTADO",
+    "pos": 21,
+    "type": "int",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "ID_ENTIDADES_FUNC_RESP",
+    "pos": 22,
+    "type": "int",
+    "view": "vw_lab_boletins",
+    "nullable": true
+  },
+  {
+    "col": "RESPONSAVEL1",
+    "pos": 23,
+    "type": "varchar(150)",
+    "view": "vw_lab_boletins",
+    "nullable": true
+  },
+  {
+    "col": "ID_ENTIDADES_FUNC_RESP2",
+    "pos": 24,
+    "type": "int",
+    "view": "vw_lab_boletins",
+    "nullable": true
+  },
+  {
+    "col": "RESPONSAVEL2",
+    "pos": 25,
+    "type": "varchar(150)",
+    "view": "vw_lab_boletins",
+    "nullable": true
+  },
+  {
+    "col": "DT_ENTREGA",
+    "pos": 26,
+    "type": "date",
+    "view": "vw_lab_boletins",
+    "nullable": false
+  },
+  {
+    "col": "ID_EMPRESAS",
+    "pos": 1,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_PROPOSTAS",
+    "pos": 2,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "NR_PROPOSTA",
+    "pos": 3,
+    "type": "varchar(20)",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "COD_PROPOSTA",
+    "pos": 4,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "ANO_PROPOSTA",
+    "pos": 5,
+    "type": "smallint",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "REV_PROPOSTA",
+    "pos": 6,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "ULTIMA_REVISAO",
+    "pos": 7,
+    "type": "tinyint(1)",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "MOTIVO_REVISAO",
+    "pos": 8,
+    "type": "varchar(500)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "DT_SOLICITACAO",
+    "pos": 9,
+    "type": "date",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "DT_VALIDADE",
+    "pos": 10,
+    "type": "date",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "DT_ENVIO_CLIENTE",
+    "pos": 11,
+    "type": "date",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "DT_AUTORIZACAO",
+    "pos": 12,
+    "type": "date",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "ID_ENTIDADES",
+    "pos": 13,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "CLIENTE_NOME",
+    "pos": 14,
+    "type": "varchar(150)",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "CLIENTE_FANTASIA",
+    "pos": 15,
+    "type": "varchar(150)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "CLIENTE_CPF_CNPJ",
+    "pos": 16,
+    "type": "varchar(18)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "ID_ENT_CONTATO",
+    "pos": 17,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "NOME_CONTATO",
+    "pos": 18,
+    "type": "varchar(100)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "CONTATO_EMAIL",
+    "pos": 19,
+    "type": "varchar(150)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "CONTATO_DEPARTAMENTO",
+    "pos": 20,
+    "type": "varchar(100)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "ID_ENTIDADES_COMERC",
+    "pos": 21,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "COMERCIAL_NOME",
+    "pos": 22,
+    "type": "varchar(150)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "ID_ENTIDADES_FUNC",
+    "pos": 23,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "DIGITADOR_NOME",
+    "pos": 24,
+    "type": "varchar(150)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "ID_ENT_COBRANCA",
+    "pos": 25,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "COBRANCA_NOME",
+    "pos": 26,
+    "type": "varchar(150)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "COBRANCA_CPF_CNPJ",
+    "pos": 27,
+    "type": "varchar(18)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "ID_ENT_CONTATO_RESULTADO",
+    "pos": 28,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "CONTATO_RESULTADO",
+    "pos": 29,
+    "type": "varchar(100)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "EMAIL_RESULTADO",
+    "pos": 30,
+    "type": "varchar(150)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "ID_ENT_CONTATO_NF",
+    "pos": 31,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "CONTATO_NF",
+    "pos": 32,
+    "type": "varchar(100)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "EMAIL_NF",
+    "pos": 33,
+    "type": "varchar(150)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "ID_ENT_END_LAUDO",
+    "pos": 34,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "ID_ENT_END_COBRANCA",
+    "pos": 35,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "ID_LAB_PROPOSTAS_STATUS",
+    "pos": 36,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "STATUS",
+    "pos": 37,
+    "type": "varchar(60)",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "COR_STATUS",
+    "pos": 38,
+    "type": "varchar(7)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "ID_CONDICOES_PAGTOS",
+    "pos": 39,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "CONDICAO_PAGAMENTO",
+    "pos": 40,
+    "type": "varchar(250)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "ID_MOEDAS",
+    "pos": 41,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "MOEDA",
+    "pos": 42,
+    "type": "varchar(53)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "VR_SOMA_VR_ANALIS",
+    "pos": 43,
+    "type": "decimal(15,2)",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "VR_SOMA_DESC_ANALIS",
+    "pos": 44,
+    "type": "decimal(15,2)",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "VR_SOMA_VR_TOT_ANALIS",
+    "pos": 45,
+    "type": "decimal(15,2)",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "PORC_DESCONTO",
+    "pos": 46,
+    "type": "decimal(7,4)",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "VR_DESCONTO",
+    "pos": 47,
+    "type": "decimal(15,2)",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "VR_TOTAL_PROPOSTA",
+    "pos": 48,
+    "type": "decimal(15,2)",
+    "view": "vw_lab_propostas",
+    "nullable": false
+  },
+  {
+    "col": "ID_PEDIDOS_VENDA",
+    "pos": 49,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "NR_PEDIDO",
+    "pos": 50,
+    "type": "int",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "NR_PEDIDO_FMT",
+    "pos": 51,
+    "type": "varchar(9)",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "SITUACAO_PEDIDO",
+    "pos": 52,
+    "type": "enum('ABERTO','EM_EXECUCAO','CONCLUIDO','CANCELADO')",
+    "view": "vw_lab_propostas",
+    "nullable": true
+  },
+  {
+    "col": "ID_EMPRESAS",
+    "pos": 1,
+    "type": "int",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_PROPOSTAS",
+    "pos": 2,
+    "type": "int",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_PROPOSTAS_PRODANALISES",
+    "pos": 3,
+    "type": "int",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_PROPOSTAS_PRODUTOS",
+    "pos": 4,
+    "type": "int",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "ITEM",
+    "pos": 5,
+    "type": "int",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "ID_PRODUTOS",
+    "pos": 6,
+    "type": "int",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "PRODUTO_CODIGO",
+    "pos": 7,
+    "type": "varchar(10)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "PRODUTO_DESCRICAO",
+    "pos": 8,
+    "type": "varchar(150)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "QTDE_PRODUTO",
+    "pos": 9,
+    "type": "int",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_PARAMETROS_ANALISES",
+    "pos": 10,
+    "type": "int",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "PARAMETRO",
+    "pos": 11,
+    "type": "varchar(150)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "DESC_REDUZIDA",
+    "pos": 12,
+    "type": "varchar(150)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "AUDITADO",
+    "pos": 13,
+    "type": "tinyint(1)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "COD_TIPO_ANALISE",
+    "pos": 14,
+    "type": "smallint",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "TIPO_ANALISE",
+    "pos": 15,
+    "type": "varchar(60)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "METODO",
+    "pos": 16,
+    "type": "varchar(250)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "IDIOMA",
+    "pos": 17,
+    "type": "varchar(40)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "PRAZO",
+    "pos": 18,
+    "type": "varchar(150)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "QTDE_DIAS",
+    "pos": 19,
+    "type": "int",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "TIPO_DOCUMENTO",
+    "pos": 20,
+    "type": "enum('BOLETIM','RELATORIO')",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "QTDE_AMOSTRAS",
+    "pos": 21,
+    "type": "int",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "VR_UNITARIO",
+    "pos": 22,
+    "type": "decimal(15,2)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "VR_SUBTOTAL",
+    "pos": 23,
+    "type": "decimal(15,2)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "PORC_DESCONTO",
+    "pos": 24,
+    "type": "decimal(7,4)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "VR_DESCONTO",
+    "pos": 25,
+    "type": "decimal(15,2)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "VR_TOTAL",
+    "pos": 26,
+    "type": "decimal(15,2)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "ST_REV_ANTERIOR",
+    "pos": 27,
+    "type": "tinyint(1)",
+    "view": "vw_lab_propostas_analises",
+    "nullable": false
+  },
+  {
+    "col": "ID_EMPRESAS",
+    "pos": 1,
+    "type": "int",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_RESULTADOS_ANALISES",
+    "pos": 2,
+    "type": "int",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_HIST_AMOSTRAS",
+    "pos": 3,
+    "type": "int",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "REVISAO",
+    "pos": 4,
+    "type": "int",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "ULTIMA_REVISAO",
+    "pos": 5,
+    "type": "tinyint(1)",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_RESULTADOS_PARAM",
+    "pos": 6,
+    "type": "int",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_HIST_AMOSTRAS_TESTES",
+    "pos": 7,
+    "type": "int",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_PARAMETROS_ANALISES",
+    "pos": 8,
+    "type": "int",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "PARAMETRO",
+    "pos": 9,
+    "type": "varchar(150)",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "DESC_REDUZIDA",
+    "pos": 10,
+    "type": "varchar(150)",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "AUDITADO",
+    "pos": 11,
+    "type": "tinyint(1)",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "DT_INICIAL",
+    "pos": 12,
+    "type": "date",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "DT_RESULTADO",
+    "pos": 13,
+    "type": "date",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "DIAS_ANALISE",
+    "pos": 14,
+    "type": "int",
+    "view": "vw_lab_resultados",
+    "nullable": true
+  },
+  {
+    "col": "TIPO_RESULTADO",
+    "pos": 15,
+    "type": "tinyint(1)",
+    "view": "vw_lab_resultados",
+    "nullable": false
+  },
+  {
+    "col": "RESULTADO_FORMATADO",
+    "pos": 16,
+    "type": "varchar(80)",
+    "view": "vw_lab_resultados",
+    "nullable": true
+  },
+  {
+    "col": "ESPECIF_FORMATADA",
+    "pos": 17,
+    "type": "varchar(80)",
+    "view": "vw_lab_resultados",
+    "nullable": true
+  },
+  {
+    "col": "UNIDADE",
+    "pos": 18,
+    "type": "varchar(15)",
+    "view": "vw_lab_resultados",
+    "nullable": true
+  },
+  {
+    "col": "QT_AMOSTRA_TXT",
+    "pos": 19,
+    "type": "varchar(56)",
+    "view": "vw_lab_resultados",
+    "nullable": true
+  },
+  {
+    "col": "ID_ENTIDADES_FUNC_ANALISE",
+    "pos": 20,
+    "type": "int",
+    "view": "vw_lab_resultados",
+    "nullable": true
+  },
+  {
+    "col": "ANALISTA_NOME",
+    "pos": 21,
+    "type": "varchar(150)",
+    "view": "vw_lab_resultados",
+    "nullable": true
+  },
+  {
+    "col": "VR_SATISFEITO",
+    "pos": 22,
+    "type": "tinyint(1)",
+    "view": "vw_lab_resultados",
+    "nullable": true
+  },
+  {
+    "col": "ID_EMPRESAS",
+    "pos": 1,
+    "type": "int",
+    "view": "vw_lab_testes_pendentes",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_HIST_AMOSTRAS",
+    "pos": 2,
+    "type": "int",
+    "view": "vw_lab_testes_pendentes",
+    "nullable": false
+  },
+  {
+    "col": "NR_AMOSTRA",
+    "pos": 3,
+    "type": "varchar(25)",
+    "view": "vw_lab_testes_pendentes",
+    "nullable": false
+  },
+  {
+    "col": "DT_ENTREGA",
+    "pos": 4,
+    "type": "date",
+    "view": "vw_lab_testes_pendentes",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_HIST_AMOSTRAS_TESTES",
+    "pos": 5,
+    "type": "int",
+    "view": "vw_lab_testes_pendentes",
+    "nullable": false
+  },
+  {
+    "col": "ID_LAB_PARAMETROS_ANALISES",
+    "pos": 6,
+    "type": "int",
+    "view": "vw_lab_testes_pendentes",
+    "nullable": false
+  },
+  {
+    "col": "PARAMETRO",
+    "pos": 7,
+    "type": "varchar(150)",
+    "view": "vw_lab_testes_pendentes",
+    "nullable": false
+  },
+  {
+    "col": "DT_PREVISTA",
+    "pos": 8,
+    "type": "date",
+    "view": "vw_lab_testes_pendentes",
+    "nullable": true
+  },
+  {
+    "col": "DIAS_PARA_PRAZO",
+    "pos": 9,
+    "type": "int",
+    "view": "vw_lab_testes_pendentes",
+    "nullable": true
+  },
+  {
+    "col": "CLIENTE_NOME",
+    "pos": 10,
+    "type": "varchar(150)",
+    "view": "vw_lab_testes_pendentes",
+    "nullable": false
+  },
+  {
+    "col": "PRODUTO_DESCRICAO",
+    "pos": 11,
+    "type": "varchar(150)",
+    "view": "vw_lab_testes_pendentes",
+    "nullable": false
+  },
+  {
+    "col": "ID_EMPRESAS",
+    "pos": 1,
+    "type": "int",
+    "view": "vw_pedidos_venda_saldo",
+    "nullable": true
+  },
+  {
+    "col": "ID_PEDIDOS_VENDA",
+    "pos": 2,
+    "type": "int",
+    "view": "vw_pedidos_venda_saldo",
+    "nullable": true
+  },
+  {
+    "col": "NR_PEDIDO",
+    "pos": 3,
+    "type": "int",
+    "view": "vw_pedidos_venda_saldo",
+    "nullable": true
+  },
+  {
+    "col": "ID_PEDIDOS_VENDA_ITENS",
+    "pos": 4,
+    "type": "int",
+    "view": "vw_pedidos_venda_saldo",
+    "nullable": false
+  },
+  {
+    "col": "ITEM",
+    "pos": 5,
+    "type": "int",
+    "view": "vw_pedidos_venda_saldo",
+    "nullable": true
+  },
+  {
+    "col": "ID_PRODUTOS",
+    "pos": 6,
+    "type": "int",
+    "view": "vw_pedidos_venda_saldo",
+    "nullable": false
+  },
+  {
+    "col": "PRODUTO_DESCRICAO",
+    "pos": 7,
+    "type": "varchar(150)",
+    "view": "vw_pedidos_venda_saldo",
+    "nullable": false
+  },
+  {
+    "col": "QTDE_CONTRATADA",
+    "pos": 8,
+    "type": "int",
+    "view": "vw_pedidos_venda_saldo",
+    "nullable": false
+  },
+  {
+    "col": "QTDE_RECEBIDA",
+    "pos": 9,
+    "type": "bigint",
+    "view": "vw_pedidos_venda_saldo",
+    "nullable": true
+  },
+  {
+    "col": "ID_EMPRESAS",
+    "pos": 1,
+    "type": "int",
+    "view": "vw_profissionais",
+    "nullable": false
+  },
+  {
+    "col": "ID_ENTIDADES",
+    "pos": 2,
+    "type": "int",
+    "view": "vw_profissionais",
+    "nullable": false
+  },
+  {
+    "col": "NOME",
+    "pos": 3,
+    "type": "varchar(150)",
+    "view": "vw_profissionais",
+    "nullable": false
+  },
+  {
+    "col": "SOBRENOME",
+    "pos": 4,
+    "type": "varchar(150)",
+    "view": "vw_profissionais",
+    "nullable": true
+  },
+  {
+    "col": "NOME_COMPLETO",
+    "pos": 5,
+    "type": "varchar(301)",
+    "view": "vw_profissionais",
+    "nullable": true
+  },
+  {
+    "col": "NR_REGISTRO_PROFISSIONAL",
+    "pos": 6,
+    "type": "varchar(25)",
+    "view": "vw_profissionais",
+    "nullable": true
+  },
+  {
+    "col": "UF_REGISTRO",
+    "pos": 7,
+    "type": "char(2)",
+    "view": "vw_profissionais",
+    "nullable": true
+  },
+  {
+    "col": "ID_TIPOS_REG_PROFISSIONAL",
+    "pos": 8,
+    "type": "int",
+    "view": "vw_profissionais",
+    "nullable": true
+  },
+  {
+    "col": "TIPO_REGISTRO",
+    "pos": 9,
+    "type": "varchar(15)",
+    "view": "vw_profissionais",
+    "nullable": true
+  },
+  {
+    "col": "REGISTRO_COMPLETO",
+    "pos": 10,
+    "type": "varchar(44)",
+    "view": "vw_profissionais",
+    "nullable": true
+  },
+  {
+    "col": "ID_CARGOS_FUNCIONARIOS",
+    "pos": 11,
+    "type": "int",
+    "view": "vw_profissionais",
+    "nullable": true
+  },
+  {
+    "col": "CARGO",
+    "pos": 12,
+    "type": "varchar(50)",
+    "view": "vw_profissionais",
+    "nullable": true
+  },
+  {
+    "col": "ASSINA_BOLETIM",
+    "pos": 13,
+    "type": "tinyint(1)",
+    "view": "vw_profissionais",
+    "nullable": false
+  },
+  {
+    "col": "EXECUTA_ANALISE",
+    "pos": 14,
+    "type": "tinyint(1)",
+    "view": "vw_profissionais",
+    "nullable": false
+  },
+  {
+    "col": "TEM_ASSINATURA",
+    "pos": 15,
+    "type": "int",
+    "view": "vw_profissionais",
+    "nullable": false
+  },
+  {
+    "col": "INATIVO",
+    "pos": 16,
+    "type": "tinyint(1)",
+    "view": "vw_profissionais",
+    "nullable": false
+  },
+  {
+    "col": "ID_USUARIOS",
+    "pos": 17,
+    "type": "int",
+    "view": "vw_profissionais",
+    "nullable": true
+  },
+  {
+    "col": "LOGIN",
+    "pos": 18,
+    "type": "varchar(30)",
+    "view": "vw_profissionais",
+    "nullable": true
+  }
+]
