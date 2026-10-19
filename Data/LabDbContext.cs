@@ -26,12 +26,17 @@ public partial class LabDbContext(DbContextOptions<LabDbContext> options, IEmpre
         foreach (var tipo in modelBuilder.Model.GetEntityTypes()
                      .Where(t => typeof(IFiltradoPorEmpresa).IsAssignableFrom(t.ClrType)))
         {
-            // e => (int?)e.IdEmpresas == this.EmpresaAtivaId  (o EF troca "this" pelo contexto da consulta)
+            // e => this.EmpresaAtivaId != null && (int?)e.IdEmpresas == this.EmpresaAtivaId
+            // (o EF troca "this" pelo contexto da consulta). O "!= null" evita que, sem empresa ativa, a
+            // comparação vire "ID_EMPRESAS IS NULL" e mostre as linhas sem empresa (AUDITORIA, views).
             var e = Expression.Parameter(tipo.ClrType, "e");
+            var ativa = Expression.Property(Expression.Constant(this), nameof(EmpresaAtivaId));
             var filtro = Expression.Lambda(
-                Expression.Equal(
-                    Expression.Convert(Expression.Property(e, nameof(IPorEmpresa.IdEmpresas)), typeof(int?)),
-                    Expression.Property(Expression.Constant(this), nameof(EmpresaAtivaId))),
+                Expression.AndAlso(
+                    Expression.NotEqual(ativa, Expression.Constant(null, typeof(int?))),
+                    Expression.Equal(
+                        Expression.Convert(Expression.Property(e, nameof(IPorEmpresa.IdEmpresas)), typeof(int?)),
+                        ativa)),
                 e);
             modelBuilder.Entity(tipo.ClrType).HasQueryFilter(filtro);
         }
@@ -44,42 +49,34 @@ public partial class LabDbContext(DbContextOptions<LabDbContext> options, IEmpre
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         ConferirEmpresa();
-        var pendentes = CapturarAuditoria(acceptAllChangesOnSuccess);
+        var pendentes = AuditoriaAlteracoes.Capturar(ChangeTracker);
         if (pendentes.Count == 0) return base.SaveChanges(acceptAllChangesOnSuccess);
 
         using var propria = Database.CurrentTransaction is null ? Database.BeginTransaction() : null;
-        var n = base.SaveChanges(acceptAllChangesOnSuccess);
-        Set<Auditoria>().AddRange(pendentes.Select(p => p.Gerar(empresa)));
-        base.SaveChanges(true);
+        var n = base.SaveChanges(acceptAllChangesOnSuccess: false);
+        AuditoriaAlteracoes.Inserir(Database, pendentes.Select(p => p.Gerar(empresa)));
         propria?.Commit();
+        if (acceptAllChangesOnSuccess) ChangeTracker.AcceptAllChanges();
         return n;
     }
 
     /// <summary>
     /// Confere a empresa e grava a AUDITORIA das tabelas críticas na MESMA transação: usa a transação aberta
-    /// pelo serviço ou abre uma própria. Se a auditoria falhar, a alteração também é desfeita.
+    /// pelo serviço ou abre uma própria. Se a auditoria ou o commit falharem, a alteração também é desfeita e o
+    /// rastreador continua com as alterações pendentes (só é aceito depois do commit).
     /// </summary>
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         ConferirEmpresa();
-        var pendentes = CapturarAuditoria(acceptAllChangesOnSuccess);
+        var pendentes = AuditoriaAlteracoes.Capturar(ChangeTracker);
         if (pendentes.Count == 0) return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
 
         await using var propria = Database.CurrentTransaction is null ? await Database.BeginTransactionAsync(cancellationToken) : null;
-        var n = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-        Set<Auditoria>().AddRange(pendentes.Select(p => p.Gerar(empresa)));
-        await base.SaveChangesAsync(true, cancellationToken);
+        var n = await base.SaveChangesAsync(acceptAllChangesOnSuccess: false, cancellationToken);
+        await AuditoriaAlteracoes.InserirAsync(Database, pendentes.Select(p => p.Gerar(empresa)), cancellationToken);
         if (propria is not null) await propria.CommitAsync(cancellationToken);
+        if (acceptAllChangesOnSuccess) ChangeTracker.AcceptAllChanges();
         return n;
-    }
-
-    private List<AuditoriaAlteracoes.Pendente> CapturarAuditoria(bool acceptAllChangesOnSuccess)
-    {
-        var pendentes = AuditoriaAlteracoes.Capturar(ChangeTracker);
-        // o 2º SaveChanges (da auditoria) regravaria as entidades ainda não aceitas
-        if (pendentes.Count > 0 && !acceptAllChangesOnSuccess)
-            throw new NotSupportedException("SaveChanges(acceptAllChangesOnSuccess: false) não é suportado em tabelas auditadas.");
-        return pendentes;
     }
 
     /// <summary>
@@ -108,6 +105,19 @@ public partial class LabDbContext(DbContextOptions<LabDbContext> options, IEmpre
                 throw new InvalidOperationException($"{nome}: registro de outra empresa ({prop.OriginalValue}) não pode ser alterado/excluído.");
             if (prop.CurrentValue != prop.OriginalValue)
                 throw new InvalidOperationException($"{nome}: não é permitido trocar a empresa do registro.");
+        }
+
+        // Vínculos do usuário com empresas/perfis: sem filtro na leitura (o login lista as empresas do usuário),
+        // mas a gravação fica restrita à empresa ativa, exceto para ADMIN_GLOBAL.
+        foreach (var entrada in ChangeTracker.Entries().Where(x => x.Entity is UsuarioEmpresa or UsuarioPerfil))
+        {
+            if (entrada.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted) || empresa.AdminGlobal) continue;
+            var nome = entrada.Metadata.ClrType.Name;
+            var ativa = EmpresaAtivaId
+                ?? throw new InvalidOperationException($"Gravação de {nome} sem empresa ativa.");
+            var prop = entrada.Property(nameof(UsuarioEmpresa.IdEmpresas));
+            if ((int)prop.CurrentValue! != ativa || (entrada.State != EntityState.Added && (int)prop.OriginalValue! != ativa))
+                throw new InvalidOperationException($"{nome}: vínculo com outra empresa só pode ser gravado por ADMIN_GLOBAL.");
         }
     }
 }

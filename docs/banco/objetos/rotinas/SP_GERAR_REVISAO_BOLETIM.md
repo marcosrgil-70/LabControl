@@ -36,8 +36,8 @@ CREATE PROCEDURE SP_GERAR_REVISAO_BOLETIM(IN p_id_origem INT, IN p_motivo VARCHA
 ## O que acessa
 - **Altera:** —
 - **Lê:** [`LAB_RESULTADOS_ANALISES`](../tabelas/LAB_RESULTADOS_ANALISES.md), [`LAB_BOLETIM_ANALISES`](../tabelas/LAB_BOLETIM_ANALISES.md)
-- **Chama:** [`PR_REVISAO_BOLETIM`](../rotinas/PR_REVISAO_BOLETIM.md)
-- **Variáveis de sessão:** —
+- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md), [`PR_REVISAO_BOLETIM`](../rotinas/PR_REVISAO_BOLETIM.md)
+- **Variáveis de sessão:** `@LC_REVISAO` ()
 
 ## Mensagens de negócio (SQLSTATE 45000)
 - "Informe o motivo da revisão."
@@ -70,11 +70,12 @@ CREATE PROCEDURE SP_GERAR_REVISAO_BOLETIM(IN p_id_origem INT, IN p_motivo VARCHA
                                           IN p_id_usuario INT, OUT p_id_novo INT, OUT p_revisao INT)
 BEGIN
   DECLARE v_res, v_res_ultimo INT;
-  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_REVISAO = NULL; ROLLBACK; RESIGNAL; END;
   IF COALESCE(TRIM(p_motivo), '') = '' THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Informe o motivo da revisão.';
   END IF;
   START TRANSACTION;
+  SET @LC_REVISAO = 1;
   -- Se o resultado foi revisado depois do boletim, a revisão do boletim já aponta para o resultado vigente
   SELECT B.ID_LAB_RESULTADOS_ANALISES INTO v_res FROM LAB_BOLETIM_ANALISES B
    WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_origem;
@@ -85,6 +86,10 @@ BEGIN
    LIMIT 1;
   CALL PR_REVISAO_BOLETIM(p_id_origem, IF(v_res_ultimo IS NOT NULL AND v_res_ultimo <> v_res, v_res_ultimo, NULL),
                           p_motivo, p_id_func, p_id_usuario, p_id_novo, p_revisao);
+  SET @LC_REVISAO = NULL;
+  CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_BOLETIM_ANALISES WHERE ID_LAB_BOLETIM_ANALISES = p_id_novo),
+                  'LAB_BOLETIM_ANALISES', p_id_novo, 'R', JSON_OBJECT('ID_ORIGEM', p_id_origem),
+                  JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo));
   COMMIT;
 END
 ```

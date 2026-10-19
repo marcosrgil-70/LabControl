@@ -15,18 +15,21 @@ Comentário do script: _Resultados_
 - `NEW.ID_EMPRESAS`
 
 ## Validações (mensagens SQLSTATE 45000)
-- — (não recusa operações)
+- "Revisões só podem ser geradas pela rotina de revisão."
 
 ## Variáveis de sessão
-- —
+- `@LC_MIGRACAO` — 1 = carga da migração: desliga numeração automática e validações (nunca usar fora da migração)
+- `@LC_REVISAO` — 
 
 ## O que acessa
 - **Altera outras tabelas:** —
 - **Lê outras tabelas:** [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md)
-- **Chama:** —
+- **Chama:** [`PR_CONFERIR_EMPRESA`](../rotinas/PR_CONFERIR_EMPRESA.md)
 
 ## Impacto na aplicação
 - A aplicação não precisa (e não deve depender de) enviar: `ID_EMPRESAS`. Reler a linha depois de gravar.
+- Capturar `MySqlException` com `SqlState == "45000"` e mostrar a mensagem ao usuário (é regra de negócio, não erro técnico).
+- Com `@LC_MIGRACAO = 1` (só na migração) as validações/numeração ficam desligadas.
 
 ## Telas e processos relacionados
 - **Telas:** [T26 Resultados](../../../telas/T26-resultados.md) · [T27 Boletim](../../../telas/T27-boletim.md)
@@ -36,6 +39,12 @@ Comentário do script: _Resultados_
 ```sql
 CREATE TRIGGER TG_RESULT_BI BEFORE INSERT ON LAB_RESULTADOS_ANALISES FOR EACH ROW
 BEGIN
-  SET NEW.ID_EMPRESAS = (SELECT ID_EMPRESAS FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = NEW.ID_LAB_HIST_AMOSTRAS);
+  DECLARE v_emp INT;
+  SELECT ID_EMPRESAS INTO v_emp FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = NEW.ID_LAB_HIST_AMOSTRAS;
+  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, v_emp);
+  SET NEW.ID_EMPRESAS = v_emp;
+  IF COALESCE(@LC_MIGRACAO, 0) = 0 AND NEW.REVISAO <> 0 AND COALESCE(@LC_REVISAO, 0) = 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Revisões só podem ser geradas pela rotina de revisão.';
+  END IF;
 END
 ```

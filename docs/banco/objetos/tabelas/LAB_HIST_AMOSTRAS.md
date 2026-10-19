@@ -133,9 +133,9 @@ Notas do script: _Fabricação/Validade podem ser PARCIAIS (só mês/ano, só an
 ## Usada por
 - **Views:** [`VW_LAB_AMOSTRAS`](../views/VW_LAB_AMOSTRAS.md), [`VW_LAB_TESTES_PENDENTES`](../views/VW_LAB_TESTES_PENDENTES.md), [`VW_LAB_BOLETINS`](../views/VW_LAB_BOLETINS.md), [`VW_PEDIDOS_VENDA_SALDO`](../views/VW_PEDIDOS_VENDA_SALDO.md)
 - **Rotinas que alteram:** [`PR_REVISAO_AMOSTRA`](../rotinas/PR_REVISAO_AMOSTRA.md), [`SP_GERAR_PEDIDO_VENDA`](../rotinas/SP_GERAR_PEDIDO_VENDA.md), [`SP_TROCAR_PRODUTO_PROPOSTA`](../rotinas/SP_TROCAR_PRODUTO_PROPOSTA.md)
-- **Rotinas que leem:** [`PR_ATUALIZA_SALDO`](../rotinas/PR_ATUALIZA_SALDO.md), [`SP_AMOSTRA_GERAR_TESTES`](../rotinas/SP_AMOSTRA_GERAR_TESTES.md), [`PR_REVISAO_RESULTADO`](../rotinas/PR_REVISAO_RESULTADO.md)
+- **Rotinas que leem:** [`PR_ATUALIZA_SALDO`](../rotinas/PR_ATUALIZA_SALDO.md), [`SP_AMOSTRA_GERAR_TESTES`](../rotinas/SP_AMOSTRA_GERAR_TESTES.md), [`PR_REVISAO_RESULTADO`](../rotinas/PR_REVISAO_RESULTADO.md), [`SP_GERAR_REVISAO_AMOSTRA`](../rotinas/SP_GERAR_REVISAO_AMOSTRA.md)
 - **Triggers de outras tabelas que alteram:** —
-- **Triggers de outras tabelas que leem:** [`TG_TESTES_BI`](../triggers/TG_TESTES_BI.md), [`TG_MOV_BI`](../triggers/TG_MOV_BI.md), [`TG_RESULT_BI`](../triggers/TG_RESULT_BI.md), [`TG_BOLETIM_BI`](../triggers/TG_BOLETIM_BI.md)
+- **Triggers de outras tabelas que leem:** [`TG_TESTES_BI`](../triggers/TG_TESTES_BI.md), [`TG_MOV_BI`](../triggers/TG_MOV_BI.md), [`TG_RESULT_BI`](../triggers/TG_RESULT_BI.md), [`TG_BOLETIM_BI`](../triggers/TG_BOLETIM_BI.md), [`TG_RE_BI`](../triggers/TG_RE_BI.md)
 
 ## Telas e processos
 - **Telas:** [T22 Recebimento de amostras](../../../telas/T22-recebimento-amostras.md) · [T23 Movimentação de amostras](../../../telas/T23-movimentacao-amostras.md) · [T24 Localização das amostras](../../../telas/T24-localizacao-amostras.md) · [T25 Etiquetas de amostras](../../../telas/T25-etiquetas-amostras.md) · [T26 Resultados](../../../telas/T26-resultados.md) · [T27 Boletim](../../../telas/T27-boletim.md) · [T28 Relatório de ensaio](../../../telas/T28-relatorio-ensaio.md) · [T29 Pesquisa de amostras](../../../telas/T29-pesquisa-amostras.md)

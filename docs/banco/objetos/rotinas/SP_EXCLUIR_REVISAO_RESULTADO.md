@@ -32,7 +32,7 @@ CREATE PROCEDURE SP_EXCLUIR_REVISAO_RESULTADO(IN p_id_resultado INT)
 ## O que acessa
 - **Altera:** [`LAB_RESULTADOS_ANALISES`](../tabelas/LAB_RESULTADOS_ANALISES.md)
 - **Lê:** [`LAB_BOLETIM_ANALISES`](../tabelas/LAB_BOLETIM_ANALISES.md)
-- **Chama:** —
+- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md)
 - **Variáveis de sessão:** `@LC_DESFAZENDO` (uso interno de `SP_EXCLUIR_REVISAO_*` para permitir excluir a revisão)
 
 ## Mensagens de negócio (SQLSTATE 45000)
@@ -58,10 +58,10 @@ catch (MySqlException ex) when (ex.SqlState == "45000") { return Resultado.Erro(
 ```sql
 CREATE PROCEDURE SP_EXCLUIR_REVISAO_RESULTADO(IN p_id_resultado INT)
 BEGIN
-  DECLARE v_origem, v_ultima INT;
+  DECLARE v_origem, v_ultima, v_emp INT;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_DESFAZENDO = NULL; ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
-  SELECT ID_RESULTADO_ORIGEM, ULTIMA_REVISAO INTO v_origem, v_ultima
+  SELECT ID_RESULTADO_ORIGEM, ULTIMA_REVISAO, ID_EMPRESAS INTO v_origem, v_ultima, v_emp
     FROM LAB_RESULTADOS_ANALISES WHERE ID_LAB_RESULTADOS_ANALISES = p_id_resultado FOR UPDATE;
   IF v_ultima IS NULL OR v_ultima = 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Só é possível excluir a última revisão do resultado.';
@@ -75,6 +75,7 @@ BEGIN
     UPDATE LAB_RESULTADOS_ANALISES SET ULTIMA_REVISAO = 1 WHERE ID_LAB_RESULTADOS_ANALISES = v_origem;
   END IF;
   SET @LC_DESFAZENDO = NULL;
+  CALL PR_AUDITAR(v_emp, 'LAB_RESULTADOS_ANALISES', p_id_resultado, 'D', NULL, JSON_OBJECT('ID_REATIVADO', v_origem));
   COMMIT;
 END
 ```

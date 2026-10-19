@@ -19,7 +19,7 @@ Garantir que cada request trabalhe com **uma** empresa (a ativa) e que nenhum da
 3. `IEmpresaContexto` (scoped) lê as claims: `EmpresaId`, `UsuarioId`, `ProfissionalId`, `AdminGlobal`, `TemPermissao()`.
 4. `LabDbContext`: **Global Query Filter** `e.IdEmpresas == contexto.EmpresaId` em toda entidade com `ID_EMPRESAS` (exceto globais: `EMPRESAS`, `PAISES`, `ESTADOS`, `CIDADES`, `USUARIOS`, `PERMISSOES`). Views mapeadas como keyless também recebem o filtro.
 5. `SaveChanges`: entidades `Added` com `ID_EMPRESAS` recebem a empresa ativa; `Modified` não podem trocar de empresa (as triggers também bloqueiam nos documentos).
-6. Banco: filhos herdam `ID_EMPRESAS` do pai pelas triggers (não há como gravar item de proposta, teste, resultado ou boletim em outra empresa).
+6. Banco: filhos herdam `ID_EMPRESAS` do pai pelas triggers, e um `ID_EMPRESAS` informado diferente do pai é recusado ("Registro pertence a outra empresa.", `PR_CONFERIR_EMPRESA`) — não há como gravar item de proposta, teste, resultado ou boletim em outra empresa.
 7. Troca de empresa (menu do topo) → novas claims → Home (descarta formulários abertos).
 
 ## Regras
@@ -32,8 +32,8 @@ Garantir que cada request trabalhe com **uma** empresa (a ativa) e que nenhum da
 ## Implementação no C# (feita na tarefa 0.4)
 - `Infra/EmpresaContexto.cs`: `IEmpresaContexto` (scoped) lê as claims `LabClaims.*` (`EmpresaId`, `UsuarioId`, `ProfissionalId`, `AdminGlobal`). `TemPermissao()` entra na Fase 1 (T04).
 - O gerador marca as entidades: **`IPorEmpresa`** (tabela com `ID_EMPRESAS NOT NULL`: filtro + `SaveChanges`) ou **`IFiltradoPorEmpresa`** (views e `AUDITORIA`, cujo `ID_EMPRESAS` é anulável: só filtro).
-- `LabDbContext.OnModelCreating`: `e => (int?)e.IdEmpresas == EmpresaAtivaId` em toda `IFiltradoPorEmpresa`; filhos sem `ID_EMPRESAS` filtram pelo pai (`CONDICOES_PAGTOS_PARC` → `CONDICOES_PAGTOS`, `PERFIS_PERMISSOES` → `PERFIS`).
-- **Sem filtro** (lista `SEM_FILTRO_EMPRESA` do gerador): `EMPRESAS` (global) e os vínculos do usuário global `USUARIOS_EMPRESAS` / `USUARIOS_PERFIS` (o login lista as empresas do usuário; os serviços de login/usuários filtram explicitamente).
+- `LabDbContext.OnModelCreating`: `e => EmpresaAtivaId != null && (int?)e.IdEmpresas == EmpresaAtivaId` em toda `IFiltradoPorEmpresa` (o `!= null` evita que, sem empresa ativa, linhas com `ID_EMPRESAS` NULL apareçam — revisão 0.9); filhos sem `ID_EMPRESAS` filtram pelo pai (`CONDICOES_PAGTOS_PARC` → `CONDICOES_PAGTOS`, `PERFIS_PERMISSOES` → `PERFIS`).
+- **Sem filtro** (lista `SEM_FILTRO_EMPRESA` do gerador): `EMPRESAS` (global) e os vínculos do usuário global `USUARIOS_EMPRESAS` / `USUARIOS_PERFIS` (o login lista as empresas do usuário; os serviços de login/usuários filtram explicitamente). A **gravação** desses vínculos fica restrita à empresa ativa, exceto para ADMIN_GLOBAL (revisão 0.9).
 - `SaveChanges`: inclusão recebe a empresa ativa (ou é recusada se vier outra); alteração/exclusão só de registro da empresa ativa e sem trocar `ID_EMPRESAS`; **sem empresa ativa nada é lido nem gravado** (fail-closed).
 - Alterar = carregar pela consulta filtrada e copiar os campos do formulário; **nunca** `db.Update(entidadeDoFormulario)` (o `UPDATE … WHERE ID = x` não leva a empresa).
 - `Infra/ExigirEmpresaMiddleware.cs`: usuário autenticado sem empresa → `/Conta/Empresa` (actions MVC, exceto o controller `Conta`).

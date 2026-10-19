@@ -40,7 +40,7 @@ CREATE PROCEDURE SP_GERAR_PEDIDO_VENDA(IN p_id_proposta INT, IN p_dt_autorizacao
 ## O que acessa
 - **Altera:** [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md), [`PEDIDOS_VENDA`](../tabelas/PEDIDOS_VENDA.md), [`PEDIDOS_VENDA_ITENS`](../tabelas/PEDIDOS_VENDA_ITENS.md), [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md)
 - **Lê:** [`LAB_PROPOSTAS_PRODUTOS`](../tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`LAB_PROPOSTAS_PRODANALISES`](../tabelas/LAB_PROPOSTAS_PRODANALISES.md)
-- **Chama:** —
+- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md)
 - **Variáveis de sessão:** —
 
 ## Mensagens de negócio (SQLSTATE 45000)
@@ -130,6 +130,9 @@ BEGIN
      SET A.ID_PEDIDOS_VENDA = p_id_pedido
    WHERE P.ID_EMPRESAS = v_emp AND P.ANO_PROPOSTA = v_ano AND P.COD_PROPOSTA = v_cod
      AND A.ID_PEDIDOS_VENDA IS NULL AND A.ULTIMA_REVISAO = 1;
+  CALL PR_AUDITAR(v_emp, 'PEDIDOS_VENDA', p_id_pedido, 'I', NULL,
+                  JSON_OBJECT('NR_PEDIDO', p_nr_pedido, 'ID_LAB_PROPOSTAS', p_id_proposta, 'DT_AUTORIZACAO', p_dt_autorizacao,
+                              'AUTORIZADO_POR', p_autorizado_por, 'NR_PEDIDO_CLIENTE', p_nr_pedido_cliente));
   COMMIT;
 END
 ```

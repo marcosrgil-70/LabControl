@@ -18,18 +18,21 @@ Comentário do script: _Boletins (LAB_BOLETIM_ANALISES_BU0/BD0/AD0 do legado, co
 
 ## Validações (mensagens SQLSTATE 45000)
 - "O resultado não pertence à amostra do boletim."
+- "Revisões só podem ser geradas pela rotina de revisão."
 
 ## Variáveis de sessão
-- —
+- `@LC_MIGRACAO` — 1 = carga da migração: desliga numeração automática e validações (nunca usar fora da migração)
+- `@LC_REVISAO` — 
 
 ## O que acessa
 - **Altera outras tabelas:** —
 - **Lê outras tabelas:** [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md), [`LAB_RESULTADOS_ANALISES`](../tabelas/LAB_RESULTADOS_ANALISES.md)
-- **Chama:** [`FN_NR_AMOSTRA_ID`](../rotinas/FN_NR_AMOSTRA_ID.md)
+- **Chama:** [`FN_NR_AMOSTRA_ID`](../rotinas/FN_NR_AMOSTRA_ID.md), [`PR_CONFERIR_EMPRESA`](../rotinas/PR_CONFERIR_EMPRESA.md)
 
 ## Impacto na aplicação
 - A aplicação não precisa (e não deve depender de) enviar: `ID_EMPRESAS`, `COD_BOLETIM`, `DT_BOLETIM`. Reler a linha depois de gravar.
 - Capturar `MySqlException` com `SqlState == "45000"` e mostrar a mensagem ao usuário (é regra de negócio, não erro técnico).
+- Com `@LC_MIGRACAO = 1` (só na migração) as validações/numeração ficam desligadas.
 
 ## Telas e processos relacionados
 - **Telas:** [T27 Boletim](../../../telas/T27-boletim.md)
@@ -45,7 +48,11 @@ BEGIN
   IF v_amo IS NULL OR v_amo <> NEW.ID_LAB_HIST_AMOSTRAS THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'O resultado não pertence à amostra do boletim.';
   END IF;
+  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, v_emp);
   SET NEW.ID_EMPRESAS = v_emp;
+  IF COALESCE(@LC_MIGRACAO, 0) = 0 AND NEW.REVISAO <> 0 AND COALESCE(@LC_REVISAO, 0) = 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Revisões só podem ser geradas pela rotina de revisão.';
+  END IF;
   -- COD_BOLETIM = número base da amostra física (sem o " Rnn"): constante entre revisões
   IF COALESCE(NEW.COD_BOLETIM, '') = '' THEN
     SELECT ID_AMOSTRAS_TIPO, COD_AMOSTRA, ID_ANALISES_TIPO, ANO_AMOSTRA INTO v_tipo, v_cod, v_analise, v_ano

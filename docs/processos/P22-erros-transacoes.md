@@ -19,7 +19,7 @@
 | Peça | Arquivo | O que faz |
 |---|---|---|
 | Conexão | `Data/ConexaoMySql.cs` | `options.Configurar(cs, empresa)`: força `AllowUserVariables=True` (sem ele o MySqlConnector trata `@LC_*` como parâmetro) e `ConnectionReset=True`; registra o interceptor |
-| Sessão | `Data/Interceptors/SessaoMySqlInterceptor.cs` | em toda abertura: `SET SESSION transaction_isolation = 'READ-COMMITTED', @LC_ID_USUARIOS = <usuário do request>, @LC_MIGRACAO = 0, @LC_PERMITE_RETROATIVO = 0, @LC_DESFAZENDO = NULL` |
+| Sessão | `Data/Interceptors/SessaoMySqlInterceptor.cs` | em toda abertura: `SET SESSION transaction_isolation = 'READ-COMMITTED', @LC_ID_USUARIOS = <usuário do request>, @LC_IP = <IP>, @LC_REVISAO = NULL, @LC_MIGRACAO = 0, @LC_PERMITE_RETROATIVO = 0, @LC_DESFAZENDO = NULL` |
 | Isolamento | `Data/Interceptors/IsolamentoInterceptor.cs` | `BeginTransaction()` sem nível abre em READ COMMITTED (o MySqlConnector mandaria `REPEATABLE READ`) |
 | Resultado | `Infra/Resultado.cs` | `Resultado.Ok()`, `Resultado.Ok(valor)`, `Resultado.Erro(msg, campo?)` (serve para `Resultado` e `Resultado<T>`) |
 | Erros | `Infra/ErrosMySql.cs` | `MensagemDeNegocio(ex)` (45000 = texto da trigger; 1062 por constraint; 1451; 1452), `CapturarAsync(...)` |
@@ -53,6 +53,8 @@ public async Task<Resultado<int>> IncluirAmostra(AmostraVM vm) {
 | `@LC_MIGRACAO` | interceptor (= 0) / MigracaoService (= 1) | sempre 0, exceto na migração |
 | `@LC_PERMITE_RETROATIVO` | interceptor (= 0) / AmostraService (= 1) | só no request autorizado |
 | `@LC_DESFAZENDO` | as próprias `SP_EXCLUIR_REVISAO_*` | interno |
+| `@LC_REVISAO` | as próprias `SP_GERAR_REVISAO_*` (interceptor zera) | interno: só elas incluem revisão (`REVISAO` > 0) |
+| `@LC_IP` | `SessaoMySqlInterceptor` | toda abertura de conexão (AUDITORIA das procedures) |
 
 ## Concorrência
 - Numeração: `SP_PROXIMO_NUMERO` com `INSERT … ON DUPLICATE KEY UPDATE` (trava exclusiva numa instrução só); revisões: `SELECT … FOR UPDATE` nas revisões existentes; item da proposta: `TG_PROPPROD_BI` trava a proposta (`FOR UPDATE`).

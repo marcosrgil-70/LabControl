@@ -349,6 +349,55 @@ CALL T_OK('12', 'sequência continua (sem reinício e sem buracos das recusas)',
           (SELECT NR_AMOSTRA FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = @AMO3));
 
 -- ---------------------------------------------------------------------
+-- 13. Revisão da Fase 0 (tarefa 0.9): auditoria nas procedures, número sempre
+--     do banco, revisão só pela rotina, filho na empresa do pai
+-- ---------------------------------------------------------------------
+CALL T_OK('13', 'AUDITORIA gravada pelas procedures (revisão R, emissão M, pedido I)',
+          (SELECT COUNT(*) FROM AUDITORIA WHERE TABELA = 'LAB_PROPOSTAS' AND ID_REGISTRO = @PROP2 AND ACAO = 'R') = 1
+          AND (SELECT COUNT(*) FROM AUDITORIA WHERE TABELA = 'LAB_BOLETIM_ANALISES' AND ID_REGISTRO = @BOL AND ACAO = 'M') = 1
+          AND (SELECT COUNT(*) FROM AUDITORIA WHERE TABELA = 'PEDIDOS_VENDA' AND ID_REGISTRO = @PED AND ACAO = 'I'
+                 AND JSON_EXTRACT(DADOS_DEPOIS, '$.NR_PEDIDO') = 1) = 1,
+          (SELECT GROUP_CONCAT(CONCAT(TABELA, ':', ACAO)) FROM AUDITORIA WHERE ID_EMPRESAS = @EMP));
+
+INSERT INTO LAB_PROPOSTAS (ID_EMPRESAS, COD_PROPOSTA, ANO_PROPOSTA, NR_PROPOSTA, ID_ENTIDADES, ID_ENTIDADES_FUNC,
+                           ID_ENT_END_LAUDO, ID_ENT_CONTATO_RESULTADO, ID_ENT_COBRANCA, DT_SOLICITACAO,
+                           ID_LAB_PROPOSTAS_STATUS, ID_CONDICOES_PAGTOS)
+VALUES (@EMP, 900, 1999, '', @CLI, @FUNC, @END, @EML, @CLI, CURDATE(), @STPROP, @CPG);
+SET @PROP3 = LAST_INSERT_ID();
+SELECT COD_PROPOSTA, ANO_PROPOSTA INTO @COD3, @ANO3 FROM LAB_PROPOSTAS WHERE ID_LAB_PROPOSTAS = @PROP3;
+CALL T_OK('13', 'proposta enviada com COD=900/ANO=1999 recebe o número do banco (2) e o ano do servidor',
+          @COD3 = 2 AND @ANO3 = YEAR(CURDATE()), CONCAT(@COD3, '/', @ANO3));
+
+INSERT INTO PEDIDOS_VENDA (ID_EMPRESAS, NR_PEDIDO, DT_PEDIDO, ID_LAB_PROPOSTAS, COD_PROPOSTA, ANO_PROPOSTA, ID_ENTIDADES,
+                           ID_ENT_COBRANCA, ID_CONDICOES_PAGTOS, DT_AUTORIZACAO)
+VALUES (@EMP, 57, CURDATE(), @PROP3, @COD3, @ANO3, @CLI, @CLI, @CPG, CURDATE());
+SET @PED3 = LAST_INSERT_ID();
+CALL T_OK('13', 'pedido enviado com NR_PEDIDO=57 recebe o número do banco (2)',
+          (SELECT NR_PEDIDO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED3) = 2,
+          (SELECT NR_PEDIDO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED3));
+
+CALL T_ESPERA_ERRO('13', 'revisão de proposta incluída fora da rotina de revisão',
+     CONCAT('INSERT INTO LAB_PROPOSTAS (ID_EMPRESAS, COD_PROPOSTA, ANO_PROPOSTA, REV_PROPOSTA, NR_PROPOSTA, ID_ENTIDADES, ',
+            'ID_ENTIDADES_FUNC, ID_ENT_END_LAUDO, ID_ENT_CONTATO_RESULTADO, ID_ENT_COBRANCA, ID_LAB_PROPOSTAS_STATUS, ',
+            'ID_CONDICOES_PAGTOS) VALUES (', @EMP, ', ', @COD3, ', ', @ANO3, ', 1, '''', ', @CLI, ', ', @FUNC, ', ', @END, ', ',
+            @EML, ', ', @CLI, ', ', @STPROP, ', ', @CPG, ')'),
+     'Revisões só podem ser geradas pela rotina de revisão.');
+CALL T_ESPERA_ERRO('13', 'revisão de resultado incluída fora da rotina de revisão',
+     CONCAT('INSERT INTO LAB_RESULTADOS_ANALISES (ID_EMPRESAS, ID_LAB_HIST_AMOSTRAS, ID_ENTIDADES_FUNC_DIG, REVISAO) VALUES (',
+            @EMP, ', ', @AMO3, ', ', @FUNC, ', 1)'),
+     'Revisões só podem ser geradas pela rotina de revisão.');
+
+INSERT INTO EMPRESAS (COD_EMPRESA, RAZAO_SOCIAL) VALUES ('T02', 'OUTRA EMPRESA DE TESTE');
+SET @EMP2 = LAST_INSERT_ID();
+CALL T_ESPERA_ERRO('13', 'filho gravado com a empresa diferente da do pai',
+     CONCAT('INSERT INTO ENTIDADES_EMAILS (ID_EMPRESAS, ID_ENTIDADES, EMAIL) VALUES (', @EMP2, ', ', @CLI, ', ''x@teste.com'')'),
+     'Registro pertence a outra empresa.');
+CALL T_ESPERA_ERRO('13', 'item de proposta gravado com a empresa diferente da do pai',
+     CONCAT('INSERT INTO LAB_PROPOSTAS_PRODUTOS (ID_EMPRESAS, ID_LAB_PROPOSTAS, ITEM, ID_PRODUTOS, QTDE_AMOSTRAS) VALUES (',
+            @EMP2, ', ', @PROP3, ', 0, ', @PROD, ', 1)'),
+     'Registro pertence a outra empresa.');
+
+-- ---------------------------------------------------------------------
 -- Resultado
 -- ---------------------------------------------------------------------
 SELECT PASSO, IF(OK = 1, 'OK', 'FALHA') AS SITUACAO, ITEM, OBTIDO FROM T_RESULTADO ORDER BY ID;

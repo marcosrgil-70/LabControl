@@ -21,7 +21,7 @@ Profissional herda `ID_EMPRESAS` da entidade.
 ## O que acessa
 - **Altera outras tabelas:** —
 - **Lê outras tabelas:** [`ENTIDADES`](../tabelas/ENTIDADES.md)
-- **Chama:** —
+- **Chama:** [`PR_CONFERIR_EMPRESA`](../rotinas/PR_CONFERIR_EMPRESA.md)
 
 ## Impacto na aplicação
 - A aplicação não precisa (e não deve depender de) enviar: `ID_EMPRESAS`. Reler a linha depois de gravar.
@@ -34,6 +34,9 @@ Profissional herda `ID_EMPRESAS` da entidade.
 ```sql
 CREATE TRIGGER TG_ENTFUN_BI BEFORE INSERT ON ENTIDADES_FUNCIONARIOS FOR EACH ROW
 BEGIN
-  SET NEW.ID_EMPRESAS = (SELECT ID_EMPRESAS FROM ENTIDADES WHERE ID_ENTIDADES = NEW.ID_ENTIDADES);
+  DECLARE v_emp INT;
+  SELECT ID_EMPRESAS INTO v_emp FROM ENTIDADES WHERE ID_ENTIDADES = NEW.ID_ENTIDADES;
+  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, v_emp);
+  SET NEW.ID_EMPRESAS = v_emp;
 END
 ```

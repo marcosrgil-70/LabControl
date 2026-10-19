@@ -5,9 +5,9 @@ using LabControl.Models;
 namespace LabControl.Infra;
 
 /// <summary>
-/// Eventos de auditoria que não são um INSERT/UPDATE/DELETE do EF (docs/processos/P21-auditoria-log.md):
-/// login (L), revisão (R), emissão (M), desfazer revisão (D) e procedures. As alterações feitas pelo EF
-/// nas tabelas críticas já são auditadas pelo <see cref="LabDbContext"/>.
+/// Eventos de auditoria que não são um INSERT/UPDATE/DELETE do EF nem de procedure (docs/processos/P21-auditoria-log.md):
+/// login (L), reset de senha, ajuste de numeração… As alterações feitas pelo EF nas tabelas críticas já são auditadas
+/// pelo <see cref="LabDbContext"/>, e as procedures (revisão, emissão, pedido…) gravam o próprio evento (PR_AUDITAR).
 /// </summary>
 public interface IAuditoria
 {
@@ -16,17 +16,18 @@ public interface IAuditoria
     Task RegistrarAsync(string acao, string tabela, string idRegistro, object? antes = null, object? depois = null);
 }
 
+/// <summary>
+/// Grava por INSERT direto (não usa o ChangeTracker: nada que o serviço tenha pendente vai junto). Dentro de uma
+/// transação aberta pelo serviço, o evento fica na mesma transação.
+/// </summary>
 public sealed class ServicoAuditoria(LabDbContext db, IEmpresaContexto empresa) : IAuditoria
 {
-    public async Task RegistrarAsync(string acao, string tabela, string idRegistro, object? antes = null, object? depois = null)
-    {
-        db.Set<Auditoria>().Add(new Auditoria
+    public Task RegistrarAsync(string acao, string tabela, string idRegistro, object? antes = null, object? depois = null) =>
+        AuditoriaAlteracoes.InserirAsync(db.Database, [new Auditoria
         {
             IdEmpresas = empresa.EmpresaId, IdUsuarios = empresa.UsuarioId, Ip = empresa.Ip,
             Tabela = tabela, IdRegistro = idRegistro, Acao = acao,
             DadosAntes = antes is null ? null : JsonSerializer.Serialize(antes),
             DadosDepois = depois is null ? null : JsonSerializer.Serialize(depois),
-        });
-        await db.SaveChangesAsync();
-    }
+        }]);
 }

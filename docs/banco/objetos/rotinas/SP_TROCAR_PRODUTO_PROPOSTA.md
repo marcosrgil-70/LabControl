@@ -34,7 +34,7 @@ CREATE PROCEDURE SP_TROCAR_PRODUTO_PROPOSTA(IN p_id_proposta INT, IN p_id_prod_v
 ## O que acessa
 - **Altera:** [`LAB_PROPOSTAS_PRODUTOS`](../tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md)
 - **Lê:** [`PRODUTOS`](../tabelas/PRODUTOS.md), [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md)
-- **Chama:** —
+- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md)
 - **Variáveis de sessão:** —
 
 ## Mensagens de negócio (SQLSTATE 45000)
@@ -76,6 +76,8 @@ BEGIN
    WHERE ID_LAB_PROPOSTAS = p_id_proposta AND ID_PRODUTOS = p_id_prod_velho;
   UPDATE LAB_HIST_AMOSTRAS SET ID_PRODUTOS = p_id_prod_novo
    WHERE ID_LAB_PROPOSTAS = p_id_proposta AND ID_PRODUTOS = p_id_prod_velho;
+  CALL PR_AUDITAR(v_emp, 'LAB_PROPOSTAS', p_id_proposta, 'A', JSON_OBJECT('ID_PRODUTOS', p_id_prod_velho),
+                  JSON_OBJECT('ID_PRODUTOS', p_id_prod_novo));
   COMMIT;
 END
 ```

@@ -36,7 +36,7 @@ public sealed class Cenario : IAsyncDisposable
         var ativa = new EmpresaFixa();
         var db = await BancoTeste.NovoContextoAsync(ativa);
         var emp = await BancoTeste.CriarEmpresaAsync(db, ativa);
-        var c = new Cenario { Db = db, Ativa = ativa, Procedures = new Procedures(db, ativa, new ServicoAuditoria(db, ativa)), Empresa = emp };
+        var c = new Cenario { Db = db, Ativa = ativa, Procedures = new Procedures(db, ativa), Empresa = emp };
         await c.CadastrosAsync();
         return c;
     }

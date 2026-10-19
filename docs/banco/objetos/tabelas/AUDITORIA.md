@@ -45,7 +45,7 @@ Comentário do script: _Auditoria genérica gravada pela aplicação (antes/depo
 
 ## Usada por
 - **Views:** —
-- **Rotinas que alteram:** —
+- **Rotinas que alteram:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md)
 - **Rotinas que leem:** —
 - **Triggers de outras tabelas que alteram:** —
 - **Triggers de outras tabelas que leem:** —

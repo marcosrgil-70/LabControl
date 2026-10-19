@@ -63,14 +63,15 @@
 - **Esforço:** S · **Depende de:** 0.3
 
 ### 0.9 Revisão da fase
+> ✅ **Concluída em 19/10/2026** — 9 achados (4 no banco, 5 no C#), todos corrigidos; roteiro SQL 46/46; `tests/LabControl.Tests/RevisaoFase0Tests.cs`. Detalhes no Diário do plano.
 `/code-review` (nível high) sobre a fase; corrigir achados; atualizar o diário do plano.
 
 ---
 
 ## Definição de pronto da fase
-- [ ] Banco v2 recriável por um comando; roteiro 12 §7 automatizado e verde.
-- [ ] Filtro de empresa, sessão MySQL, erros 45000 e auditoria funcionando e testados.
-- [ ] Sem migrations EF e sem patches de schema no `Program.cs`; segredos fora do git.
+- [x] Banco v2 recriável por um comando; roteiro 12 §7 automatizado e verde.
+- [x] Filtro de empresa, sessão MySQL, erros 45000 e auditoria funcionando e testados.
+- [x] Sem migrations EF e sem patches de schema no `Program.cs`; segredos fora do git (a senha antiga do MySQL ainda está no histórico: trocar).
 
 ## Riscos
 | Risco | Mitigação |

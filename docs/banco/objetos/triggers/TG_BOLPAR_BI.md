@@ -22,7 +22,7 @@ Parâmetro do mesmo resultado; bloqueia boletim emitido.
 ## O que acessa
 - **Altera outras tabelas:** —
 - **Lê outras tabelas:** [`LAB_RESULTADOS_PARAM`](../tabelas/LAB_RESULTADOS_PARAM.md), [`LAB_BOLETIM_ANALISES`](../tabelas/LAB_BOLETIM_ANALISES.md)
-- **Chama:** —
+- **Chama:** [`PR_CONFERIR_EMPRESA`](../rotinas/PR_CONFERIR_EMPRESA.md)
 
 ## Impacto na aplicação
 - A aplicação não precisa (e não deve depender de) enviar: `ID_EMPRESAS`. Reler a linha depois de gravar.
@@ -41,6 +41,7 @@ BEGIN
   DECLARE v_emi DATETIME;
   SELECT ID_EMPRESAS, ID_LAB_RESULTADOS_ANALISES, DH_EMISSAO INTO v_emp, v_res, v_emi
     FROM LAB_BOLETIM_ANALISES WHERE ID_LAB_BOLETIM_ANALISES = NEW.ID_LAB_BOLETIM_ANALISES;
+  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, v_emp);
   SET NEW.ID_EMPRESAS = v_emp;
   IF COALESCE(@LC_MIGRACAO, 0) = 0 THEN
     IF v_emi IS NOT NULL THEN

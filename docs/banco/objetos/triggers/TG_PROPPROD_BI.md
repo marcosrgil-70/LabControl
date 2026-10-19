@@ -22,7 +22,7 @@ tela de propostas
 ## O que acessa
 - **Altera outras tabelas:** —
 - **Lê outras tabelas:** [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md)
-- **Chama:** —
+- **Chama:** [`PR_CONFERIR_EMPRESA`](../rotinas/PR_CONFERIR_EMPRESA.md)
 
 ## Impacto na aplicação
 - A aplicação não precisa (e não deve depender de) enviar: `ID_EMPRESAS`, `ITEM`. Reler a linha depois de gravar.
@@ -40,6 +40,7 @@ BEGIN
   DECLARE v_emp, v_ultima INT;
   -- FOR UPDATE: duas inclusões simultâneas na MESMA proposta esperam uma pela outra (ITEM = MAX + 1 sem repetir)
   SELECT ID_EMPRESAS, ULTIMA_REVISAO INTO v_emp, v_ultima FROM LAB_PROPOSTAS WHERE ID_LAB_PROPOSTAS = NEW.ID_LAB_PROPOSTAS FOR UPDATE;
+  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, v_emp);
   SET NEW.ID_EMPRESAS = v_emp;
   IF COALESCE(@LC_MIGRACAO, 0) = 0 THEN
     IF v_ultima = 0 THEN

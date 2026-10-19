@@ -64,7 +64,9 @@ public static class BancoTeste
                 db.ChangeTracker.Clear(); // código já usado por outra execução
             }
         }
-        var ini = await new Procedures(db, ativa, new ServicoAuditoria(db, ativa)).InicializarEmpresaAsync(emp.IdEmpresas);
+        ativa.AdminGlobal = true; // criar/inicializar empresa é operação de ADMIN_GLOBAL
+        var ini = await new Procedures(db, ativa).InicializarEmpresaAsync(emp.IdEmpresas);
+        ativa.AdminGlobal = false;
         if (!ini.Sucesso) throw new InvalidOperationException(ini.Mensagem);
         ativa.EmpresaId = emp.IdEmpresas;
 

@@ -35,7 +35,7 @@ Teste da mesma amostra; revisão antiga bloqueada; numérico × descritivo exclu
 ## O que acessa
 - **Altera outras tabelas:** —
 - **Lê outras tabelas:** [`LAB_HIST_AMOSTRAS_TESTES`](../tabelas/LAB_HIST_AMOSTRAS_TESTES.md), [`LAB_RESULTADOS_ANALISES`](../tabelas/LAB_RESULTADOS_ANALISES.md)
-- **Chama:** [`FN_FORMATA_RESULTADO`](../rotinas/FN_FORMATA_RESULTADO.md)
+- **Chama:** [`FN_FORMATA_RESULTADO`](../rotinas/FN_FORMATA_RESULTADO.md), [`PR_CONFERIR_EMPRESA`](../rotinas/PR_CONFERIR_EMPRESA.md)
 
 ## Impacto na aplicação
 - A aplicação não precisa (e não deve depender de) enviar: `ID_EMPRESAS`, `ID_UNIDADES`, `ID_UNIDADES_AMOSTRA`, `ID_UNIDADES_ESPECIF`, `ID_LAB_TIPOS_RESULTADOS`, `ID_LAB_TIPO_RESULTADOS_ESP`, `VR_RESULTADO`, `VR_EXP_RESULTADO`, `SIMBOLO_GRANDEZA`, `VR_RESULTADO_ESPECIF`, `VR_EXP_ESPECIF`, `SIMBOLO_GR_ESPECIF`, `RESULTADO_FORMATADO`, `ESPECIF_FORMATADA`. Reler a linha depois de gravar.
@@ -53,6 +53,7 @@ BEGIN
   DECLARE v_emp, v_amo, v_amo_teste, v_ultima INT;
   SELECT ID_EMPRESAS, ID_LAB_HIST_AMOSTRAS, ULTIMA_REVISAO INTO v_emp, v_amo, v_ultima
     FROM LAB_RESULTADOS_ANALISES WHERE ID_LAB_RESULTADOS_ANALISES = NEW.ID_LAB_RESULTADOS_ANALISES;
+  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, v_emp);
   SET NEW.ID_EMPRESAS = v_emp;
   -- zero -> NULL (LAB_RESULTADOS_PARAM_BIU0 do legado)
   IF NEW.ID_UNIDADES = 0 THEN SET NEW.ID_UNIDADES = NULL; END IF;

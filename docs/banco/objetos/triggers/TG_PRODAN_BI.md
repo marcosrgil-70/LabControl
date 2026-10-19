@@ -28,7 +28,7 @@ Comentário do script: _Cálculo dos valores da linha (cds_ProdAnalises*Change d
 ## O que acessa
 - **Altera outras tabelas:** —
 - **Lê outras tabelas:** [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md), [`LAB_PROPOSTAS_PRODUTOS`](../tabelas/LAB_PROPOSTAS_PRODUTOS.md)
-- **Chama:** —
+- **Chama:** [`PR_CONFERIR_EMPRESA`](../rotinas/PR_CONFERIR_EMPRESA.md)
 
 ## Impacto na aplicação
 - A aplicação não precisa (e não deve depender de) enviar: `ID_EMPRESAS`, `ID_LAB_PROPOSTAS`, `VR_SUBTOTAL`, `VR_DESCONTO`, `VR_TOTAL`. Reler a linha depois de gravar.
@@ -47,6 +47,7 @@ BEGIN
   SELECT PP.ID_EMPRESAS, PP.ID_LAB_PROPOSTAS, P.ULTIMA_REVISAO INTO v_emp, v_prop, v_ultima
     FROM LAB_PROPOSTAS_PRODUTOS PP JOIN LAB_PROPOSTAS P ON P.ID_LAB_PROPOSTAS = PP.ID_LAB_PROPOSTAS
    WHERE PP.ID_LAB_PROPOSTAS_PRODUTOS = NEW.ID_LAB_PROPOSTAS_PRODUTOS;
+  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, v_emp);
   SET NEW.ID_EMPRESAS = v_emp, NEW.ID_LAB_PROPOSTAS = v_prop;
   IF COALESCE(@LC_MIGRACAO, 0) = 0 THEN
     IF v_ultima = 0 THEN

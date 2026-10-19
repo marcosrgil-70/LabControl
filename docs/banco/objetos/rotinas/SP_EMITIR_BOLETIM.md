@@ -35,7 +35,7 @@ CREATE PROCEDURE SP_EMITIR_BOLETIM(IN p_id_boletim INT, IN p_id_func INT, IN p_a
 ## O que acessa
 - **Altera:** [`LAB_BOLETIM_ANALISES`](../tabelas/LAB_BOLETIM_ANALISES.md)
 - **Lê:** [`EMPRESAS_PARAMETROS`](../tabelas/EMPRESAS_PARAMETROS.md), [`LAB_BOLETIM_PARAMETROS`](../tabelas/LAB_BOLETIM_PARAMETROS.md)
-- **Chama:** —
+- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md)
 - **Variáveis de sessão:** —
 
 ## Mensagens de negócio (SQLSTATE 45000)
@@ -96,6 +96,8 @@ BEGIN
          ID_BOLETINS_STATUS = COALESCE(v_status, ID_BOLETINS_STATUS),
          ARQUIVO_PDF = p_arquivo, HASH_PDF = p_hash
    WHERE ID_LAB_BOLETIM_ANALISES = p_id_boletim;
+  CALL PR_AUDITAR(v_emp, 'LAB_BOLETIM_ANALISES', p_id_boletim, 'M', NULL,
+                  JSON_OBJECT('ARQUIVO_PDF', p_arquivo, 'HASH_PDF', p_hash, 'ID_ENTIDADES_FUNC_EMI', p_id_func));
   COMMIT;
 END
 ```

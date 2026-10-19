@@ -27,6 +27,7 @@
 
 ## Regras
 - O ano nunca vem de data digitada: sempre `YEAR(CURDATE())` do servidor.
+- Número/ano enviados no INSERT são **ignorados** fora da migração (proposta, amostra, pedido, relatório de ensaio): a trigger sempre numera. Até a revisão 0.9 a proposta, o pedido e o relatório guardavam um número ≠ 0 enviado, o que podia travar a sequência (o próximo número gerado colidiria no `UNIQUE`). O EF também nunca envia essas colunas (gerador: `fixo`).
 - Nada é "zerado": a primeira amostra de 2027 cria a linha `(emp, AMOSTRA, 2027)` com 1.
 - Rollback da transação devolve o número (sem lacunas por erro de validação; lacunas só se um documento gravado for excluído).
 - `UNIQUE` no banco impede duplicidade mesmo com bug na aplicação: `UQ_AMO_NUM`, `UQ_PROP_NUM`, `UQ_PEDVEN_NR`, `UQ_PROD_COD`, `UQ_RE_NR`.

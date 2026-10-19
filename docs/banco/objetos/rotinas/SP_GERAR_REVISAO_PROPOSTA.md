@@ -28,7 +28,7 @@ CREATE PROCEDURE SP_GERAR_REVISAO_PROPOSTA(IN p_id_origem INT, IN p_motivo VARCH
 ## Quem chama
 - **Uso previsto:** Botão "Gerar revisão" da T20 (`PROPOSTAS.REVISAR`).
 - **Chamada por rotinas:** —
-- **Chamada por triggers:** —
+- **Chamada por triggers:** [`TG_PROPOSTAS_BI`](../triggers/TG_PROPOSTAS_BI.md)
 - **Usada em views:** —
 
 ## Transação
@@ -36,9 +36,9 @@ CREATE PROCEDURE SP_GERAR_REVISAO_PROPOSTA(IN p_id_origem INT, IN p_motivo VARCH
 
 ## O que acessa
 - **Altera:** —
-- **Lê:** —
-- **Chama:** [`PR_REVISAO_PROPOSTA`](../rotinas/PR_REVISAO_PROPOSTA.md)
-- **Variáveis de sessão:** —
+- **Lê:** [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md)
+- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md), [`PR_REVISAO_PROPOSTA`](../rotinas/PR_REVISAO_PROPOSTA.md)
+- **Variáveis de sessão:** `@LC_REVISAO` ()
 
 ## Mensagens de negócio (SQLSTATE 45000)
 - "Informe o motivo da revisão."
@@ -69,12 +69,16 @@ catch (MySqlException ex) when (ex.SqlState == "45000") { return Resultado.Erro(
 CREATE PROCEDURE SP_GERAR_REVISAO_PROPOSTA(IN p_id_origem INT, IN p_motivo VARCHAR(500), IN p_id_usuario INT,
                                            OUT p_id_nova INT, OUT p_revisao INT)
 BEGIN
-  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_REVISAO = NULL; ROLLBACK; RESIGNAL; END;
   IF COALESCE(TRIM(p_motivo), '') = '' THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Informe o motivo da revisão.';
   END IF;
   START TRANSACTION;
+  SET @LC_REVISAO = 1;
   CALL PR_REVISAO_PROPOSTA(p_id_origem, p_motivo, p_id_usuario, p_id_nova, p_revisao);
+  SET @LC_REVISAO = NULL;
+  CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_PROPOSTAS WHERE ID_LAB_PROPOSTAS = p_id_nova), 'LAB_PROPOSTAS', p_id_nova, 'R',
+                  JSON_OBJECT('ID_ORIGEM', p_id_origem), JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo));
   COMMIT;
 END
 ```

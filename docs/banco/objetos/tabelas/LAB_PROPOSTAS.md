@@ -96,9 +96,9 @@ Comentário do script: _6. PROPOSTAS_
 ## Usada por
 - **Views:** [`VW_LAB_PROPOSTAS`](../views/VW_LAB_PROPOSTAS.md), [`VW_LAB_AMOSTRAS`](../views/VW_LAB_AMOSTRAS.md), [`VW_PEDIDOS_VENDA_SALDO`](../views/VW_PEDIDOS_VENDA_SALDO.md)
 - **Rotinas que alteram:** [`SP_RECALCULAR_PROPOSTA`](../rotinas/SP_RECALCULAR_PROPOSTA.md), [`PR_REVISAO_PROPOSTA`](../rotinas/PR_REVISAO_PROPOSTA.md), [`SP_GERAR_PEDIDO_VENDA`](../rotinas/SP_GERAR_PEDIDO_VENDA.md)
-- **Rotinas que leem:** [`SP_ATUALIZAR_PEDIDO_REVISAO`](../rotinas/SP_ATUALIZAR_PEDIDO_REVISAO.md), [`SP_TROCAR_PRODUTO_PROPOSTA`](../rotinas/SP_TROCAR_PRODUTO_PROPOSTA.md)
+- **Rotinas que leem:** [`SP_GERAR_REVISAO_PROPOSTA`](../rotinas/SP_GERAR_REVISAO_PROPOSTA.md), [`SP_ATUALIZAR_PEDIDO_REVISAO`](../rotinas/SP_ATUALIZAR_PEDIDO_REVISAO.md), [`SP_TROCAR_PRODUTO_PROPOSTA`](../rotinas/SP_TROCAR_PRODUTO_PROPOSTA.md)
 - **Triggers de outras tabelas que alteram:** —
-- **Triggers de outras tabelas que leem:** [`TG_PROPPROD_BI`](../triggers/TG_PROPPROD_BI.md), [`TG_PROPPROD_BU`](../triggers/TG_PROPPROD_BU.md), [`TG_PRODAN_BI`](../triggers/TG_PRODAN_BI.md), [`TG_PRODAN_BU`](../triggers/TG_PRODAN_BU.md), [`TG_PRODAN_BD`](../triggers/TG_PRODAN_BD.md), [`TG_AMOSTRAS_BI`](../triggers/TG_AMOSTRAS_BI.md)
+- **Triggers de outras tabelas que leem:** [`TG_PROPPROD_BI`](../triggers/TG_PROPPROD_BI.md), [`TG_PROPPROD_BU`](../triggers/TG_PROPPROD_BU.md), [`TG_PRODAN_BI`](../triggers/TG_PRODAN_BI.md), [`TG_PRODAN_BU`](../triggers/TG_PRODAN_BU.md), [`TG_PRODAN_BD`](../triggers/TG_PRODAN_BD.md), [`TG_PEDVEN_BI`](../triggers/TG_PEDVEN_BI.md), [`TG_AMOSTRAS_BI`](../triggers/TG_AMOSTRAS_BI.md)
 
 ## Telas e processos
 - **Telas:** [T20 Propostas](../../../telas/T20-propostas.md) · [T21 Pedidos de venda](../../../telas/T21-pedidos-venda.md) · [T22 Recebimento de amostras](../../../telas/T22-recebimento-amostras.md)

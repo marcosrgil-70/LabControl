@@ -113,7 +113,7 @@ SELECT ULTIMO_NUMERO INTO n ...;
 
 ## 7. Roteiro de teste (executado em 16/10/2026 — reexecutar após qualquer mudança)
 
-> Automatizado em [`Scripts/v2/teste/roteiro_12_7.sql`](../../Scripts/v2/teste/roteiro_12_7.sql) (39 verificações; termina com erro se alguma falhar). Rodar **só num banco temporário** criado pelos scripts 01..05. O mesmo roteiro **pela aplicação** (EF + `Infra/Procedures.cs`) está em [`tests/LabControl.Tests/RoteiroTests.cs`](../../tests/LabControl.Tests/RoteiroTests.cs) (`dotnet test`). Última execução: **19/10/2026 — 39/39 OK**.
+> Automatizado em [`Scripts/v2/teste/roteiro_12_7.sql`](../../Scripts/v2/teste/roteiro_12_7.sql) (46 verificações — o passo 13 cobre a revisão da Fase 0; termina com erro se alguma falhar). Rodar **só num banco temporário** criado pelos scripts 01..05. O mesmo roteiro **pela aplicação** (EF + `Infra/Procedures.cs`) está em [`tests/LabControl.Tests/RoteiroTests.cs`](../../tests/LabControl.Tests/RoteiroTests.cs) (`dotnet test`). Última execução: **19/10/2026 — 46/46 OK**.
 > No passo 12 o script confere "último número + 1" (as recusas do passo 11 **não** consomem número): na execução de 19/10 a amostra retroativa recebeu a sequência **2**.
 
 1. `SP_INICIALIZAR_EMPRESA(1)` → status/idiomas/moedas/perfil criados.
@@ -128,3 +128,4 @@ SELECT ULTIMO_NUMERO INTO n ...;
 10. `SP_GERAR_REVISAO_PROPOSTA` → `000001/26-R1`, 2 análises com `ST_REV_ANTERIOR = 1`, total recalculado. ✅
 11. Travas (todas recusadas com mensagem): alterar boletim emitido; alterar revisão antiga da amostra; alterar análise de revisão antiga da proposta; saída maior que o saldo; segundo pedido para a mesma proposta; validade 31/02; entrega 1 ano atrás sem liberação. ✅
 12. Entrega 1 ano atrás **com** `@LC_PERMITE_RETROATIVO = 1` → gravada no ano **2026**, sequência 3 (sem reinício). ✅
+13. Revisão da Fase 0 (19/10/2026): AUDITORIA gravada pelas procedures (R, M, I); proposta enviada com `COD=900/ANO=1999` e pedido com `NR_PEDIDO=57` recebem o número do banco; revisão de proposta/resultado incluída fora da `SP_GERAR_REVISAO_*` recusada; filho com `ID_EMPRESAS` diferente do pai recusado. ✅

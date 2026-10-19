@@ -18,15 +18,17 @@ Comentário do script: _Propostas_
 - `NEW.NR_PROPOSTA`
 
 ## Validações (mensagens SQLSTATE 45000)
+- "Revisões só podem ser geradas pela rotina de revisão."
 - "Data de validade anterior à data de solicitação."
 
 ## Variáveis de sessão
 - `@LC_MIGRACAO` — 1 = carga da migração: desliga numeração automática e validações (nunca usar fora da migração)
+- `@LC_REVISAO` — 
 
 ## O que acessa
 - **Altera outras tabelas:** —
 - **Lê outras tabelas:** —
-- **Chama:** [`FN_NR_PROPOSTA`](../rotinas/FN_NR_PROPOSTA.md), [`SP_PROXIMO_NUMERO`](../rotinas/SP_PROXIMO_NUMERO.md)
+- **Chama:** [`FN_NR_PROPOSTA`](../rotinas/FN_NR_PROPOSTA.md), [`SP_PROXIMO_NUMERO`](../rotinas/SP_PROXIMO_NUMERO.md), [`SP_GERAR_REVISAO_PROPOSTA`](../rotinas/SP_GERAR_REVISAO_PROPOSTA.md)
 
 ## Impacto na aplicação
 - A aplicação não precisa (e não deve depender de) enviar: `ANO_PROPOSTA`, `COD_PROPOSTA`, `DT_SOLICITACAO`, `NR_PROPOSTA`. Reler a linha depois de gravar.
@@ -42,11 +44,18 @@ Comentário do script: _Propostas_
 CREATE TRIGGER TG_PROPOSTAS_BI BEFORE INSERT ON LAB_PROPOSTAS FOR EACH ROW
 BEGIN
   DECLARE v_num INT;
-  IF COALESCE(@LC_MIGRACAO, 0) = 0 AND NEW.REV_PROPOSTA = 0 AND COALESCE(NEW.COD_PROPOSTA, 0) = 0 THEN
-    -- ano SEMPRE do servidor; a sequência é por (empresa, ano) e nunca é "zerada"
-    SET NEW.ANO_PROPOSTA = YEAR(CURDATE());
-    CALL SP_PROXIMO_NUMERO(NEW.ID_EMPRESAS, 'PROPOSTA', NEW.ANO_PROPOSTA, v_num);
-    SET NEW.COD_PROPOSTA = v_num;
+  IF COALESCE(@LC_MIGRACAO, 0) = 0 THEN
+    IF NEW.REV_PROPOSTA <> 0 THEN
+      -- revisão: número/ano copiados da origem por SP_GERAR_REVISAO_PROPOSTA (única que inclui revisão)
+      IF COALESCE(@LC_REVISAO, 0) = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Revisões só podem ser geradas pela rotina de revisão.';
+      END IF;
+    ELSE
+      -- número e ano SEMPRE do banco (valor enviado é ignorado); a sequência é por (empresa, ano) e nunca é "zerada"
+      SET NEW.ANO_PROPOSTA = YEAR(CURDATE());
+      CALL SP_PROXIMO_NUMERO(NEW.ID_EMPRESAS, 'PROPOSTA', NEW.ANO_PROPOSTA, v_num);
+      SET NEW.COD_PROPOSTA = v_num;
+    END IF;
   END IF;
   IF NEW.DT_SOLICITACAO IS NULL THEN
     SET NEW.DT_SOLICITACAO = CURDATE();

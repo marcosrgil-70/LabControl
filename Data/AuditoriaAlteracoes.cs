@@ -3,6 +3,7 @@ using LabControl.Infra;
 using LabControl.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace LabControl.Data;
@@ -70,6 +71,25 @@ public static class AuditoriaAlteracoes
             };
         }
     }
+
+    /// <summary>
+    /// Grava as linhas por INSERT direto, sem passar pelo ChangeTracker: não leva junto alterações pendentes
+    /// do serviço e não depende de AcceptAllChanges (o rastreador só é aceito depois do commit).
+    /// </summary>
+    public static void Inserir(DatabaseFacade db, IEnumerable<Auditoria> linhas)
+    {
+        foreach (var a in linhas) db.ExecuteSql(Insert(a));
+    }
+
+    public static async Task InserirAsync(DatabaseFacade db, IEnumerable<Auditoria> linhas, CancellationToken cancellationToken = default)
+    {
+        foreach (var a in linhas) await db.ExecuteSqlAsync(Insert(a), cancellationToken);
+    }
+
+    private static FormattableString Insert(Auditoria a) => $"""
+        INSERT INTO AUDITORIA (ID_EMPRESAS, ID_USUARIOS, TABELA, ID_REGISTRO, ACAO, DADOS_ANTES, DADOS_DEPOIS, IP)
+        VALUES ({a.IdEmpresas}, {a.IdUsuarios}, {a.Tabela}, {a.IdRegistro}, {a.Acao}, {a.DadosAntes}, {a.DadosDepois}, {a.Ip})
+        """;
 
     /// <summary>Entradas auditáveis do ChangeTracker (chamar antes do SaveChanges).</summary>
     public static List<Pendente> Capturar(ChangeTracker tracker)

@@ -38,9 +38,9 @@ CREATE PROCEDURE SP_GERAR_REVISAO_AMOSTRA(IN p_id_origem INT, IN p_motivo VARCHA
 
 ## O que acessa
 - **Altera:** —
-- **Lê:** —
-- **Chama:** [`PR_REVISAO_AMOSTRA`](../rotinas/PR_REVISAO_AMOSTRA.md)
-- **Variáveis de sessão:** —
+- **Lê:** [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md)
+- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md), [`PR_REVISAO_AMOSTRA`](../rotinas/PR_REVISAO_AMOSTRA.md)
+- **Variáveis de sessão:** `@LC_REVISAO` ()
 
 ## Mensagens de negócio (SQLSTATE 45000)
 - "Informe o motivo da revisão."
@@ -77,13 +77,19 @@ CREATE PROCEDURE SP_GERAR_REVISAO_AMOSTRA(IN p_id_origem INT, IN p_motivo VARCHA
                                           IN p_id_usuario INT, OUT p_id_nova INT, OUT p_revisao INT,
                                           OUT p_id_resultado_novo INT, OUT p_id_boletim_novo INT)
 BEGIN
-  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_REVISAO = NULL; ROLLBACK; RESIGNAL; END;
   IF COALESCE(TRIM(p_motivo), '') = '' THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Informe o motivo da revisão.';
   END IF;
   START TRANSACTION;
+  SET @LC_REVISAO = 1;
   CALL PR_REVISAO_AMOSTRA(p_id_origem, p_motivo, p_id_func, p_id_usuario, p_id_nova, p_revisao,
                           p_id_resultado_novo, p_id_boletim_novo);
+  SET @LC_REVISAO = NULL;
+  CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = p_id_nova), 'LAB_HIST_AMOSTRAS', p_id_nova, 'R',
+                  JSON_OBJECT('ID_ORIGEM', p_id_origem),
+                  JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo, 'ID_RESULTADO_NOVO', p_id_resultado_novo,
+                              'ID_BOLETIM_NOVO', p_id_boletim_novo));
   COMMIT;
 END
 ```

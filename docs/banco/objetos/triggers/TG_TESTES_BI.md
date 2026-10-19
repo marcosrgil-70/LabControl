@@ -22,7 +22,7 @@ Teste herda a empresa da amostra e calcula a data prevista (entrega + prazo).
 ## O que acessa
 - **Altera outras tabelas:** —
 - **Lê outras tabelas:** [`PRAZOS`](../tabelas/PRAZOS.md), [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md)
-- **Chama:** —
+- **Chama:** [`PR_CONFERIR_EMPRESA`](../rotinas/PR_CONFERIR_EMPRESA.md)
 
 ## Impacto na aplicação
 - A aplicação não precisa (e não deve depender de) enviar: `ID_EMPRESAS`, `DT_PREVISTA`. Reler a linha depois de gravar.
@@ -38,6 +38,7 @@ BEGIN
   DECLARE v_emp INT;
   DECLARE v_dt DATE;
   SELECT ID_EMPRESAS, DT_ENTREGA INTO v_emp, v_dt FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = NEW.ID_LAB_HIST_AMOSTRAS;
+  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, v_emp);
   SET NEW.ID_EMPRESAS = v_emp;
   IF NEW.DT_PREVISTA IS NULL THEN
     SET NEW.DT_PREVISTA = DATE_ADD(v_dt, INTERVAL COALESCE((SELECT QTDE_DIAS FROM PRAZOS WHERE ID_PRAZOS = NEW.ID_PRAZOS), 0) DAY);

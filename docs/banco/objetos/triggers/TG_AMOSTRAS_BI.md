@@ -32,6 +32,7 @@ Comentário do script: _Amostras (Recebimento / Histórico de Amostras)_
 - "Proposta não pertence a esta empresa."
 - "A proposta selecionada não é do cliente da amostra."
 - "O produto selecionado não pertence à proposta."
+- "Revisões só podem ser geradas pela rotina de revisão."
 - "Selecione a última revisão da proposta."
 - "O status da proposta não permite receber amostras."
 - "Data de entrega maior que a data de hoje."
@@ -45,6 +46,7 @@ Comentário do script: _Amostras (Recebimento / Histórico de Amostras)_
 
 ## Variáveis de sessão
 - `@LC_MIGRACAO` — 1 = carga da migração: desliga numeração automática e validações (nunca usar fora da migração)
+- `@LC_REVISAO` — 
 - `@LC_PERMITE_RETROATIVO` — 1 = libera data de entrega além de `DIAS_RETROATIVOS_ENTREGA` (só após confirmação + permissão `AMOSTRAS.ENTREGA_RETROATIVA`)
 
 ## O que acessa
@@ -92,6 +94,9 @@ BEGIN
     END IF;
     SET NEW.ID_PRODUTOS = v_item_prod;
 
+    IF NEW.REVISAO <> 0 AND COALESCE(@LC_REVISAO, 0) = 0 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Revisões só podem ser geradas pela rotina de revisão.';
+    END IF;
     IF NEW.REVISAO = 0 THEN
       IF v_prop_ultima = 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Selecione a última revisão da proposta.';

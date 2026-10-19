@@ -2,7 +2,7 @@
 
 > Scripts: `Scripts/v2/01_schema.sql` → `02_funcoes_procedures.sql` → `03_triggers.sql` → `04_views.sql` → `05_seed.sql`
 > Banco: **`labcontrol_v2`** (convive com o `labcontrol` antigo até a virada). MySQL 8.0+, `utf8mb4_0900_ai_ci`.
-> **Validado em 16/10/2026** no MySQL 8.0.46 local (banco temporário, depois removido): 69 tabelas/views, 8 funções, 19 procedures, 42 triggers, 109 permissões; fluxo completo proposta → pedido → amostra → resultado → boletim → emissão → revisões (amostra/resultado/proposta) e travas negativas testados.
+> **Validado em 16/10/2026** no MySQL 8.0.46 local (banco temporário, depois removido): 69 tabelas/views, 8 funções, 19 procedures (21 desde a revisão da Fase 0, 19/10/2026: `PR_AUDITAR`, `PR_CONFERIR_EMPRESA`), 42 triggers, 109 permissões; fluxo completo proposta → pedido → amostra → resultado → boletim → emissão → revisões (amostra/resultado/proposta) e travas negativas testados.
 
 ## 1. Decisões de modelagem
 
@@ -59,6 +59,8 @@
 | `SP_GERAR_PEDIDO_VENDA` / `SP_ATUALIZAR_PEDIDO_REVISAO` | Proc com transação | Tela de Pedido de Venda |
 | `SP_TROCAR_PRODUTO_PROPOSTA` | Proc com transação | Utilitário da proposta |
 | `SP_INICIALIZAR_EMPRESA(id)` | Proc | Ao criar empresa nova e na migração |
+| `PR_AUDITAR(emp, tabela, id, ação, antes, depois)` | Proc interna | Chamada pelas `SP_*` com transação: o evento (R, M, D, I/A) fica na transação da procedure |
+| `PR_CONFERIR_EMPRESA(informada, do_pai)` | Proc interna | Triggers dos filhos: recusa `ID_EMPRESAS` diferente da empresa do pai |
 | `FN_NR_AMOSTRA`, `FN_NR_AMOSTRA_ID`, `FN_NR_PROPOSTA`, `FN_DATA_PARCIAL`, `FN_FORMATA_DECIMAL`, `FN_FORMATA_RESULTADO`, `FN_ACREDITADO`, `FN_OBS_METODOS` | Funções | Views, triggers, boletim |
 
 **Regra de transação:** procedures `SP_*` com transação **não** podem ser chamadas dentro de uma transação já aberta pelo EF Core (o `START TRANSACTION` faria commit implícito). Na aplicação, chamar com `ExecuteSqlRaw`/`DbCommand` fora de `BeginTransaction`.
@@ -126,12 +128,13 @@
 
 ## 5. Regras garantidas pelo banco (independem da aplicação)
 
-1. Número de amostra/proposta/pedido/RE gerado no servidor, com bloqueio; ano = ano do servidor.
+1. Número de amostra/proposta/pedido/RE gerado no servidor, com bloqueio; ano = ano do servidor. Fora da migração o número/ano enviado é **ignorado** (a trigger sempre numera).
 2. Data de entrega não pode ser futura nem mais antiga que `DIAS_RETROATIVOS_ENTREGA` sem liberação.
 3. Validade/fabricação parciais coerentes (dia exige mês e ano; mês exige ano; dia válido para o mês).
 4. A amostra só usa proposta da mesma empresa, do mesmo cliente, na última revisão e com status que permite amostra; o produto vem do item.
-5. Revisões antigas (proposta, amostra, resultado, boletim) são somente leitura.
+5. Revisões antigas (proposta, amostra, resultado, boletim) são somente leitura, e revisão nova (`REVISAO`/`REV_PROPOSTA` > 0) só é incluída pelas `SP_GERAR_REVISAO_*` (`@LC_REVISAO`).
 6. Boletim emitido não pode ser alterado nem excluído, e o resultado de boletim emitido também não.
 7. Saída de estoque não pode deixar saldo negativo; a entrada automática não pode ser excluída.
-8. Filhos herdam `ID_EMPRESAS` do pai (não há como gravar em empresa errada).
+8. Filhos herdam `ID_EMPRESAS` do pai; um `ID_EMPRESAS` informado diferente do pai é recusado (`PR_CONFERIR_EMPRESA`).
+10. Eventos das procedures com transação (revisão, emissão, desfazer, pedido, troca de produto) gravam `AUDITORIA` na própria transação (`PR_AUDITAR`).
 9. Totais da proposta recalculados a cada alteração das análises.

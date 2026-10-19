@@ -8,6 +8,8 @@
 --   @LC_PERMITE_RETROATIVO=1 libera data de entrega além de DIAS_RETROATIVOS_ENTREGA
 --                            (somente após confirmação + permissão AMOSTRAS.ENTREGA_RETROATIVA)
 --   @LC_DESFAZENDO = 1       uso interno de SP_EXCLUIR_REVISAO_*
+--   @LC_REVISAO = 1          uso interno de SP_GERAR_REVISAO_*: só elas incluem revisão (REVISAO/REV_PROPOSTA > 0)
+--   @LC_IP                   IP do usuário (AUDITORIA gravada pelas procedures, PR_AUDITAR)
 --
 -- Padrão transacional:
 --   * PR_*  = rotinas internas, SEM controle de transação (podem ser aninhadas).
@@ -27,6 +29,8 @@ DROP FUNCTION IF EXISTS FN_DATA_PARCIAL;
 DROP FUNCTION IF EXISTS FN_ACREDITADO;
 DROP FUNCTION IF EXISTS FN_OBS_METODOS;
 DROP PROCEDURE IF EXISTS SP_PROXIMO_NUMERO;
+DROP PROCEDURE IF EXISTS PR_AUDITAR;
+DROP PROCEDURE IF EXISTS PR_CONFERIR_EMPRESA;
 DROP PROCEDURE IF EXISTS PR_ATUALIZA_SALDO;
 DROP PROCEDURE IF EXISTS SP_RECALCULAR_PROPOSTA;
 DROP PROCEDURE IF EXISTS SP_AMOSTRA_GERAR_TESTES;
@@ -218,6 +222,30 @@ BEGIN
   SELECT ULTIMO_NUMERO INTO p_numero
     FROM SEQUENCIAS_DOCUMENTOS
    WHERE ID_EMPRESAS = p_id_empresa AND TIPO_DOCUMENTO = p_tipo AND ANO = p_ano;
+END$$
+
+-- ---------------------------------------------------------------------
+-- PR_AUDITAR — evento em AUDITORIA gravado pela própria procedure, dentro da
+-- transação dela (revisão R, emissão M, desfazer D, pedido I/A, troca de produto A).
+-- Usuário e IP vêm da sessão (@LC_ID_USUARIOS / @LC_IP, definidos pela aplicação).
+-- ---------------------------------------------------------------------
+CREATE PROCEDURE PR_AUDITAR(IN p_id_empresa INT, IN p_tabela VARCHAR(60), IN p_id_registro INT, IN p_acao CHAR(1),
+                            IN p_antes JSON, IN p_depois JSON)
+BEGIN
+  INSERT INTO AUDITORIA (ID_EMPRESAS, ID_USUARIOS, TABELA, ID_REGISTRO, ACAO, DADOS_ANTES, DADOS_DEPOIS, IP)
+  VALUES (p_id_empresa, @LC_ID_USUARIOS, p_tabela, p_id_registro, p_acao, p_antes, p_depois, @LC_IP);
+END$$
+
+-- ---------------------------------------------------------------------
+-- PR_CONFERIR_EMPRESA — usada nas triggers BEFORE INSERT dos filhos, que herdam a
+-- empresa do pai: recusa ID_EMPRESAS informado diferente da empresa do pai
+-- (0/NULL = não informado, a trigger preenche).
+-- ---------------------------------------------------------------------
+CREATE PROCEDURE PR_CONFERIR_EMPRESA(IN p_informada INT, IN p_do_pai INT)
+BEGIN
+  IF COALESCE(p_informada, 0) <> 0 AND p_do_pai IS NOT NULL AND p_informada <> p_do_pai THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Registro pertence a outra empresa.';
+  END IF;
 END$$
 
 -- ---------------------------------------------------------------------
@@ -625,12 +653,16 @@ END$$
 CREATE PROCEDURE SP_GERAR_REVISAO_PROPOSTA(IN p_id_origem INT, IN p_motivo VARCHAR(500), IN p_id_usuario INT,
                                            OUT p_id_nova INT, OUT p_revisao INT)
 BEGIN
-  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_REVISAO = NULL; ROLLBACK; RESIGNAL; END;
   IF COALESCE(TRIM(p_motivo), '') = '' THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Informe o motivo da revisão.';
   END IF;
   START TRANSACTION;
+  SET @LC_REVISAO = 1;
   CALL PR_REVISAO_PROPOSTA(p_id_origem, p_motivo, p_id_usuario, p_id_nova, p_revisao);
+  SET @LC_REVISAO = NULL;
+  CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_PROPOSTAS WHERE ID_LAB_PROPOSTAS = p_id_nova), 'LAB_PROPOSTAS', p_id_nova, 'R',
+                  JSON_OBJECT('ID_ORIGEM', p_id_origem), JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo));
   COMMIT;
 END$$
 
@@ -638,13 +670,19 @@ CREATE PROCEDURE SP_GERAR_REVISAO_AMOSTRA(IN p_id_origem INT, IN p_motivo VARCHA
                                           IN p_id_usuario INT, OUT p_id_nova INT, OUT p_revisao INT,
                                           OUT p_id_resultado_novo INT, OUT p_id_boletim_novo INT)
 BEGIN
-  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_REVISAO = NULL; ROLLBACK; RESIGNAL; END;
   IF COALESCE(TRIM(p_motivo), '') = '' THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Informe o motivo da revisão.';
   END IF;
   START TRANSACTION;
+  SET @LC_REVISAO = 1;
   CALL PR_REVISAO_AMOSTRA(p_id_origem, p_motivo, p_id_func, p_id_usuario, p_id_nova, p_revisao,
                           p_id_resultado_novo, p_id_boletim_novo);
+  SET @LC_REVISAO = NULL;
+  CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = p_id_nova), 'LAB_HIST_AMOSTRAS', p_id_nova, 'R',
+                  JSON_OBJECT('ID_ORIGEM', p_id_origem),
+                  JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo, 'ID_RESULTADO_NOVO', p_id_resultado_novo,
+                              'ID_BOLETIM_NOVO', p_id_boletim_novo));
   COMMIT;
 END$$
 
@@ -652,13 +690,18 @@ CREATE PROCEDURE SP_GERAR_REVISAO_RESULTADO(IN p_id_origem INT, IN p_motivo VARC
                                             IN p_id_usuario INT, IN p_gerar_boletim TINYINT,
                                             OUT p_id_novo INT, OUT p_revisao INT, OUT p_id_boletim_novo INT)
 BEGIN
-  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_REVISAO = NULL; ROLLBACK; RESIGNAL; END;
   IF COALESCE(TRIM(p_motivo), '') = '' THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Informe o motivo da revisão.';
   END IF;
   START TRANSACTION;
+  SET @LC_REVISAO = 1;
   CALL PR_REVISAO_RESULTADO(p_id_origem, NULL, p_motivo, p_id_func, p_id_usuario, p_gerar_boletim,
                             p_id_novo, p_revisao, p_id_boletim_novo);
+  SET @LC_REVISAO = NULL;
+  CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_RESULTADOS_ANALISES WHERE ID_LAB_RESULTADOS_ANALISES = p_id_novo),
+                  'LAB_RESULTADOS_ANALISES', p_id_novo, 'R', JSON_OBJECT('ID_ORIGEM', p_id_origem),
+                  JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo, 'ID_BOLETIM_NOVO', p_id_boletim_novo));
   COMMIT;
 END$$
 
@@ -666,11 +709,12 @@ CREATE PROCEDURE SP_GERAR_REVISAO_BOLETIM(IN p_id_origem INT, IN p_motivo VARCHA
                                           IN p_id_usuario INT, OUT p_id_novo INT, OUT p_revisao INT)
 BEGIN
   DECLARE v_res, v_res_ultimo INT;
-  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_REVISAO = NULL; ROLLBACK; RESIGNAL; END;
   IF COALESCE(TRIM(p_motivo), '') = '' THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Informe o motivo da revisão.';
   END IF;
   START TRANSACTION;
+  SET @LC_REVISAO = 1;
   -- Se o resultado foi revisado depois do boletim, a revisão do boletim já aponta para o resultado vigente
   SELECT B.ID_LAB_RESULTADOS_ANALISES INTO v_res FROM LAB_BOLETIM_ANALISES B
    WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_origem;
@@ -681,16 +725,20 @@ BEGIN
    LIMIT 1;
   CALL PR_REVISAO_BOLETIM(p_id_origem, IF(v_res_ultimo IS NOT NULL AND v_res_ultimo <> v_res, v_res_ultimo, NULL),
                           p_motivo, p_id_func, p_id_usuario, p_id_novo, p_revisao);
+  SET @LC_REVISAO = NULL;
+  CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_BOLETIM_ANALISES WHERE ID_LAB_BOLETIM_ANALISES = p_id_novo),
+                  'LAB_BOLETIM_ANALISES', p_id_novo, 'R', JSON_OBJECT('ID_ORIGEM', p_id_origem),
+                  JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo));
   COMMIT;
 END$$
 
 -- Desfaz (exclui) a última revisão de um resultado ainda sem boletim, reativando a anterior.
 CREATE PROCEDURE SP_EXCLUIR_REVISAO_RESULTADO(IN p_id_resultado INT)
 BEGIN
-  DECLARE v_origem, v_ultima INT;
+  DECLARE v_origem, v_ultima, v_emp INT;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_DESFAZENDO = NULL; ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
-  SELECT ID_RESULTADO_ORIGEM, ULTIMA_REVISAO INTO v_origem, v_ultima
+  SELECT ID_RESULTADO_ORIGEM, ULTIMA_REVISAO, ID_EMPRESAS INTO v_origem, v_ultima, v_emp
     FROM LAB_RESULTADOS_ANALISES WHERE ID_LAB_RESULTADOS_ANALISES = p_id_resultado FOR UPDATE;
   IF v_ultima IS NULL OR v_ultima = 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Só é possível excluir a última revisão do resultado.';
@@ -704,17 +752,18 @@ BEGIN
     UPDATE LAB_RESULTADOS_ANALISES SET ULTIMA_REVISAO = 1 WHERE ID_LAB_RESULTADOS_ANALISES = v_origem;
   END IF;
   SET @LC_DESFAZENDO = NULL;
+  CALL PR_AUDITAR(v_emp, 'LAB_RESULTADOS_ANALISES', p_id_resultado, 'D', NULL, JSON_OBJECT('ID_REATIVADO', v_origem));
   COMMIT;
 END$$
 
 -- Desfaz (exclui) a última revisão de um boletim NÃO emitido, reativando a anterior.
 CREATE PROCEDURE SP_EXCLUIR_REVISAO_BOLETIM(IN p_id_boletim INT)
 BEGIN
-  DECLARE v_origem, v_ultima INT;
+  DECLARE v_origem, v_ultima, v_emp INT;
   DECLARE v_emissao DATETIME;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_DESFAZENDO = NULL; ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
-  SELECT ID_BOLETIM_ORIGEM, ULTIMA_REVISAO, DH_EMISSAO INTO v_origem, v_ultima, v_emissao
+  SELECT ID_BOLETIM_ORIGEM, ULTIMA_REVISAO, DH_EMISSAO, ID_EMPRESAS INTO v_origem, v_ultima, v_emissao, v_emp
     FROM LAB_BOLETIM_ANALISES WHERE ID_LAB_BOLETIM_ANALISES = p_id_boletim FOR UPDATE;
   IF v_ultima IS NULL OR v_ultima = 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Só é possível excluir a última revisão do boletim.';
@@ -728,6 +777,7 @@ BEGIN
     UPDATE LAB_BOLETIM_ANALISES SET ULTIMA_REVISAO = 1 WHERE ID_LAB_BOLETIM_ANALISES = v_origem;
   END IF;
   SET @LC_DESFAZENDO = NULL;
+  CALL PR_AUDITAR(v_emp, 'LAB_BOLETIM_ANALISES', p_id_boletim, 'D', NULL, JSON_OBJECT('ID_REATIVADO', v_origem));
   COMMIT;
 END$$
 
@@ -766,6 +816,8 @@ BEGIN
          ID_BOLETINS_STATUS = COALESCE(v_status, ID_BOLETINS_STATUS),
          ARQUIVO_PDF = p_arquivo, HASH_PDF = p_hash
    WHERE ID_LAB_BOLETIM_ANALISES = p_id_boletim;
+  CALL PR_AUDITAR(v_emp, 'LAB_BOLETIM_ANALISES', p_id_boletim, 'M', NULL,
+                  JSON_OBJECT('ARQUIVO_PDF', p_arquivo, 'HASH_PDF', p_hash, 'ID_ENTIDADES_FUNC_EMI', p_id_func));
   COMMIT;
 END$$
 
@@ -827,17 +879,20 @@ BEGIN
      SET A.ID_PEDIDOS_VENDA = p_id_pedido
    WHERE P.ID_EMPRESAS = v_emp AND P.ANO_PROPOSTA = v_ano AND P.COD_PROPOSTA = v_cod
      AND A.ID_PEDIDOS_VENDA IS NULL AND A.ULTIMA_REVISAO = 1;
+  CALL PR_AUDITAR(v_emp, 'PEDIDOS_VENDA', p_id_pedido, 'I', NULL,
+                  JSON_OBJECT('NR_PEDIDO', p_nr_pedido, 'ID_LAB_PROPOSTAS', p_id_proposta, 'DT_AUTORIZACAO', p_dt_autorizacao,
+                              'AUTORIZADO_POR', p_autorizado_por, 'NR_PEDIDO_CLIENTE', p_nr_pedido_cliente));
   COMMIT;
 END$$
 
 -- Atualiza o pedido para a revisão vigente da proposta (após revisão aprovada pelo cliente)
 CREATE PROCEDURE SP_ATUALIZAR_PEDIDO_REVISAO(IN p_id_pedido INT, IN p_id_usuario INT)
 BEGIN
-  DECLARE v_emp, v_cod, v_ano, v_nova INT;
+  DECLARE v_emp, v_cod, v_ano, v_nova, v_antiga INT;
   DECLARE v_sit VARCHAR(20);
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
-  SELECT ID_EMPRESAS, COD_PROPOSTA, ANO_PROPOSTA, SITUACAO INTO v_emp, v_cod, v_ano, v_sit
+  SELECT ID_EMPRESAS, COD_PROPOSTA, ANO_PROPOSTA, SITUACAO, ID_LAB_PROPOSTAS INTO v_emp, v_cod, v_ano, v_sit, v_antiga
     FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = p_id_pedido FOR UPDATE;
   IF v_emp IS NULL THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Pedido não encontrado.';
@@ -860,6 +915,8 @@ BEGIN
          COALESCE((SELECT SUM(PA.VR_TOTAL) FROM LAB_PROPOSTAS_PRODANALISES PA
                     WHERE PA.ID_LAB_PROPOSTAS_PRODUTOS = PP.ID_LAB_PROPOSTAS_PRODUTOS), 0)
     FROM LAB_PROPOSTAS_PRODUTOS PP WHERE PP.ID_LAB_PROPOSTAS = v_nova;
+  CALL PR_AUDITAR(v_emp, 'PEDIDOS_VENDA', p_id_pedido, 'A', JSON_OBJECT('ID_LAB_PROPOSTAS', v_antiga),
+                  JSON_OBJECT('ID_LAB_PROPOSTAS', v_nova));
   COMMIT;
 END$$
 
@@ -883,6 +940,8 @@ BEGIN
    WHERE ID_LAB_PROPOSTAS = p_id_proposta AND ID_PRODUTOS = p_id_prod_velho;
   UPDATE LAB_HIST_AMOSTRAS SET ID_PRODUTOS = p_id_prod_novo
    WHERE ID_LAB_PROPOSTAS = p_id_proposta AND ID_PRODUTOS = p_id_prod_velho;
+  CALL PR_AUDITAR(v_emp, 'LAB_PROPOSTAS', p_id_proposta, 'A', JSON_OBJECT('ID_PRODUTOS', p_id_prod_velho),
+                  JSON_OBJECT('ID_PRODUTOS', p_id_prod_novo));
   COMMIT;
 END$$
 

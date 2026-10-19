@@ -33,7 +33,7 @@ CREATE PROCEDURE SP_ATUALIZAR_PEDIDO_REVISAO(IN p_id_pedido INT, IN p_id_usuario
 ## O que acessa
 - **Altera:** [`PEDIDOS_VENDA`](../tabelas/PEDIDOS_VENDA.md), [`PEDIDOS_VENDA_ITENS`](../tabelas/PEDIDOS_VENDA_ITENS.md)
 - **Lê:** [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md), [`LAB_PROPOSTAS_PRODUTOS`](../tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`LAB_PROPOSTAS_PRODANALISES`](../tabelas/LAB_PROPOSTAS_PRODANALISES.md)
-- **Chama:** —
+- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md)
 - **Variáveis de sessão:** —
 
 ## Mensagens de negócio (SQLSTATE 45000)
@@ -60,11 +60,11 @@ catch (MySqlException ex) when (ex.SqlState == "45000") { return Resultado.Erro(
 ```sql
 CREATE PROCEDURE SP_ATUALIZAR_PEDIDO_REVISAO(IN p_id_pedido INT, IN p_id_usuario INT)
 BEGIN
-  DECLARE v_emp, v_cod, v_ano, v_nova INT;
+  DECLARE v_emp, v_cod, v_ano, v_nova, v_antiga INT;
   DECLARE v_sit VARCHAR(20);
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
-  SELECT ID_EMPRESAS, COD_PROPOSTA, ANO_PROPOSTA, SITUACAO INTO v_emp, v_cod, v_ano, v_sit
+  SELECT ID_EMPRESAS, COD_PROPOSTA, ANO_PROPOSTA, SITUACAO, ID_LAB_PROPOSTAS INTO v_emp, v_cod, v_ano, v_sit, v_antiga
     FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = p_id_pedido FOR UPDATE;
   IF v_emp IS NULL THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Pedido não encontrado.';
@@ -87,6 +87,8 @@ BEGIN
          COALESCE((SELECT SUM(PA.VR_TOTAL) FROM LAB_PROPOSTAS_PRODANALISES PA
                     WHERE PA.ID_LAB_PROPOSTAS_PRODUTOS = PP.ID_LAB_PROPOSTAS_PRODUTOS), 0)
     FROM LAB_PROPOSTAS_PRODUTOS PP WHERE PP.ID_LAB_PROPOSTAS = v_nova;
+  CALL PR_AUDITAR(v_emp, 'PEDIDOS_VENDA', p_id_pedido, 'A', JSON_OBJECT('ID_LAB_PROPOSTAS', v_antiga),
+                  JSON_OBJECT('ID_LAB_PROPOSTAS', v_nova));
   COMMIT;
 END
 ```

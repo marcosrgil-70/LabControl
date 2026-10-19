@@ -27,7 +27,9 @@
   - Colunas = nomes do banco; enums com o valor do banco (`'BOLETIM'`); `SENHA_HASH` → `"***"`; blobs (`LOGO`, `ASSINATURA`) → `"[binário]"`; `ULTIMO_ACESSO` ignorada (o login tem evento próprio).
   - `ID_EMPRESAS` do registro (ou a empresa ativa, em tabela global), `ID_USUARIOS` e `IP` do `IEmpresaContexto`.
   - Optou-se pelo override do `SaveChanges` em vez de um `SaveChangesInterceptor`: o interceptor teria de chamar `SaveChanges` dentro de outro `SaveChanges` para gravar a auditoria na mesma transação.
-- **Eventos** — `Infra/ServicoAuditoria.cs` (`IAuditoria.RegistrarAsync`): `Infra/Procedures.cs` já registra revisão (R), emissão (M), desfazer revisão (**D**), pedido gerado (I em `PEDIDOS_VENDA`), atualização do pedido e troca de produto (A). Login (**L**) entra na Fase 1. Os códigos `D` e `L` complementam o comentário da coluna `ACAO` (`AcoesAuditoria`).
+- **Eventos das procedures** — revisão (R), emissão (M), desfazer revisão (**D**), pedido gerado (I em `PEDIDOS_VENDA`), atualização do pedido e troca de produto (A) são gravados **pela própria procedure** (`PR_AUDITAR`, antes do COMMIT dela): o evento é atômico com a operação. Usuário e IP vêm de `@LC_ID_USUARIOS`/`@LC_IP` (`SessaoMySqlInterceptor`). Até a revisão 0.9 o `Procedures.cs` gravava depois do COMMIT da procedure (uma falha deixava a operação sem evento).
+- **Demais eventos** — `Infra/ServicoAuditoria.cs` (`IAuditoria.RegistrarAsync`): login (**L**, Fase 1), reset de senha, ajuste de numeração. Grava por INSERT direto (não leva junto alterações pendentes do rastreador). Os códigos `D` e `L` complementam o comentário da coluna `ACAO` (`AcoesAuditoria`).
+- As linhas I/A/E do `SaveChanges` também são gravadas por INSERT direto, e o rastreador só é aceito (`AcceptAllChanges`) depois do commit: se a auditoria ou o commit falham, as alterações continuam pendentes.
 - Testes: `tests/LabControl.Tests/AuditoriaTests.cs`.
 
 ## Cenários de teste

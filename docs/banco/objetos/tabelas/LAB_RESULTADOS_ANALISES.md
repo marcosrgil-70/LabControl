@@ -58,7 +58,7 @@ Comentário do script: _9. RESULTADOS_
 ## Usada por
 - **Views:** [`VW_LAB_AMOSTRAS`](../views/VW_LAB_AMOSTRAS.md), [`VW_LAB_TESTES_PENDENTES`](../views/VW_LAB_TESTES_PENDENTES.md), [`VW_LAB_RESULTADOS`](../views/VW_LAB_RESULTADOS.md), [`VW_LAB_BOLETINS`](../views/VW_LAB_BOLETINS.md)
 - **Rotinas que alteram:** [`PR_REVISAO_RESULTADO`](../rotinas/PR_REVISAO_RESULTADO.md), [`SP_EXCLUIR_REVISAO_RESULTADO`](../rotinas/SP_EXCLUIR_REVISAO_RESULTADO.md)
-- **Rotinas que leem:** [`SP_AMOSTRA_GERAR_TESTES`](../rotinas/SP_AMOSTRA_GERAR_TESTES.md), [`PR_REVISAO_BOLETIM`](../rotinas/PR_REVISAO_BOLETIM.md), [`PR_REVISAO_AMOSTRA`](../rotinas/PR_REVISAO_AMOSTRA.md), [`SP_GERAR_REVISAO_BOLETIM`](../rotinas/SP_GERAR_REVISAO_BOLETIM.md)
+- **Rotinas que leem:** [`SP_AMOSTRA_GERAR_TESTES`](../rotinas/SP_AMOSTRA_GERAR_TESTES.md), [`PR_REVISAO_BOLETIM`](../rotinas/PR_REVISAO_BOLETIM.md), [`PR_REVISAO_AMOSTRA`](../rotinas/PR_REVISAO_AMOSTRA.md), [`SP_GERAR_REVISAO_RESULTADO`](../rotinas/SP_GERAR_REVISAO_RESULTADO.md), [`SP_GERAR_REVISAO_BOLETIM`](../rotinas/SP_GERAR_REVISAO_BOLETIM.md)
 - **Triggers de outras tabelas que alteram:** —
 - **Triggers de outras tabelas que leem:** [`TG_AMOSTRAS_BU`](../triggers/TG_AMOSTRAS_BU.md), [`TG_AMOSTRAS_BD`](../triggers/TG_AMOSTRAS_BD.md), [`TG_RESPAR_BI`](../triggers/TG_RESPAR_BI.md), [`TG_RESPAR_BU`](../triggers/TG_RESPAR_BU.md), [`TG_RESPAR_BD`](../triggers/TG_RESPAR_BD.md), [`TG_BOLETIM_BI`](../triggers/TG_BOLETIM_BI.md)
 
