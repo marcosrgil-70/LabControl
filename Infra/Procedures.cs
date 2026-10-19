@@ -18,9 +18,10 @@ public sealed record PedidoGerado(int IdPedido, int NrPedido);
 /// - SQLSTATE 45000 vira <see cref="Resultado"/> com a mensagem; erro técnico continua subindo.
 /// - Procedures com transação própria são recusadas dentro de <c>BeginTransaction</c> (o START TRANSACTION
 ///   delas faria commit implícito da transação da aplicação).
+/// - Cada procedure bem-sucedida gera um evento em AUDITORIA (R, M, D, I/A do pedido…).
 /// Depois de chamar, recarregue as entidades afetadas (<c>Entry(x).ReloadAsync()</c> ou nova consulta).
 /// </summary>
-public sealed class Procedures(LabDbContext db, IEmpresaContexto empresa)
+public sealed class Procedures(LabDbContext db, IEmpresaContexto empresa, IAuditoria auditoria)
 {
     // ------------------------------------------------------------------ com transação própria
 
@@ -29,7 +30,11 @@ public sealed class Procedures(LabDbContext db, IEmpresaContexto empresa)
         if (!await db.LabPropostas.AnyAsync(x => x.IdLabPropostas == idOrigem)) return Resultado.Erro("Proposta não encontrada.");
         var r = await ChamarAsync("SP_GERAR_REVISAO_PROPOSTA", true,
             [("p_id_origem", idOrigem), ("p_motivo", motivo), ("p_id_usuario", empresa.UsuarioId)], "p_id_nova", "p_revisao");
-        return r.Sucesso ? Resultado.Ok(new RevisaoGerada(Int(r.Valor["p_id_nova"]), Int(r.Valor["p_revisao"]))) : Resultado.Erro(r.Mensagem!);
+        if (!r.Sucesso) return Resultado.Erro(r.Mensagem!);
+        var rev = new RevisaoGerada(Int(r.Valor["p_id_nova"]), Int(r.Valor["p_revisao"]));
+        await auditoria.RegistrarAsync(AcoesAuditoria.Revisao, "LAB_PROPOSTAS", rev.IdNovo.ToString(),
+            new { ID_ORIGEM = idOrigem }, new { REVISAO = rev.Revisao, MOTIVO = motivo });
+        return Resultado.Ok(rev);
     }
 
     public async Task<Resultado<RevisaoAmostra>> GerarRevisaoAmostraAsync(int idOrigem, string motivo)
@@ -39,10 +44,12 @@ public sealed class Procedures(LabDbContext db, IEmpresaContexto empresa)
         var r = await ChamarAsync("SP_GERAR_REVISAO_AMOSTRA", true,
             [("p_id_origem", idOrigem), ("p_motivo", motivo), ("p_id_func", func), ("p_id_usuario", empresa.UsuarioId)],
             "p_id_nova", "p_revisao", "p_id_resultado_novo", "p_id_boletim_novo");
-        return r.Sucesso
-            ? Resultado.Ok(new RevisaoAmostra(Int(r.Valor["p_id_nova"]), Int(r.Valor["p_revisao"]),
-                                              IntOuNulo(r.Valor["p_id_resultado_novo"]), IntOuNulo(r.Valor["p_id_boletim_novo"])))
-            : Resultado.Erro(r.Mensagem!);
+        if (!r.Sucesso) return Resultado.Erro(r.Mensagem!);
+        var rev = new RevisaoAmostra(Int(r.Valor["p_id_nova"]), Int(r.Valor["p_revisao"]),
+                                     IntOuNulo(r.Valor["p_id_resultado_novo"]), IntOuNulo(r.Valor["p_id_boletim_novo"]));
+        await auditoria.RegistrarAsync(AcoesAuditoria.Revisao, "LAB_HIST_AMOSTRAS", rev.IdNova.ToString(), new { ID_ORIGEM = idOrigem },
+            new { REVISAO = rev.Revisao, MOTIVO = motivo, ID_RESULTADO_NOVO = rev.IdResultadoNovo, ID_BOLETIM_NOVO = rev.IdBoletimNovo });
+        return Resultado.Ok(rev);
     }
 
     public async Task<Resultado<RevisaoResultado>> GerarRevisaoResultadoAsync(int idOrigem, string motivo, bool gerarBoletim = true)
@@ -53,9 +60,11 @@ public sealed class Procedures(LabDbContext db, IEmpresaContexto empresa)
             [("p_id_origem", idOrigem), ("p_motivo", motivo), ("p_id_func", func), ("p_id_usuario", empresa.UsuarioId),
              ("p_gerar_boletim", gerarBoletim ? 1 : 0)],
             "p_id_novo", "p_revisao", "p_id_boletim_novo");
-        return r.Sucesso
-            ? Resultado.Ok(new RevisaoResultado(Int(r.Valor["p_id_novo"]), Int(r.Valor["p_revisao"]), IntOuNulo(r.Valor["p_id_boletim_novo"])))
-            : Resultado.Erro(r.Mensagem!);
+        if (!r.Sucesso) return Resultado.Erro(r.Mensagem!);
+        var rev = new RevisaoResultado(Int(r.Valor["p_id_novo"]), Int(r.Valor["p_revisao"]), IntOuNulo(r.Valor["p_id_boletim_novo"]));
+        await auditoria.RegistrarAsync(AcoesAuditoria.Revisao, "LAB_RESULTADOS_ANALISES", rev.IdNovo.ToString(), new { ID_ORIGEM = idOrigem },
+            new { REVISAO = rev.Revisao, MOTIVO = motivo, ID_BOLETIM_NOVO = rev.IdBoletimNovo });
+        return Resultado.Ok(rev);
     }
 
     public async Task<Resultado<RevisaoGerada>> GerarRevisaoBoletimAsync(int idOrigem, string motivo)
@@ -65,27 +74,34 @@ public sealed class Procedures(LabDbContext db, IEmpresaContexto empresa)
         var r = await ChamarAsync("SP_GERAR_REVISAO_BOLETIM", true,
             [("p_id_origem", idOrigem), ("p_motivo", motivo), ("p_id_func", func), ("p_id_usuario", empresa.UsuarioId)],
             "p_id_novo", "p_revisao");
-        return r.Sucesso ? Resultado.Ok(new RevisaoGerada(Int(r.Valor["p_id_novo"]), Int(r.Valor["p_revisao"]))) : Resultado.Erro(r.Mensagem!);
+        if (!r.Sucesso) return Resultado.Erro(r.Mensagem!);
+        var rev = new RevisaoGerada(Int(r.Valor["p_id_novo"]), Int(r.Valor["p_revisao"]));
+        await auditoria.RegistrarAsync(AcoesAuditoria.Revisao, "LAB_BOLETIM_ANALISES", rev.IdNovo.ToString(),
+            new { ID_ORIGEM = idOrigem }, new { REVISAO = rev.Revisao, MOTIVO = motivo });
+        return Resultado.Ok(rev);
     }
 
     public async Task<Resultado> ExcluirRevisaoResultadoAsync(int idResultado)
     {
         if (!await db.LabResultadosAnalises.AnyAsync(x => x.IdLabResultadosAnalises == idResultado)) return Resultado.Erro("Resultado não encontrado.");
-        return await ChamarSemSaidaAsync("SP_EXCLUIR_REVISAO_RESULTADO", true, ("p_id_resultado", idResultado));
+        return await Auditado(await ChamarSemSaidaAsync("SP_EXCLUIR_REVISAO_RESULTADO", true, ("p_id_resultado", idResultado)),
+            AcoesAuditoria.DesfazerRevisao, "LAB_RESULTADOS_ANALISES", idResultado, null, null);
     }
 
     public async Task<Resultado> ExcluirRevisaoBoletimAsync(int idBoletim)
     {
         if (!await db.LabBoletimAnalises.AnyAsync(x => x.IdLabBoletimAnalises == idBoletim)) return Resultado.Erro("Boletim não encontrado.");
-        return await ChamarSemSaidaAsync("SP_EXCLUIR_REVISAO_BOLETIM", true, ("p_id_boletim", idBoletim));
+        return await Auditado(await ChamarSemSaidaAsync("SP_EXCLUIR_REVISAO_BOLETIM", true, ("p_id_boletim", idBoletim)),
+            AcoesAuditoria.DesfazerRevisao, "LAB_BOLETIM_ANALISES", idBoletim, null, null);
     }
 
     public async Task<Resultado> EmitirBoletimAsync(int idBoletim, string arquivoPdf, string hashPdf)
     {
         if (!await db.LabBoletimAnalises.AnyAsync(x => x.IdLabBoletimAnalises == idBoletim)) return Resultado.Erro("Boletim não encontrado.");
         if (empresa.ProfissionalId is not { } func) return SemProfissional();
-        return await ChamarSemSaidaAsync("SP_EMITIR_BOLETIM", true,
-            ("p_id_boletim", idBoletim), ("p_id_func", func), ("p_arquivo", arquivoPdf), ("p_hash", hashPdf));
+        return await Auditado(await ChamarSemSaidaAsync("SP_EMITIR_BOLETIM", true,
+                ("p_id_boletim", idBoletim), ("p_id_func", func), ("p_arquivo", arquivoPdf), ("p_hash", hashPdf)),
+            AcoesAuditoria.Emissao, "LAB_BOLETIM_ANALISES", idBoletim, null, new { ARQUIVO_PDF = arquivoPdf, HASH_PDF = hashPdf });
     }
 
     public async Task<Resultado<PedidoGerado>> GerarPedidoVendaAsync(int idProposta, DateOnly? dtAutorizacao, string? autorizadoPor, string? nrPedidoCliente)
@@ -95,20 +111,26 @@ public sealed class Procedures(LabDbContext db, IEmpresaContexto empresa)
             [("p_id_proposta", idProposta), ("p_dt_autorizacao", dtAutorizacao?.ToDateTime(TimeOnly.MinValue)),
              ("p_autorizado_por", autorizadoPor), ("p_nr_pedido_cliente", nrPedidoCliente), ("p_id_usuario", empresa.UsuarioId)],
             "p_id_pedido", "p_nr_pedido");
-        return r.Sucesso ? Resultado.Ok(new PedidoGerado(Int(r.Valor["p_id_pedido"]), Int(r.Valor["p_nr_pedido"]))) : Resultado.Erro(r.Mensagem!);
+        if (!r.Sucesso) return Resultado.Erro(r.Mensagem!);
+        var ped = new PedidoGerado(Int(r.Valor["p_id_pedido"]), Int(r.Valor["p_nr_pedido"]));
+        await auditoria.RegistrarAsync(AcoesAuditoria.Inclusao, "PEDIDOS_VENDA", ped.IdPedido.ToString(), null,
+            new { NR_PEDIDO = ped.NrPedido, ID_LAB_PROPOSTAS = idProposta, DT_AUTORIZACAO = dtAutorizacao, AUTORIZADO_POR = autorizadoPor, NR_PEDIDO_CLIENTE = nrPedidoCliente });
+        return Resultado.Ok(ped);
     }
 
     public async Task<Resultado> AtualizarPedidoRevisaoAsync(int idPedido)
     {
         if (!await db.PedidosVenda.AnyAsync(x => x.IdPedidosVenda == idPedido)) return Resultado.Erro("Pedido de venda não encontrado.");
-        return await ChamarSemSaidaAsync("SP_ATUALIZAR_PEDIDO_REVISAO", true, ("p_id_pedido", idPedido), ("p_id_usuario", empresa.UsuarioId));
+        return await Auditado(await ChamarSemSaidaAsync("SP_ATUALIZAR_PEDIDO_REVISAO", true, ("p_id_pedido", idPedido), ("p_id_usuario", empresa.UsuarioId)),
+            AcoesAuditoria.Alteracao, "PEDIDOS_VENDA", idPedido, null, new { ATUALIZADO_PARA = "ULTIMA_REVISAO_DA_PROPOSTA" });
     }
 
     public async Task<Resultado> TrocarProdutoPropostaAsync(int idProposta, int idProdutoVelho, int idProdutoNovo)
     {
         if (!await db.LabPropostas.AnyAsync(x => x.IdLabPropostas == idProposta)) return Resultado.Erro("Proposta não encontrada.");
-        return await ChamarSemSaidaAsync("SP_TROCAR_PRODUTO_PROPOSTA", true,
-            ("p_id_proposta", idProposta), ("p_id_prod_velho", idProdutoVelho), ("p_id_prod_novo", idProdutoNovo));
+        return await Auditado(await ChamarSemSaidaAsync("SP_TROCAR_PRODUTO_PROPOSTA", true,
+                ("p_id_proposta", idProposta), ("p_id_prod_velho", idProdutoVelho), ("p_id_prod_novo", idProdutoNovo)),
+            AcoesAuditoria.Alteracao, "LAB_PROPOSTAS", idProposta, new { ID_PRODUTOS = idProdutoVelho }, new { ID_PRODUTOS = idProdutoNovo });
     }
 
     // ------------------------------------------------------------------ sem transação (podem rodar dentro da transação da aplicação)
@@ -143,6 +165,12 @@ public sealed class Procedures(LabDbContext db, IEmpresaContexto empresa)
     }
 
     // ------------------------------------------------------------------ núcleo
+
+    private async Task<Resultado> Auditado(Resultado r, string acao, string tabela, int id, object? antes, object? depois)
+    {
+        if (r.Sucesso) await auditoria.RegistrarAsync(acao, tabela, id.ToString(), antes, depois);
+        return r;
+    }
 
     private static Falha SemProfissional() =>
         Resultado.Erro("Seu usuário não está vinculado a um profissional nesta empresa (cadastro de usuários).");

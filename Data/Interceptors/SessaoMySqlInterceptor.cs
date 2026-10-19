@@ -9,11 +9,15 @@ namespace LabControl.Data.Interceptors;
 /// Define as variáveis de sessão lidas pelas triggers/procedures em TODA abertura de conexão
 /// (docs/processos/P22-erros-transacoes.md). Como o pool reaproveita conexões, nada de um request
 /// anterior sobrevive: retroativo e migração voltam a 0 e o usuário é o do request atual.
+/// Isolamento READ COMMITTED: sem as travas de intervalo (gap locks) do REPEATABLE READ, que faziam
+/// documentos diferentes gravados ao mesmo tempo darem deadlock (MAX+1 das triggers, revisões).
+/// A unicidade continua garantida por UNIQUE + FOR UPDATE nas linhas existentes.
 /// </summary>
 public sealed class SessaoMySqlInterceptor(IEmpresaContexto empresa) : DbConnectionInterceptor
 {
     private const string Sql =
-        "SET @LC_ID_USUARIOS = @usuario, @LC_MIGRACAO = 0, @LC_PERMITE_RETROATIVO = 0, @LC_DESFAZENDO = NULL";
+        "SET SESSION transaction_isolation = 'READ-COMMITTED', " +
+        "@LC_ID_USUARIOS = @usuario, @LC_MIGRACAO = 0, @LC_PERMITE_RETROATIVO = 0, @LC_DESFAZENDO = NULL";
 
     public override void ConnectionOpened(DbConnection connection, ConnectionEndEventData eventData)
     {

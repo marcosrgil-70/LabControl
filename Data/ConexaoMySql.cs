@@ -19,5 +19,5 @@ public static class ConexaoMySql
 
     public static DbContextOptionsBuilder Configurar(this DbContextOptionsBuilder options, string connectionString, IEmpresaContexto empresa) =>
         options.UseMySql(Normalizar(connectionString), Versao)
-               .AddInterceptors(new SessaoMySqlInterceptor(empresa));
+               .AddInterceptors(new SessaoMySqlInterceptor(empresa), new IsolamentoInterceptor());
 }

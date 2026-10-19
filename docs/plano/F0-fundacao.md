@@ -45,6 +45,7 @@
 - **Esforço:** M · **Depende de:** 0.3
 
 ### 0.6 Auditoria (infraestrutura)
+> ✅ **Concluída em 19/10/2026** — ver [P21 › Implementação](../processos/P21-auditoria-log.md#implementação-tarefa-06); aceite em `tests/LabControl.Tests/AuditoriaTests.cs`. Durante a tarefa foi encontrado e corrigido um deadlock na numeração sob concorrência (ver Diário e [P22 › Concorrência](../processos/P22-erros-transacoes.md#concorrência)).
 - **Passos:** `Data/Interceptors/AuditoriaInterceptor.cs` (antes/depois em JSON para as tabelas da lista do [P21](../processos/P21-auditoria-log.md)); `IAuditoria.Registrar(acao, tabela, id, antes, depois)` para eventos (login, revisão, emissão).
 - **Aceite:** alteração numa tabela auditada gera linha em `AUDITORIA` na mesma transação; blobs e hash de senha nunca vão para o JSON.
 - **Esforço:** S · **Depende de:** 0.4

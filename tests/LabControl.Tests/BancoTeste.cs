@@ -141,4 +141,5 @@ public sealed class EmpresaFixa : IEmpresaContexto
     public int? UsuarioId { get; set; }
     public int? ProfissionalId { get; set; }
     public bool AdminGlobal { get; set; }
+    public string? Ip { get; set; } = "127.0.0.1";
 }

@@ -13,6 +13,8 @@ public interface IEmpresaContexto
     /// <summary><c>USUARIOS_EMPRESAS.ID_ENTIDADES_FUNC</c> do usuário na empresa ativa.</summary>
     int? ProfissionalId { get; }
     bool AdminGlobal { get; }
+    /// <summary>IP do cliente (gravado na AUDITORIA).</summary>
+    string? Ip { get; }
 }
 
 /// <summary>Nomes das claims gravadas no login/troca de empresa (Fase 1, T00).</summary>
@@ -35,4 +37,5 @@ public sealed class EmpresaContexto(IHttpContextAccessor http) : IEmpresaContext
     public int? UsuarioId => Usuario?.Identity?.IsAuthenticated == true ? Inteiro(LabClaims.UsuarioId) : null;
     public int? ProfissionalId => Inteiro(LabClaims.ProfissionalId);
     public bool AdminGlobal => Usuario?.FindFirstValue(LabClaims.AdminGlobal) == "1";
+    public string? Ip => http.HttpContext?.Connection.RemoteIpAddress?.ToString();
 }

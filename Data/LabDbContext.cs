@@ -44,13 +44,42 @@ public partial class LabDbContext(DbContextOptions<LabDbContext> options, IEmpre
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         ConferirEmpresa();
-        return base.SaveChanges(acceptAllChangesOnSuccess);
+        var pendentes = CapturarAuditoria(acceptAllChangesOnSuccess);
+        if (pendentes.Count == 0) return base.SaveChanges(acceptAllChangesOnSuccess);
+
+        using var propria = Database.CurrentTransaction is null ? Database.BeginTransaction() : null;
+        var n = base.SaveChanges(acceptAllChangesOnSuccess);
+        Set<Auditoria>().AddRange(pendentes.Select(p => p.Gerar(empresa)));
+        base.SaveChanges(true);
+        propria?.Commit();
+        return n;
     }
 
-    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Confere a empresa e grava a AUDITORIA das tabelas críticas na MESMA transação: usa a transação aberta
+    /// pelo serviço ou abre uma própria. Se a auditoria falhar, a alteração também é desfeita.
+    /// </summary>
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         ConferirEmpresa();
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        var pendentes = CapturarAuditoria(acceptAllChangesOnSuccess);
+        if (pendentes.Count == 0) return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
+        await using var propria = Database.CurrentTransaction is null ? await Database.BeginTransactionAsync(cancellationToken) : null;
+        var n = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        Set<Auditoria>().AddRange(pendentes.Select(p => p.Gerar(empresa)));
+        await base.SaveChangesAsync(true, cancellationToken);
+        if (propria is not null) await propria.CommitAsync(cancellationToken);
+        return n;
+    }
+
+    private List<AuditoriaAlteracoes.Pendente> CapturarAuditoria(bool acceptAllChangesOnSuccess)
+    {
+        var pendentes = AuditoriaAlteracoes.Capturar(ChangeTracker);
+        // o 2º SaveChanges (da auditoria) regravaria as entidades ainda não aceitas
+        if (pendentes.Count > 0 && !acceptAllChangesOnSuccess)
+            throw new NotSupportedException("SaveChanges(acceptAllChangesOnSuccess: false) não é suportado em tabelas auditadas.");
+        return pendentes;
     }
 
     /// <summary>

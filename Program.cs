@@ -22,6 +22,7 @@ builder.Services.AddScoped<IEmpresaContexto, EmpresaContexto>();
 // interceptor de sessão MySQL (@LC_*) por request: recebe o IEmpresaContexto do escopo
 builder.Services.AddDbContext<LabDbContext>((sp, options) =>
     options.Configurar(connectionString, sp.GetRequiredService<IEmpresaContexto>()));
+builder.Services.AddScoped<IAuditoria, ServicoAuditoria>();
 builder.Services.AddScoped<Procedures>();
 
 // Sessão: ainda lida pelo _Layout (nome da empresa/usuário). Sai na Fase 1 (cookie authentication).

@@ -33,9 +33,10 @@ Em todas: motivo obrigatório, só se revisa a **última** revisão, a anterior 
 
 ### v2 (`SP_PROXIMO_NUMERO` + triggers)
 ```sql
-INSERT IGNORE INTO SEQUENCIAS_DOCUMENTOS (...) VALUES (emp, tipo, ano, 0);
-SELECT ULTIMO_NUMERO + 1 ... FOR UPDATE;   -- bloqueio até o COMMIT
-UPDATE ... SET ULTIMO_NUMERO = n;
+INSERT INTO SEQUENCIAS_DOCUMENTOS (...) VALUES (emp, tipo, ano, 1)
+ON DUPLICATE KEY UPDATE ULTIMO_NUMERO = ULTIMO_NUMERO + 1;   -- trava exclusiva até o COMMIT
+SELECT ULTIMO_NUMERO INTO n ...;
+-- (versão anterior INSERT IGNORE + SELECT … FOR UPDATE dava deadlock com gravações simultâneas — corrigido em 19/10/2026)
 ```
 - `TG_AMOSTRAS_BI`: na revisão 0, `ANO_AMOSTRA = YEAR(CURDATE())` e `COD_AMOSTRA = SP_PROXIMO_NUMERO('AMOSTRA', ano)`. O que a aplicação mandar nesses campos é **ignorado**.
 - Proteção contra erro de digitação do ano:

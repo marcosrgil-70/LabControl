@@ -203,20 +203,20 @@ END$$
 -- SP_GET_ULT_PED_VENDA e SP_SYS_GERAR_CODIGO.
 -- O ano NUNCA vem de data digitada: quem chama passa YEAR(CURDATE()) do servidor.
 -- Não abre transação (é chamada também por triggers).
+-- Uma única instrução com trava EXCLUSIVA (INSERT ... ON DUPLICATE KEY UPDATE): a versão anterior
+-- (INSERT IGNORE + SELECT ... FOR UPDATE) pegava trava compartilhada no IGNORE e depois a exclusiva,
+-- e duas gravações simultâneas na mesma empresa davam deadlock (teste ConcorrenciaTests, 19/10/2026).
+-- A linha fica travada até o COMMIT de quem chamou: números consecutivos e sem repetição.
 -- ---------------------------------------------------------------------
 CREATE PROCEDURE SP_PROXIMO_NUMERO(IN p_id_empresa INT, IN p_tipo VARCHAR(30), IN p_ano SMALLINT,
                                    OUT p_numero INT)
 BEGIN
-  INSERT IGNORE INTO SEQUENCIAS_DOCUMENTOS (ID_EMPRESAS, TIPO_DOCUMENTO, ANO, ULTIMO_NUMERO)
-  VALUES (p_id_empresa, p_tipo, p_ano, 0);
+  INSERT INTO SEQUENCIAS_DOCUMENTOS (ID_EMPRESAS, TIPO_DOCUMENTO, ANO, ULTIMO_NUMERO)
+  VALUES (p_id_empresa, p_tipo, p_ano, 1)
+  ON DUPLICATE KEY UPDATE ULTIMO_NUMERO = ULTIMO_NUMERO + 1;
 
-  SELECT ULTIMO_NUMERO + 1 INTO p_numero
+  SELECT ULTIMO_NUMERO INTO p_numero
     FROM SEQUENCIAS_DOCUMENTOS
-   WHERE ID_EMPRESAS = p_id_empresa AND TIPO_DOCUMENTO = p_tipo AND ANO = p_ano
-   FOR UPDATE;
-
-  UPDATE SEQUENCIAS_DOCUMENTOS
-     SET ULTIMO_NUMERO = p_numero
    WHERE ID_EMPRESAS = p_id_empresa AND TIPO_DOCUMENTO = p_tipo AND ANO = p_ano;
 END$$
 

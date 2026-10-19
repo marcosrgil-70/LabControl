@@ -18,9 +18,9 @@
 ## Fluxo (dentro da transação do INSERT do documento)
 1. Aplicação faz o INSERT **sem** número (0 / vazio).
 2. Trigger `BEFORE INSERT` chama `SP_PROXIMO_NUMERO(empresa, tipo, ano, @n)`:
-   - `INSERT IGNORE` cria a linha (empresa, tipo, ano) com 0 se não existir;
-   - `SELECT ULTIMO_NUMERO + 1 … FOR UPDATE` **bloqueia** a linha até o COMMIT;
-   - `UPDATE` grava o novo último número.
+   - `INSERT … VALUES (…, 1) ON DUPLICATE KEY UPDATE ULTIMO_NUMERO = ULTIMO_NUMERO + 1` cria a linha com 1 ou incrementa, numa única instrução com trava **exclusiva** até o COMMIT;
+   - `SELECT ULTIMO_NUMERO` devolve o número (a própria transação enxerga o valor que acabou de gravar).
+   - (Até 19/10/2026 era `INSERT IGNORE` + `SELECT … FOR UPDATE` + `UPDATE`: o IGNORE pegava trava compartilhada e duas gravações simultâneas na mesma empresa davam **deadlock** — 66 de 80 no teste `ConcorrenciaTests`.)
 3. Trigger monta o texto formatado (`NR_PROPOSTA`, `NR_AMOSTRA`).
 4. COMMIT libera o bloqueio; um segundo usuário simultâneo espera e recebe o número seguinte.
 5. Aplicação **relê** a linha e mostra o número ("Código da Amostra: …", "Nr. da Proposta: …").

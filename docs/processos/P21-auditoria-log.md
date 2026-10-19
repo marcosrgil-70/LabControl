@@ -21,6 +21,15 @@
 4. `SessaoMySqlInterceptor` define `@LC_ID_USUARIOS` (para o log das triggers).
 5. Nunca gravar blobs (logo, assinatura) nem hash de senha no JSON.
 
+## Implementação (tarefa 0.6)
+- **Alterações (I/A/E)** — `Data/AuditoriaAlteracoes.cs` + `LabDbContext.SaveChanges`: antes do save captura as entradas das tabelas da lista acima; grava as alterações e, **na mesma transação** (a do serviço ou uma aberta pelo próprio contexto), as linhas de `AUDITORIA`. Se a auditoria falhar, a alteração é desfeita.
+  - I: linha completa em `DADOS_DEPOIS`, já com os valores gerados pelo banco (`NR_PROPOSTA`, `NR_AMOSTRA`…); E: linha completa em `DADOS_ANTES`; A: só as colunas que mudaram (antes e depois); alteração sem mudança real não gera linha.
+  - Colunas = nomes do banco; enums com o valor do banco (`'BOLETIM'`); `SENHA_HASH` → `"***"`; blobs (`LOGO`, `ASSINATURA`) → `"[binário]"`; `ULTIMO_ACESSO` ignorada (o login tem evento próprio).
+  - `ID_EMPRESAS` do registro (ou a empresa ativa, em tabela global), `ID_USUARIOS` e `IP` do `IEmpresaContexto`.
+  - Optou-se pelo override do `SaveChanges` em vez de um `SaveChangesInterceptor`: o interceptor teria de chamar `SaveChanges` dentro de outro `SaveChanges` para gravar a auditoria na mesma transação.
+- **Eventos** — `Infra/ServicoAuditoria.cs` (`IAuditoria.RegistrarAsync`): `Infra/Procedures.cs` já registra revisão (R), emissão (M), desfazer revisão (**D**), pedido gerado (I em `PEDIDOS_VENDA`), atualização do pedido e troca de produto (A). Login (**L**) entra na Fase 1. Os códigos `D` e `L` complementam o comentário da coluna `ACAO` (`AcoesAuditoria`).
+- Testes: `tests/LabControl.Tests/AuditoriaTests.cs`.
+
 ## Cenários de teste
 - Alterar uma amostra → uma linha em `LAB_HIST_AMOSTRAS_LOG` (A) com o usuário correto e uma em `AUDITORIA` com antes/depois.
 - Emitir boletim → `AUDITORIA` M.

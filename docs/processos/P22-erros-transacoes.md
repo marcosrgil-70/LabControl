@@ -19,7 +19,8 @@
 | Peça | Arquivo | O que faz |
 |---|---|---|
 | Conexão | `Data/ConexaoMySql.cs` | `options.Configurar(cs, empresa)`: força `AllowUserVariables=True` (sem ele o MySqlConnector trata `@LC_*` como parâmetro) e `ConnectionReset=True`; registra o interceptor |
-| Sessão | `Data/Interceptors/SessaoMySqlInterceptor.cs` | em toda abertura: `SET @LC_ID_USUARIOS = <usuário do request>, @LC_MIGRACAO = 0, @LC_PERMITE_RETROATIVO = 0, @LC_DESFAZENDO = NULL` |
+| Sessão | `Data/Interceptors/SessaoMySqlInterceptor.cs` | em toda abertura: `SET SESSION transaction_isolation = 'READ-COMMITTED', @LC_ID_USUARIOS = <usuário do request>, @LC_MIGRACAO = 0, @LC_PERMITE_RETROATIVO = 0, @LC_DESFAZENDO = NULL` |
+| Isolamento | `Data/Interceptors/IsolamentoInterceptor.cs` | `BeginTransaction()` sem nível abre em READ COMMITTED (o MySqlConnector mandaria `REPEATABLE READ`) |
 | Resultado | `Infra/Resultado.cs` | `Resultado.Ok()`, `Resultado.Ok(valor)`, `Resultado.Erro(msg, campo?)` (serve para `Resultado` e `Resultado<T>`) |
 | Erros | `Infra/ErrosMySql.cs` | `MensagemDeNegocio(ex)` (45000 = texto da trigger; 1062 por constraint; 1451; 1452), `CapturarAsync(...)` |
 | Procedures | `Infra/Procedures.cs` (scoped) | um método por `SP_*`; confere que a origem é da empresa ativa; usuário/profissional do contexto; lê OUT params; 45000 → `Resultado.Erro`; **recusa** procedure com transação própria dentro de `BeginTransaction`; `DefinirPermiteRetroativoAsync` só dentro de transação |
@@ -54,7 +55,10 @@ public async Task<Resultado<int>> IncluirAmostra(AmostraVM vm) {
 | `@LC_DESFAZENDO` | as próprias `SP_EXCLUIR_REVISAO_*` | interno |
 
 ## Concorrência
-Numeração e revisões usam `SELECT … FOR UPDATE` no banco; telas de edição usam controle otimista por `ALTERADO_EM` (token de concorrência) para avisar "registro alterado por outro usuário".
+- Numeração: `SP_PROXIMO_NUMERO` com `INSERT … ON DUPLICATE KEY UPDATE` (trava exclusiva numa instrução só); revisões: `SELECT … FOR UPDATE` nas revisões existentes; item da proposta: `TG_PROPPROD_BI` trava a proposta (`FOR UPDATE`).
+- A aplicação usa **READ COMMITTED** (definido pelo `SessaoMySqlInterceptor` em toda conexão): sem as travas de intervalo do REPEATABLE READ, que faziam documentos **diferentes** gravados ao mesmo tempo darem deadlock (o `MAX()+1` da trigger e o `MAX(REVISAO) … FOR UPDATE` travavam o fim do índice). A unicidade continua garantida por `UNIQUE` + `FOR UPDATE` nas linhas existentes.
+- Coberto por `tests/LabControl.Tests/ConcorrenciaTests.cs` (8 gravações simultâneas × 10, mesma empresa: numeração e primeiro item de propostas diferentes).
+- Telas de edição: controle otimista por `ALTERADO_EM` (token de concorrência) para avisar "registro alterado por outro usuário".
 
 ## Cenários de teste (projeto xUnit da fase 0)
 - Recriar banco de teste pelos scripts e rodar o roteiro do doc 12 §7 via serviço.

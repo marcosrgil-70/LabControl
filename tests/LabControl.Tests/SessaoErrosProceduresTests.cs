@@ -10,11 +10,11 @@ public class SessaoErrosProceduresTests
     private static async Task<DateOnly> HojeAsync(Cenario c) =>
         await c.Db.Database.SqlQueryRaw<DateOnly>("SELECT CURDATE() AS Value").SingleAsync();
 
-    private sealed record Sessao(long? Usuario, long? Migracao, long? Retroativo, long Conexao);
+    private sealed record Sessao(long? Usuario, long? Migracao, long? Retroativo, long Conexao, string Isolamento);
 
     private static Task<Sessao> LerSessaoAsync(Data.LabDbContext db) =>
         db.Database.SqlQueryRaw<Sessao>(
-            "SELECT @LC_ID_USUARIOS AS Usuario, @LC_MIGRACAO AS Migracao, @LC_PERMITE_RETROATIVO AS Retroativo, CONNECTION_ID() AS Conexao")
+            "SELECT @LC_ID_USUARIOS AS Usuario, @LC_MIGRACAO AS Migracao, @LC_PERMITE_RETROATIVO AS Retroativo, CONNECTION_ID() AS Conexao, @@transaction_isolation AS Isolamento")
           .SingleAsync();
 
     [Fact]
@@ -39,6 +39,7 @@ public class SessaoErrosProceduresTests
         Assert.Equal(9, s2.Usuario);
         Assert.Equal(0, s2.Retroativo);
         Assert.Equal(0, s2.Migracao);
+        Assert.Equal("READ-COMMITTED", s2.Isolamento);
 
         // sem usuário: NULL (nunca o usuário do request anterior)
         await using var db3 = await BancoTeste.NovoContextoAsync(new EmpresaFixa());
