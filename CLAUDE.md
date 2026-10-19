@@ -20,6 +20,6 @@ Reescrita do sistema de laboratório **Delphi 7 + Firebird** (`C:\Project\Labora
 - Ao concluir: marcar o checklist do plano e do arquivo da fase, atualizar o "Status" do MD da tela, a matriz `docs/plano/MATRIZ-DELPHI-CSHARP.md` e o Diário.
 
 ## Comandos
-- Recriar banco: `mysqlsh --sql "root:<senha>@localhost:3306" --file Scripts/v2/01_schema.sql` (e 02..05, em ordem).
+- Recriar banco: `.\Scripts\v2\recriar.ps1` (pede a senha; `-Teste` = banco temporário + roteiro do doc 12 §7). Detalhes em `Scripts/v2/README.md`.
 - Firebird legado: `"C:\Program Files (x86)\Firebird\Firebird_2_5\bin\isql.exe" -user SYSDBA -password masterkey localhost:C:\Project\Laboratorio\DBMAIS.FDB`.
 - Executar: `dotnet run` (ou `rodar.bat`).

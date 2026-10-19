@@ -1,0 +1,154 @@
+﻿<#
+.SYNOPSIS
+  Recria do zero um banco LabControl v2 a partir de Scripts/v2/01..05 e,
+  opcionalmente, roda o roteiro de teste do doc 12 §7.
+
+.DESCRIPTION
+  1. Apaga o banco informado (pede confirmação se ele já existir);
+  2. executa 01_schema -> 02_funcoes_procedures -> 03_triggers -> 04_views -> 05_seed,
+     trocando "labcontrol_v2" pelo nome do banco, e PARA no primeiro erro;
+  3. confere as contagens de objetos (59 tabelas, 10 views, 8 funções,
+     19 procedures, 42 triggers, 109 permissões);
+  4. com -Teste: cria um banco temporário labcontrol_teste_<id>, roda
+     teste/roteiro_12_7.sql e apaga o banco no final (a não ser que -Manter).
+
+  A senha é pedida no console (não fica em arquivo). Se a variável de
+  ambiente MYSQL_PWD já estiver definida, ela é usada.
+
+.EXAMPLE
+  .\Scripts\v2\recriar.ps1                       # recria labcontrol_v2
+  .\Scripts\v2\recriar.ps1 -Teste                # banco temporário + roteiro 12 §7
+  .\Scripts\v2\recriar.ps1 -Banco labcontrol_v2_hml -Forcar
+#>
+[CmdletBinding()]
+param(
+  [string]$Banco = 'labcontrol_v2',
+  [string]$Servidor = '127.0.0.1',
+  [int]$Porta = 3306,
+  [string]$Usuario = 'root',
+  [string]$MySql = '',
+  [switch]$Teste,
+  [switch]$Manter,
+  [switch]$Forcar
+)
+
+$ErrorActionPreference = 'Stop'
+$pasta = $PSScriptRoot
+$scripts = '01_schema', '02_funcoes_procedures', '03_triggers', '04_views', '05_seed'
+$esperado = [ordered]@{ TABELAS = 59; VIEWS = 10; FUNCOES = 8; PROCEDURES = 19; TRIGGERS = 42; PERMISSOES = 109 }
+
+function Falhar([string]$msg) { Write-Host "ERRO: $msg" -ForegroundColor Red; exit 1 }
+
+# --- banco ---------------------------------------------------------------
+if ($Teste) { $Banco = 'labcontrol_teste_' + [guid]::NewGuid().ToString('N').Substring(0, 8) }
+if ($Banco -notmatch '^[A-Za-z0-9_]+$') { Falhar "nome de banco inválido: $Banco" }
+if ($Banco -in 'labcontrol', 'mysql', 'sys', 'information_schema', 'performance_schema') {
+  Falhar "o banco '$Banco' não pode ser recriado por este script (labcontrol = v1)."
+}
+
+# --- cliente mysql -------------------------------------------------------
+if (-not $MySql) {
+  $cmd = Get-Command mysql.exe -ErrorAction SilentlyContinue
+  $MySql = if ($cmd) { $cmd.Source } else { 'C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe' }
+}
+if (-not (Test-Path $MySql)) { Falhar "mysql.exe não encontrado ($MySql). Informe -MySql <caminho>." }
+
+# --- senha ---------------------------------------------------------------
+$senhaAntes = $env:MYSQL_PWD
+if (-not $env:MYSQL_PWD) {
+  $seg = Read-Host "Senha do usuário '$Usuario' em ${Servidor}:$Porta" -AsSecureString
+  $env:MYSQL_PWD = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+    [Runtime.InteropServices.Marshal]::SecureStringToBSTR($seg))
+}
+
+$base = @("-u$Usuario", "-h$Servidor", "-P$Porta", '--default-character-set=utf8mb4')
+$tmp = Join-Path ([IO.Path]::GetTempPath()) ('labcontrol_recriar_' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $tmp | Out-Null
+$utf8 = New-Object Text.UTF8Encoding($false)
+
+# Executa SQL (texto ou arquivo) no mysql; devolve a saída ou para no erro.
+function Sql([string]$texto, [string]$arquivo, [string[]]$extra = @()) {
+  if (-not $arquivo) {
+    $arquivo = Join-Path $tmp 'cmd.sql'
+    [IO.File]::WriteAllText($arquivo, $texto, $utf8)
+  }
+  $saida = Join-Path $tmp 'saida.txt'
+  $erro = Join-Path $tmp 'erro.txt'
+  $p = Start-Process -FilePath $MySql -ArgumentList ($base + $extra) -RedirectStandardInput $arquivo `
+         -RedirectStandardOutput $saida -RedirectStandardError $erro -NoNewWindow -Wait -PassThru
+  $out = [IO.File]::ReadAllText($saida, $utf8)
+  $err = ([IO.File]::ReadAllText($erro, $utf8) -split "`r?`n" | Where-Object { $_ -and $_ -notmatch 'Using a password' }) -join "`n"
+  if ($p.ExitCode -ne 0) { throw "mysql (código $($p.ExitCode)): $err`n$out" }
+  return $out
+}
+
+$sucesso = $false
+try {
+  Write-Host "Servidor: ${Servidor}:$Porta  Banco: $Banco" -ForegroundColor Cyan
+  [void](Sql 'SELECT 1;')
+
+  $existe = (Sql "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '$Banco';" '' @('-N')).Trim()
+  if ($existe -eq '1' -and -not $Forcar -and -not $Teste) {
+    $r = Read-Host "O banco '$Banco' já existe e será APAGADO com todos os dados. Digite o nome do banco para confirmar"
+    if ($r -ne $Banco) { Falhar 'cancelado pelo usuário.' }
+  }
+  [void](Sql "DROP DATABASE IF EXISTS ``$Banco``;")
+
+  foreach ($s in $scripts) {
+    $origem = Join-Path $pasta "$s.sql"
+    $destino = Join-Path $tmp "$s.sql"
+    $texto = [IO.File]::ReadAllText($origem, $utf8) -replace '\blabcontrol_v2\b', $Banco
+    [IO.File]::WriteAllText($destino, $texto, $utf8)
+    $t = [Diagnostics.Stopwatch]::StartNew()
+    try { [void](Sql '' $destino) } catch { Write-Host ("  {0,-26} ERRO" -f "$s.sql") -ForegroundColor Red; throw "$s.sql: $($_.Exception.Message)" }
+    Write-Host ("  {0,-26} ok ({1:n0}s)" -f "$s.sql", $t.Elapsed.TotalSeconds) -ForegroundColor Green
+  }
+
+  $contagem = Sql @"
+SELECT
+ (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$Banco' AND TABLE_TYPE = 'BASE TABLE'),
+ (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$Banco' AND TABLE_TYPE = 'VIEW'),
+ (SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = '$Banco' AND ROUTINE_TYPE = 'FUNCTION'),
+ (SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = '$Banco' AND ROUTINE_TYPE = 'PROCEDURE'),
+ (SELECT COUNT(*) FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = '$Banco'),
+ (SELECT COUNT(*) FROM ``$Banco``.PERMISSOES);
+"@ '' @('-N')
+  $valores = $contagem.Trim() -split '\s+'
+  $i = 0; $divergente = $false
+  foreach ($k in $esperado.Keys) {
+    $ok = [int]$valores[$i] -eq $esperado[$k]
+    if (-not $ok) { $divergente = $true }
+    Write-Host ("  {0,-12} {1,4}  (esperado {2})" -f $k, $valores[$i], $esperado[$k]) -ForegroundColor $(if ($ok) { 'Gray' } else { 'Yellow' })
+    $i++
+  }
+  if ($divergente) {
+    Write-Host 'AVISO: contagens diferentes do esperado. Se o schema mudou de propósito, atualize $esperado neste script e o doc 11.' -ForegroundColor Yellow
+  }
+
+  if ($Teste) {
+    try {
+      $res = Sql '' (Join-Path $pasta 'teste\roteiro_12_7.sql') @("-D$Banco", '--table')
+      Write-Host $res
+      Write-Host '  roteiro 12 §7: ok' -ForegroundColor Green
+    } catch {
+      Write-Host '  roteiro 12 §7: FALHA' -ForegroundColor Red
+      throw $_.Exception.Message
+    }
+  }
+
+  $sucesso = -not $divergente
+  if ($sucesso) { Write-Host "Banco '$Banco' recriado com sucesso." -ForegroundColor Green }
+}
+catch {
+  Write-Host "ERRO: $($_.Exception.Message)" -ForegroundColor Red
+}
+finally {
+  if ($Teste -and -not $Manter) {
+    try { [void](Sql "DROP DATABASE IF EXISTS ``$Banco``;"); Write-Host "Banco temporário '$Banco' removido." }
+    catch { Write-Host "Não foi possível remover '$Banco': $($_.Exception.Message)" -ForegroundColor Yellow }
+  }
+  $env:MYSQL_PWD = $senhaAntes
+  Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
+}
+if (-not $sucesso) { exit 1 }
+exit 0

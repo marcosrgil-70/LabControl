@@ -15,6 +15,7 @@
 - **Esforço:** S · **Depende de:** —
 
 ### 0.2 `Scripts/v2/README.md` + script de recriação
+> ✅ **Concluída em 19/10/2026** — `.\Scripts\v2\recriar.ps1` recria o banco (contagens conferidas); `-Teste` roda o roteiro 12 §7 num banco temporário. Ver [Scripts/v2/README.md](../../Scripts/v2/README.md).
 - **Passos:** documentar comandos de criação/recriação, ordem dos scripts, como rodar o roteiro de teste; criar `Scripts/v2/recriar.ps1` (parâmetro do banco, pede senha, roda os 5 scripts e para no primeiro erro).
 - **Aceite:** um comando recria o banco do zero.
 - **Esforço:** S · **Depende de:** 0.1
