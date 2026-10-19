@@ -18,8 +18,8 @@ LabControl/
 ├── Data/            LabDbContext.cs, Configurations/ (IEntityTypeConfiguration por tabela),
 │                    Interceptors/SessaoMySqlInterceptor.cs (SET @LC_ID_USUARIOS etc.)
 ├── Models/          Entidades (1 classe por tabela), Enums
-├── ViewModels/      por tela
-├── Services/        regras de negócio (AmostraService, PropostaService, BoletimService, NumeracaoService…)
+├── ViewModels/      por tela (convenções em ViewModels/README.md)
+├── Services/        regras de negócio (AmostraService, PropostaService, BoletimService, NumeracaoService…) — Services/README.md
 │   └── Migracao/    MigracaoService (Firebird → MySQL)
 ├── Infra/           EmpresaContexto (empresa/usuário/profissional do request), Permissoes, Pdf/
 ├── Controllers/     finos: validam, chamam Service, devolvem View/JSON

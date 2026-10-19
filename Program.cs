@@ -24,14 +24,7 @@ builder.Services.AddDbContext<LabDbContext>((sp, options) =>
     options.Configurar(connectionString, sp.GetRequiredService<IEmpresaContexto>()));
 builder.Services.AddScoped<IAuditoria, ServicoAuditoria>();
 builder.Services.AddScoped<Procedures>();
-
-// Sessão: ainda lida pelo _Layout (nome da empresa/usuário). Sai na Fase 1 (cookie authentication).
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromHours(8);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
+// Serviços de negócio (Services/) registrados aqui, um AddScoped por serviço
 
 var app = builder.Build();
 
@@ -43,7 +36,6 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseSession();
 app.UseAuthorization();
 app.UseMiddleware<ExigirEmpresaMiddleware>();
 app.MapStaticAssets();

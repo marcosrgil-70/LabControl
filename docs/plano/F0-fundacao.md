@@ -57,6 +57,7 @@
 - **Esforço:** M · **Depende de:** 0.5
 
 ### 0.8 Estrutura de pastas e limpeza da v1
+> ✅ **Concluída em 19/10/2026** — v1 em `Legacy/` desde a 0.3 (fora da compilação); `Services/` e `ViewModels/` com README das convenções; layout v2 sem sessão e com CSS em `wwwroot/css/site.css`; menu/Home só com o que existe (nenhum link para tela v1); aceite em `tests/LabControl.Tests/LayoutTests.cs`.
 - **Passos:** criar `Services/`, `ViewModels/`, `Infra/`, `Data/Configurations/`; mover o layout/CSS reaproveitável; marcar controllers v1 como obsoletos (pasta `Legacy/` excluída da compilação ou removida quando a tela for refeita) — **não apagar antes de a tela nova existir**.
 - **Aceite:** projeto compila só com o que usa o schema v2; telas v1 ainda acessíveis só se compilarem contra o novo contexto (senão removidas da navegação).
 - **Esforço:** S · **Depende de:** 0.3

@@ -1,17 +1,13 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using LabControl.Models;
+using LabControl.ViewModels;
 
 namespace LabControl.Controllers;
 
 public class HomeController : Controller
 {
+    // Painel com os contadores da T01 entra na tarefa 1.2
     public IActionResult Index()
-    {
-        return View();
-    }
-
-    public IActionResult Privacy()
     {
         return View();
     }

@@ -36,4 +36,4 @@ Todos os números são links para a tela filtrada.
 - [ ] Empresa ativa visível em todas as páginas.
 - [ ] Painel usa só dados da empresa ativa.
 
-**Status:** ⬜ (o layout v1 existe e será adaptado)
+**Status:** ⬜ — base pronta na tarefa 0.8 (layout v2 sem sessão, CSS em `site.css`, menu só com Início); menu por permissão, empresa no topo e painel na 1.2.

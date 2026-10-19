@@ -1,31 +1,50 @@
-html {
-  font-size: 14px;
+/* LabControl v2 — estilos do layout (Views/Shared/_Layout.cshtml) e padrões comuns das telas.
+   Base: Bootstrap 5 (wwwroot/lib) + Bootstrap Icons. Cores do legado: azul #1a2f4e. */
+
+:root {
+  --lc-azul: #1a2f4e;
+  --lc-sidebar-largura: 230px;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+body {
+  background-color: #f8f9fa;
+  font-size: 0.92rem;
 }
 
+/* Topo */
+.topbar { background: var(--lc-azul); }
+.topbar .navbar-brand { color: #fff; font-weight: 700; font-size: 1.2rem; }
+
+/* Menu lateral */
+.sidebar {
+  width: var(--lc-sidebar-largura);
+  min-width: var(--lc-sidebar-largura);
+  min-height: calc(100vh - 56px);
+  background: var(--lc-azul);
+}
+.sidebar .nav-link { color: #adb5bd; padding: 0.6rem 1rem; border-radius: 4px; }
+.sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(255, 255, 255, 0.1); }
+.sidebar .nav-section { color: #6c757d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 1rem 1rem 0.3rem; }
+.sidebar .nav-link i { width: 20px; }
+
+/* Conteúdo */
+.content-wrapper { padding: 1.5rem; min-width: 0; }
+.card { border: none; box-shadow: 0 1px 4px rgba(0, 0, 0, .08); }
+.table th { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6c757d; }
+
+/* Status com a COR do cadastro (AMOSTRAS_STATUS, BOLETINS_STATUS…) */
+.badge-status { font-size: 0.78rem; padding: 0.35em 0.7em; }
+
+/* Foco visível nos campos */
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
-html {
-  position: relative;
-  min-height: 100%;
-}
-
-body {
-  margin-bottom: 60px;
-}
-
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
-}
-
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+/* Celular: menu acima do conteúdo */
+@media (max-width: 767.98px) {
+  .d-flex:has(> .sidebar) { flex-direction: column; }
+  .sidebar { width: 100%; min-width: 0; min-height: 0; }
+  .sidebar nav { flex-direction: row !important; flex-wrap: wrap; }
+  .sidebar .nav-section { display: none; }
+  .content-wrapper { padding: 1rem; }
 }
