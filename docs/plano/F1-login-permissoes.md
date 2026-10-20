@@ -38,6 +38,7 @@
 - **Esforço:** G · **Depende de:** 1.3
 
 ### 1.6 T05 — Parâmetros da empresa + numeração
+> ✅ **Concluída em 20/10/2026** — ver [T05 › Implementação](../telas/T05-parametros-empresa.md#implementação-tarefa-16); aceite em `ParametrosEmpresaServiceTests`.
 - **Passos:** aba parâmetros (status padrão, dias retroativos, validade, pesquisa, 2º responsável, textos padrão); aba numeração somente leitura + ajuste ADMIN_GLOBAL auditado.
 - **Aceite:** [aceite da T05](../telas/T05-parametros-empresa.md#critérios-de-aceite).
 - **Esforço:** M · **Depende de:** 1.5

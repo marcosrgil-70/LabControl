@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LabControl.Controllers;
 
 /// <summary>T03 — dados da empresa ativa (<c>/Empresa/Dados</c>), logo e combo de cidades. A lista e a inclusão ficam em <see cref="EmpresasController"/>.</summary>
-public sealed class EmpresaController(EmpresaService empresas, ContaService conta, IEmpresaContexto ctx) : Controller
+public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresaService parametros, ContaService conta, IEmpresaContexto ctx) : Controller
 {
     private int Ativa => ctx.EmpresaId ?? throw new InvalidOperationException("Sem empresa ativa.");
 
@@ -29,6 +29,31 @@ public sealed class EmpresaController(EmpresaService empresas, ContaService cont
         await empresas.PrepararAsync(vm);
         vm.CodEmpresa = (await empresas.CarregarAsync(Ativa))?.CodEmpresa ?? "";
         return View(vm);
+    }
+
+    /// <summary>T05 — parâmetros da empresa ativa (aba "Parâmetros") e numeração somente leitura (aba "Numeração").</summary>
+    [HttpGet, Permissao("PARAMETROS_EMPRESA.CONSULTAR")]
+    public async Task<IActionResult> Parametros() =>
+        await parametros.CarregarAsync() is { } vm ? View(vm) : NotFound();
+
+    [HttpPost, Permissao("PARAMETROS_EMPRESA.ALTERAR")]
+    public async Task<IActionResult> Parametros(ParametrosEmpresaVM vm)
+    {
+        if (ModelState.IsValid && this.AplicarNoFormulario(await parametros.AlterarAsync(vm), "Parâmetros da empresa gravados."))
+            return RedirectToAction(nameof(Parametros));
+        await parametros.PrepararAsync(vm);
+        return View(vm);
+    }
+
+    /// <summary>T05 — ajuste manual de uma linha da numeração, com motivo (só ADMIN_GLOBAL).</summary>
+    [HttpPost, SomenteAdminGlobal]
+    public async Task<IActionResult> AjustarNumeracao([Bind(Prefix = nameof(ParametrosEmpresaVM.Ajuste))] AjusteNumeracaoVM ajuste)
+    {
+        Resultado r = ModelState.IsValid
+            ? await parametros.AjustarNumeracaoAsync(ajuste)
+            : Resultado.Erro(ModelState.Values.SelectMany(v => v.Errors).First().ErrorMessage);
+        this.AplicarNoTempData(r, $"Numeração ajustada: {ParametrosEmpresaService.Documentos.GetValueOrDefault(ajuste.Tipo, ajuste.Tipo)} → {ajuste.NovoValor}.");
+        return Redirect(Url.Action(nameof(Parametros)) + "#numeracao");
     }
 
     /// <summary>Logo (tela e PDFs): da empresa ativa ou, para ADMIN_GLOBAL, de qualquer uma.</summary>

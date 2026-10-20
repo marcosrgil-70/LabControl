@@ -34,8 +34,14 @@ Validações: dias ≥ 0 (`DIAS_RETROATIVOS_ENTREGA` entre 0 e 365, com aviso se
 - `ID_LAB_PROPOSTAS_STATUS_ENVCLI` nulo: a data de envio ao cliente nunca era gravada automaticamente.
 
 ## Critérios de aceite
-- [ ] Mudar `DIAS_RETROATIVOS_ENTREGA` altera imediatamente a regra do recebimento.
-- [ ] Ajuste de numeração para valor menor é recusado; ajuste válido aparece na Auditoria.
-- [ ] Combos mostram só status da empresa ativa.
+- [x] Mudar `DIAS_RETROATIVOS_ENTREGA` altera imediatamente a regra do recebimento.
+- [x] Ajuste de numeração para valor menor é recusado; ajuste válido aparece na Auditoria.
+- [x] Combos mostram só status da empresa ativa.
 
-**Status:** ⬜
+## Implementação (tarefa 1.6)
+- `Controllers/EmpresaController.cs` (`/Empresa/Parametros`: `PARAMETROS_EMPRESA.CONSULTAR` para ver, `PARAMETROS_EMPRESA.ALTERAR` para gravar; `/Empresa/AjustarNumeracao` só ADMIN_GLOBAL — `[SomenteAdminGlobal]`) · `Services/ParametrosEmpresaService.cs` · `ViewModels/ParametrosEmpresaVM.cs` · `Views/Empresa/Parametros.cshtml` (abas Parâmetros/Numeração, modal de ajuste).
+- **Parâmetros:** combos só com status da empresa ativa (ativos + o já escolhido, marcado "(inativo)"); obrigatórios todos os status, exceto "permite resultados (legado)"; "Enviado ao cliente" ≠ inicial da proposta e boletim emitido ≠ inicial; dias retroativos 0–365 (aviso na tela acima de 30), validade/pesquisa 0–3650. Gravação pelo EF → auditoria automática (`EMPRESAS_PARAMETROS`, só colunas alteradas). Sem cache: as triggers leem a tabela a cada gravação, então a mudança vale na hora.
+- **Numeração:** grid de `SEQUENCIAS_DOCUMENTOS` da empresa ativa (ano 0 = não anual). Ajuste numa transação: `SELECT … FOR UPDATE` na linha (mesma trava do `SP_PROXIMO_NUMERO`); recusa valor igual ao atual ou menor que o maior já usado (`MAX(COD_AMOSTRA)`/`MAX(COD_PROPOSTA)`/`MAX(NR_RELATORIO)` do ano, `MAX(NR_PEDIDO)`, maior `PRODUTOS.CODIGO` numérico); motivo de 10 a 500 caracteres; `UPDATE` direto + evento `A` em `AUDITORIA` (`ID_REGISTRO` = `empresa-tipo-ano`; antes: `ULTIMO_NUMERO`; depois: `ULTIMO_NUMERO`, `MAIOR_USADO`, `MOTIVO`). Só linhas existentes são ajustáveis (o ano novo nasce sozinho; os máximos do legado entram pela M-18).
+- Aceite em `ParametrosEmpresaServiceTests` (4 testes).
+
+**Status:** ✅ concluída na tarefa 1.6 (20/10/2026).

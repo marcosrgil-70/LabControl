@@ -39,6 +39,7 @@ builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<PerfilService>();
 builder.Services.AddScoped<CopiaCadastros>();
 builder.Services.AddScoped<EmpresaService>();
+builder.Services.AddScoped<ParametrosEmpresaService>();
 builder.Services.AddSingleton<TelasExistentes>(); // menu e painel só mostram telas já reescritas
 
 // Login próprio (T00 / P02): cookie HttpOnly + Secure + SameSite=Lax, expiração deslizante, revalidado a cada request

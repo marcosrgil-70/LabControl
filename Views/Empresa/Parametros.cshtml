@@ -1,0 +1,210 @@
+@model ParametrosEmpresaVM
+@{
+    ViewData["Title"] = "Parâmetros da empresa";
+}
+
+<h5 class="mb-3"><i class="bi bi-gear me-2 text-primary"></i>Parâmetros da empresa</h5>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#parametros" type="button" role="tab">Parâmetros</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#numeracao" type="button" role="tab">Numeração</button></li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="parametros" role="tabpanel">
+        <form method="post" asp-action="Parametros" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+            <div class="card mb-3">
+                <div class="card-header fw-semibold py-2">Status padrão</div>
+                <div class="card-body row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="IdLabPropostasStatusInicial" class="form-label small"></label>
+                        <select asp-for="IdLabPropostasStatusInicial" asp-items="@(new SelectList(Model.StatusPropostas, "Id", "Nome"))" class="form-select"><option value="">—</option></select>
+                        <span asp-validation-for="IdLabPropostasStatusInicial" class="text-danger small"></span>
+                        <div class="form-text">Proposta nova e nova revisão.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="IdLabPropostasStatusEnvcli" class="form-label small"></label>
+                        <select asp-for="IdLabPropostasStatusEnvcli" asp-items="@(new SelectList(Model.StatusPropostas, "Id", "Nome"))" class="form-select"><option value="">—</option></select>
+                        <span asp-validation-for="IdLabPropostasStatusEnvcli" class="text-danger small"></span>
+                        <div class="form-text">Ao entrar neste status a proposta grava a data de envio ao cliente.</div>
+                    </div>
+                    <div class="col-md-4"></div>
+                    <div class="col-md-4">
+                        <label asp-for="IdAmostrasStatusInicial" class="form-label small"></label>
+                        <select asp-for="IdAmostrasStatusInicial" asp-items="@(new SelectList(Model.StatusAmostras, "Id", "Nome"))" class="form-select"><option value="">—</option></select>
+                        <span asp-validation-for="IdAmostrasStatusInicial" class="text-danger small"></span>
+                        <div class="form-text">Amostra recebida.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="IdAmostrasStatusResultados" class="form-label small"></label>
+                        <select asp-for="IdAmostrasStatusResultados" asp-items="@(new SelectList(Model.StatusAmostras, "Id", "Nome"))" class="form-select"><option value="">—</option></select>
+                        <span asp-validation-for="IdAmostrasStatusResultados" class="text-danger small"></span>
+                        <div class="form-text">Informativo: quem libera os resultados é a marcação "Permite resultado" do status.</div>
+                    </div>
+                    <div class="col-md-4"></div>
+                    <div class="col-md-4">
+                        <label asp-for="IdBoletinsStatusInicial" class="form-label small"></label>
+                        <select asp-for="IdBoletinsStatusInicial" asp-items="@(new SelectList(Model.StatusBoletins, "Id", "Nome"))" class="form-select"><option value="">—</option></select>
+                        <span asp-validation-for="IdBoletinsStatusInicial" class="text-danger small"></span>
+                        <div class="form-text">Boletim novo e nova revisão.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="IdBoletinsStatusEmitido" class="form-label small"></label>
+                        <select asp-for="IdBoletinsStatusEmitido" asp-items="@(new SelectList(Model.StatusBoletins, "Id", "Nome"))" class="form-select"><option value="">—</option></select>
+                        <span asp-validation-for="IdBoletinsStatusEmitido" class="text-danger small"></span>
+                        <div class="form-text">Gravado na emissão do boletim.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header fw-semibold py-2">Prazos e regras</div>
+                <div class="card-body row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="DiasRetroativosEntrega" class="form-label small"></label>
+                        <input asp-for="DiasRetroativosEntrega" class="form-control" type="number" min="0" max="365" />
+                        <span asp-validation-for="DiasRetroativosEntrega" class="text-danger small"></span>
+                        <div class="form-text">Data de entrega mais antiga que isso exige confirmação e permissão (protege contra ano digitado errado).</div>
+                        <div id="avisoRetroativos" class="form-text text-warning-emphasis d-none"><i class="bi bi-exclamation-triangle me-1"></i>Mais de 30 dias enfraquece a proteção contra ano digitado errado.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="DiasValidadeProposta" class="form-label small"></label>
+                        <input asp-for="DiasValidadeProposta" class="form-control" type="number" min="0" />
+                        <span asp-validation-for="DiasValidadeProposta" class="text-danger small"></span>
+                        <div class="form-text">Sugere a data de validade da proposta.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="DiasPesquisaPadrao" class="form-label small"></label>
+                        <input asp-for="DiasPesquisaPadrao" class="form-control" type="number" min="0" />
+                        <span asp-validation-for="DiasPesquisaPadrao" class="text-danger small"></span>
+                        <div class="form-text">"Exibir a partir de" das consultas.</div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input asp-for="ExigeResp2Boletim" class="form-check-input" />
+                            <label asp-for="ExigeResp2Boletim" class="form-check-label"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header fw-semibold py-2">Textos padrão</div>
+                <div class="card-body row g-3">
+                    <div class="col-12">
+                        <label asp-for="TextoPadraoLegenda" class="form-label small"></label>
+                        <textarea asp-for="TextoPadraoLegenda" class="form-control" rows="3"></textarea>
+                        <div class="form-text">Sugerida no boletim novo.</div>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="TextoPadraoContrato" class="form-label small"></label>
+                        <textarea asp-for="TextoPadraoContrato" class="form-control" rows="8"></textarea>
+                        <div class="form-text">Usado pelo botão "Usar contrato padrão" da proposta.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 align-items-center">
+                <button type="submit" class="btn btn-primary" lc-permissao="PARAMETROS_EMPRESA.ALTERAR"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+                @if (Model.AlteradoEm is { } em)
+                {
+                    <span class="small text-body-secondary ms-auto">Última alteração: @em.ToString("dd/MM/yyyy HH:mm")</span>
+                }
+            </div>
+        </form>
+    </div>
+
+    <div class="tab-pane fade" id="numeracao" role="tabpanel">
+        <div class="alert alert-info py-2 small">
+            <i class="bi bi-info-circle me-1"></i>A numeração é gerada pelo banco. Ela reinicia sozinha a cada ano (linha nova por ano):
+            não é preciso zerar nada na virada do ano. Ano 0 = numeração contínua (não anual).
+        </div>
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle mb-0">
+                    <thead><tr><th>Documento</th><th>Ano</th><th class="text-end">Último número</th><th>Última alteração</th>@if (Model.AdminGlobal) { <th></th> }</tr></thead>
+                    <tbody>
+                        @foreach (var s in Model.Numeracao)
+                        {
+                            <tr>
+                                <td>@s.Documento</td>
+                                <td>@(s.Ano == 0 ? "—" : s.Ano.ToString())</td>
+                                <td class="text-end font-monospace">@s.UltimoNumero</td>
+                                <td class="small">@s.AlteradoEm.ToString("dd/MM/yyyy HH:mm")</td>
+                                @if (Model.AdminGlobal)
+                                {
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalAjuste"
+                                                data-tipo="@s.Tipo" data-ano="@s.Ano" data-documento="@s.Documento" data-ultimo="@s.UltimoNumero" title="Ajustar">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                        @if (Model.Numeracao.Count == 0)
+                        {
+                            <tr><td colspan="5" class="text-center text-body-secondary small py-3">Nenhum documento numerado ainda.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.AdminGlobal)
+{
+    <div class="modal fade" id="modalAjuste" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="post" asp-action="AjustarNumeracao" class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title">Ajustar numeração — <span id="ajusteDocumento"></span></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" asp-for="Ajuste.Tipo" />
+                    <input type="hidden" asp-for="Ajuste.Ano" />
+                    <p class="small text-body-secondary mb-2">O próximo documento recebe o último número + 1. Não é aceito valor menor que o maior número já usado. O ajuste fica registrado na auditoria.</p>
+                    <div class="mb-3">
+                        <label asp-for="Ajuste.NovoValor" class="form-label small"></label>
+                        <input asp-for="Ajuste.NovoValor" class="form-control" type="number" min="0" required />
+                    </div>
+                    <div>
+                        <label asp-for="Ajuste.Motivo" class="form-label small"></label>
+                        <textarea asp-for="Ajuste.Motivo" class="form-control" rows="3" minlength="10" maxlength="500" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Ajustar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // volta para a aba Numeração depois do ajuste (redirect com #numeracao)
+        if (location.hash === '#numeracao')
+            bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#numeracao"]')).show();
+
+        const retro = document.getElementById('DiasRetroativosEntrega');
+        const aviso = () => document.getElementById('avisoRetroativos').classList.toggle('d-none', !(Number(retro.value) > 30));
+        retro.addEventListener('input', aviso);
+        aviso();
+
+        document.getElementById('modalAjuste')?.addEventListener('show.bs.modal', e => {
+            const b = e.relatedTarget.dataset;
+            document.getElementById('Ajuste_Tipo').value = b.tipo;
+            document.getElementById('Ajuste_Ano').value = b.ano;
+            document.getElementById('Ajuste_NovoValor').value = b.ultimo;
+            document.getElementById('Ajuste_Motivo').value = '';
+            document.getElementById('ajusteDocumento').textContent = b.documento + (b.ano === '0' ? '' : ' / ' + b.ano);
+        });
+    </script>
+}
