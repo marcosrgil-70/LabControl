@@ -422,6 +422,60 @@ CALL T_ESPERA_ERRO('13', 'item de proposta gravado com a empresa diferente da do
      'Registro pertence a outra empresa.');
 
 -- ---------------------------------------------------------------------
+-- 14. Contatos das entidades e empresa usuária como entidade (20/10/2026)
+-- ---------------------------------------------------------------------
+SELECT ID_ENTIDADES INTO @ENTEMP FROM EMPRESAS WHERE ID_EMPRESAS = @EMP;
+CALL T_OK('14', 'empresa inicializada tem a entidade "empresa usuária" com a identidade da empresa',
+          (SELECT TIPO_EMPRESA_USUARIA = 1 AND NOME = 'LABORATÓRIO DE TESTE' AND ID_EMPRESAS = @EMP
+             FROM ENTIDADES WHERE ID_ENTIDADES = @ENTEMP), @ENTEMP);
+CALL SP_INICIALIZAR_EMPRESA(@EMP);
+CALL T_OK('14', 'reinicializar não cria outra entidade da empresa',
+          (SELECT COUNT(*) FROM ENTIDADES WHERE ID_EMPRESAS = @EMP AND TIPO_EMPRESA_USUARIA = 1) = 1, NULL);
+UPDATE EMPRESAS SET RAZAO_SOCIAL = 'LABORATÓRIO DE TESTE S.A.', CNPJ = '11.222.333/0001-81' WHERE ID_EMPRESAS = @EMP;
+CALL T_OK('14', 'razão social e CNPJ da empresa espelhados na entidade',
+          (SELECT NOME = 'LABORATÓRIO DE TESTE S.A.' AND CPF_CNPJ = '11.222.333/0001-81' FROM ENTIDADES WHERE ID_ENTIDADES = @ENTEMP),
+          (SELECT CONCAT(NOME, ' ', COALESCE(CPF_CNPJ, '')) FROM ENTIDADES WHERE ID_ENTIDADES = @ENTEMP));
+CALL T_ESPERA_ERRO('14', 'empresa usuária marcada também como cliente',
+     CONCAT('UPDATE ENTIDADES SET TIPO_CLIENTE = 1 WHERE ID_ENTIDADES = ', @ENTEMP),
+     'A empresa usuária não pode ser também cliente, fornecedor, funcionário, comercial ou transportador.');
+CALL T_ESPERA_ERRO('14', 'entidade da empresa deixando de ser empresa usuária',
+     CONCAT('UPDATE ENTIDADES SET TIPO_EMPRESA_USUARIA = 0 WHERE ID_ENTIDADES = ', @ENTEMP),
+     'Este cadastro é o da própria empresa e não pode deixar de ser empresa usuária.');
+
+INSERT INTO ENTIDADES_ENDERECOS (ID_ENTIDADES, ID_ENDERECOS_TIPOS, LOGRADOURO, ID_CIDADES) VALUES (@ENTEMP, @TPEND, 'RUA DA EMPRESA', @CID);
+SET @ENDEMP = LAST_INSERT_ID();
+CALL T_OK('14', 'endereço da empresa herda a empresa da entidade',
+          (SELECT ID_EMPRESAS FROM ENTIDADES_ENDERECOS WHERE ID_ENTIDADES_ENDERECOS = @ENDEMP) = @EMP, NULL);
+CALL T_ESPERA_ERRO('14', 'segundo endereço ativo do mesmo tipo',
+     CONCAT('INSERT INTO ENTIDADES_ENDERECOS (ID_ENTIDADES, ID_ENDERECOS_TIPOS, LOGRADOURO, ID_CIDADES) VALUES (',
+            @ENTEMP, ', ', @TPEND, ', ''OUTRA RUA'', ', @CID, ')'),
+     'Já existe um endereço ativo deste tipo para este cadastro. Inative o anterior ou altere-o.');
+UPDATE ENTIDADES_ENDERECOS SET INATIVO = 1 WHERE ID_ENTIDADES_ENDERECOS = @ENDEMP;
+INSERT INTO ENTIDADES_ENDERECOS (ID_ENTIDADES, ID_ENDERECOS_TIPOS, LOGRADOURO, ID_CIDADES) VALUES (@ENTEMP, @TPEND, 'RUA NOVA', @CID);
+CALL T_OK('14', 'com o anterior inativo, o novo endereço do mesmo tipo é aceito (histórico guardado)',
+          (SELECT COUNT(*) FROM ENTIDADES_ENDERECOS WHERE ID_ENTIDADES = @ENTEMP AND ID_ENDERECOS_TIPOS = @TPEND) = 2, NULL);
+
+SELECT MIN(ID_FONES_TIPOS) INTO @TPFON FROM FONES_TIPOS WHERE ID_EMPRESAS = @EMP;
+INSERT INTO ENTIDADES_FONES (ID_ENTIDADES, ID_FONES_TIPOS, DDD, FONE, PRINCIPAL) VALUES (@ENTEMP, @TPFON, '19', '3333-4444', 1);
+CALL T_ESPERA_ERRO('14', 'segundo telefone principal',
+     CONCAT('INSERT INTO ENTIDADES_FONES (ID_ENTIDADES, ID_FONES_TIPOS, DDD, FONE, PRINCIPAL) VALUES (', @ENTEMP, ', ', @TPFON, ', ''19'', ''99999-0000'', 1)'),
+     'Já existe um telefone principal para este cadastro.');
+INSERT INTO ENTIDADES_FONES (ID_ENTIDADES, ID_FONES_TIPOS, DDD, FONE, PRINCIPAL, INATIVO) VALUES (@ENTEMP, @TPFON, '19', '98888-0000', 1, 1);
+CALL T_OK('14', 'telefone inativo nunca fica como principal',
+          (SELECT PRINCIPAL FROM ENTIDADES_FONES WHERE ID_ENTIDADES_FONES = LAST_INSERT_ID()) = 0, NULL);
+
+INSERT INTO ENTIDADES_EMAILS (ID_ENTIDADES, EMAIL, PRINCIPAL) VALUES (@ENTEMP, '  Contato@Empresa.COM ', 1);
+CALL T_OK('14', 'e-mail gravado em minúsculas e sem espaços',
+          (SELECT EMAIL FROM ENTIDADES_EMAILS WHERE ID_ENTIDADES_EMAILS = LAST_INSERT_ID()) = 'contato@empresa.com',
+          (SELECT EMAIL FROM ENTIDADES_EMAILS WHERE ID_ENTIDADES_EMAILS = LAST_INSERT_ID()));
+CALL T_ESPERA_ERRO('14', 'segundo e-mail principal',
+     CONCAT('INSERT INTO ENTIDADES_EMAILS (ID_ENTIDADES, EMAIL, PRINCIPAL) VALUES (', @ENTEMP, ', ''outro@empresa.com'', 1)'),
+     'Já existe um e-mail principal para este cadastro.');
+CALL T_ESPERA_ERRO('14', 'mover contato para o cadastro de outra entidade',
+     CONCAT('UPDATE ENTIDADES_EMAILS SET ID_ENTIDADES = ', @CLI, ' WHERE ID_ENTIDADES = ', @ENTEMP),
+     'Não é permitido mover o e-mail para outro cadastro.');
+
+-- ---------------------------------------------------------------------
 -- Resultado
 -- ---------------------------------------------------------------------
 SELECT PASSO, IF(OK = 1, 'OK', 'FALHA') AS SITUACAO, ITEM, OBTIDO FROM T_RESULTADO ORDER BY ID;

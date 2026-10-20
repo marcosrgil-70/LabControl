@@ -1,8 +1,8 @@
 # 11 — Modelo MySQL v2
 
-> Scripts: `Scripts/v2/01_schema.sql` → `02_funcoes_procedures.sql` → `03_triggers.sql` → `04_views.sql` → `05_seed.sql`
+> Scripts: `Scripts/v2/01_schema.sql` → `02_funcoes_procedures.sql` → `03_triggers.sql` → `04_views.sql` → `05_seed.sql` → `06_cidades.sql`
 > Banco: **`labcontrol_v2`** (convive com o `labcontrol` antigo até a virada). MySQL 8.0+, `utf8mb4_0900_ai_ci`.
-> **Validado em 16/10/2026** no MySQL 8.0.46 local (banco temporário, depois removido): 69 tabelas/views, 8 funções, 19 procedures (22 desde 19/10/2026: `PR_AUDITAR`, `PR_CONFERIR_EMPRESA` na revisão da Fase 0 e `PR_CRIAR_PERFIL` na T04), 42 triggers, 109 permissões; fluxo completo proposta → pedido → amostra → resultado → boletim → emissão → revisões (amostra/resultado/proposta) e travas negativas testados.
+> **Validado em 16/10/2026** no MySQL 8.0.46 local (banco temporário, depois removido): 69 tabelas/views, 8 funções, 19 procedures (22 desde 19/10/2026: `PR_AUDITAR`, `PR_CONFERIR_EMPRESA` na revisão da Fase 0 e `PR_CRIAR_PERFIL` na T04), 42 triggers (48 desde 20/10/2026: empresa usuária como entidade e regras dos contatos — D-19/D-20; procedures 26), 109 permissões, 5.571 cidades IBGE (D-21); fluxo completo proposta → pedido → amostra → resultado → boletim → emissão → revisões (amostra/resultado/proposta) e travas negativas testados.
 
 ## 1. Decisões de modelagem
 
@@ -26,6 +26,9 @@
 | D-16 | Senhas com PBKDF2 (`PasswordHasher` do ASP.NET Core Identity) em `USUARIOS.SENHA_HASH` | O SHA-256 sem salt da v1 é inseguro |
 | D-17 | Permissões por **perfil**, por empresa (`PERFIS`, `USUARIOS_PERFIS`), com catálogo `PERMISSOES` (`TELA.ACAO`) | Substitui `SYS_*_ACESSOS` (3.690 linhas por componente) |
 | D-18 | Usuário ↔ Profissional por empresa: `USUARIOS_EMPRESAS.ID_ENTIDADES_FUNC` | O mesmo usuário pode ser profissional em várias empresas |
+| D-19 | **Empresa usuária = entidade** (`EMPRESAS.ID_ENTIDADES` → `ENTIDADES.TIPO_EMPRESA_USUARIA`, criada por `SP_INICIALIZAR_EMPRESA`): endereços, telefones e e-mails da empresa nas mesmas `ENTIDADES_*` de clientes e profissionais; `EMPRESAS` mantém a identidade global e `TG_EMPRESAS_AU` a espelha na entidade (20/10/2026, decisão do usuário) | Como o legado (`un_Entidades` em modo `teEMP`): vários contatos tipados; a 1ª versão tinha um endereço/fone/e-mail em colunas de `EMPRESAS` |
+| D-20 | Regras dos contatos no banco: um endereço **ativo** por tipo, um telefone e um e-mail principal, contato não muda de entidade, e-mail em minúsculas (`PR_CONFERIR_ENDERECO/FONE/EMAIL`, triggers `BI/BU`) | O Firebird usava `UNIQUE (entidade, tipo)` (não guardava o endereço antigo) e o "principal" ficava só na tela |
+| D-21 | Municípios do IBGE no seed `06_cidades.sql` (5.571, código de 7 dígitos) | Base da busca de CEP (ViaCEP casa pelo código IBGE); o legado tinha 190 cidades sem código |
 
 ## 2. Tabelas v2 (69 objetos)
 

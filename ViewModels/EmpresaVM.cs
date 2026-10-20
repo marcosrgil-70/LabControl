@@ -25,17 +25,6 @@ public sealed class EmpresaVM
     [StringLength(20), Display(Name = "Inscrição estadual")] public string? InscEstadual { get; set; }
     [StringLength(20), Display(Name = "Inscrição municipal")] public string? InscMunicipal { get; set; }
 
-    [StringLength(10), Display(Name = "CEP")] public string? Cep { get; set; }
-    [StringLength(150), Display(Name = "Logradouro")] public string? Logradouro { get; set; }
-    [StringLength(20), Display(Name = "Número")] public string? Numero { get; set; }
-    [StringLength(50), Display(Name = "Complemento")] public string? Complemento { get; set; }
-    [StringLength(80), Display(Name = "Bairro")] public string? Bairro { get; set; }
-    [Display(Name = "UF")] public int? IdEstado { get; set; }
-    [Display(Name = "Cidade")] public int? IdCidades { get; set; }
-
-    [StringLength(3), Display(Name = "DDD")] public string? Ddd { get; set; }
-    [StringLength(20), Display(Name = "Telefone")] public string? Fone { get; set; }
-    [EmailAddress(ErrorMessage = "E-mail inválido."), StringLength(150), Display(Name = "E-mail")] public string? Email { get; set; }
     [Url(ErrorMessage = "Site inválido (use http:// ou https://)."), StringLength(150), Display(Name = "Site")] public string? Site { get; set; }
 
     [Display(Name = "Cabeçalho do laudo")] public string? CabecalhoLaudo { get; set; }
@@ -53,8 +42,8 @@ public sealed class EmpresaVM
     // exibição
     public bool TemLogo { get; set; }
     public bool AdminGlobal { get; set; }
-    public IReadOnlyList<OpcaoVM> Estados { get; set; } = [];
-    public IReadOnlyList<OpcaoVM> Cidades { get; set; } = [];
+    /// <summary>Entidade da empresa (endereços, telefones e e-mails — componente de contatos).</summary>
+    public int? IdEntidades { get; set; }
     public IReadOnlyList<OpcaoVM> EmpresasOrigem { get; set; } = [];
     public IReadOnlyList<GrupoCopia> GruposDisponiveis { get; set; } = [];
 }

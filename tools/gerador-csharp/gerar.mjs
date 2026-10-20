@@ -97,7 +97,9 @@ const NORMAIS = new Set(['ID_EMPRESAS', 'ID_LAB_PROPOSTAS', 'ID_AMOSTRA_RAIZ', '
   'VR_DESCONTO', 'ID_LAB_HIST_AMOSTRAS', 'VALIDADE_DIA', 'VALIDADE_MES', 'VALIDADE_ANO', 'FABRICACAO_DIA',
   'FABRICACAO_MES', 'FABRICACAO_ANO', 'ID_UNIDADES', 'ID_UNIDADES_AMOSTRA', 'ID_UNIDADES_ESPECIF',
   'ID_LAB_TIPOS_RESULTADOS', 'ID_LAB_TIPO_RESULTADOS_ESP', 'VR_RESULTADO', 'VR_EXP_RESULTADO', 'SIMBOLO_GRANDEZA',
-  'VR_RESULTADO_ESPECIF', 'VR_EXP_ESPECIF', 'SIMBOLO_GR_ESPECIF']);
+  'VR_RESULTADO_ESPECIF', 'VR_EXP_ESPECIF', 'SIMBOLO_GR_ESPECIF',
+  // contatos: a trigger só normaliza o que a aplicação já envia (e-mail em minúsculas, inativo não é principal)
+  'PRINCIPAL', 'EMAIL']);
 
 // ---------------------------------------------------------------------
 const pascal = s => s.toLowerCase().split('_').filter(Boolean).map(p => p[0].toUpperCase() + p.slice(1)).join('');

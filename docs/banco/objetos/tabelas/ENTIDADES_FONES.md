@@ -1,6 +1,6 @@
 # ENTIDADES_FONES
 
-Telefones da entidade.
+Telefones da entidade (cliente, fornecedor, profissional, empresa usuária), com tipo.
 
 **Grupo:** Cadastros · **Criticidade:** ⚪ Normal · **Script:** `Scripts/v2/01_schema.sql` · **Migração:** M-06
 
@@ -20,7 +20,7 @@ Telefones da entidade.
 | 4 | `ID_FONES_TIPOS` | INT | não |  | aplicação |  |
 | 5 | `DDD` | VARCHAR(3) | não |  | aplicação |  |
 | 6 | `FONE` | VARCHAR(20) | não |  | aplicação |  |
-| 7 | `PRINCIPAL` | TINYINT(1) | não | 0 | aplicação |  |
+| 7 | `PRINCIPAL` | TINYINT(1) | não | 0 | trigger TG_ENTFON_BI, trigger TG_ENTFON_BU |  |
 | 8 | `CONTATO` | VARCHAR(100) | sim |  | aplicação |  |
 | 9 | `DEPARTAMENTO` | VARCHAR(100) | sim |  | aplicação |  |
 | 10 | `INATIVO` | TINYINT(1) | não | 0 | aplicação |  |
@@ -43,29 +43,31 @@ Telefones da entidade.
 —
 
 ## Triggers
-- [`TG_ENTFON_BI`](../triggers/TG_ENTFON_BI.md) — BEFORE INSERT: Telefone herda `ID_EMPRESAS` da entidade.
+- [`TG_ENTFON_BI`](../triggers/TG_ENTFON_BI.md) — BEFORE INSERT: Telefone herda `ID_EMPRESAS` da entidade; inativo não é principal; um principal por entidade (`PR_CONFERIR_FONE`).
+- [`TG_ENTFON_BU`](../triggers/TG_ENTFON_BU.md) — BEFORE UPDATE: Telefone não muda de entidade/empresa; inativo não é principal; um principal por entidade.
 
 ## Usada por
 - **Views:** [`VW_CLIENTES`](../views/VW_CLIENTES.md)
 - **Rotinas que alteram:** —
-- **Rotinas que leem:** —
+- **Rotinas que leem:** [`PR_CONFERIR_FONE`](../rotinas/PR_CONFERIR_FONE.md)
 - **Triggers de outras tabelas que alteram:** —
 - **Triggers de outras tabelas que leem:** —
 
 ## Telas e processos
-- **Telas:** [T12 Clientes/fornecedores](../../../telas/T12-clientes.md) · [T13 Profissionais](../../../telas/T13-profissionais.md)
-- **Processos:** —
+- **Telas:** [T12 Clientes/fornecedores](../../../telas/T12-clientes.md) · [T13 Profissionais](../../../telas/T13-profissionais.md) · [T03 Empresa usuária](../../../telas/T03-empresa-usuaria.md)
+- **Processos:** `P25-cadastro-entidades-contatos`
 
 ## Regras de negócio
-- Um só `PRINCIPAL` por entidade (ao marcar, desmarcar os outros no serviço).
-- DDD 2–3 dígitos.
+- Tipo de telefone obrigatório (combo dos tipos da empresa).
+- Um só `PRINCIPAL` por entidade — garantido pelo banco (`PR_CONFERIR_FONE`); o serviço desmarca o anterior na mesma transação. Inativo nunca é principal.
+- DDD 2–3 dígitos; telefone 8–9 dígitos gravado `0000-0000`/`00000-0000`.
 
 ## Implementação no C# (EF Core)
 - **Multiempresa:** entra no Global Query Filter por `ID_EMPRESAS` (empresa ativa) e o `SaveChanges` preenche `ID_EMPRESAS` na inclusão.
-- **Preenchidas pelo banco (trigger):** `ID_EMPRESAS` — não depender do valor enviado; reler a linha após gravar.
+- **Preenchidas pelo banco (trigger):** `ID_EMPRESAS`, `PRINCIPAL` — não depender do valor enviado; reler a linha após gravar.
 - Chave auto-incremento: `ID_ENTIDADES_FONES`.
 - `TINYINT(1)` → `bool`: `PRINCIPAL`, `INATIVO`.
-- `ID_EMPRESAS` herdado por `TG_ENTFON_BI`.
+- `ID_EMPRESAS` herdado por `TG_ENTFON_BI`; não muda de entidade (`TG_ENTFON_BU`).
 
 ## Definição (DDL)
 ```sql

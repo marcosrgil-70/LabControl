@@ -1,0 +1,190 @@
+@model ContatosVM
+@* Modais de endereço / telefone / e-mail (P25), renderizados uma vez na página. O contatos.js preenche pelo
+   data-registro da linha, envia por fetch para {UrlBase}/ContatoEndereco|ContatoFone|ContatoEmail e recarrega as abas. *@
+
+<div id="contatos" data-url="@Model.UrlBase" hidden>@Html.AntiForgeryToken()</div>
+
+<div class="modal fade" id="modal-endereco" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form class="modal-content" data-contato-form="endereco" data-acao="ContatoEndereco" novalidate>
+            <div class="modal-header">
+                <h6 class="modal-title"><span data-titulo>Endereço</span></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body row g-3">
+                <div class="col-12 alert alert-danger py-2 mb-0" data-erro hidden></div>
+                <input type="hidden" name="Id" value="0" />
+                <div class="col-md-4">
+                    <label class="form-label small" for="end-tipo">Tipo de endereço *</label>
+                    <select class="form-select" id="end-tipo" name="IdEnderecosTipos" required>
+                        <option value="">—</option>
+                        @foreach (var o in Model.TiposEndereco) { <option value="@o.Id">@o.Nome</option> }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small" for="end-cep">CEP</label>
+                    <div class="input-group">
+                        <input class="form-control" id="end-cep" name="Cep" maxlength="9" placeholder="00000-000" inputmode="numeric" />
+                        <button type="button" class="btn btn-outline-secondary" data-buscar-cep title="Buscar o endereço pelo CEP"><i class="bi bi-search"></i></button>
+                    </div>
+                    <div class="form-text" data-cep-msg></div>
+                </div>
+                <div class="col-md-5"></div>
+                <div class="col-md-3">
+                    <label class="form-label small" for="end-tiplog">Tipo de logradouro</label>
+                    <select class="form-select" id="end-tiplog" name="IdTiposLogradouro">
+                        <option value="">—</option>
+                        @foreach (var o in Model.TiposLogradouro) { <option value="@o.Id">@o.Nome</option> }
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label small" for="end-logradouro">Logradouro *</label>
+                    <input class="form-control text-uppercase" id="end-logradouro" name="Logradouro" maxlength="150" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small" for="end-numero">Número</label>
+                    <input class="form-control text-uppercase" id="end-numero" name="Numero" maxlength="20" />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small" for="end-complemento">Complemento</label>
+                    <input class="form-control text-uppercase" id="end-complemento" name="Complemento" maxlength="50" />
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label small" for="end-bairro">Bairro</label>
+                    <input class="form-control text-uppercase" id="end-bairro" name="Bairro" maxlength="80" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small" for="end-uf">UF *</label>
+                    <select class="form-select" id="end-uf" name="IdEstado" data-uf>
+                        <option value="">—</option>
+                        @foreach (var o in Model.Estados) { <option value="@o.Id">@o.Nome</option> }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small" for="end-cidade">Cidade *</label>
+                    <select class="form-select" id="end-cidade" name="IdCidades" data-cidade required>
+                        <option value="">— selecione a UF —</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        <input type="checkbox" class="form-check-input" id="end-inativo" name="Inativo" value="true" />
+                        <label class="form-check-label" for="end-inativo">Inativo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-fone" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" data-contato-form="fone" data-acao="ContatoFone" novalidate>
+            <div class="modal-header">
+                <h6 class="modal-title"><span data-titulo>Telefone</span></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body row g-3">
+                <div class="col-12 alert alert-danger py-2 mb-0" data-erro hidden></div>
+                <input type="hidden" name="Id" value="0" />
+                <div class="col-12">
+                    <label class="form-label small" for="fone-tipo">Tipo *</label>
+                    <select class="form-select" id="fone-tipo" name="IdFonesTipos" required>
+                        <option value="">—</option>
+                        @foreach (var o in Model.TiposFone) { <option value="@o.Id">@o.Nome</option> }
+                    </select>
+                </div>
+                <div class="col-3">
+                    <label class="form-label small" for="fone-ddd">DDD *</label>
+                    <input class="form-control" id="fone-ddd" name="Ddd" maxlength="3" inputmode="numeric" required />
+                </div>
+                <div class="col-9">
+                    <label class="form-label small" for="fone-numero">Telefone *</label>
+                    <input class="form-control" id="fone-numero" name="Fone" maxlength="10" inputmode="numeric" placeholder="0000-0000 ou 00000-0000" required />
+                </div>
+                <div class="col-6">
+                    <label class="form-label small" for="fone-contato">Contato</label>
+                    <input class="form-control text-uppercase" id="fone-contato" name="Contato" maxlength="100" />
+                </div>
+                <div class="col-6">
+                    <label class="form-label small" for="fone-depto">Departamento</label>
+                    <input class="form-control text-uppercase" id="fone-depto" name="Departamento" maxlength="100" />
+                </div>
+                <div class="col-12 d-flex gap-4">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="fone-principal" name="Principal" value="true" />
+                        <label class="form-check-label" for="fone-principal">Principal</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="fone-inativo" name="Inativo" value="true" />
+                        <label class="form-check-label" for="fone-inativo">Inativo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-email" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" data-contato-form="email" data-acao="ContatoEmail" novalidate>
+            <div class="modal-header">
+                <h6 class="modal-title"><span data-titulo>E-mail</span></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body row g-3">
+                <div class="col-12 alert alert-danger py-2 mb-0" data-erro hidden></div>
+                <input type="hidden" name="Id" value="0" />
+                <div class="col-12">
+                    <label class="form-label small" for="email-email">E-mail *</label>
+                    <input type="email" class="form-control text-lowercase" id="email-email" name="Email" maxlength="150" required />
+                </div>
+                <div class="col-6">
+                    <label class="form-label small" for="email-tipo">Tipo</label>
+                    <select class="form-select" id="email-tipo" name="IdEmailsTipos">
+                        <option value="">—</option>
+                        @foreach (var o in Model.TiposEmail) { <option value="@o.Id">@o.Nome</option> }
+                    </select>
+                </div>
+                <div class="col-6">
+                    <label class="form-label small" for="email-depto">Departamento</label>
+                    <input class="form-control text-uppercase" id="email-depto" name="Departamento" maxlength="100" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label small" for="email-contato">Nome do contato</label>
+                    <input class="form-control text-uppercase" id="email-contato" name="NomeContato" maxlength="100" />
+                </div>
+                <div class="col-12 d-flex flex-wrap gap-4">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="email-principal" name="Principal" value="true" />
+                        <label class="form-check-label" for="email-principal">Principal</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="email-nfe" name="EnviarNfe" value="true" />
+                        <label class="form-check-label" for="email-nfe">Enviar NF-e/NFS-e</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="email-laudo" name="EnviarLaudo" value="true" />
+                        <label class="form-check-label" for="email-laudo">Enviar laudo</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="email-inativo" name="Inativo" value="true" />
+                        <label class="form-check-label" for="email-inativo">Inativo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+            </div>
+        </form>
+    </div>
+</div>

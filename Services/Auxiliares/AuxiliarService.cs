@@ -183,9 +183,13 @@ public sealed partial class AuxiliarService(LabDbContext db)
         return Enum.GetValues(e).Cast<object>().Select(v => new OpcaoVM(Convert.ToInt32(v, CultureInfo.InvariantCulture), Rotulo(v))).ToList();
     }
 
-    // CamelCase do enum → texto ("NotaFiscal" → "Nota fiscal")
+    // [Display(Name)] do enum, ou o nome em frase ("NotaFiscal" → "Nota fiscal")
     private static string Rotulo(object valor)
     {
+        var membro = valor.GetType().GetField(valor.ToString()!);
+        if (membro?.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.DisplayAttribute), false)
+                is [System.ComponentModel.DataAnnotations.DisplayAttribute { Name: { } nome }, ..])
+            return nome;
         var s = RegexMaiuscula().Replace(valor.ToString()!, " $1").Trim();
         return s.Length == 0 ? s : s[0] + s[1..].ToLowerInvariant();
     }

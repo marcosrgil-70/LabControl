@@ -33,6 +33,7 @@ public partial class EntidadeConfiguration : IEntityTypeConfiguration<Entidade>
         b.Property(e => e.TipoFuncionario).HasColumnName("TIPO_FUNCIONARIO");
         b.Property(e => e.TipoVendedor).HasColumnName("TIPO_VENDEDOR");
         b.Property(e => e.TipoTransportador).HasColumnName("TIPO_TRANSPORTADOR");
+        b.Property(e => e.TipoEmpresaUsuaria).HasColumnName("TIPO_EMPRESA_USUARIA");
         b.Property(e => e.Avaliacao).HasColumnName("AVALIACAO").HasMaxLength(20);
         b.Property(e => e.Observacao).HasColumnName("OBSERVACAO").HasColumnType("text");
         b.Property(e => e.ObsIncluirFaturamento).HasColumnName("OBS_INCLUIR_FATURAMENTO");

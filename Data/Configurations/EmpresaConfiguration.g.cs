@@ -23,15 +23,7 @@ public partial class EmpresaConfiguration : IEntityTypeConfiguration<Empresa>
         b.Property(e => e.Cnpj).HasColumnName("CNPJ").HasMaxLength(18);
         b.Property(e => e.InscEstadual).HasColumnName("INSC_ESTADUAL").HasMaxLength(20);
         b.Property(e => e.InscMunicipal).HasColumnName("INSC_MUNICIPAL").HasMaxLength(20);
-        b.Property(e => e.Logradouro).HasColumnName("LOGRADOURO").HasMaxLength(150);
-        b.Property(e => e.Numero).HasColumnName("NUMERO").HasMaxLength(20);
-        b.Property(e => e.Complemento).HasColumnName("COMPLEMENTO").HasMaxLength(50);
-        b.Property(e => e.Bairro).HasColumnName("BAIRRO").HasMaxLength(80);
-        b.Property(e => e.Cep).HasColumnName("CEP").HasMaxLength(10);
-        b.Property(e => e.IdCidades).HasColumnName("ID_CIDADES");
-        b.Property(e => e.Ddd).HasColumnName("DDD").HasMaxLength(3);
-        b.Property(e => e.Fone).HasColumnName("FONE").HasMaxLength(20);
-        b.Property(e => e.Email).HasColumnName("EMAIL").HasMaxLength(150);
+        b.Property(e => e.IdEntidades).HasColumnName("ID_ENTIDADES");
         b.Property(e => e.Site).HasColumnName("SITE").HasMaxLength(150);
         b.Property(e => e.Logo).HasColumnName("LOGO").HasColumnType("mediumblob");
         b.Property(e => e.LogoMime).HasColumnName("LOGO_MIME").HasMaxLength(50);
@@ -41,7 +33,7 @@ public partial class EmpresaConfiguration : IEntityTypeConfiguration<Empresa>
         b.Property(e => e.Ativa).HasColumnName("ATIVA");
         b.Property(e => e.CriadoEm).HasColumnName("CRIADO_EM").HasColumnType("datetime").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
         b.Property(e => e.AlteradoEm).HasColumnName("ALTERADO_EM").HasColumnType("datetime").CalculadaPeloBanco();
-        b.HasOne(e => e.Cidade).WithMany().HasForeignKey(e => e.IdCidades).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_EMPRESAS_CIDADES");
+        b.HasOne(e => e.Entidade).WithMany().HasForeignKey(e => e.IdEntidades).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_EMPRESAS_ENT");
         Ajustar(b);
     }
 

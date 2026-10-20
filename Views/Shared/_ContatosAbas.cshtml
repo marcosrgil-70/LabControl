@@ -1,0 +1,141 @@
+@model ContatosVM
+@* Abas Endereços / Telefones / E-mails (P25). Os três .tab-pane ficam dentro do .tab-content da página; o contatos.js
+   recarrega o miolo deles (GET {UrlBase}/Contatos) depois de cada gravação. Cada linha leva os dados em data-registro
+   para o modal de alteração. *@
+@{
+    string Json(object o) => System.Text.Json.JsonSerializer.Serialize(o);
+}
+
+<div class="tab-pane fade" id="aba-enderecos" role="tabpanel">
+    <div class="d-flex align-items-center mb-2">
+        <span class="small text-body-secondary">Um endereço ativo por tipo. Endereço antigo: inative em vez de excluir (fica o histórico).</span>
+        @if (Model.PodeAlterar)
+        {
+            <button type="button" class="btn btn-primary btn-sm ms-auto" data-contato-novo="endereco"><i class="bi bi-plus-lg me-1"></i>Incluir endereço</button>
+        }
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Tipo</th><th>Endereço</th><th>Bairro / Cidade / CEP</th><th>Situação</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var e in Model.Enderecos)
+                {
+                    <tr class="@(e.Inativo ? "text-body-secondary" : "")">
+                        <td class="text-nowrap">@e.Tipo</td>
+                        <td>@e.Linha1</td>
+                        <td class="small">@e.Linha2</td>
+                        <td>@if (e.Inativo) { <span class="badge text-bg-secondary">Inativo</span> } else { <span class="badge text-bg-success">Ativo</span> }</td>
+                        <td class="text-end text-nowrap">
+                            @if (Model.PodeAlterar)
+                            {
+                                <button type="button" class="btn btn-outline-secondary btn-sm" title="Alterar" data-contato-editar="endereco"
+                                        data-registro="@Json(new { e.Id, IdEnderecosTipos = e.IdTipo, e.Cep, IdTiposLogradouro = e.IdTipoLogradouro, e.Logradouro, e.Numero, e.Complemento, e.Bairro, e.IdEstado, IdCidades = e.IdCidade, Cidade = e.Cidade, e.Inativo })">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" title="Excluir" data-contato-excluir="Endereco" data-id="@e.Id"
+                                        data-descricao="@e.Tipo: @e.Linha1"><i class="bi bi-trash"></i></button>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (Model.Enderecos.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-center text-body-secondary small py-3">Nenhum endereço cadastrado.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="tab-pane fade" id="aba-telefones" role="tabpanel">
+    <div class="d-flex align-items-center mb-2">
+        <span class="small text-body-secondary">O telefone principal aparece nas consultas e documentos (só um por cadastro).</span>
+        @if (Model.PodeAlterar)
+        {
+            <button type="button" class="btn btn-primary btn-sm ms-auto" data-contato-novo="fone"><i class="bi bi-plus-lg me-1"></i>Incluir telefone</button>
+        }
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Tipo</th><th>Telefone</th><th>Contato</th><th>Departamento</th><th>Situação</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var f in Model.Fones)
+                {
+                    <tr class="@(f.Inativo ? "text-body-secondary" : "")">
+                        <td class="text-nowrap">@f.Tipo</td>
+                        <td class="text-nowrap">(@f.Ddd) @f.Fone @if (f.Principal) { <span class="badge text-bg-primary ms-1">principal</span> }</td>
+                        <td>@f.Contato</td>
+                        <td>@f.Departamento</td>
+                        <td>@if (f.Inativo) { <span class="badge text-bg-secondary">Inativo</span> } else { <span class="badge text-bg-success">Ativo</span> }</td>
+                        <td class="text-end text-nowrap">
+                            @if (Model.PodeAlterar)
+                            {
+                                <button type="button" class="btn btn-outline-secondary btn-sm" title="Alterar" data-contato-editar="fone"
+                                        data-registro="@Json(new { f.Id, IdFonesTipos = f.IdTipo, f.Ddd, f.Fone, f.Contato, f.Departamento, f.Principal, f.Inativo })">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" title="Excluir" data-contato-excluir="Fone" data-id="@f.Id"
+                                        data-descricao="(@f.Ddd) @f.Fone"><i class="bi bi-trash"></i></button>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (Model.Fones.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-center text-body-secondary small py-3">Nenhum telefone cadastrado.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="tab-pane fade" id="aba-emails" role="tabpanel">
+    <div class="d-flex align-items-center mb-2">
+        <span class="small text-body-secondary">Os e-mails são os contatos da proposta (contato, resultado e NF). Marque quem recebe NF-e e laudo.</span>
+        @if (Model.PodeAlterar)
+        {
+            <button type="button" class="btn btn-primary btn-sm ms-auto" data-contato-novo="email"><i class="bi bi-plus-lg me-1"></i>Incluir e-mail</button>
+        }
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>E-mail</th><th>Tipo</th><th>Contato</th><th>Departamento</th><th>Envia</th><th>Situação</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var m in Model.Emails)
+                {
+                    <tr class="@(m.Inativo ? "text-body-secondary" : "")">
+                        <td>@m.Email @if (m.Principal) { <span class="badge text-bg-primary ms-1">principal</span> }</td>
+                        <td>@m.Tipo</td>
+                        <td>@m.NomeContato</td>
+                        <td>@m.Departamento</td>
+                        <td class="text-nowrap">
+                            @if (m.EnviarNfe) { <span class="badge text-bg-info">NF-e</span> }
+                            @if (m.EnviarLaudo) { <span class="badge text-bg-info">Laudo</span> }
+                        </td>
+                        <td>@if (m.Inativo) { <span class="badge text-bg-secondary">Inativo</span> } else { <span class="badge text-bg-success">Ativo</span> }</td>
+                        <td class="text-end text-nowrap">
+                            @if (Model.PodeAlterar)
+                            {
+                                <button type="button" class="btn btn-outline-secondary btn-sm" title="Alterar" data-contato-editar="email"
+                                        data-registro="@Json(new { m.Id, IdEmailsTipos = m.IdTipo, m.Email, m.NomeContato, m.Departamento, m.Principal, m.EnviarNfe, m.EnviarLaudo, m.Inativo })">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" title="Excluir" data-contato-excluir="Email" data-id="@m.Id"
+                                        data-descricao="@m.Email"><i class="bi bi-trash"></i></button>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (Model.Emails.Count == 0)
+                {
+                    <tr><td colspan="7" class="text-center text-body-secondary small py-3">Nenhum e-mail cadastrado.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@* contagens das abas (o JS copia para os badges dos botões das abas) *@
+<span hidden id="contagem-enderecos">@Model.Enderecos.Count(e => !e.Inativo)</span>
+<span hidden id="contagem-telefones">@Model.Fones.Count(f => !f.Inativo)</span>
+<span hidden id="contagem-emails">@Model.Emails.Count(m => !m.Inativo)</span>

@@ -41,6 +41,17 @@ builder.Services.AddScoped<CopiaCadastros>();
 builder.Services.AddScoped<EmpresaService>();
 builder.Services.AddScoped<ParametrosEmpresaService>();
 builder.Services.AddScoped<LabControl.Services.Auxiliares.AuxiliarService>();
+builder.Services.AddScoped<LabControl.Services.Entidades.ContatosService>();
+builder.Services.AddScoped<LabControl.Services.Entidades.ClienteService>();
+builder.Services.AddScoped<LabControl.Services.Entidades.ProfissionalService>();
+builder.Services.AddScoped<LabControl.Services.Geografia.ConsultaCepService>();
+builder.Services.AddMemoryCache();
+// ViaCEP chamado pelo servidor, com timeout curto (o componente de endereço continua manual se cair)
+builder.Services.AddHttpClient<LabControl.Services.Geografia.IFonteCep, LabControl.Services.Geografia.ViaCep>(c =>
+{
+    c.BaseAddress = new Uri("https://viacep.com.br/");
+    c.Timeout = TimeSpan.FromSeconds(5);
+});
 builder.Services.AddSingleton<TelasExistentes>(); // menu e painel só mostram telas já reescritas
 
 // Login próprio (T00 / P02): cookie HttpOnly + Secure + SameSite=Lax, expiração deslizante, revalidado a cada request

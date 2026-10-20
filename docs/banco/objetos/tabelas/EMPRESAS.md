@@ -11,6 +11,8 @@ Empresas usuárias do sistema (o laboratório). Dados do cabeçalho do laudo, lo
 |---|---|
 | `EMPRESAS` + entidade marcada como `TIPO_EMPRESA_USUARIA` (`ENTIDADES`/`ENTIDADES_PJ`/endereço) | 1 |
 
+Notas do script: _FK_EMPRESAS_ENT criada no fim do script (ENTIDADES depende de EMPRESAS)_
+
 ## Colunas
 | # | Coluna | Tipo | Nulo | Padrão | Preenchida por | Descrição |
 |---:|---|---|---|---|---|---|
@@ -21,35 +23,28 @@ Empresas usuárias do sistema (o laboratório). Dados do cabeçalho do laudo, lo
 | 5 | `CNPJ` | VARCHAR(18) | sim |  | aplicação |  |
 | 6 | `INSC_ESTADUAL` | VARCHAR(20) | sim |  | aplicação |  |
 | 7 | `INSC_MUNICIPAL` | VARCHAR(20) | sim |  | aplicação |  |
-| 8 | `LOGRADOURO` | VARCHAR(150) | sim |  | aplicação |  |
-| 9 | `NUMERO` | VARCHAR(20) | sim |  | aplicação |  |
-| 10 | `COMPLEMENTO` | VARCHAR(50) | sim |  | aplicação |  |
-| 11 | `BAIRRO` | VARCHAR(80) | sim |  | aplicação |  |
-| 12 | `CEP` | VARCHAR(10) | sim |  | aplicação |  |
-| 13 | `ID_CIDADES` | INT | sim |  | aplicação |  |
-| 14 | `DDD` | VARCHAR(3) | sim |  | aplicação |  |
-| 15 | `FONE` | VARCHAR(20) | sim |  | aplicação |  |
-| 16 | `EMAIL` | VARCHAR(150) | sim |  | aplicação |  |
-| 17 | `SITE` | VARCHAR(150) | sim |  | aplicação |  |
-| 18 | `LOGO` | MEDIUMBLOB | sim |  | aplicação |  |
-| 19 | `LOGO_MIME` | VARCHAR(50) | sim |  | aplicação |  |
-| 20 | `CABECALHO_LAUDO` | TEXT | sim |  | aplicação |  |
-| 21 | `RODAPE_LAUDO` | TEXT | sim |  | aplicação |  |
-| 22 | `NR_ACREDITACAO` | VARCHAR(50) | sim |  | aplicação | Ex.: CRL INMETRO — exibido no boletim acreditado |
-| 23 | `ATIVA` | TINYINT(1) | não | 1 | aplicação |  |
-| 24 | `CRIADO_EM` | DATETIME | não | CURRENT_TIMESTAMP | banco |  |
-| 25 | `ALTERADO_EM` | DATETIME | sim |  | banco |  |
+| 8 | `ID_ENTIDADES` | INT | sim |  | aplicação | Entidade da própria empresa (TIPO_EMPRESA_USUARIA): endereços, telefones e e-mails, como no legado; criada por SP_INICIALIZAR_EMPRESA |
+| 9 | `SITE` | VARCHAR(150) | sim |  | aplicação |  |
+| 10 | `LOGO` | MEDIUMBLOB | sim |  | aplicação |  |
+| 11 | `LOGO_MIME` | VARCHAR(50) | sim |  | aplicação |  |
+| 12 | `CABECALHO_LAUDO` | TEXT | sim |  | aplicação |  |
+| 13 | `RODAPE_LAUDO` | TEXT | sim |  | aplicação |  |
+| 14 | `NR_ACREDITACAO` | VARCHAR(50) | sim |  | aplicação | Ex.: CRL INMETRO — exibido no boletim acreditado |
+| 15 | `ATIVA` | TINYINT(1) | não | 1 | aplicação |  |
+| 16 | `CRIADO_EM` | DATETIME | não | CURRENT_TIMESTAMP | banco |  |
+| 17 | `ALTERADO_EM` | DATETIME | sim |  | banco |  |
 
 ## Chaves, restrições e índices
 - **PK:** `ID_EMPRESAS`
 - **Única** `UQ_EMPRESAS_COD` (COD_EMPRESA)
 - **Única** `UQ_EMPRESAS_CNPJ` (CNPJ)
+- **Única** `UQ_EMPRESAS_ENT` (ID_ENTIDADES)
 
 ## Relacionamentos
 ### Referencia
 | Coluna | Tabela | Coluna destino | Ao excluir o pai |
 |---|---|---|---|
-| `ID_CIDADES` | [`CIDADES`](../tabelas/CIDADES.md) | ID_CIDADES | bloqueia |
+| `ID_ENTIDADES` | [`ENTIDADES`](../tabelas/ENTIDADES.md) | ID_ENTIDADES | bloqueia (FK adiada, fim do script) |
 
 ### É referenciada por
 | Tabela | Coluna | Ao excluir esta |
@@ -105,22 +100,23 @@ Empresas usuárias do sistema (o laboratório). Dados do cabeçalho do laudo, lo
 | [`LAB_RELATORIO_ENSAIO`](../tabelas/LAB_RELATORIO_ENSAIO.md) | ID_EMPRESAS | bloqueia |
 
 ## Triggers
-- —
+- [`TG_EMPRESAS_AU`](../triggers/TG_EMPRESAS_AU.md) — AFTER UPDATE: Espelha a identidade da empresa (razão social, fantasia, CNPJ, IE, IM, ativa) na entidade da empresa (`ID_ENTIDADES`).
 
 ## Usada por
 - **Views:** —
-- **Rotinas que alteram:** —
+- **Rotinas que alteram:** [`SP_INICIALIZAR_EMPRESA`](../rotinas/SP_INICIALIZAR_EMPRESA.md)
 - **Rotinas que leem:** —
 - **Triggers de outras tabelas que alteram:** —
-- **Triggers de outras tabelas que leem:** —
+- **Triggers de outras tabelas que leem:** [`TG_ENT_BU`](../triggers/TG_ENT_BU.md)
 
 ## Telas e processos
 - **Telas:** [T03 Empresa usuária](../../../telas/T03-empresa-usuaria.md) · [T00 Login e seleção de empresa](../../../telas/T00-login-empresa.md)
-- **Processos:** [P01 Multiempresa e empresa ativa](../../../processos/P01-multiempresa.md) · [P23 Nova empresa e cópia de cadastros](../../../processos/P23-nova-empresa.md)
+- **Processos:** [P01 Multiempresa e empresa ativa](../../../processos/P01-multiempresa.md) · [P23 Nova empresa e cópia de cadastros](../../../processos/P23-nova-empresa.md) · `P25-cadastro-entidades-contatos`
 
 ## Regras de negócio
 - `COD_EMPRESA` (3) único e imutável; CNPJ único.
 - Criar empresa = INSERT + `CALL SP_INICIALIZAR_EMPRESA(id)` + vincular o usuário criador com perfil ADMINISTRADOR.
+- **Endereços, telefones e e-mails** ficam na entidade da empresa (`ID_ENTIDADES`, `TIPO_EMPRESA_USUARIA`), como no legado — vários, por tipo (P25). A entidade é criada por `SP_INICIALIZAR_EMPRESA`; a identidade (razão social, fantasia, CNPJ, IE, IM, ativa) é espelhada nela por `TG_EMPRESAS_AU`.
 - Logo (PNG/JPG até 1 MB) e `NR_ACREDITACAO` são impressos no boletim/proposta/pedido.
 
 ## Implementação no C# (EF Core)
@@ -140,15 +136,7 @@ CREATE TABLE EMPRESAS (
   CNPJ             VARCHAR(18)  NULL,
   INSC_ESTADUAL    VARCHAR(20)  NULL,
   INSC_MUNICIPAL   VARCHAR(20)  NULL,
-  LOGRADOURO       VARCHAR(150) NULL,
-  NUMERO           VARCHAR(20)  NULL,
-  COMPLEMENTO      VARCHAR(50)  NULL,
-  BAIRRO           VARCHAR(80)  NULL,
-  CEP              VARCHAR(10)  NULL,
-  ID_CIDADES       INT          NULL,
-  DDD              VARCHAR(3)   NULL,
-  FONE             VARCHAR(20)  NULL,
-  EMAIL            VARCHAR(150) NULL,
+  ID_ENTIDADES     INT          NULL COMMENT 'Entidade da própria empresa (TIPO_EMPRESA_USUARIA): endereços, telefones e e-mails, como no legado; criada por SP_INICIALIZAR_EMPRESA',
   SITE             VARCHAR(150) NULL,
   LOGO             MEDIUMBLOB   NULL,
   LOGO_MIME        VARCHAR(50)  NULL,
@@ -160,6 +148,7 @@ CREATE TABLE EMPRESAS (
   ALTERADO_EM      DATETIME     NULL ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT UQ_EMPRESAS_COD UNIQUE (COD_EMPRESA),
   CONSTRAINT UQ_EMPRESAS_CNPJ UNIQUE (CNPJ),
-  CONSTRAINT FK_EMPRESAS_CIDADES FOREIGN KEY (ID_CIDADES) REFERENCES CIDADES (ID_CIDADES)
+  CONSTRAINT UQ_EMPRESAS_ENT UNIQUE (ID_ENTIDADES)
+  -- FK_EMPRESAS_ENT criada no fim do script (ENTIDADES depende de EMPRESAS)
 ) ENGINE=InnoDB;
 ```

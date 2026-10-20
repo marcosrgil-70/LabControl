@@ -8,28 +8,28 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 |---|---|---|---|---|---|
 | País | `Standards/un_Paises` | [T11-01](../telas/T11-01-paises.md) | `/Geografia/Paises` | 2 | ⬜ |
 | Estados | `Standards/un_Estados` | [T11-02](../telas/T11-02-estados.md) | `/Geografia/Estados` | 2 | ⬜ |
-| Cidades | `Standards/un_Cidades` | [T11-03](../telas/T11-03-cidades.md) | `/Geografia/Cidades` | 2 | ⬜ |
+| Cidades | `Standards/un_Cidades` | [T11-03](../telas/T11-03-cidades.md) | `/Geografia/Cidades` | 2 | 🟨 |
 | Bairros | `Standards/un_Bairros` | [T11-04](../telas/T11-04-bairros-logradouros.md) | — | — | ⛔ (endereço em texto) |
-| Tipos de Logradouros | `Standards/un_Logradouros_Tipos` | [T10-01](../telas/T10-01-tipos-logradouro.md) | `/Auxiliares/TIPOS_LOGRADOURO` | 2 | ⬜ |
+| Tipos de Logradouros | `Standards/un_Logradouros_Tipos` | [T10-01](../telas/T10-01-tipos-logradouro.md) | `/Auxiliares/TIPOS_LOGRADOURO` | 2 | ✅ |
 | Logradouros | `Standards/un_Logradouros` | [T11-04](../telas/T11-04-bairros-logradouros.md) | — | — | ⛔ |
-| Tipos de Endereço | `Standards/un_Enderecos_Tipos` | [T10-02](../telas/T10-02-tipos-endereco.md) | `/Auxiliares/ENDERECOS_TIPOS` | 2 | ⬜ |
-| Registros Profissionais | `un_CadRegProfissional` | [T10-05](../telas/T10-05-registros-profissionais.md) | `/Auxiliares/TIPOS_REG_PROFISSIONAL` | 2 | ⬜ |
-| Cargos de Funcionários | `un_Cargo_Funcionarios` | [T10-06](../telas/T10-06-cargos-funcionarios.md) | `/Auxiliares/CARGOS_FUNCIONARIOS` | 2 | ⬜ |
+| Tipos de Endereço | `Standards/un_Enderecos_Tipos` | [T10-02](../telas/T10-02-tipos-endereco.md) | `/Auxiliares/ENDERECOS_TIPOS` | 2 | ✅ |
+| Registros Profissionais | `un_CadRegProfissional` | [T10-05](../telas/T10-05-registros-profissionais.md) | `/Auxiliares/TIPOS_REG_PROFISSIONAL` | 2 | ✅ |
+| Cargos de Funcionários | `un_Cargo_Funcionarios` | [T10-06](../telas/T10-06-cargos-funcionarios.md) | `/Auxiliares/CARGOS_FUNCIONARIOS` | 2 | ✅ |
 | Idiomas | `un_CadIdiomas` | [T10-07](../telas/T10-07-idiomas.md) | `/Auxiliares/IDIOMAS` | 2 | ✅ |
 | Unidades | `un_CadUnidades` | [T10-08](../telas/T10-08-unidades.md) | `/Auxiliares/UNIDADES` | 2 | ⬜ |
 | Tipo de Embalagens | `un_CadTipoEmbalagem` | [T10-09](../telas/T10-09-tipos-embalagem.md) | `/Auxiliares/EMBALAGENS_TIPOS` | 2 | ⬜ |
 | Tipo de Resultados | `un_TipoResultado` | [T10-10](../telas/T10-10-tipos-resultado.md) | `/Auxiliares/LAB_TIPOS_RESULTADOS` | 2 | ⬜ |
 | Condições de Pagamento | `Standards/un_Condicoes_Pagtos` | [T10-11](../telas/T10-11-condicoes-pagamento.md) | `/Auxiliares/CONDICOES_PAGTOS` | 2 | ⬜ |
 | Prazos | `un_CadPrazos` | [T10-12](../telas/T10-12-prazos.md) | `/Auxiliares/PRAZOS` | 2 | ⬜ |
-| (fora do menu) Tipos de Telefone | `Standards/un_CadTipoFone` | [T10-03](../telas/T10-03-tipos-telefone.md) | `/Auxiliares/FONES_TIPOS` | 2 | ⬜ |
-| (fora do menu) Tipos de E-mail | `Standards/un_cadEmails_Tipos` | [T10-04](../telas/T10-04-tipos-email.md) | `/Auxiliares/EMAILS_TIPOS` | 2 | ⬜ |
+| (fora do menu) Tipos de Telefone | `Standards/un_CadTipoFone` | [T10-03](../telas/T10-03-tipos-telefone.md) | `/Auxiliares/FONES_TIPOS` | 2 | ✅ |
+| (fora do menu) Tipos de E-mail | `Standards/un_cadEmails_Tipos` | [T10-04](../telas/T10-04-tipos-email.md) | `/Auxiliares/EMAILS_TIPOS` | 2 | ✅ |
 | (sem tela) Moedas | — | [T10-13](../telas/T10-13-moedas.md) | `/Auxiliares/MOEDAS` | 2 | ⬜ |
 
 ## Cadastros
 | Menu Delphi | Unit Delphi | MD v2 | Rota v2 | Fase | Situação |
 |---|---|---|---|---|---|
-| Clientes/Fornecedores | `Standards/un_Entidades` (`teCLI`) | [T12](../telas/T12-clientes.md) | `/Clientes` | 3 | 🟨 |
-| Funcionários | `Standards/un_Entidades` (`teFUNC`) | [T13](../telas/T13-profissionais.md) | `/Profissionais` | 3 | 🟨 |
+| Clientes/Fornecedores | `Standards/un_Entidades` (`teCLI`) | [T12](../telas/T12-clientes.md) | `/Clientes` | 3 | ✅ |
+| Funcionários | `Standards/un_Entidades` (`teFUNC`) | [T13](../telas/T13-profissionais.md) | `/Profissionais` | 3 | ✅ |
 | Tipos de Amostras | `un_CadTipoAmostra` | [T10-14](../telas/T10-14-tipos-amostra.md) | `/Auxiliares/AMOSTRAS_TIPO` | 2 | ⬜ |
 | Status das Amostras | `un_CadStatusAmostra` | [T10-15](../telas/T10-15-status-amostra.md) | `/Auxiliares/AMOSTRAS_STATUS` | 2 | ⬜ |
 | Tipos de Análises | `un_CadTipoAnalise` | [T10-16](../telas/T10-16-tipos-analise.md) | `/Auxiliares/ANALISES_TIPO` | 2 | ⬜ |

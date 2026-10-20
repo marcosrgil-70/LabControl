@@ -22,8 +22,8 @@ Botão "Importar municípios IBGE" (CSV oficial: código, nome, UF): insere os q
 - Substitui o fluxo do legado, que exigia cadastrar **bairro e logradouro antes** do endereço (T11-04).
 
 ## Critérios de aceite
-- [ ] CEP válido preenche o endereço e a cidade correta (pelo IBGE).
-- [ ] Sem internet o endereço pode ser digitado.
-- [ ] Importação IBGE idempotente.
+- [x] CEP válido preenche o endereço e a cidade correta (pelo IBGE) — `GET /Geografia/Cep/{cep}` (ViaCEP no servidor, cache 1 dia, separa o tipo de logradouro), usado no componente de endereço ([P25](../processos/P25-cadastro-entidades-contatos.md)).
+- [x] Sem internet o endereço pode ser digitado (mensagem "Serviço de CEP indisponível…" e preenchimento manual).
+- [x] Importação IBGE idempotente — feita como **seed** `Scripts/v2/06_cidades.sql` (5.571 municípios, `INSERT IGNORE` pelo código IBGE; gerador `tools/gerador-cidades`). A tela de manutenção de países/estados/cidades continua na 2.3.
 
-**Status:** ⬜
+**Status:** 🟨 cidades IBGE, busca de CEP e componente de endereço prontos em 20/10/2026 (P25); falta a tela de manutenção T11-01…03 (2.3).

@@ -32,6 +32,10 @@ DROP PROCEDURE IF EXISTS SP_PROXIMO_NUMERO;
 DROP PROCEDURE IF EXISTS PR_AUDITAR;
 DROP PROCEDURE IF EXISTS PR_CONFERIR_EMPRESA;
 DROP PROCEDURE IF EXISTS PR_CRIAR_PERFIL;
+DROP PROCEDURE IF EXISTS PR_CONFERIR_ENDERECO;
+DROP PROCEDURE IF EXISTS PR_CONFERIR_FONE;
+DROP PROCEDURE IF EXISTS PR_CONFERIR_EMAIL;
+DROP PROCEDURE IF EXISTS PR_CONFERIR_TIPOS_ENTIDADE;
 DROP PROCEDURE IF EXISTS PR_ATUALIZA_SALDO;
 DROP PROCEDURE IF EXISTS SP_RECALCULAR_PROPOSTA;
 DROP PROCEDURE IF EXISTS SP_AMOSTRA_GERAR_TESTES;
@@ -235,6 +239,48 @@ CREATE PROCEDURE PR_AUDITAR(IN p_id_empresa INT, IN p_tabela VARCHAR(60), IN p_i
 BEGIN
   INSERT INTO AUDITORIA (ID_EMPRESAS, ID_USUARIOS, TABELA, ID_REGISTRO, ACAO, DADOS_ANTES, DADOS_DEPOIS, IP)
   VALUES (p_id_empresa, @LC_ID_USUARIOS, p_tabela, p_id_registro, p_acao, p_antes, p_depois, @LC_IP);
+END$$
+
+-- ---------------------------------------------------------------------
+-- Contatos das entidades (clientes, fornecedores, funcionários e empresa usuária),
+-- chamadas pelas triggers BEFORE INSERT/UPDATE de ENTIDADES_ENDERECOS/FONES/EMAILS.
+-- PR_CONFERIR_ENDERECO: no máximo um endereço ATIVO por tipo na entidade (no
+-- Firebird era UNIQUE (entidade, tipo), que impedia guardar o endereço antigo inativo).
+-- ---------------------------------------------------------------------
+CREATE PROCEDURE PR_CONFERIR_ENDERECO(IN p_id INT, IN p_entidade INT, IN p_tipo INT, IN p_inativo TINYINT)
+BEGIN
+  IF p_inativo = 0 AND EXISTS (SELECT 1 FROM ENTIDADES_ENDERECOS
+                                WHERE ID_ENTIDADES = p_entidade AND ID_ENDERECOS_TIPOS = p_tipo AND INATIVO = 0
+                                  AND ID_ENTIDADES_ENDERECOS <> COALESCE(p_id, 0)) THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Já existe um endereço ativo deste tipo para este cadastro. Inative o anterior ou altere-o.';
+  END IF;
+END$$
+
+-- PR_CONFERIR_FONE / PR_CONFERIR_EMAIL: um só principal por entidade (a aplicação
+-- desmarca o anterior na mesma transação; o banco garante).
+CREATE PROCEDURE PR_CONFERIR_FONE(IN p_id INT, IN p_entidade INT, IN p_principal TINYINT)
+BEGIN
+  IF p_principal = 1 AND EXISTS (SELECT 1 FROM ENTIDADES_FONES
+                                  WHERE ID_ENTIDADES = p_entidade AND PRINCIPAL = 1 AND ID_ENTIDADES_FONES <> COALESCE(p_id, 0)) THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Já existe um telefone principal para este cadastro.';
+  END IF;
+END$$
+
+CREATE PROCEDURE PR_CONFERIR_EMAIL(IN p_id INT, IN p_entidade INT, IN p_principal TINYINT)
+BEGIN
+  IF p_principal = 1 AND EXISTS (SELECT 1 FROM ENTIDADES_EMAILS
+                                  WHERE ID_ENTIDADES = p_entidade AND PRINCIPAL = 1 AND ID_ENTIDADES_EMAILS <> COALESCE(p_id, 0)) THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Já existe um e-mail principal para este cadastro.';
+  END IF;
+END$$
+
+-- PR_CONFERIR_TIPOS_ENTIDADE: a empresa usuária "não pode coexistir com nenhum
+-- outro tipo" (regra do legado, un_Entidades teEMP).
+CREATE PROCEDURE PR_CONFERIR_TIPOS_ENTIDADE(IN p_empresa_usuaria TINYINT, IN p_outros INT)
+BEGIN
+  IF p_empresa_usuaria = 1 AND p_outros > 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'A empresa usuária não pode ser também cliente, fornecedor, funcionário, comercial ou transportador.';
+  END IF;
 END$$
 
 -- ---------------------------------------------------------------------
@@ -1004,15 +1050,28 @@ BEGIN
   INSERT IGNORE INTO ENDERECOS_TIPOS (ID_EMPRESAS, DESCRICAO, FINALIDADE) VALUES
     (p_id_empresa, 'NOTA FISCAL', 'NOTA_FISCAL'), (p_id_empresa, 'CORRESPONDÊNCIA', 'CORRESPONDENCIA'),
     (p_id_empresa, 'ENTREGA', 'ENTREGA'), (p_id_empresa, 'COBRANÇA', 'COBRANCA');
+  -- tipos de telefone do legado (FONES_TIPOS do Firebird) + WhatsApp
   INSERT IGNORE INTO FONES_TIPOS (ID_EMPRESAS, DESCRICAO) VALUES
-    (p_id_empresa, 'COMERCIAL'), (p_id_empresa, 'CELULAR'), (p_id_empresa, 'RESIDENCIAL'), (p_id_empresa, 'FAX');
-  INSERT IGNORE INTO EMAILS_TIPOS (ID_EMPRESAS, DESCRICAO) VALUES (p_id_empresa, 'COMERCIAL');
+    (p_id_empresa, 'COMERCIAL'), (p_id_empresa, 'RESIDENCIAL'), (p_id_empresa, 'CELULAR COMERCIAL'),
+    (p_id_empresa, 'CELULAR PARTICULAR'), (p_id_empresa, 'WHATSAPP'), (p_id_empresa, 'RÁDIO');
+  INSERT IGNORE INTO EMAILS_TIPOS (ID_EMPRESAS, DESCRICAO) VALUES
+    (p_id_empresa, 'GERAL'), (p_id_empresa, 'COMERCIAL'), (p_id_empresa, 'FINANCEIRO'), (p_id_empresa, 'TÉCNICO');
   INSERT IGNORE INTO TIPOS_REG_PROFISSIONAL (ID_EMPRESAS, DESCRICAO) VALUES
     (p_id_empresa, 'CRF'), (p_id_empresa, 'CRQ');
   INSERT IGNORE INTO TIPOS_LOGRADOURO (ID_EMPRESAS, DESCRICAO, ABREVIATURA) VALUES
     (p_id_empresa, 'RUA', 'R.'), (p_id_empresa, 'AVENIDA', 'AV.'), (p_id_empresa, 'ALAMEDA', 'AL.'),
     (p_id_empresa, 'TRAVESSA', 'TV.'), (p_id_empresa, 'RODOVIA', 'ROD.'), (p_id_empresa, 'ESTRADA', 'EST.'),
     (p_id_empresa, 'PRAÇA', 'PÇA.');
+
+  -- Entidade da própria empresa (como no legado: EMPRESAS.ID_ENTIDADES, tipo "empresa usuária"):
+  -- guarda os endereços, telefones e e-mails da empresa. Identidade copiada de EMPRESAS
+  -- (depois mantida por TG_EMPRESAS_AU). Só cria se ainda não existir.
+  IF (SELECT ID_ENTIDADES FROM EMPRESAS WHERE ID_EMPRESAS = p_id_empresa) IS NULL THEN
+    INSERT INTO ENTIDADES (ID_EMPRESAS, CATEGORIA, NOME, NOME_FANTASIA, CPF_CNPJ, RG_IE, INSC_MUNICIPAL, TIPO_EMPRESA_USUARIA, INATIVO)
+    SELECT ID_EMPRESAS, 'J', RAZAO_SOCIAL, NOME_FANTASIA, CNPJ, INSC_ESTADUAL, INSC_MUNICIPAL, 1, 1 - ATIVA
+      FROM EMPRESAS WHERE ID_EMPRESAS = p_id_empresa;
+    UPDATE EMPRESAS SET ID_ENTIDADES = LAST_INSERT_ID() WHERE ID_EMPRESAS = p_id_empresa;
+  END IF;
 
   INSERT IGNORE INTO EMPRESAS_PARAMETROS (ID_EMPRESAS) VALUES (p_id_empresa);
   UPDATE EMPRESAS_PARAMETROS EP

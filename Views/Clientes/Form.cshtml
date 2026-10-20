@@ -1,0 +1,188 @@
+@model ClienteVM
+@inject IEmpresaContexto Usuario
+@{
+    var inclusao = Model.Id == 0;
+    ViewData["Title"] = inclusao ? "Novo cliente / fornecedor" : Model.Nome;
+    var contatos = ViewData["Contatos"] as ContatosVM;
+    var podeGravar = Usuario.TemPermissao(inclusao ? "CLIENTES.INCLUIR" : "CLIENTES.ALTERAR");
+    var pf = Model.Categoria == Categoria.Fisica;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-2">
+        <li class="breadcrumb-item"><a asp-action="Index">Clientes / Fornecedores</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@(inclusao ? "Novo" : $"{Model.Id} — {Model.Nome}")</li>
+    </ol>
+</nav>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#aba-dados" type="button" role="tab">Dados básicos</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#aba-enderecos" type="button" role="tab" disabled="@inclusao">Endereços <span class="badge text-bg-light border" data-contagem="enderecos"></span></button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#aba-telefones" type="button" role="tab" disabled="@inclusao">Telefones <span class="badge text-bg-light border" data-contagem="telefones"></span></button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#aba-emails" type="button" role="tab" disabled="@inclusao">E-mails <span class="badge text-bg-light border" data-contagem="emails"></span></button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#aba-observacoes" type="button" role="tab">Observações</button></li>
+</ul>
+
+<form method="post" asp-action="@(inclusao ? "Criar" : "Editar")" asp-route-id="@(inclusao ? null : Model.Id)" id="formCliente" novalidate></form>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="aba-dados" role="tabpanel">
+        <fieldset disabled="@(!podeGravar)">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+            @if (inclusao)
+            {
+                <div class="alert alert-info py-2 small"><i class="bi bi-info-circle me-1"></i>Grave os dados básicos para liberar as abas de endereços, telefones e e-mails.</div>
+            }
+            <div class="card mb-3">
+                <div class="card-body row g-3">
+                    <div class="col-sm-2">
+                        <label class="form-label small">Código</label>
+                        <input class="form-control" value="@(inclusao ? "automático" : Model.Id.ToString())" readonly />
+                    </div>
+                    <div class="col-sm-2">
+                        <label class="form-label small">Cadastro</label>
+                        <input class="form-control" value="@Model.DataCadastro?.ToString("dd/MM/yyyy")" readonly />
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label small d-block">Categoria</label>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="Categoria" id="cat-j" value="Juridica" form="formCliente" checked="@(!pf)" data-categoria />
+                            <label class="btn btn-outline-primary btn-sm" for="cat-j">Pessoa jurídica</label>
+                            <input type="radio" class="btn-check" name="Categoria" id="cat-f" value="Fisica" form="formCliente" checked="@pf" data-categoria />
+                            <label class="btn btn-outline-primary btn-sm" for="cat-f">Pessoa física</label>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 d-flex align-items-end">
+                        <div class="form-check form-switch mb-2">
+                            <input asp-for="Inativo" class="form-check-input" form="formCliente" />
+                            <label asp-for="Inativo" class="form-check-label">Inativo (some dos combos)</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Nome" class="form-label small" data-pj>Razão social *</label>
+                        <label asp-for="Nome" class="form-label small" data-pf>Nome *</label>
+                        <input asp-for="Nome" class="form-control text-uppercase" form="formCliente" />
+                        <span asp-validation-for="Nome" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="NomeFantasia" class="form-label small" data-pj>Nome fantasia</label>
+                        <label asp-for="NomeFantasia" class="form-label small" data-pf>Sobrenome</label>
+                        <input asp-for="NomeFantasia" class="form-control text-uppercase" form="formCliente" />
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="CpfCnpj" class="form-label small" data-pj>CNPJ</label>
+                        <label asp-for="CpfCnpj" class="form-label small" data-pf>CPF</label>
+                        <input asp-for="CpfCnpj" class="form-control" form="formCliente" />
+                        <span asp-validation-for="CpfCnpj" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="RgIe" class="form-label small" data-pj>Inscrição estadual</label>
+                        <label asp-for="RgIe" class="form-label small" data-pf>RG</label>
+                        <input asp-for="RgIe" class="form-control text-uppercase" form="formCliente" />
+                    </div>
+                    <div class="col-md-3" data-pj>
+                        <label asp-for="InscMunicipal" class="form-label small"></label>
+                        <input asp-for="InscMunicipal" class="form-control" form="formCliente" />
+                    </div>
+                    <div class="col-md-3" data-pj>
+                        <label asp-for="InscSuframa" class="form-label small"></label>
+                        <input asp-for="InscSuframa" class="form-control" form="formCliente" />
+                    </div>
+                    <div class="col-md-2" data-pf>
+                        <label asp-for="Sexo" class="form-label small"></label>
+                        <select asp-for="Sexo" asp-items="Html.GetEnumSelectList<Sexo>()" class="form-select" form="formCliente"><option value="">—</option></select>
+                    </div>
+                    <div class="col-md-2" data-pf>
+                        <label asp-for="DtNascimento" class="form-label small"></label>
+                        <input asp-for="DtNascimento" type="date" class="form-control" form="formCliente" />
+                        <span asp-validation-for="DtNascimento" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-2" data-pf>
+                        <label asp-for="EstadoCivil" class="form-label small"></label>
+                        <select asp-for="EstadoCivil" asp-items="Html.GetEnumSelectList<EstadoCivil>()" class="form-select" form="formCliente"><option value="">—</option></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header fw-semibold py-2">Tipo de cadastro</div>
+                <div class="card-body row g-3">
+                    <div class="col-md-8 d-flex flex-wrap gap-4">
+                        @foreach (var (campo, rotulo) in new[] { ("TipoCliente", "Cliente"), ("TipoFornecedor", "Fornecedor"), ("TipoVendedor", "Comercial (vendedor)"), ("TipoTransportador", "Transportador") })
+                        {
+                            var marcado = campo switch { "TipoCliente" => Model.TipoCliente, "TipoFornecedor" => Model.TipoFornecedor, "TipoVendedor" => Model.TipoVendedor, _ => Model.TipoTransportador };
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="@campo" name="@campo" value="true" checked="@marcado" form="formCliente" />
+                                <input type="hidden" name="@campo" value="false" form="formCliente" />
+                                <label class="form-check-label" for="@campo">@rotulo</label>
+                            </div>
+                        }
+                        @if (Model.TipoFuncionario)
+                        {
+                            <span class="badge text-bg-info align-self-center" title="Mantido na tela de Profissionais">Profissional</span>
+                        }
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Avaliacao" class="form-label small"></label>
+                        <input asp-for="Avaliacao" class="form-control text-uppercase" form="formCliente" />
+                    </div>
+                    <span asp-validation-for="TipoCliente" class="text-danger small"></span>
+                </div>
+            </div>
+        </fieldset>
+    </div>
+
+    @if (contatos is not null)
+    {
+        <partial name="_ContatosAbas" model="contatos" />
+    }
+
+    <div class="tab-pane fade" id="aba-observacoes" role="tabpanel">
+        <fieldset disabled="@(!podeGravar)" class="card mb-3">
+            <div class="card-body">
+                <label asp-for="Observacao" class="form-label small"></label>
+                <textarea asp-for="Observacao" class="form-control" rows="8" form="formCliente"></textarea>
+                <div class="form-check mt-2">
+                    <input asp-for="ObsIncluirFaturamento" class="form-check-input" form="formCliente" />
+                    <label asp-for="ObsIncluirFaturamento" class="form-check-label"></label>
+                </div>
+            </div>
+        </fieldset>
+    </div>
+</div>
+
+<div class="d-flex gap-2 align-items-center border-top pt-3 mt-2">
+    @if (podeGravar)
+    {
+        <button type="submit" form="formCliente" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Gravar dados</button>
+    }
+    <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+    @if (!inclusao)
+    {
+        <span class="small text-body-secondary ms-auto"><i class="bi bi-info-circle me-1"></i>Endereços, telefones e e-mails são gravados na hora, em cada aba.</span>
+    }
+</div>
+
+@if (contatos is not null)
+{
+    <partial name="_ContatosModais" model="contatos" />
+}
+
+@section Scripts {
+    <script src="~/js/contatos.js" asp-append-version="true"></script>
+    <script>
+        // PF/PJ: rótulos e campos de cada categoria
+        const categoria = () => document.querySelector('[data-categoria]:checked')?.value === 'Fisica' ? 'pf' : 'pj';
+        const aplicar = () => {
+            const c = categoria();
+            document.querySelectorAll('[data-pf]').forEach(e => e.hidden = c !== 'pf');
+            document.querySelectorAll('[data-pj]').forEach(e => e.hidden = c !== 'pj');
+        };
+        document.querySelectorAll('[data-categoria]').forEach(r => r.addEventListener('change', aplicar));
+        aplicar();
+        // aba pedida no endereço (#aba-enderecos depois de incluir)
+        const aba = location.hash && document.querySelector(`[data-bs-target="${location.hash}"]:not([disabled])`);
+        if (aba) bootstrap.Tab.getOrCreateInstance(aba).show();
+    </script>
+}

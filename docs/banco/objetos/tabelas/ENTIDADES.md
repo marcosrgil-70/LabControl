@@ -33,16 +33,17 @@ Comentário do script: _4. ENTIDADES (clientes, fornecedores, profissionais, com
 | 15 | `TIPO_FUNCIONARIO` | TINYINT(1) | não | 0 | aplicação | Profissional do laboratório |
 | 16 | `TIPO_VENDEDOR` | TINYINT(1) | não | 0 | aplicação | Comercial (ID_ENTIDADES_COMERC da proposta) |
 | 17 | `TIPO_TRANSPORTADOR` | TINYINT(1) | não | 0 | aplicação |  |
-| 18 | `AVALIACAO` | VARCHAR(20) | sim |  | aplicação |  |
-| 19 | `OBSERVACAO` | TEXT | sim |  | aplicação |  |
-| 20 | `OBS_INCLUIR_FATURAMENTO` | TINYINT(1) | não | 0 | aplicação |  |
-| 21 | `DATA_CADASTRO` | DATE | não | (CURRENT_DATE) | banco |  |
-| 22 | `INATIVO` | TINYINT(1) | não | 0 | aplicação |  |
-| 23 | `ID_LEGADO` | INT | sim |  | aplicação | ID_ENTIDADES do Firebird |
-| 24 | `CRIADO_EM` | DATETIME | não | CURRENT_TIMESTAMP | banco |  |
-| 25 | `CRIADO_POR` | INT | sim |  | aplicação |  |
-| 26 | `ALTERADO_EM` | DATETIME | sim |  | banco |  |
-| 27 | `ALTERADO_POR` | INT | sim |  | aplicação |  |
+| 18 | `TIPO_EMPRESA_USUARIA` | TINYINT(1) | não | 0 | aplicação | Entidade da própria empresa (EMPRESAS.ID_ENTIDADES); não coexiste com outro tipo |
+| 19 | `AVALIACAO` | VARCHAR(20) | sim |  | aplicação |  |
+| 20 | `OBSERVACAO` | TEXT | sim |  | aplicação |  |
+| 21 | `OBS_INCLUIR_FATURAMENTO` | TINYINT(1) | não | 0 | aplicação |  |
+| 22 | `DATA_CADASTRO` | DATE | não | (CURRENT_DATE) | banco |  |
+| 23 | `INATIVO` | TINYINT(1) | não | 0 | aplicação |  |
+| 24 | `ID_LEGADO` | INT | sim |  | aplicação | ID_ENTIDADES do Firebird |
+| 25 | `CRIADO_EM` | DATETIME | não | CURRENT_TIMESTAMP | banco |  |
+| 26 | `CRIADO_POR` | INT | sim |  | aplicação |  |
+| 27 | `ALTERADO_EM` | DATETIME | sim |  | banco |  |
+| 28 | `ALTERADO_POR` | INT | sim |  | aplicação |  |
 
 ## Chaves, restrições e índices
 - **PK:** `ID_ENTIDADES`
@@ -60,6 +61,7 @@ Comentário do script: _4. ENTIDADES (clientes, fornecedores, profissionais, com
 ### É referenciada por
 | Tabela | Coluna | Ao excluir esta |
 |---|---|---|
+| [`EMPRESAS`](../tabelas/EMPRESAS.md) | ID_ENTIDADES | bloqueia |
 | [`ENTIDADES_ENDERECOS`](../tabelas/ENTIDADES_ENDERECOS.md) | ID_ENTIDADES | CASCADE |
 | [`ENTIDADES_FONES`](../tabelas/ENTIDADES_FONES.md) | ID_ENTIDADES | CASCADE |
 | [`ENTIDADES_EMAILS`](../tabelas/ENTIDADES_EMAILS.md) | ID_ENTIDADES | CASCADE |
@@ -73,18 +75,19 @@ Comentário do script: _4. ENTIDADES (clientes, fornecedores, profissionais, com
 | [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md) | ID_ENTIDADES | bloqueia |
 
 ## Triggers
-- —
+- [`TG_ENT_BI`](../triggers/TG_ENT_BI.md) — BEFORE INSERT: Empresa usuária não coexiste com outro tipo de cadastro.
+- [`TG_ENT_BU`](../triggers/TG_ENT_BU.md) — BEFORE UPDATE: Empresa usuária não coexiste com outro tipo e não deixa de ser empresa usuária enquanto `EMPRESAS` apontar para ela.
 
 ## Usada por
 - **Views:** [`VW_CLIENTES`](../views/VW_CLIENTES.md), [`VW_PROFISSIONAIS`](../views/VW_PROFISSIONAIS.md), [`VW_LAB_PROPOSTAS`](../views/VW_LAB_PROPOSTAS.md), [`VW_LAB_AMOSTRAS`](../views/VW_LAB_AMOSTRAS.md), [`VW_LAB_TESTES_PENDENTES`](../views/VW_LAB_TESTES_PENDENTES.md), [`VW_LAB_RESULTADOS`](../views/VW_LAB_RESULTADOS.md), [`VW_LAB_BOLETINS`](../views/VW_LAB_BOLETINS.md)
-- **Rotinas que alteram:** —
+- **Rotinas que alteram:** [`SP_INICIALIZAR_EMPRESA`](../rotinas/SP_INICIALIZAR_EMPRESA.md)
 - **Rotinas que leem:** —
-- **Triggers de outras tabelas que alteram:** —
+- **Triggers de outras tabelas que alteram:** [`TG_EMPRESAS_AU`](../triggers/TG_EMPRESAS_AU.md)
 - **Triggers de outras tabelas que leem:** [`TG_ENTEND_BI`](../triggers/TG_ENTEND_BI.md), [`TG_ENTFON_BI`](../triggers/TG_ENTFON_BI.md), [`TG_ENTEML_BI`](../triggers/TG_ENTEML_BI.md), [`TG_ENTFUN_BI`](../triggers/TG_ENTFUN_BI.md)
 
 ## Telas e processos
-- **Telas:** [T12 Clientes/fornecedores](../../../telas/T12-clientes.md) · [T13 Profissionais](../../../telas/T13-profissionais.md)
-- **Processos:** [P01 Multiempresa e empresa ativa](../../../processos/P01-multiempresa.md)
+- **Telas:** [T12 Clientes/fornecedores](../../../telas/T12-clientes.md) · [T13 Profissionais](../../../telas/T13-profissionais.md) · [T03 Empresa usuária](../../../telas/T03-empresa-usuaria.md)
+- **Processos:** [P01 Multiempresa e empresa ativa](../../../processos/P01-multiempresa.md) · `P25-cadastro-entidades-contatos`
 
 ## Regras de negócio
 - `CPF_CNPJ` único por empresa, com dígito verificador ("Este CNPJ não é válido!", "CNPJ já cadastrado para: …").
@@ -92,16 +95,18 @@ Comentário do script: _4. ENTIDADES (clientes, fornecedores, profissionais, com
 - PF: `NOME_FANTASIA` = sobrenome, `RG_IE` = RG. PJ: `NOME_FANTASIA` = fantasia, `RG_IE` = inscrição estadual (aceita "ISENTO").
 - Trocar a categoria F↔J limpa os campos da outra categoria (o legado excluía o registro PF/PJ após confirmação).
 - Excluir só sem movimento (proposta/amostra); senão inativar.
+- `TIPO_EMPRESA_USUARIA`: a entidade da própria empresa (`EMPRESAS.ID_ENTIDADES`) — não coexiste com outro tipo e não deixa de ser empresa usuária (`TG_ENT_BI/BU`); nunca aparece em Clientes/Profissionais.
 
 ## Implementação no C# (EF Core)
 - **Multiempresa:** entra no Global Query Filter por `ID_EMPRESAS` (empresa ativa) e o `SaveChanges` preenche `ID_EMPRESAS` na inclusão.
 - Chave auto-incremento: `ID_ENTIDADES`.
-- `TINYINT(1)` → `bool`: `TIPO_CLIENTE`, `TIPO_FORNECEDOR`, `TIPO_FUNCIONARIO`, `TIPO_VENDEDOR`, `TIPO_TRANSPORTADOR`, `OBS_INCLUIR_FATURAMENTO`, `INATIVO`.
+- `TINYINT(1)` → `bool`: `TIPO_CLIENTE`, `TIPO_FORNECEDOR`, `TIPO_FUNCIONARIO`, `TIPO_VENDEDOR`, `TIPO_TRANSPORTADOR`, `TIPO_EMPRESA_USUARIA`, `OBS_INCLUIR_FATURAMENTO`, `INATIVO`.
 - `ENUM` → enum C# com conversão para string: `CATEGORIA` ('F','J'); `SEXO` ('M','F'); `ESTADO_CIVIL` ('S','C','D','P','V').
 - `DATE` → `DateOnly`: `DT_NASCIMENTO`, `DATA_CADASTRO`.
 - Datas mantidas pelo MySQL (`DEFAULT/ON UPDATE CURRENT_TIMESTAMP`): `CRIADO_EM`, `ALTERADO_EM` — mapear como gerado pelo banco.
 - `CRIADO_POR`/`ALTERADO_POR` = `ID_USUARIOS` logado (preencher no `SaveChanges`).
-- Uma entidade C# só (sem herança PF/PJ); validação de CPF/CNPJ no ViewModel e no serviço.
+- Uma entidade C# só (sem herança PF/PJ); validação de CPF/CNPJ no serviço (`Documentos`).
+- Telas: T12 (`ClienteService`), T13 (`ProfissionalService`), contatos pelo `ContatosService` (P25).
 
 ## Definição (DDL)
 ```sql
@@ -123,6 +128,7 @@ CREATE TABLE ENTIDADES (
   TIPO_FUNCIONARIO   TINYINT(1)   NOT NULL DEFAULT 0 COMMENT 'Profissional do laboratório',
   TIPO_VENDEDOR      TINYINT(1)   NOT NULL DEFAULT 0 COMMENT 'Comercial (ID_ENTIDADES_COMERC da proposta)',
   TIPO_TRANSPORTADOR TINYINT(1)   NOT NULL DEFAULT 0,
+  TIPO_EMPRESA_USUARIA TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Entidade da própria empresa (EMPRESAS.ID_ENTIDADES); não coexiste com outro tipo',
   AVALIACAO          VARCHAR(20)  NULL,
   OBSERVACAO         TEXT         NULL,
   OBS_INCLUIR_FATURAMENTO TINYINT(1) NOT NULL DEFAULT 0,

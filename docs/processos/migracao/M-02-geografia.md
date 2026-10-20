@@ -14,7 +14,7 @@
 [`PAISES`](../../banco/objetos/tabelas/PAISES.md), [`ESTADOS`](../../banco/objetos/tabelas/ESTADOS.md), [`CIDADES`](../../banco/objetos/tabelas/CIDADES.md)
 
 ## Regras de transformação
-- Recomendado: importar antes a lista IBGE completa (5.570 municípios) pela T11-03.
+- A lista IBGE completa (5.571 municípios, nomes em maiúsculas) já vem no seed `Scripts/v2/06_cidades.sql` (desde 20/10/2026, D-21).
 - País: Brasil já existe no seed (`ID_PAISES = 1`).
 - UF: casar pela **sigla** com o seed (27 UFs); a 28ª linha do legado vai para o relatório.
 - Cidade: casar pelo `CODIGO_IBGE`; sem código → casar por nome + UF; sem casamento → inserir e listar.

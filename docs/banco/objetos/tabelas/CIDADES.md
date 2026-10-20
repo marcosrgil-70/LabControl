@@ -9,7 +9,7 @@ Municípios (globais, código IBGE de 7 dígitos). Base do componente de endere�
 ## Origem no legado (Firebird)
 | Origem | Registros no legado |
 |---|---|
-| `CIDADES` (+ `CIDADES_BAIRROS`, `LOGRADOUROS` descontinuadas) | 190 (legado); recomendado importar os 5.570 do IBGE |
+| `CIDADES` (+ `CIDADES_BAIRROS`, `LOGRADOUROS` descontinuadas) | 190 (legado, sem código IBGE); 5.571 do IBGE no seed `06_cidades.sql` |
 
 ## Colunas
 | # | Coluna | Tipo | Nulo | Padrão | Preenchida por | Descrição |
@@ -34,7 +34,6 @@ Municípios (globais, código IBGE de 7 dígitos). Base do componente de endere�
 ### É referenciada por
 | Tabela | Coluna | Ao excluir esta |
 |---|---|---|
-| [`EMPRESAS`](../tabelas/EMPRESAS.md) | ID_CIDADES | bloqueia |
 | [`ENTIDADES_ENDERECOS`](../tabelas/ENTIDADES_ENDERECOS.md) | ID_CIDADES | bloqueia |
 
 ## Triggers
@@ -48,12 +47,13 @@ Municípios (globais, código IBGE de 7 dígitos). Base do componente de endere�
 - **Triggers de outras tabelas que leem:** —
 
 ## Telas e processos
-- **Telas:** [T11-03 Cidades](../../../telas/T11-03-cidades.md) · [T11-04 Bairros e logradouros (descontinuados)](../../../telas/T11-04-bairros-logradouros.md)
-- **Processos:** —
+- **Telas:** [T11-03 Cidades](../../../telas/T11-03-cidades.md) · [T11-04 Bairros e logradouros (descontinuados)](../../../telas/T11-04-bairros-logradouros.md) · [T12 Clientes/fornecedores](../../../telas/T12-clientes.md) · [T03 Empresa usuária](../../../telas/T03-empresa-usuaria.md)
+- **Processos:** `P25-cadastro-entidades-contatos`
 
 ## Regras de negócio
-- `CODIGO_IBGE` único — é por ele que o ViaCEP casa a cidade.
-- Botão "Importar IBGE" (CSV) na tela de cidades.
+- `CODIGO_IBGE` único — é por ele que a busca de CEP (ViaCEP) casa a cidade.
+- Seed `Scripts/v2/06_cidades.sql` com os 5.571 municípios (gerado por `tools/gerador-cidades`, nomes em maiúsculas como no legado).
+- Migração: cidades do legado (sem IBGE) casadas por nome + UF (M-02).
 
 ## Implementação no C# (EF Core)
 - Chave auto-incremento: `ID_CIDADES`.

@@ -20,10 +20,10 @@ Comentário do script: _E-mails também são os CONTATOS usados na proposta (con
 | 2 | `ID_EMPRESAS` | INT | não |  | trigger TG_ENTEML_BI |  |
 | 3 | `ID_ENTIDADES` | INT | não |  | aplicação |  |
 | 4 | `ID_EMAILS_TIPOS` | INT | sim |  | aplicação |  |
-| 5 | `EMAIL` | VARCHAR(150) | não |  | aplicação |  |
+| 5 | `EMAIL` | VARCHAR(150) | não |  | trigger TG_ENTEML_BI, trigger TG_ENTEML_BU |  |
 | 6 | `NOME_CONTATO` | VARCHAR(100) | sim |  | aplicação |  |
 | 7 | `DEPARTAMENTO` | VARCHAR(100) | sim |  | aplicação |  |
-| 8 | `PRINCIPAL` | TINYINT(1) | não | 0 | aplicação |  |
+| 8 | `PRINCIPAL` | TINYINT(1) | não | 0 | trigger TG_ENTEML_BI, trigger TG_ENTEML_BU |  |
 | 9 | `ENVIAR_NFE` | TINYINT(1) | não | 0 | aplicação |  |
 | 10 | `ENVIAR_LAUDO` | TINYINT(1) | não | 0 | aplicação |  |
 | 11 | `INATIVO` | TINYINT(1) | não | 0 | aplicação |  |
@@ -49,31 +49,33 @@ Comentário do script: _E-mails também são os CONTATOS usados na proposta (con
 | [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md) | ID_ENT_CONTATO_NF | bloqueia |
 
 ## Triggers
-- [`TG_ENTEML_BI`](../triggers/TG_ENTEML_BI.md) — BEFORE INSERT: E-mail/contato herda `ID_EMPRESAS` da entidade.
+- [`TG_ENTEML_BI`](../triggers/TG_ENTEML_BI.md) — BEFORE INSERT: E-mail/contato herda `ID_EMPRESAS` da entidade; minúsculas sem espaços; inativo não é principal; um principal por entidade (`PR_CONFERIR_EMAIL`).
+- [`TG_ENTEML_BU`](../triggers/TG_ENTEML_BU.md) — BEFORE UPDATE: E-mail não muda de entidade/empresa; minúsculas; inativo não é principal; um principal por entidade.
 
 ## Usada por
 - **Views:** [`VW_CLIENTES`](../views/VW_CLIENTES.md), [`VW_LAB_PROPOSTAS`](../views/VW_LAB_PROPOSTAS.md)
 - **Rotinas que alteram:** —
-- **Rotinas que leem:** —
+- **Rotinas que leem:** [`PR_CONFERIR_EMAIL`](../rotinas/PR_CONFERIR_EMAIL.md)
 - **Triggers de outras tabelas que alteram:** —
 - **Triggers de outras tabelas que leem:** —
 
 ## Telas e processos
-- **Telas:** [T12 Clientes/fornecedores](../../../telas/T12-clientes.md) · [T20 Propostas](../../../telas/T20-propostas.md)
-- **Processos:** [P05 Ciclo de vida da proposta](../../../processos/P05-ciclo-proposta.md)
+- **Telas:** [T12 Clientes/fornecedores](../../../telas/T12-clientes.md) · [T13 Profissionais](../../../telas/T13-profissionais.md) · [T03 Empresa usuária](../../../telas/T03-empresa-usuaria.md) · [T20 Propostas](../../../telas/T20-propostas.md)
+- **Processos:** [P05 Ciclo de vida da proposta](../../../processos/P05-ciclo-proposta.md) · `P25-cadastro-entidades-contatos`
 
 ## Regras de negócio
 - E-mail único por entidade (`UQ_ENTEML`).
 - `ENVIAR_LAUDO` sugere o contato do resultado; `ENVIAR_NFE` sugere o contato da NF.
 - Cliente sem e-mail não consegue ter proposta gravada (contatos obrigatórios).
 - Os IDs são FKs da proposta: manter o mapa de IDs na migração (M-06).
+- Um só `PRINCIPAL` por entidade (`PR_CONFERIR_EMAIL`); e-mail gravado em minúsculas e sem espaços pela trigger; inativo nunca é principal.
 
 ## Implementação no C# (EF Core)
 - **Multiempresa:** entra no Global Query Filter por `ID_EMPRESAS` (empresa ativa) e o `SaveChanges` preenche `ID_EMPRESAS` na inclusão.
-- **Preenchidas pelo banco (trigger):** `ID_EMPRESAS` — não depender do valor enviado; reler a linha após gravar.
+- **Preenchidas pelo banco (trigger):** `ID_EMPRESAS`, `EMAIL`, `PRINCIPAL` — não depender do valor enviado; reler a linha após gravar.
 - Chave auto-incremento: `ID_ENTIDADES_EMAILS`.
 - `TINYINT(1)` → `bool`: `PRINCIPAL`, `ENVIAR_NFE`, `ENVIAR_LAUDO`, `INATIVO`.
-- `ID_EMPRESAS` herdado por `TG_ENTEML_BI`.
+- `ID_EMPRESAS` herdado por `TG_ENTEML_BI`; não muda de entidade (`TG_ENTEML_BU`).
 
 ## Definição (DDL)
 ```sql

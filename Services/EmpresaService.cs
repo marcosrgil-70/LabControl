@@ -19,7 +19,9 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
     public async Task<IReadOnlyList<EmpresaListaItemVM>> ListarAsync() =>
         await db.Empresas.AsNoTracking().OrderBy(e => e.CodEmpresa)
             .Select(e => new EmpresaListaItemVM(e.IdEmpresas, e.CodEmpresa, e.NomeFantasia ?? e.RazaoSocial, e.Cnpj,
-                db.Cidades.Where(c => c.IdCidades == e.IdCidades).Select(c => c.Nome + "/" + c.Estado.Sigla).FirstOrDefault(),
+                // cidade do 1º endereço ativo da entidade da empresa (lista só do ADMIN_GLOBAL: lê as outras empresas)
+                db.EntidadesEnderecos.IgnoreQueryFilters().Where(a => a.IdEntidades == e.IdEntidades && !a.Inativo)
+                    .OrderBy(a => a.IdEntidadesEnderecos).Select(a => a.Cidade.Nome + "/" + a.Cidade.Estado.Sigla).FirstOrDefault(),
                 e.Ativa, db.UsuariosEmpresas.Count(v => v.IdEmpresas == e.IdEmpresas && v.Ativo)))
             .ToListAsync();
 
@@ -39,25 +41,23 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
         var vm = new EmpresaVM
         {
             Id = e.IdEmpresas, CodEmpresa = e.CodEmpresa, RazaoSocial = e.RazaoSocial, NomeFantasia = e.NomeFantasia, Cnpj = e.Cnpj,
-            InscEstadual = e.InscEstadual, InscMunicipal = e.InscMunicipal, Cep = e.Cep, Logradouro = e.Logradouro, Numero = e.Numero,
-            Complemento = e.Complemento, Bairro = e.Bairro, IdCidades = e.IdCidades, Ddd = e.Ddd, Fone = e.Fone, Email = e.Email,
-            Site = e.Site, CabecalhoLaudo = e.CabecalhoLaudo, RodapeLaudo = e.RodapeLaudo, NrAcreditacao = e.NrAcreditacao, Ativa = e.Ativa,
+            InscEstadual = e.InscEstadual, InscMunicipal = e.InscMunicipal, IdEntidades = e.IdEntidades, Site = e.Site, CabecalhoLaudo = e.CabecalhoLaudo, RodapeLaudo = e.RodapeLaudo, NrAcreditacao = e.NrAcreditacao, Ativa = e.Ativa,
             TemLogo = e.Logo is { Length: > 0 },
         };
         await PrepararAsync(vm);
         return vm;
     }
 
-    /// <summary>Combos (UF/cidade, empresas de origem, grupos de cópia); usado também ao reexibir o POST com erro.</summary>
+    /// <summary>Combos (empresas de origem, grupos de cópia), logo e entidade; usado também ao reexibir o POST com erro.</summary>
     public async Task PrepararAsync(EmpresaVM vm)
     {
         vm.AdminGlobal = ctx.AdminGlobal;
-        if (vm.IdCidades is { } cid && vm.IdEstado is null)
-            vm.IdEstado = await db.Cidades.Where(c => c.IdCidades == cid).Select(c => (int?)c.IdEstados).SingleOrDefaultAsync();
-        vm.Estados = await db.Estados.AsNoTracking().OrderBy(e => e.Sigla).Select(e => new OpcaoVM(e.IdEstados, e.Sigla)).ToListAsync();
-        vm.Cidades = vm.IdEstado is { } uf ? await CidadesAsync(uf) : [];
         if (vm.Id != 0)
-            vm.TemLogo = await db.Empresas.AnyAsync(e => e.IdEmpresas == vm.Id && e.Logo != null);
+        {
+            var atual = await db.Empresas.AsNoTracking().Where(e => e.IdEmpresas == vm.Id)
+                .Select(e => new { TemLogo = e.Logo != null, e.IdEntidades }).SingleOrDefaultAsync();
+            (vm.TemLogo, vm.IdEntidades) = (atual?.TemLogo ?? false, atual?.IdEntidades);
+        }
         if (vm.Id == 0 && ctx.AdminGlobal)
         {
             vm.EmpresasOrigem = await db.Empresas.AsNoTracking().Where(e => e.Ativa).OrderBy(e => e.CodEmpresa)
@@ -65,10 +65,6 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
             vm.GruposDisponiveis = CopiaCadastros.Grupos;
         }
     }
-
-    public async Task<IReadOnlyList<OpcaoVM>> CidadesAsync(int idEstado) =>
-        await db.Cidades.AsNoTracking().Where(c => c.IdEstados == idEstado).OrderBy(c => c.Nome)
-            .Select(c => new OpcaoVM(c.IdCidades, c.Nome)).ToListAsync();
 
     /// <summary>
     /// Nova empresa (ADMIN_GLOBAL), numa transação só: EMPRESAS → SP_INICIALIZAR_EMPRESA (status, parâmetros, perfis) →
@@ -136,6 +132,10 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
         return l is null ? null : (l.Logo!, l.LogoMime ?? "image/png");
     }
 
+    /// <summary>Entidade da empresa (endereços, telefones e e-mails), criada por SP_INICIALIZAR_EMPRESA.</summary>
+    public async Task<int?> EntidadeDaEmpresaAsync(int id) =>
+        PodeVer(id) ? await db.Empresas.Where(e => e.IdEmpresas == id).Select(e => e.IdEntidades).SingleOrDefaultAsync() : null;
+
     private bool PodeVer(int id) => ctx.AdminGlobal || id == ctx.EmpresaId;
 
     private async Task<Resultado> AplicarAsync(Empresa e, EmpresaVM vm)
@@ -146,9 +146,6 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
             if (!Documentos.CnpjValido(vm.Cnpj)) return Resultado.Erro("CNPJ inválido.", nameof(vm.Cnpj));
             cnpj = Documentos.FormatarCnpj(vm.Cnpj);
         }
-        if (vm.IdCidades is { } cid && !await db.Cidades.AnyAsync(c => c.IdCidades == cid))
-            return Resultado.Erro("Cidade não encontrada.", nameof(vm.IdCidades));
-
         if (vm.NovoLogo is { Length: > 0 } arquivo)
         {
             if (arquivo.Length > TamanhoMaximoLogo) return Resultado.Erro("O logo deve ter no máximo 1 MB.", nameof(vm.NovoLogo));
@@ -167,15 +164,6 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
         e.Cnpj = cnpj;
         e.InscEstadual = Vazio(vm.InscEstadual)?.ToUpperInvariant();
         e.InscMunicipal = Vazio(vm.InscMunicipal);
-        e.Cep = Vazio(vm.Cep);
-        e.Logradouro = Vazio(vm.Logradouro);
-        e.Numero = Vazio(vm.Numero);
-        e.Complemento = Vazio(vm.Complemento);
-        e.Bairro = Vazio(vm.Bairro);
-        e.IdCidades = vm.IdCidades;
-        e.Ddd = Vazio(vm.Ddd);
-        e.Fone = Vazio(vm.Fone);
-        e.Email = Vazio(vm.Email);
         e.Site = Vazio(vm.Site);
         e.CabecalhoLaudo = Vazio(vm.CabecalhoLaudo);
         e.RodapeLaudo = Vazio(vm.RodapeLaudo);

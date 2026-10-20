@@ -47,4 +47,17 @@ Filtros: nome/fantasia/documento (contém), tipo (cliente/fornecedor/...), inati
 - Excluir só sem movimento (proposta/amostra); senão inativar.
 - A v1 usa endpoints AJAX por aba (`/Clientes/AdicionarFone`…): **manter o padrão**, agora com `ID_EMPRESAS` e validações acima.
 
-**Status:** 🟨 v1 existe (sem empresa e com endereço incompleto) — **refazer sobre o schema v2**
+## Critérios de aceite
+- [x] Incluir PF/PJ com CPF/CNPJ validado (dígito verificador) e único por empresa; campos da outra categoria limpos.
+- [x] Ao menos um tipo (cliente, fornecedor, comercial, transportador); funcionário é mantido na T13 (só exibido aqui).
+- [x] Vários endereços (tipo de endereço + tipo de logradouro + CEP com ViaCEP + cidade IBGE), um ativo por tipo; vários telefones e e-mails tipados com um principal.
+- [x] Consulta por nome/fantasia/documento (com ou sem máscara), tipo e inativos, com telefone e e-mail principais; empresa usuária nunca aparece.
+- [x] Excluir só sem movimento (senão a mensagem sugere inativar; botão inativar/reativar na lista); contatos excluídos junto.
+- [x] Sem `CLIENTES.ALTERAR` a tela abre só para consulta.
+
+## Implementação (antecipada em 20/10/2026 — pedido do usuário)
+- `Controllers/ClientesController.cs` (`/Clientes`, `Criar`, `Editar/{id}`, `Excluir`, `Inativo`; contatos em `/Clientes/{idEntidade}/Contatos|ContatoEndereco|ContatoFone|ContatoEmail|ContatoExcluir`) · `Services/Entidades/ClienteService.cs` · `Services/Entidades/ContatosService.cs` · `Views/Clientes/{Index,Form}.cshtml` · componente `_ContatosAbas`/`_ContatosModais` + `wwwroot/js/contatos.js` · `/Geografia/Cidades` e `/Geografia/Cep/{cep}`.
+- Abas **Dados básicos · Endereços · Telefones · E-mails · Observações**; ao incluir, grava os dados e abre a aba Endereços (as de contatos ficam desabilitadas antes de existir o cadastro); contatos gravados na hora, por AJAX. Textos em maiúsculas (e-mail em minúsculas). Detalhes, regras e testes: [P25](../processos/P25-cadastro-entidades-contatos.md).
+- Testes: `CadastrosEntidadesTests`, `CadastrosTelasTests`.
+
+**Status:** ✅ concluída em 20/10/2026 (antecipada da tarefa 3.1).

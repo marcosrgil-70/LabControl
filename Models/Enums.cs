@@ -28,7 +28,7 @@ public enum EstadoCivil
     [ValorBanco("C")] Casado,
     [ValorBanco("D")] Divorciado,
     [ValorBanco("P")] Separado,
-    [ValorBanco("V")] Viuvo,
+    [ValorBanco("V"), System.ComponentModel.DataAnnotations.Display(Name = "Viúvo")] Viuvo,
 }
 
 /// <summary>TIPO_DOCUMENTO da análise/amostra: boletim ou relatório de ensaio</summary>
@@ -65,10 +65,10 @@ public enum SituacaoArquivo
 public enum FinalidadeEndereco
 {
     [ValorBanco("GERAL")] Geral,
-    [ValorBanco("NOTA_FISCAL")] NotaFiscal,
-    [ValorBanco("CORRESPONDENCIA")] Correspondencia,
+    [ValorBanco("NOTA_FISCAL"), System.ComponentModel.DataAnnotations.Display(Name = "Nota fiscal")] NotaFiscal,
+    [ValorBanco("CORRESPONDENCIA"), System.ComponentModel.DataAnnotations.Display(Name = "Correspondência")] Correspondencia,
     [ValorBanco("ENTREGA")] Entrega,
-    [ValorBanco("COBRANCA")] Cobranca,
+    [ValorBanco("COBRANCA"), System.ComponentModel.DataAnnotations.Display(Name = "Cobrança")] Cobranca,
 }
 
 /// <summary>Valor do membro do enum na coluna ENUM do MySQL.</summary>

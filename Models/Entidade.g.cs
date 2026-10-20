@@ -35,6 +35,8 @@ public partial class Entidade : IPorEmpresa
     /// <summary><c>TIPO_VENDEDOR</c> — Comercial (ID_ENTIDADES_COMERC da proposta)</summary>
     public bool TipoVendedor { get; set; }
     public bool TipoTransportador { get; set; }
+    /// <summary><c>TIPO_EMPRESA_USUARIA</c> — Entidade da própria empresa (EMPRESAS.ID_ENTIDADES); não coexiste com outro tipo</summary>
+    public bool TipoEmpresaUsuaria { get; set; }
     public string? Avaliacao { get; set; }
     public string? Observacao { get; set; }
     public bool ObsIncluirFaturamento { get; set; }

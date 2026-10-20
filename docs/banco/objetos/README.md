@@ -4,7 +4,7 @@
 > Cada arquivo traz: finalidade, origem no legado, colunas, chaves, relacionamentos, triggers, quem usa, telas, processos, regras de negócio, cuidados no C# e o código SQL.
 > Legenda: 🔴 crítico · 🟠 importante · ⚪ normal.
 
-**Totais:** 59 tabelas · 10 views · 8 funções · 22 procedures · 42 triggers.
+**Totais:** 59 tabelas · 10 views · 8 funções · 26 procedures · 48 triggers.
 
 ## Tabelas
 
@@ -13,7 +13,7 @@
 |---|---|---|---|
 | [`PAISES`](tabelas/PAISES.md) | ⚪ | Países (dado global, igual para todas as empresas). | `PAISES` (1) |
 | [`ESTADOS`](tabelas/ESTADOS.md) | ⚪ | Unidades federativas (globais, códigos IBGE). | `ESTADOS` (28 (seed v2: 27 UFs)) |
-| [`CIDADES`](tabelas/CIDADES.md) | ⚪ | Municípios (globais, código IBGE de 7 dígitos). Base do componente de endereço com busca por CEP. | `CIDADES` (+ `CIDADES_BAIRROS`, `LOGRADOUROS` descontinuadas) (190 (legado); recomendado importar os 5.570 do IBGE) |
+| [`CIDADES`](tabelas/CIDADES.md) | ⚪ | Municípios (globais, código IBGE de 7 dígitos). Base do componente de endereço com busca por CEP. | `CIDADES` (+ `CIDADES_BAIRROS`, `LOGRADOUROS` descontinuadas) (190 (legado, sem código IBGE); 5.571 do IBGE no seed `06_cidades.sql`) |
 | [`EMPRESAS`](tabelas/EMPRESAS.md) | 🟠 | Empresas usuárias do sistema (o laboratório). Dados do cabeçalho do laudo, logo e nº de acreditação. | `EMPRESAS` + entidade marcada como `TIPO_EMPRESA_USUARIA` (`ENTIDADES`/`ENTIDADES_PJ`/endereço) (1) |
 | [`EMPRESAS_PARAMETROS`](tabelas/EMPRESAS_PARAMETROS.md) | 🔴 | Parâmetros de funcionamento de cada empresa: status padrão, limites de dias, textos padrão. | `EMPRESAS_PARAMETROS` (os `ULT_COD_*` foram para `SEQUENCIAS_DOCUMENTOS`) (1) |
 | [`SEQUENCIAS_DOCUMENTOS`](tabelas/SEQUENCIAS_DOCUMENTOS.md) | 🔴 | Último número usado por (empresa, tipo de documento, ano). É a base da numeração segura de amostras, propostas, pedidos, produtos e relatórios de ensaio. | `EMPRESAS_PARAMETROS.ULT_COD_AMOSTRA/ULT_COD_PROPOSTA/ULT_PED_VENDA/ULT_COD_BOLETIM/ULT_COD_RE` + `SYS_TABELAS_ID` (— (criada na migração, M-18)) |
@@ -55,7 +55,7 @@
 |---|---|---|---|
 | [`ENTIDADES`](tabelas/ENTIDADES.md) | 🟠 | Pessoa física ou jurídica: clientes, fornecedores, profissionais (funcionários), comerciais e transportadores. | `ENTIDADES` + `ENTIDADES_PF` + `ENTIDADES_PJ` + `ENTIDADES_OBSERVACOES` (527 (44 PF / 483 PJ)) |
 | [`ENTIDADES_ENDERECOS`](tabelas/ENTIDADES_ENDERECOS.md) | 🟠 | Endereços da entidade (logradouro/bairro em texto + cidade IBGE). | `ENTIDADES_ENDERECOS` ⨝ `LOGRADOUROS` ⨝ `CIDADES_BAIRROS` ⨝ `CIDADES` (538) |
-| [`ENTIDADES_FONES`](tabelas/ENTIDADES_FONES.md) | ⚪ | Telefones da entidade. | `ENTIDADES_FONES` (695) |
+| [`ENTIDADES_FONES`](tabelas/ENTIDADES_FONES.md) | ⚪ | Telefones da entidade (cliente, fornecedor, profissional, empresa usuária), com tipo. | `ENTIDADES_FONES` (695) |
 | [`ENTIDADES_EMAILS`](tabelas/ENTIDADES_EMAILS.md) | 🟠 | E-mails da entidade — são também os **contatos** usados na proposta (contato comercial, do resultado e da NF). | `ENTIDADES_EMAILS` (664) |
 | [`ENTIDADES_FUNCIONARIOS`](tabelas/ENTIDADES_FUNCIONARIOS.md) | 🟠 | Dados de profissional (funcionário): registro, cargo, flags de assinatura/análise e imagem da assinatura. | `ENTIDADES_FUNCIONARIOS` + `ENTIDADES_FUNC_ASSINATURAS` (vazia) (16) |
 | [`PRODUTOS`](tabelas/PRODUTOS.md) | ⚪ | Produtos = nomes das amostras do cliente (ex.: "QUEIJO MINAS"). Usados na proposta, amostra, etiqueta e boletim. | `PRODUTOS` (só a aba Principal era usada; código por `SYS_TABELAS_ID`) (1.915) |
@@ -118,6 +118,10 @@
 | [`FN_OBS_METODOS`](rotinas/FN_OBS_METODOS.md) | Função | 🟠 | Texto das metodologias do boletim ("DESCR_METODO: método"), separado por acreditado (1) e não acreditado (0). |
 | [`SP_PROXIMO_NUMERO`](rotinas/SP_PROXIMO_NUMERO.md) | Pública | 🔴 | Numeração segura por (empresa, tipo, ano): `INSERT … ON DUPLICATE KEY UPDATE` com trava exclusiva até o COMMIT (sem deadlock em gravações simultâneas). |
 | [`PR_AUDITAR`](rotinas/PR_AUDITAR.md) | Interna | 🔴 | Grava um evento em `AUDITORIA` (usuário `@LC_ID_USUARIOS`, IP `@LC_IP`) dentro da transação da procedure que a chama: revisão R, emissão M, desfazer revisão D, pedido I/A, troca de produto A. |
+| [`PR_CONFERIR_ENDERECO`](rotinas/PR_CONFERIR_ENDERECO.md) | Interna | 🟠 | Recusa (45000) um segundo endereço **ativo** do mesmo tipo na entidade; endereço inativo (histórico) é aceito. |
+| [`PR_CONFERIR_FONE`](rotinas/PR_CONFERIR_FONE.md) | Interna | ⚪ | Recusa (45000) um segundo telefone principal na entidade. |
+| [`PR_CONFERIR_EMAIL`](rotinas/PR_CONFERIR_EMAIL.md) | Interna | ⚪ | Recusa (45000) um segundo e-mail principal na entidade. |
+| [`PR_CONFERIR_TIPOS_ENTIDADE`](rotinas/PR_CONFERIR_TIPOS_ENTIDADE.md) | Interna | 🟠 | Recusa (45000) entidade "empresa usuária" marcada também com outro tipo (cliente, fornecedor, funcionário, comercial, transportador). |
 | [`PR_CONFERIR_EMPRESA`](rotinas/PR_CONFERIR_EMPRESA.md) | Interna | 🔴 | Recusa (45000 "Registro pertence a outra empresa.") um filho gravado com `ID_EMPRESAS` diferente da empresa do pai; 0/NULL = não informado. |
 | [`PR_CRIAR_PERFIL`](rotinas/PR_CRIAR_PERFIL.md) | Interna | 🟠 | Cria um perfil sugerido da empresa com as permissões listadas (códigos ou TELA.*), só se ele ainda não existir — reinicializar não devolve permissão que a empresa retirou. |
 | [`PR_ATUALIZA_SALDO`](rotinas/PR_ATUALIZA_SALDO.md) | Interna | 🟠 | Recalcula o saldo físico da amostra (Σ entradas − Σ saídas). |
@@ -137,14 +141,20 @@
 | [`SP_GERAR_PEDIDO_VENDA`](rotinas/SP_GERAR_PEDIDO_VENDA.md) | Pública | 🔴 | Gera o pedido de venda da proposta (um por proposta), com itens, e liga as amostras já recebidas. |
 | [`SP_ATUALIZAR_PEDIDO_REVISAO`](rotinas/SP_ATUALIZAR_PEDIDO_REVISAO.md) | Pública | 🟠 | Atualiza o pedido para a revisão vigente da proposta (valores, cobrança, condição, itens). |
 | [`SP_TROCAR_PRODUTO_PROPOSTA`](rotinas/SP_TROCAR_PRODUTO_PROPOSTA.md) | Pública | 🟠 | Troca um produto por outro na proposta e nas amostras **dessa** proposta. |
-| [`SP_INICIALIZAR_EMPRESA`](rotinas/SP_INICIALIZAR_EMPRESA.md) | Pública | 🟠 | Cria os cadastros padrão de uma empresa (status, idiomas, moedas, tipos, parâmetros e perfil ADMINISTRADOR com todas as permissões). Idempotente. |
+| [`SP_INICIALIZAR_EMPRESA`](rotinas/SP_INICIALIZAR_EMPRESA.md) | Pública | 🟠 | Cria os cadastros padrão de uma empresa (status, idiomas, moedas, tipos de endereço/logradouro/telefone/e-mail/registro, parâmetros, perfis) e a **entidade da empresa** (`EMPRESAS.ID_ENTIDADES`, onde ficam endereços/telefones/e-mails). Idempotente. |
 
 ## Triggers (por tabela)
 | Tabela | Trigger | Momento | O que faz |
 |---|---|---|---|
-| [`ENTIDADES_ENDERECOS`](tabelas/ENTIDADES_ENDERECOS.md) | [`TG_ENTEND_BI`](triggers/TG_ENTEND_BI.md) | BEFORE INSERT | Endereço herda `ID_EMPRESAS` da entidade. |
-| [`ENTIDADES_FONES`](tabelas/ENTIDADES_FONES.md) | [`TG_ENTFON_BI`](triggers/TG_ENTFON_BI.md) | BEFORE INSERT | Telefone herda `ID_EMPRESAS` da entidade. |
-| [`ENTIDADES_EMAILS`](tabelas/ENTIDADES_EMAILS.md) | [`TG_ENTEML_BI`](triggers/TG_ENTEML_BI.md) | BEFORE INSERT | E-mail/contato herda `ID_EMPRESAS` da entidade. |
+| [`EMPRESAS`](tabelas/EMPRESAS.md) | [`TG_EMPRESAS_AU`](triggers/TG_EMPRESAS_AU.md) | AFTER UPDATE | Espelha a identidade da empresa (razão social, fantasia, CNPJ, IE, IM, ativa) na entidade da empresa (`ID_ENTIDADES`). |
+| [`ENTIDADES`](tabelas/ENTIDADES.md) | [`TG_ENT_BI`](triggers/TG_ENT_BI.md) | BEFORE INSERT | Empresa usuária não coexiste com outro tipo de cadastro. |
+| [`ENTIDADES`](tabelas/ENTIDADES.md) | [`TG_ENT_BU`](triggers/TG_ENT_BU.md) | BEFORE UPDATE | Empresa usuária não coexiste com outro tipo e não deixa de ser empresa usuária enquanto `EMPRESAS` apontar para ela. |
+| [`ENTIDADES_ENDERECOS`](tabelas/ENTIDADES_ENDERECOS.md) | [`TG_ENTEND_BI`](triggers/TG_ENTEND_BI.md) | BEFORE INSERT | Endereço herda `ID_EMPRESAS` da entidade; um endereço ativo por tipo (`PR_CONFERIR_ENDERECO`). |
+| [`ENTIDADES_ENDERECOS`](tabelas/ENTIDADES_ENDERECOS.md) | [`TG_ENTEND_BU`](triggers/TG_ENTEND_BU.md) | BEFORE UPDATE | Endereço não muda de entidade/empresa; um endereço ativo por tipo. |
+| [`ENTIDADES_FONES`](tabelas/ENTIDADES_FONES.md) | [`TG_ENTFON_BI`](triggers/TG_ENTFON_BI.md) | BEFORE INSERT | Telefone herda `ID_EMPRESAS` da entidade; inativo não é principal; um principal por entidade (`PR_CONFERIR_FONE`). |
+| [`ENTIDADES_FONES`](tabelas/ENTIDADES_FONES.md) | [`TG_ENTFON_BU`](triggers/TG_ENTFON_BU.md) | BEFORE UPDATE | Telefone não muda de entidade/empresa; inativo não é principal; um principal por entidade. |
+| [`ENTIDADES_EMAILS`](tabelas/ENTIDADES_EMAILS.md) | [`TG_ENTEML_BI`](triggers/TG_ENTEML_BI.md) | BEFORE INSERT | E-mail/contato herda `ID_EMPRESAS` da entidade; minúsculas sem espaços; inativo não é principal; um principal por entidade (`PR_CONFERIR_EMAIL`). |
+| [`ENTIDADES_EMAILS`](tabelas/ENTIDADES_EMAILS.md) | [`TG_ENTEML_BU`](triggers/TG_ENTEML_BU.md) | BEFORE UPDATE | E-mail não muda de entidade/empresa; minúsculas; inativo não é principal; um principal por entidade. |
 | [`ENTIDADES_FUNCIONARIOS`](tabelas/ENTIDADES_FUNCIONARIOS.md) | [`TG_ENTFUN_BI`](triggers/TG_ENTFUN_BI.md) | BEFORE INSERT | Profissional herda `ID_EMPRESAS` da entidade. |
 | [`PRODUTOS`](tabelas/PRODUTOS.md) | [`TG_PRODUTOS_BI`](triggers/TG_PRODUTOS_BI.md) | BEFORE INSERT | Código automático do produto (6 dígitos) quando vazio. |
 | [`LAB_PROPOSTAS`](tabelas/LAB_PROPOSTAS.md) | [`TG_PROPOSTAS_BI`](triggers/TG_PROPOSTAS_BI.md) | BEFORE INSERT | Numeração da proposta (ano do servidor + sequência anual), data de solicitação padrão, validade ≥ solicitação e `NR_PROPOSTA`. |

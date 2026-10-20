@@ -15,6 +15,7 @@
 - **Esforço:** M
 
 ### 2.2 Replicar para os outros 19 auxiliares ⚪⚡
+> 🟨 **6 de 19 feitos em 20/10/2026** (T10-01…T10-06: tipos de logradouro, endereço, telefone, e-mail, registros profissionais e cargos — usados pelos cadastros com contatos, [P25](../processos/P25-cadastro-entidades-contatos.md)). Faltam T10-08…T10-20 (skill `/novo-auxiliar`).
 - **Passos:** uma `AuxiliarDefinicao` por tabela, conforme o MD de cada uma (campos, únicos, regras específicas). Atenção às regras especiais:
   - [T10-14](../telas/T10-14-tipos-amostra.md)/[T10-16](../telas/T10-16-tipos-analise.md): **código 1–99 imutável após uso** (validar `EXISTS` antes de permitir edição);
   - [T10-15](../telas/T10-15-status-amostra.md): ao menos um "permite resultado";
@@ -26,6 +27,7 @@
 - **Esforço:** M · **Depende de:** 2.1
 
 ### 2.3 Geografia + importação IBGE + componente de endereço
+> 🟨 **Parte feita em 20/10/2026:** 5.571 municípios IBGE no seed `06_cidades.sql`, `/Geografia/Cidades`, `/Geografia/Cep/{cep}` (ViaCEP no servidor) e o componente de endereço/contatos (`_ContatosAbas`/`_ContatosModais`/`contatos.js`). Falta a tela de manutenção T11-01…03.
 - **Passos:** T11-01/02/03 (só ADMIN_GLOBAL altera); importação do CSV do IBGE; endpoint `/Geografia/Cep/{cep}` (ViaCEP no servidor, cache, timeout); componente Razor/JS "Endereço" reutilizável (usado depois em T12 e T03).
 - **Aceite:** [aceite da T11-03](../telas/T11-03-cidades.md#critérios-de-aceite).
 - **Esforço:** M

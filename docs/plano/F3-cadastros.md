@@ -8,11 +8,13 @@
 ---
 
 ### 3.1 T12 — Clientes/Fornecedores
+> ✅ **Antecipada e concluída em 20/10/2026** (pedido do usuário: cadastros com vários endereços/telefones/e-mails tipados, como o legado) — ver [T12 › Implementação](../telas/T12-clientes.md#implementação-antecipada-em-20102026--pedido-do-usuário) e [P25](../processos/P25-cadastro-entidades-contatos.md); aceite em `CadastrosEntidadesTests`/`CadastrosTelasTests`.
 - **Passos:** Index (filtros nome/fantasia/documento, tipo, inativos); formulário com abas Dados básicos (F/J, CPF/CNPJ com DV e unicidade — mensagens do legado), Endereços (componente da 2.3; um ativo por tipo), Telefones (um principal), E-mails/Contatos (únicos; flags principal, NF-e, laudo), Observações; endpoints AJAX por aba; excluir só sem movimento.
 - **Aceite:** checklist da T12; cliente com contatos pronto para proposta.
 - **Esforço:** G
 
 ### 3.2 T13 — Profissionais
+> ✅ **Antecipada e concluída em 20/10/2026** — ver [T13 › Implementação](../telas/T13-profissionais.md#implementação-antecipada-em-20102026--pedido-do-usuário); falta só a assinatura no PDF do boletim (5.3/5.4).
 - **Passos:** entidade PF com `TIPO_FUNCIONARIO` + `ENTIDADES_FUNCIONARIOS` (cargo, registro/UF, assina boletim, executa análise, assinatura PNG ≤ 300 KB com SHA-256); campo "Usuário do sistema" (serviço único da 1.3); abas de e-mail/telefone reaproveitadas da T12.
 - **Aceite:** [aceite da T13](../telas/T13-profissionais.md#aceite).
 - **Esforço:** M · **Depende de:** 3.1

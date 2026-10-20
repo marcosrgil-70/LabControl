@@ -87,6 +87,44 @@ public static class CatalogoAuxiliares
             Ajuda = "Idioma de cada análise da proposta; o teste da amostra herda.",
             Campos = [Descricao],
         },
+        // T10-01…T10-06: tipos usados nos cadastros de empresa, clientes/fornecedores e profissionais (P25)
+        new AuxiliarDefinicao<TipoLogradouro>
+        {
+            Tabela = "TIPOS_LOGRADOURO", Titulo = "Tipos de logradouro", Singular = "tipo de logradouro", Icone = "bi-signpost",
+            Ajuda = "Rua, Avenida, Rodovia… escolhido em cada endereço (a busca de CEP reconhece pela descrição).",
+            Campos = [Descricao, new("Abreviatura", "Abreviatura", Busca: true, Maiusculas: true)],
+        },
+        new AuxiliarDefinicao<EnderecoTipo>
+        {
+            Tabela = "ENDERECOS_TIPOS", Titulo = "Tipos de endereço", Singular = "tipo de endereço", Icone = "bi-mailbox",
+            Ajuda = "Nota fiscal, correspondência, entrega, cobrança… (um endereço ativo por tipo em cada cadastro).",
+            Campos = [Descricao, new("Finalidade", "Finalidade", TipoCampo.Opcoes,
+                Ajuda: "Orienta as sugestões da proposta (endereço do laudo, da cobrança).")],
+        },
+        new AuxiliarDefinicao<FoneTipo>
+        {
+            Tabela = "FONES_TIPOS", Titulo = "Tipos de telefone", Singular = "tipo de telefone", Icone = "bi-telephone",
+            Ajuda = "Comercial, residencial, celular… escolhido em cada telefone.",
+            Campos = [Descricao],
+        },
+        new AuxiliarDefinicao<EmailTipo>
+        {
+            Tabela = "EMAILS_TIPOS", Titulo = "Tipos de e-mail", Singular = "tipo de e-mail", Icone = "bi-envelope",
+            Ajuda = "Geral, comercial, financeiro… escolhido em cada e-mail.",
+            Campos = [Descricao],
+        },
+        new AuxiliarDefinicao<TipoRegProfissional>
+        {
+            Tabela = "TIPOS_REG_PROFISSIONAL", Titulo = "Registros profissionais", Singular = "tipo de registro", Icone = "bi-patch-check",
+            Ajuda = "CRQ, CRF, CRBio… impresso no boletim junto com o nº e a UF do profissional.",
+            Campos = [Descricao],
+        },
+        new AuxiliarDefinicao<CargoFuncionario>
+        {
+            Tabela = "CARGOS_FUNCIONARIOS", Titulo = "Cargos de funcionários", Singular = "cargo", Icone = "bi-person-vcard",
+            Ajuda = "Cargo do profissional, impresso no boletim.",
+            Campos = [Descricao],
+        },
     ];
 
     public static AuxiliarDefinicao? Encontrar(string? tabela) =>

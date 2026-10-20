@@ -30,7 +30,7 @@
                             @if (!p.Administrador)
                             {
                                 <form asp-action="Excluir" asp-route-id="@p.Id" method="post" class="d-inline" lc-permissao="PERFIS.EXCLUIR"
-                                      onsubmit="return confirm('Excluir o perfil @p.Nome?')">
+                                      data-confirmar="Excluir o perfil &quot;@p.Nome&quot;?">
                                     <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash"></i></button>
                                 </form>
                             }
@@ -41,3 +41,11 @@
         </table>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // nome no data-*: nunca dentro de string JavaScript (XSS com apóstrofo no nome)
+        document.querySelectorAll('form[data-confirmar]').forEach(f =>
+            f.addEventListener('submit', e => { if (!confirm(f.dataset.confirmar)) e.preventDefault(); }));
+    </script>
+}

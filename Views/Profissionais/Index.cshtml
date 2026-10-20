@@ -1,0 +1,83 @@
+@model ProfissionalListaVM
+@{
+    ViewData["Title"] = "Profissionais";
+    var f = Model.Filtro;
+}
+
+<div class="d-flex align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-person-badge me-2 text-primary"></i>Profissionais (funcionários)</h5>
+    <a asp-action="Criar" class="btn btn-primary btn-sm ms-auto" lc-permissao="PROFISSIONAIS.INCLUIR"><i class="bi bi-plus-lg me-1"></i>Incluir</a>
+</div>
+
+<form method="get" class="card mb-3">
+    <div class="card-body py-2 d-flex flex-wrap gap-3 align-items-end">
+        <div class="flex-grow-1" style="max-width: 26rem">
+            <label class="form-label small mb-0" for="Texto">Nome, registro ou login</label>
+            <input name="Texto" id="Texto" value="@f.Texto" class="form-control form-control-sm" autofocus />
+        </div>
+        <div class="form-check mb-1">
+            <input type="checkbox" class="form-check-input" name="Inativos" id="Inativos" value="true" checked="@f.Inativos" />
+            <label class="form-check-label small" for="Inativos">Mostrar inativos</label>
+        </div>
+        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Pesquisar</button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead><tr><th>Nome</th><th>Cargo</th><th>Registro</th><th>Funções</th><th>Usuário</th><th>Situação</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var p in Model.Itens)
+                {
+                    <tr class="@(p.Inativo ? "text-body-secondary" : "")">
+                        <td class="fw-semibold"><a asp-action="Editar" asp-route-id="@p.Id" class="text-decoration-none">@p.NomeCompleto</a></td>
+                        <td class="small">@p.Cargo</td>
+                        <td class="small text-nowrap">@p.Registro</td>
+                        <td class="small text-nowrap">
+                            @if (p.AssinaBoletim) { <span class="badge text-bg-primary">Assina boletim</span> }
+                            @if (p.ExecutaAnalise) { <span class="badge text-bg-info">Analista</span> }
+                            @if (p.TemAssinatura) { <i class="bi bi-pen ms-1" title="Assinatura cadastrada"></i> }
+                        </td>
+                        <td class="small">@p.Login</td>
+                        <td>@if (p.Inativo) { <span class="badge text-bg-secondary">Inativo</span> } else { <span class="badge text-bg-success">Ativo</span> }</td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Editar" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm" title="Abrir"><i class="bi bi-pencil"></i></a>
+                            <form method="post" asp-action="Excluir" asp-route-id="@p.Id" class="d-inline" lc-permissao="PROFISSIONAIS.EXCLUIR"
+                                  data-confirmar="Excluir o profissional &quot;@p.NomeCompleto&quot;? Só é possível sem movimentos e sem usuário vinculado.">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (Model.Itens.Count == 0)
+                {
+                    <tr><td colspan="7" class="text-center text-body-secondary small py-3">Nenhum profissional encontrado.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center small py-2">
+        <span class="text-body-secondary">@Model.Total registro(s)</span>
+        @if (Model.Paginas > 1)
+        {
+            <nav class="ms-auto" aria-label="Páginas">
+                <ul class="pagination pagination-sm mb-0">
+                    @for (var p = 1; p <= Model.Paginas; p++)
+                    {
+                        <li class="page-item @(p == f.Pagina ? "active" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-Texto="@f.Texto" asp-route-Inativos="@(f.Inativos ? "true" : null)" asp-route-Pagina="@p">@p</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('form[data-confirmar]').forEach(f =>
+            f.addEventListener('submit', e => { if (!confirm(f.dataset.confirmar)) e.preventDefault(); }));
+    </script>
+}

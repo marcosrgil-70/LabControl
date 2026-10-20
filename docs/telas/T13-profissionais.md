@@ -30,8 +30,15 @@
 - Responsável pelo recebimento (amostra), analista (resultado) e responsáveis do boletim são escolhidos entre os profissionais ativos com as flags acima.
 
 ## Aceite
-- [ ] Profissional com "Assina boletim" exige registro.
-- [ ] Vincular usuário pela tela do profissional e pela tela de usuários dá o mesmo resultado.
-- [ ] Assinatura aparece só no PDF emitido.
+- [x] Profissional com "Assina boletim" exige registro.
+- [x] Vincular usuário pela tela do profissional e pela tela de usuários dá o mesmo resultado (mesmo `VinculoUsuarioProfissionalService`).
+- [ ] Assinatura aparece só no PDF emitido — **na 5.3/5.4** (a imagem PNG ≤ 300 KB e o SHA-256 já são gravados e exibidos na tela).
+- [x] Vários endereços, telefones e e-mails tipados (mesmo componente da T12/T03).
 
-**Status:** 🟨 v1 "Funcionários" existe — refazer com vínculo de usuário e flags
+## Implementação (antecipada em 20/10/2026 — pedido do usuário)
+- `Controllers/ProfissionaisController.cs` (`/Profissionais`, `Criar`, `Editar/{id}`, `Excluir`, `Assinatura/{id}`; contatos em `/Profissionais/{idEntidade}/…`) · `Services/Entidades/ProfissionalService.cs` · `Views/Profissionais/{Index,Form}.cshtml`.
+- Inclusão cria `ENTIDADES` (pessoa física, `TIPO_FUNCIONARIO`) + `ENTIDADES_FUNCIONARIOS` na mesma transação; cargo e tipo de registro pelos auxiliares T10-05/T10-06; UF do registro validada; CPF com dígito verificador.
+- **Usuário do sistema**: combo com os usuários da empresa sem profissional (+ o já vinculado); trocar o usuário desfaz o vínculo anterior; **profissional inativo fica sem usuário**. Excluir: só sem movimento e sem usuário vinculado; se também for cliente/fornecedor, só inativar.
+- Testes: `CadastrosEntidadesTests.Profissional_registro_assinatura_e_vinculo_com_usuario`, `CadastrosTelasTests`. Processo: [P25](../processos/P25-cadastro-entidades-contatos.md).
+
+**Status:** ✅ concluída em 20/10/2026 (antecipada da tarefa 3.2) — falta a assinatura no PDF do boletim (5.3/5.4).

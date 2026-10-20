@@ -1,6 +1,6 @@
 # SP_INICIALIZAR_EMPRESA
 
-Cria os cadastros padrão de uma empresa (status, idiomas, moedas, tipos, parâmetros e perfil ADMINISTRADOR com todas as permissões). Idempotente.
+Cria os cadastros padrão de uma empresa (status, idiomas, moedas, tipos de endereço/logradouro/telefone/e-mail/registro, parâmetros, perfis) e a **entidade da empresa** (`EMPRESAS.ID_ENTIDADES`, onde ficam endereços/telefones/e-mails). Idempotente.
 
 **Tipo:** Procedure pública (SP_) · **Criticidade:** 🟠 Importante · **Script:** `Scripts/v2/02_funcoes_procedures.sql`
 
@@ -30,7 +30,7 @@ CREATE PROCEDURE SP_INICIALIZAR_EMPRESA(IN p_id_empresa INT)
 Sem transação própria (INSERT IGNORE).
 
 ## O que acessa
-- **Altera:** [`PERFIS`](../tabelas/PERFIS.md), [`PERFIS_PERMISSOES`](../tabelas/PERFIS_PERMISSOES.md), [`EMPRESAS_PARAMETROS`](../tabelas/EMPRESAS_PARAMETROS.md), [`TIPOS_LOGRADOURO`](../tabelas/TIPOS_LOGRADOURO.md), [`ENDERECOS_TIPOS`](../tabelas/ENDERECOS_TIPOS.md), [`FONES_TIPOS`](../tabelas/FONES_TIPOS.md), [`EMAILS_TIPOS`](../tabelas/EMAILS_TIPOS.md), [`TIPOS_REG_PROFISSIONAL`](../tabelas/TIPOS_REG_PROFISSIONAL.md), [`IDIOMAS`](../tabelas/IDIOMAS.md), [`MOEDAS`](../tabelas/MOEDAS.md), [`AMOSTRAS_STATUS`](../tabelas/AMOSTRAS_STATUS.md), [`ANALISES_STATUS`](../tabelas/ANALISES_STATUS.md), [`BOLETINS_STATUS`](../tabelas/BOLETINS_STATUS.md), [`LAB_PROPOSTAS_STATUS`](../tabelas/LAB_PROPOSTAS_STATUS.md)
+- **Altera:** [`EMPRESAS`](../tabelas/EMPRESAS.md), [`PERFIS`](../tabelas/PERFIS.md), [`PERFIS_PERMISSOES`](../tabelas/PERFIS_PERMISSOES.md), [`EMPRESAS_PARAMETROS`](../tabelas/EMPRESAS_PARAMETROS.md), [`TIPOS_LOGRADOURO`](../tabelas/TIPOS_LOGRADOURO.md), [`ENDERECOS_TIPOS`](../tabelas/ENDERECOS_TIPOS.md), [`FONES_TIPOS`](../tabelas/FONES_TIPOS.md), [`EMAILS_TIPOS`](../tabelas/EMAILS_TIPOS.md), [`TIPOS_REG_PROFISSIONAL`](../tabelas/TIPOS_REG_PROFISSIONAL.md), [`IDIOMAS`](../tabelas/IDIOMAS.md), [`MOEDAS`](../tabelas/MOEDAS.md), [`AMOSTRAS_STATUS`](../tabelas/AMOSTRAS_STATUS.md), [`ANALISES_STATUS`](../tabelas/ANALISES_STATUS.md), [`BOLETINS_STATUS`](../tabelas/BOLETINS_STATUS.md), [`LAB_PROPOSTAS_STATUS`](../tabelas/LAB_PROPOSTAS_STATUS.md), [`ENTIDADES`](../tabelas/ENTIDADES.md)
 - **Lê:** [`PERMISSOES`](../tabelas/PERMISSOES.md)
 - **Chama:** [`PR_CRIAR_PERFIL`](../rotinas/PR_CRIAR_PERFIL.md)
 - **Variáveis de sessão:** —
@@ -82,15 +82,28 @@ BEGIN
   INSERT IGNORE INTO ENDERECOS_TIPOS (ID_EMPRESAS, DESCRICAO, FINALIDADE) VALUES
     (p_id_empresa, 'NOTA FISCAL', 'NOTA_FISCAL'), (p_id_empresa, 'CORRESPONDÊNCIA', 'CORRESPONDENCIA'),
     (p_id_empresa, 'ENTREGA', 'ENTREGA'), (p_id_empresa, 'COBRANÇA', 'COBRANCA');
+  -- tipos de telefone do legado (FONES_TIPOS do Firebird) + WhatsApp
   INSERT IGNORE INTO FONES_TIPOS (ID_EMPRESAS, DESCRICAO) VALUES
-    (p_id_empresa, 'COMERCIAL'), (p_id_empresa, 'CELULAR'), (p_id_empresa, 'RESIDENCIAL'), (p_id_empresa, 'FAX');
-  INSERT IGNORE INTO EMAILS_TIPOS (ID_EMPRESAS, DESCRICAO) VALUES (p_id_empresa, 'COMERCIAL');
+    (p_id_empresa, 'COMERCIAL'), (p_id_empresa, 'RESIDENCIAL'), (p_id_empresa, 'CELULAR COMERCIAL'),
+    (p_id_empresa, 'CELULAR PARTICULAR'), (p_id_empresa, 'WHATSAPP'), (p_id_empresa, 'RÁDIO');
+  INSERT IGNORE INTO EMAILS_TIPOS (ID_EMPRESAS, DESCRICAO) VALUES
+    (p_id_empresa, 'GERAL'), (p_id_empresa, 'COMERCIAL'), (p_id_empresa, 'FINANCEIRO'), (p_id_empresa, 'TÉCNICO');
   INSERT IGNORE INTO TIPOS_REG_PROFISSIONAL (ID_EMPRESAS, DESCRICAO) VALUES
     (p_id_empresa, 'CRF'), (p_id_empresa, 'CRQ');
   INSERT IGNORE INTO TIPOS_LOGRADOURO (ID_EMPRESAS, DESCRICAO, ABREVIATURA) VALUES
     (p_id_empresa, 'RUA', 'R.'), (p_id_empresa, 'AVENIDA', 'AV.'), (p_id_empresa, 'ALAMEDA', 'AL.'),
     (p_id_empresa, 'TRAVESSA', 'TV.'), (p_id_empresa, 'RODOVIA', 'ROD.'), (p_id_empresa, 'ESTRADA', 'EST.'),
     (p_id_empresa, 'PRAÇA', 'PÇA.');
+
+  -- Entidade da própria empresa (como no legado: EMPRESAS.ID_ENTIDADES, tipo "empresa usuária"):
+  -- guarda os endereços, telefones e e-mails da empresa. Identidade copiada de EMPRESAS
+  -- (depois mantida por TG_EMPRESAS_AU). Só cria se ainda não existir.
+  IF (SELECT ID_ENTIDADES FROM EMPRESAS WHERE ID_EMPRESAS = p_id_empresa) IS NULL THEN
+    INSERT INTO ENTIDADES (ID_EMPRESAS, CATEGORIA, NOME, NOME_FANTASIA, CPF_CNPJ, RG_IE, INSC_MUNICIPAL, TIPO_EMPRESA_USUARIA, INATIVO)
+    SELECT ID_EMPRESAS, 'J', RAZAO_SOCIAL, NOME_FANTASIA, CNPJ, INSC_ESTADUAL, INSC_MUNICIPAL, 1, 1 - ATIVA
+      FROM EMPRESAS WHERE ID_EMPRESAS = p_id_empresa;
+    UPDATE EMPRESAS SET ID_ENTIDADES = LAST_INSERT_ID() WHERE ID_EMPRESAS = p_id_empresa;
+  END IF;
 
   INSERT IGNORE INTO EMPRESAS_PARAMETROS (ID_EMPRESAS) VALUES (p_id_empresa);
   UPDATE EMPRESAS_PARAMETROS EP

@@ -21,6 +21,6 @@
 Endereços (T12) e sugestões da Proposta (T20).
 
 ## Critérios de aceite
-- [ ] Itens do [padrão T10-00](T10-00-crud-auxiliares.md#critérios-de-aceite-valem-para-todos).
+- [x] Itens do [padrão T10-00](T10-00-crud-auxiliares.md#critérios-de-aceite-valem-para-todos).
 
-**Status:** ⬜
+**Status:** ✅ concluída em 20/10/2026 — entrada no `CatalogoAuxiliares` (CRUD genérico da 2.1), antecipada para os cadastros com contatos tipados ([P25](../processos/P25-cadastro-entidades-contatos.md)); padrão testado em `AuxiliaresTests`, tela em `CadastrosTelasTests`.

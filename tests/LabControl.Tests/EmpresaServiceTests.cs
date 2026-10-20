@@ -95,7 +95,8 @@ public class EmpresaServiceTests(AppWeb app) : IClassFixture<AppWeb>
         Assert.Equal((c.Produto.Codigo, nova), (produto.Codigo, produto.Unidade));
         Assert.Equal(1, await Da(db.CondicoesPagtosParc).CountAsync(x => x.CondicaoPagto.IdEmpresas == nova));
         Assert.Equal(3, await Da(db.Idiomas).CountAsync(x => x.IdEmpresas == nova)); // os do SP_INICIALIZAR_EMPRESA não duplicam
-        Assert.Equal(0, await Da(db.Entidades).CountAsync(x => x.IdEmpresas == nova)); // clientes/profissionais nunca
+        Assert.Equal(0, await Da(db.Entidades).CountAsync(x => x.IdEmpresas == nova && !x.TipoEmpresaUsuaria)); // clientes/profissionais nunca
+        Assert.Equal(1, await Da(db.Entidades).CountAsync(x => x.IdEmpresas == nova && x.TipoEmpresaUsuaria)); // só a entidade da própria empresa (P25)
 
         // a sequência do produto acompanha o código copiado: o próximo produto da empresa nova não repete
         var naNova = new EmpresaFixa { EmpresaId = nova, UsuarioId = ctx.UsuarioId };
@@ -187,7 +188,7 @@ public class EmpresaServiceTests(AppWeb app) : IClassFixture<AppWeb>
             Assert.Contains(c.Empresa.CodEmpresa, await dados.HtmlAsync());
             Assert.Equal(HttpStatusCode.Forbidden, (await web.PostarAsync("/Empresa/Dados", "/Empresa/Dados", ("RazaoSocial", "X"))).StatusCode);
             Assert.Equal(HttpStatusCode.Forbidden, (await web.GetAsync("/Empresas")).StatusCode);
-            Assert.Equal(HttpStatusCode.OK, (await web.GetAsync($"/Empresa/Cidades?idEstado={await c.Db.Estados.Select(x => x.IdEstados).FirstAsync()}")).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await web.GetAsync($"/Geografia/Cidades?idEstado={await c.Db.Estados.Select(x => x.IdEstados).FirstAsync()}")).StatusCode);
         }
 
         var admin = await UsuariosTeste.CriarAsync(adminGlobal: true);

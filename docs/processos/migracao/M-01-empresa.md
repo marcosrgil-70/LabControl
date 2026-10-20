@@ -12,11 +12,12 @@
 | `ENTIDADES_ENDERECOS da empresa` | — |
 
 ## Destino (MySQL `labcontrol_v2`)
-[`EMPRESAS`](../../banco/objetos/tabelas/EMPRESAS.md)
+[`EMPRESAS`](../../banco/objetos/tabelas/EMPRESAS.md) + a entidade da empresa em [`ENTIDADES`](../../banco/objetos/tabelas/ENTIDADES.md) (`TIPO_EMPRESA_USUARIA = 1`) com os contatos em `ENTIDADES_ENDERECOS/FONES/EMAILS` (D-19, [P25](../P25-cadastro-entidades-contatos.md))
 
 ## Regras de transformação
 - `ID_EMPRESAS = 1`, `COD_EMPRESA = COD_EMPRESAS` ('001').
-- Razão social, fantasia, CNPJ, IE/IM e endereço vêm da entidade marcada como empresa usuária (PJ + endereço).
+- Razão social, fantasia, CNPJ, IE/IM vêm da entidade marcada como empresa usuária (PJ) e vão para `EMPRESAS`.
+- **Desde 20/10/2026:** a entidade 4 do legado migra (em M-05, com `@LC_MIGRACAO = 1`) como a **entidade da empresa** (`TIPO_EMPRESA_USUARIA = 1`, sem outros tipos) e `EMPRESAS.ID_ENTIDADES` aponta para ela **antes** do `SP_INICIALIZAR_EMPRESA` (que então não cria outra). Seus endereços, telefones e e-mails migram em M-06/M-07 como os de qualquer entidade — não há mais colunas de endereço em `EMPRESAS`.
 - `SP_INICIALIZAR_EMPRESA(1)` **só depois** de M-03 (para não duplicar status/idiomas já migrados) — chamar ao final de M-04.
 - Logo/cabeçalho/rodapé não existem no legado: ficam vazios (preencher na T03).
 

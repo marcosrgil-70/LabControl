@@ -1,0 +1,99 @@
+@model ClienteListaVM
+@{
+    ViewData["Title"] = "Clientes / Fornecedores";
+    var f = Model.Filtro;
+}
+
+<div class="d-flex align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-people me-2 text-primary"></i>Clientes / Fornecedores</h5>
+    <a asp-action="Criar" class="btn btn-primary btn-sm ms-auto" lc-permissao="CLIENTES.INCLUIR"><i class="bi bi-plus-lg me-1"></i>Incluir</a>
+</div>
+
+<form method="get" class="card mb-3">
+    <div class="card-body py-2 d-flex flex-wrap gap-3 align-items-end">
+        <div class="flex-grow-1" style="max-width: 26rem">
+            <label class="form-label small mb-0" for="Texto">Nome, fantasia ou CPF/CNPJ</label>
+            <input name="Texto" id="Texto" value="@f.Texto" class="form-control form-control-sm" autofocus />
+        </div>
+        <div>
+            <label class="form-label small mb-0" for="Tipo">Tipo</label>
+            <select name="Tipo" id="Tipo" class="form-select form-select-sm">
+                <option value="" selected="@(f.Tipo is null)">Todos</option>
+                <option value="cliente" selected="@(f.Tipo == "cliente")">Clientes</option>
+                <option value="fornecedor" selected="@(f.Tipo == "fornecedor")">Fornecedores</option>
+                <option value="comercial" selected="@(f.Tipo == "comercial")">Comerciais</option>
+                <option value="transportador" selected="@(f.Tipo == "transportador")">Transportadores</option>
+            </select>
+        </div>
+        <div class="form-check mb-1">
+            <input type="checkbox" class="form-check-input" name="Inativos" id="Inativos" value="true" checked="@f.Inativos" />
+            <label class="form-check-label small" for="Inativos">Mostrar inativos</label>
+        </div>
+        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Pesquisar</button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead>
+                <tr><th class="text-end">Código</th><th>F/J</th><th>Nome / Razão social</th><th>Fantasia</th><th>CPF/CNPJ</th><th>Telefone</th><th>E-mail</th><th>Tipo</th><th>Situação</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.Itens)
+                {
+                    <tr class="@(c.Inativo ? "text-body-secondary" : "")">
+                        <td class="text-end font-monospace small">@c.Id</td>
+                        <td>@(c.Categoria == Categoria.Fisica ? "F" : "J")</td>
+                        <td class="fw-semibold"><a asp-action="Editar" asp-route-id="@c.Id" class="text-decoration-none">@c.Nome</a></td>
+                        <td class="small">@c.NomeFantasia</td>
+                        <td class="small text-nowrap">@c.CpfCnpj</td>
+                        <td class="small text-nowrap">@c.Fone</td>
+                        <td class="small">@c.Email</td>
+                        <td class="small">@c.Tipos</td>
+                        <td>@if (c.Inativo) { <span class="badge text-bg-secondary">Inativo</span> } else { <span class="badge text-bg-success">Ativo</span> }</td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Editar" asp-route-id="@c.Id" class="btn btn-outline-secondary btn-sm" title="Abrir"><i class="bi bi-pencil"></i></a>
+                            <form method="post" asp-action="Inativo" asp-route-id="@c.Id" class="d-inline" lc-permissao="CLIENTES.ALTERAR">
+                                <input type="hidden" name="inativo" value="@(c.Inativo ? "false" : "true")" />
+                                <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(c.Inativo ? "Reativar" : "Inativar")"><i class="bi @(c.Inativo ? "bi-eye" : "bi-eye-slash")"></i></button>
+                            </form>
+                            <form method="post" asp-action="Excluir" asp-route-id="@c.Id" class="d-inline" lc-permissao="CLIENTES.EXCLUIR"
+                                  data-confirmar="Excluir o cadastro de &quot;@c.Nome&quot;? Só é possível sem propostas ou amostras.">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (Model.Itens.Count == 0)
+                {
+                    <tr><td colspan="10" class="text-center text-body-secondary small py-3">Nenhum cadastro encontrado.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center small py-2">
+        <span class="text-body-secondary">@Model.Total registro(s)</span>
+        @if (Model.Paginas > 1)
+        {
+            <nav class="ms-auto" aria-label="Páginas">
+                <ul class="pagination pagination-sm mb-0">
+                    @for (var p = 1; p <= Model.Paginas; p++)
+                    {
+                        <li class="page-item @(p == f.Pagina ? "active" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-Texto="@f.Texto" asp-route-Tipo="@f.Tipo"
+                               asp-route-Inativos="@(f.Inativos ? "true" : null)" asp-route-Pagina="@p">@p</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('form[data-confirmar]').forEach(f =>
+            f.addEventListener('submit', e => { if (!confirm(f.dataset.confirmar)) e.preventDefault(); }));
+    </script>
+}

@@ -1,5 +1,6 @@
 using LabControl.Infra;
 using LabControl.Services;
+using LabControl.Services.Entidades;
 using LabControl.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -7,14 +8,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LabControl.Controllers;
 
-/// <summary>T03 — dados da empresa ativa (<c>/Empresa/Dados</c>), logo e combo de cidades. A lista e a inclusão ficam em <see cref="EmpresasController"/>.</summary>
-public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresaService parametros, ContaService conta, IEmpresaContexto ctx) : Controller
+/// <summary>T03 — dados da empresa ativa (<c>/Empresa/Dados</c>), logo e contatos (endereços, telefones e e-mails da entidade da empresa). A lista e a inclusão ficam em <see cref="EmpresasController"/>.</summary>
+public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresaService parametros, ContatosService contatos, ContaService conta, IEmpresaContexto ctx) : Controller
 {
     private int Ativa => ctx.EmpresaId ?? throw new InvalidOperationException("Sem empresa ativa.");
 
     [HttpGet, Permissao("EMPRESAS.CONSULTAR")]
-    public async Task<IActionResult> Dados() =>
-        await empresas.CarregarAsync(Ativa) is { } vm ? View(vm) : NotFound();
+    public async Task<IActionResult> Dados()
+    {
+        if (await empresas.CarregarAsync(Ativa) is not { } vm) return NotFound();
+        await ContatosNaTelaAsync();
+        return View(vm);
+    }
 
     [HttpPost, Permissao("EMPRESAS.ALTERAR")]
     public async Task<IActionResult> Dados(EmpresaVM vm)
@@ -28,6 +33,7 @@ public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresa
         }
         await empresas.PrepararAsync(vm);
         vm.CodEmpresa = (await empresas.CarregarAsync(Ativa))?.CodEmpresa ?? "";
+        await ContatosNaTelaAsync();
         return View(vm);
     }
 
@@ -61,9 +67,35 @@ public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresa
     public async Task<IActionResult> Logo(int? id) =>
         await empresas.LogoAsync(id ?? Ativa) is { } logo ? File(logo.Dados, logo.Mime) : NotFound();
 
-    /// <summary>Combo de cidades da UF (JSON), usado pelo formulário de endereço.</summary>
-    [HttpGet]
-    public async Task<IActionResult> Cidades(int idEstado) => Json(await empresas.CidadesAsync(idEstado));
+    // ---- contatos da empresa ativa (endereços, telefones e e-mails da entidade da empresa — P25)
+
+    private const string RotaContatos = "/Empresa";
+
+    [HttpGet("Empresa/Contatos"), Permissao("EMPRESAS.CONSULTAR")]
+    public async Task<IActionResult> Contatos() =>
+        await this.AbasAsync(contatos, CadastroDono.Empresa, await EntidadeAsync(), RotaContatos, "EMPRESAS.ALTERAR", ctx);
+
+    [HttpPost("Empresa/ContatoEndereco"), Permissao("EMPRESAS.ALTERAR")]
+    public async Task<IActionResult> ContatoEndereco(EnderecoVM vm) =>
+        await this.RespostaAsync(contatos.GravarEnderecoAsync(CadastroDono.Empresa, await EntidadeAsync(), vm));
+
+    [HttpPost("Empresa/ContatoFone"), Permissao("EMPRESAS.ALTERAR")]
+    public async Task<IActionResult> ContatoFone(FoneVM vm) =>
+        await this.RespostaAsync(contatos.GravarFoneAsync(CadastroDono.Empresa, await EntidadeAsync(), vm));
+
+    [HttpPost("Empresa/ContatoEmail"), Permissao("EMPRESAS.ALTERAR")]
+    public async Task<IActionResult> ContatoEmail(EmailVM vm) =>
+        await this.RespostaAsync(contatos.GravarEmailAsync(CadastroDono.Empresa, await EntidadeAsync(), vm));
+
+    [HttpPost("Empresa/ContatoExcluir"), Permissao("EMPRESAS.ALTERAR")]
+    public async Task<IActionResult> ContatoExcluir(TipoContato tipo, int idContato) =>
+        await this.RespostaAsync(contatos.ExcluirAsync(CadastroDono.Empresa, await EntidadeAsync(), tipo, idContato));
+
+    /// <summary>Abas de contatos renderizadas junto com a página (sem segundo request).</summary>
+    private async Task ContatosNaTelaAsync() =>
+        ViewData["Contatos"] = await contatos.CarregarAsync(CadastroDono.Empresa, await EntidadeAsync(), RotaContatos, ctx.TemPermissao("EMPRESAS.ALTERAR"));
+
+    private async Task<int> EntidadeAsync() => await empresas.EntidadeDaEmpresaAsync(Ativa) ?? 0;
 
     // nome/código da empresa no topo vêm das claims: regrava a identidade depois de alterar
     private async Task AtualizarTopoAsync()

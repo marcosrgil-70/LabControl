@@ -12,6 +12,7 @@ Legenda de criticidade: 🔴🔴 núcleo do laboratório · 🔴 crítico · �
 | [P21 Auditoria e log](P21-auditoria-log.md) | 🟠 | `AUDITORIA` (aplicação) + log da amostra (banco) |
 | [P22 Erros de negócio e transações](P22-erros-transacoes.md) | 🔴 | SQLSTATE 45000, procedures com/sem transação, variáveis de sessão |
 | [P23 Nova empresa e cópia de cadastros](P23-nova-empresa.md) | 🟠 | `SP_INICIALIZAR_EMPRESA` + cópia |
+| [P25 Cadastro de entidades e contatos](P25-cadastro-entidades-contatos.md) | 🟠 | empresa usuária como entidade; endereços, telefones e e-mails tipados (T03, T12, T13); CEP/IBGE |
 
 ## Propostas e pedidos (fases 4/6)
 | Processo | Crit. | Resumo |

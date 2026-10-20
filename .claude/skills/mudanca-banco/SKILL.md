@@ -5,7 +5,7 @@ description: Roteiro obrigatório para qualquer mudança no banco MySQL do LabCo
 
 # Mudança no banco (Scripts/v2)
 
-Responda em português do Brasil. O schema é **somente** `Scripts/v2/01..05*.sql` (banco `labcontrol_v2`).
+Responda em português do Brasil. O schema é **somente** `Scripts/v2/01..06*.sql` (banco `labcontrol_v2`).
 **Proibido:** EF migrations, `EnsureCreated`, "patches" de SQL no `Program.cs`, editar `*.g.cs` à mão.
 
 ## 0. Antes de mexer
@@ -21,6 +21,7 @@ Responda em português do Brasil. O schema é **somente** `Scripts/v2/01..05*.sq
 | trigger | `03_triggers.sql` |
 | view | `04_views.sql` |
 | permissão, UF, dados fixos | `05_seed.sql` |
+| municípios (IBGE) | `06_cidades.sql` — gerado por `tools/gerador-cidades` (não editar à mão) |
 
 Convenções:
 - Tudo por empresa: tabela de cadastro/movimento tem `ID_EMPRESAS` + FK; filho com empresa diferente do pai → `CALL PR_CONFERIR_EMPRESA(...)` na trigger.

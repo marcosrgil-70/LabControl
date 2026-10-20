@@ -1,14 +1,47 @@
 @model EmpresaVM
 @{
     ViewData["Title"] = "Empresa";
+    var contatos = ViewData["Contatos"] as ContatosVM;
 }
 
 <h5 class="mb-3"><i class="bi bi-building-gear me-2 text-primary"></i>Dados da empresa <span class="badge text-bg-secondary">@Model.CodEmpresa</span></h5>
 
-<form method="post" asp-action="Dados" enctype="multipart/form-data" novalidate>
-    <partial name="_EmpresaCampos" model="Model" />
-    <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary" lc-permissao="EMPRESAS.ALTERAR"><i class="bi bi-check-lg me-1"></i>Gravar</button>
-        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#aba-dados" type="button" role="tab">Dados</button></li>
+    @if (contatos is not null)
+    {
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#aba-enderecos" type="button" role="tab">Endereços <span class="badge text-bg-light border" data-contagem="enderecos"></span></button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#aba-telefones" type="button" role="tab">Telefones <span class="badge text-bg-light border" data-contagem="telefones"></span></button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#aba-emails" type="button" role="tab">E-mails <span class="badge text-bg-light border" data-contagem="emails"></span></button></li>
+    }
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="aba-dados" role="tabpanel">
+        <form method="post" asp-action="Dados" enctype="multipart/form-data" novalidate>
+            <partial name="_EmpresaCampos" model="Model" />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" lc-permissao="EMPRESAS.ALTERAR"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+            </div>
+        </form>
     </div>
-</form>
+    @if (contatos is not null)
+    {
+        <partial name="_ContatosAbas" model="contatos" />
+    }
+</div>
+
+@if (contatos is not null)
+{
+    <partial name="_ContatosModais" model="contatos" />
+}
+
+@section Scripts {
+    <script src="~/js/contatos.js" asp-append-version="true"></script>
+    <script>
+        // abre a aba pedida no endereço (#aba-enderecos …)
+        const aba = location.hash && document.querySelector(`[data-bs-target="${location.hash}"]`);
+        if (aba) bootstrap.Tab.getOrCreateInstance(aba).show();
+    </script>
+}

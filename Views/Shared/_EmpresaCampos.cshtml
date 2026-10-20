@@ -56,66 +56,15 @@
 </div>
 
 <div class="card mb-3">
-    <div class="card-header fw-semibold py-2">Endereço e contato</div>
+    <div class="card-header fw-semibold py-2">Internet</div>
     <div class="card-body row g-3">
-        <div class="col-sm-2">
-            <label asp-for="Cep" class="form-label small"></label>
-            <input asp-for="Cep" class="form-control" placeholder="00000-000" />
-        </div>
         <div class="col-sm-6">
-            <label asp-for="Logradouro" class="form-label small"></label>
-            <input asp-for="Logradouro" class="form-control" />
-        </div>
-        <div class="col-sm-2">
-            <label asp-for="Numero" class="form-label small"></label>
-            <input asp-for="Numero" class="form-control" />
-        </div>
-        <div class="col-sm-2">
-            <label asp-for="Complemento" class="form-label small"></label>
-            <input asp-for="Complemento" class="form-control" />
-        </div>
-        <div class="col-sm-4">
-            <label asp-for="Bairro" class="form-label small"></label>
-            <input asp-for="Bairro" class="form-control" />
-        </div>
-        <div class="col-sm-2">
-            <label asp-for="IdEstado" class="form-label small"></label>
-            <select asp-for="IdEstado" class="form-select" id="empresa-uf">
-                <option value="">—</option>
-                @foreach (var uf in Model.Estados)
-                {
-                    <option value="@uf.Id" selected="@(uf.Id == Model.IdEstado)">@uf.Nome</option>
-                }
-            </select>
-        </div>
-        <div class="col-sm-6">
-            <label asp-for="IdCidades" class="form-label small"></label>
-            <select asp-for="IdCidades" class="form-select" id="empresa-cidade">
-                <option value="">@(Model.IdEstado is null ? "— selecione a UF —" : "—")</option>
-                @foreach (var c in Model.Cidades)
-                {
-                    <option value="@c.Id" selected="@(c.Id == Model.IdCidades)">@c.Nome</option>
-                }
-            </select>
-            <span asp-validation-for="IdCidades" class="text-danger small"></span>
-        </div>
-        <div class="col-sm-1">
-            <label asp-for="Ddd" class="form-label small"></label>
-            <input asp-for="Ddd" class="form-control" maxlength="3" />
-        </div>
-        <div class="col-sm-3">
-            <label asp-for="Fone" class="form-label small"></label>
-            <input asp-for="Fone" class="form-control" />
-        </div>
-        <div class="col-sm-4">
-            <label asp-for="Email" class="form-label small"></label>
-            <input asp-for="Email" class="form-control" />
-            <span asp-validation-for="Email" class="text-danger small"></span>
-        </div>
-        <div class="col-sm-4">
             <label asp-for="Site" class="form-label small"></label>
             <input asp-for="Site" class="form-control" placeholder="https://" />
             <span asp-validation-for="Site" class="text-danger small"></span>
+        </div>
+        <div class="col-sm-6 small text-body-secondary align-self-end">
+            <i class="bi bi-info-circle me-1"></i>Endereços, telefones e e-mails ficam nas abas de contatos da empresa (vários, por tipo, como no sistema anterior)@(inclusao ? " — disponíveis depois de criar a empresa" : "").
         </div>
     </div>
 </div>
@@ -154,16 +103,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    // UF → cidades (JSON de /Empresa/Cidades); o servidor confere a cidade de novo
-    document.getElementById('empresa-uf')?.addEventListener('change', async e => {
-        const cidade = document.getElementById('empresa-cidade');
-        cidade.innerHTML = '<option value="">—</option>';
-        if (!e.target.value) return;
-        const r = await fetch('/Empresa/Cidades?idEstado=' + encodeURIComponent(e.target.value), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        if (!r.ok) return;
-        for (const c of await r.json()) cidade.add(new Option(c.nome, c.id));
-        if (cidade.options.length === 1) cidade.options[0].text = '— nenhuma cidade cadastrada nesta UF —';
-    });
-</script>

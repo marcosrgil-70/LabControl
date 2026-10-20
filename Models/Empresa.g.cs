@@ -18,15 +18,8 @@ public partial class Empresa
     public string? Cnpj { get; set; }
     public string? InscEstadual { get; set; }
     public string? InscMunicipal { get; set; }
-    public string? Logradouro { get; set; }
-    public string? Numero { get; set; }
-    public string? Complemento { get; set; }
-    public string? Bairro { get; set; }
-    public string? Cep { get; set; }
-    public int? IdCidades { get; set; }
-    public string? Ddd { get; set; }
-    public string? Fone { get; set; }
-    public string? Email { get; set; }
+    /// <summary><c>ID_ENTIDADES</c> — Entidade da própria empresa (TIPO_EMPRESA_USUARIA): endereços, telefones e e-mails, como no legado; criada por SP_INICIALIZAR_EMPRESA</summary>
+    public int? IdEntidades { get; set; }
     public string? Site { get; set; }
     public byte[]? Logo { get; set; }
     public string? LogoMime { get; set; }
@@ -40,5 +33,5 @@ public partial class Empresa
     /// <summary><c>ALTERADO_EM</c> — Calculada pelo banco (trigger/default): não é enviada; relida após gravar.</summary>
     public DateTime? AlteradoEm { get; set; }
 
-    public Cidade? Cidade { get; set; }
+    public Entidade? Entidade { get; set; }
 }
