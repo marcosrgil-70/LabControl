@@ -12,7 +12,7 @@ Documentação: [doc 11 — modelo](../../docs/banco/11-MODELO-MYSQL.md) · [doc
 | 3 | `03_triggers.sql` | 42 triggers (numeração, travas de revisão/emissão, saldo, log) |
 | 4 | `04_views.sql` | 10 views |
 | 5 | `05_seed.sql` | Brasil + 27 UFs e catálogo de 109 permissões |
-| — | `teste/roteiro_12_7.sql` | roteiro de teste do doc 12 §7 (39 verificações) — **só em banco temporário** |
+| — | `teste/roteiro_12_7.sql` | roteiro de teste do doc 12 §7 (46 verificações) — **só em banco temporário** |
 | — | `recriar.ps1` | recria um banco do zero e confere as contagens; `-Teste` roda o roteiro; `-Dev` roda `dev/*.sql` |
 | — | `dev/admin_dev.sql` | **só desenvolvimento**: empresa `001` + usuário `ADMIN` / senha provisória `Admin123` (ADMIN_GLOBAL, troca obrigatória no 1º acesso) |
 
@@ -37,6 +37,27 @@ O script:
 
 A senha é pedida no console. Para rodar sem pergunta (ex.: CI), defina antes `$env:MYSQL_PWD`.
 Leva ~3 minutos por banco no MySQL local (DDL lento no Windows).
+
+## Senha do MySQL (onde fica e como trocar)
+
+A senha **nunca** vai para arquivo versionado (`appsettings*.json`, scripts, docs). Ela fica só em:
+
+| Quem usa | Onde | Observação |
+|---|---|---|
+| App (`dotnet run`) e testes (`dotnet test`) | user-secret `ConnectionStrings:LabControl` — arquivo `%APPDATA%\Microsoft\UserSecrets\labcontrol-v2-0b6c1d2e\secrets.json` (fora do repositório) | o projeto de testes usa o mesmo `UserSecretsId` e troca só o nome do banco para `labcontrol_teste` |
+| `recriar.ps1` | digitada no console, ou `$env:MYSQL_PWD` da sessão | não grava em lugar nenhum |
+| Migração (Firebird) | user-secret `Firebird:Password` | idem |
+| CI / outra máquina | variável de ambiente `LABCONTROL_TESTE_CS` (testes) ou `ConnectionStrings__LabControl` (app) | definida no ambiente, não no repositório |
+
+**Trocar a senha** (ex.: a antiga ficou no histórico do git até a tarefa 0.3):
+1. No MySQL: `mysql -u root -p` → `ALTER USER 'root'@'localhost' IDENTIFIED BY '<nova senha>';` (repita para `'root'@'%'`, se existir).
+2. No projeto (vale para o app **e** para os testes):
+   ```powershell
+   dotnet user-secrets set "ConnectionStrings:LabControl" "Server=localhost;Port=3306;Database=labcontrol_v2;User=root;Password=<nova senha>" --project LabControl.csproj
+   ```
+3. Conferir: `dotnet user-secrets list --project LabControl.csproj` e `dotnet test tests/LabControl.Tests` (conecta no `labcontrol_teste` com a senha nova).
+
+Sugestão para homologação/produção: um usuário próprio em vez do `root` (ex.: `CREATE USER 'labcontrol'@'localhost' IDENTIFIED BY '…'; GRANT ALL ON labcontrol_v2.* TO 'labcontrol'@'localhost';`). Para rodar os testes ele também precisa de `GRANT ALL ON labcontrol_teste.*`, porque os testes recriam esse banco.
 
 ## Manualmente
 

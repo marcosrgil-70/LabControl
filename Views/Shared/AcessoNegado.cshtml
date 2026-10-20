@@ -1,0 +1,17 @@
+@{
+    ViewData["Title"] = "Acesso negado";
+}
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="text-danger"><i class="bi bi-shield-lock me-2"></i>Acesso negado</h5>
+        <p class="mb-0 text-muted">
+            @PermissaoAttribute.MensagemSemPermissao
+            @if (ViewData["Permissao"] is string codigo)
+            {
+                <span>Permissão necessária: <code>@codigo</code> (peça ao administrador para incluí-la num dos seus perfis).</span>
+            }
+        </p>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm mt-3"><i class="bi bi-house me-1"></i>Voltar ao início</a>
+    </div>
+</div>

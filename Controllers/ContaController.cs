@@ -73,6 +73,10 @@ public sealed class ContaController(ContaService conta, IEmpresaContexto context
         return RedirectToAction("Index", "Home");
     }
 
+    /// <summary>Destino do <c>Forbid</c> do cookie; o <see cref="PermissaoAttribute"/> devolve o 403 direto.</summary>
+    [HttpGet]
+    public IActionResult AcessoNegado() => PermissaoAttribute.AcessoNegado(HttpContext, ModelState, null);
+
     [HttpPost]
     public async Task<IActionResult> Sair()
     {

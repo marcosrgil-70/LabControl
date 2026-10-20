@@ -32,8 +32,17 @@ Logo · **Empresa ativa (código + nome)** com "trocar" · nome do usuário/prof
 Todos os números são links para a tela filtrada.
 
 ## Aceite
-- [ ] Menu respeita permissões.
-- [ ] Empresa ativa visível em todas as páginas.
-- [ ] Painel usa só dados da empresa ativa.
+- [x] Menu respeita permissões.
+- [x] Empresa ativa visível em todas as páginas.
+- [x] Painel usa só dados da empresa ativa.
 
-**Status:** ⬜ — base pronta na tarefa 0.8 (layout v2 sem sessão, CSS em `site.css`, menu só com Início); menu por permissão, empresa no topo e painel na 1.2.
+Testes: `tests/LabControl.Tests/PermissoesMenuPainelTests.cs` (403 com/sem permissão, AJAX, ADMIN_GLOBAL, menu, tag helper, painel por empresa e por perfil) e `LayoutTests.cs`.
+
+## Implementação (tarefa 1.2)
+- **Menu** — `Infra/Menu.cs` (catálogo acima, com a permissão de cada item) + `MenuViewComponent`: o item aparece se o usuário tem a permissão **e** a tela já existe (`TelasExistentes`: controller/action registrados). O menu cresce sozinho a cada tela reescrita, sem link quebrado; seção sem itens some. Ao criar uma tela, confira se a rota e a permissão do item no catálogo batem com o controller.
+- **Permissão** — `[Permissao("TELA.ACAO")]` (`Infra/Permissao.cs`) na classe ou na action: sem a permissão → 403 com a página "Acesso negado" (que mostra o código exigido) ou JSON `{ erro }` em AJAX; anônimo → login. Tag helper `<permissao codigo="…">…</permissao>` ou `lc-permissao="…"` num elemento para esconder botões (esconder **não** dispensa o atributo na action).
+- **Topo** — empresa (código + nome, link para trocar), menu do usuário e aviso "sem profissional" (feitos na 1.1).
+- **Painel** — `Services/PainelService.cs`: amostras recebidas hoje/no mês (revisão 0), testes pendentes (com vencidos), boletins não emitidos (última revisão), propostas aguardando cliente (status "enviada ao cliente" dos parâmetros da empresa). Cada contador só com a permissão `*.CONSULTAR` da tela; o número vira link quando a tela existir.
+- **Sobre o sistema** — versão (`<Version>` do `LabControl.csproj`) no rodapé do menu (`Infra/Versao.cs`).
+
+**Status:** ✅ concluída na tarefa 1.2 (19/10/2026).

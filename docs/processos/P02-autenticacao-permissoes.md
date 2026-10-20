@@ -24,6 +24,7 @@
 - `[Permissao("AMOSTRAS.INCLUIR")]` (filtro de autorização) em cada action; sem a claim → 403. ADMIN_GLOBAL passa sempre.
 - Menu e botões renderizados só com a permissão (tag helper `<permissao codigo="…">`).
 - Telas que gravam como profissional (recebimento, resultados, boletim, movimentação, descarte) exigem `ProfissionalId` → sem ele, aviso e bloqueio da ação.
+- Implementado na tarefa 1.2: `Infra/Permissao.cs` (`PermissaoAttribute` → 403 "Acesso negado" ou JSON em AJAX; `PermissaoTagHelper`), menu por permissão em `Infra/Menu.cs` — ver [T01 › Implementação](../telas/T01-layout-menu.md#implementação-tarefa-12). O cookie manda `Forbid` para `/Conta/AcessoNegado` (também 403).
 
 ## Profissional do usuário
 - Vínculo por empresa (`UQ_USUEMP_FUNC`: um profissional ↔ um usuário por empresa), editável na T02 e na T13 (mesmo serviço).

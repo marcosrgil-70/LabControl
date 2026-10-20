@@ -6,6 +6,7 @@ using LabControl.Models;
 using LabControl.Services;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LabControl.Tests;
 
@@ -39,13 +40,37 @@ public static class UsuariosTeste
     }
 
     public static ContaService Servico(LabDbContext db, IEmpresaContexto ctx) => new(db, new ServicoAuditoria(db, ctx), TimeProvider.System);
+
+    /// <summary>Usuário vinculado à empresa do cenário com um perfil novo contendo só <paramref name="codigos"/>.</summary>
+    public static async Task<Usuario> ComPermissoesAsync(Cenario c, params string[] codigos)
+    {
+        var usu = await CriarAsync();
+        await VincularAsync(usu.IdUsuarios, c.Empresa.IdEmpresas); // sem profissional: UQ_USUEMP_FUNC (RN-02.09) permite um usuário por profissional
+        if (codigos.Length == 0) return usu;
+        var perfil = new Perfil { Nome = "P" + Guid.NewGuid().ToString("N")[..10] };
+        c.Db.Add(perfil);
+        await c.Db.SaveChangesAsync();
+        var lista = codigos.ToList(); // string[].Contains viraria MemoryExtensions (ReadOnlySpan) no C# 14, que o EF 9 não traduz
+        var ids = await c.Db.Permissoes.Where(p => lista.Contains(p.Codigo)).Select(p => p.IdPermissoes).ToListAsync();
+        Assert.Equal(codigos.Length, ids.Count);
+        c.Db.AddRange(ids.Select(id => new PerfilPermissao { IdPerfis = perfil.IdPerfis, IdPermissoes = id }));
+        await c.Db.SaveChangesAsync();
+        await using var adm = await ContextoAdminAsync();
+        adm.Add(new UsuarioPerfil { IdUsuarios = usu.IdUsuarios, IdEmpresas = c.Empresa.IdEmpresas, IdPerfis = perfil.IdPerfis });
+        await adm.SaveChangesAsync();
+        return usu;
+    }
 }
 
 /// <summary>App web inteiro (WebApplicationFactory) apontando para o banco de testes.</summary>
 public sealed class AppWeb : WebApplicationFactory<Program>
 {
-    protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder) =>
+    protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
+    {
         builder.UseSetting("ConnectionStrings:LabControl", BancoTeste.ConnectionString);
+        // controllers só de teste (ex.: TestePermissaoController) entram no app de teste
+        builder.ConfigureServices(s => s.AddControllersWithViews().AddApplicationPart(typeof(AppWeb).Assembly));
+    }
 
     /// <summary>Cliente HTTPS com cookies e sem seguir redirecionamentos (os testes conferem o destino).</summary>
     public ClienteWeb Cliente() =>

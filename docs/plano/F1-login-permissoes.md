@@ -14,6 +14,7 @@
 - **Esforço:** M
 
 ### 1.2 T01 — Layout, menu por permissão e painel
+> ✅ **Concluída em 19/10/2026** — ver [T01 › Implementação](../telas/T01-layout-menu.md#implementação-tarefa-12); aceite em `PermissoesMenuPainelTests`.
 - **Passos:** `_Layout` com empresa ativa no topo, aviso "sem profissional vinculado", menu da T01 com itens filtrados por `[Permissao]`; atributo `PermissaoAttribute` + tag helper; painel com contadores (pode começar com 2: recebidas hoje e testes pendentes).
 - **Aceite:** menu respeita permissões; empresa visível em todas as páginas.
 - **Esforço:** M · **Depende de:** 1.1

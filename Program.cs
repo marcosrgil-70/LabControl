@@ -33,6 +33,8 @@ builder.Services.AddScoped<Procedures>();
 builder.Services.AddSingleton(TimeProvider.System);
 // Serviços de negócio (Services/) registrados aqui, um AddScoped por serviço
 builder.Services.AddScoped<ContaService>();
+builder.Services.AddScoped<PainelService>();
+builder.Services.AddSingleton<TelasExistentes>(); // menu e painel só mostram telas já reescritas
 
 // Login próprio (T00 / P02): cookie HttpOnly + Secure + SameSite=Lax, expiração deslizante, revalidado a cada request
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -40,6 +42,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/Conta/Login";
         options.LogoutPath = "/Conta/Sair";
+        options.AccessDeniedPath = "/Conta/AcessoNegado";
         options.Cookie.Name = "LabControl.Auth";
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;

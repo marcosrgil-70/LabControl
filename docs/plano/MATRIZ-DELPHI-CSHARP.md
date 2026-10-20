@@ -74,11 +74,11 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 | Atualizar Direitos de Acesso | `un_DireitoAcesso01`, `un_DirAcesso01` | [T02](../telas/T02-usuarios.md) + [T04](../telas/T04-perfis-permissoes.md) | `/Usuarios`, `/Perfis` | 1 | 🟨 |
 | Atualizar Componentes | `un_Menu` / `SYS_COMPONENTES` | [T04](../telas/T04-perfis-permissoes.md) (catálogo pelo seed) | — | — | ⛔ |
 | Lado a Lado / Cascata | MDI | — | — | — | ⛔ |
-| Sobre o Sistema | `un_About` | [T01](../telas/T01-layout-menu.md) (versão no topo) | — | 1 | ⬜ |
+| Sobre o Sistema | `un_About` | [T01](../telas/T01-layout-menu.md) (versão no menu) | — | 1 | ✅ |
 | Sair | `un_Menu` | [T00](../telas/T00-login-empresa.md) | `/Conta/Sair` | 1 | ✅ |
 | (novo) Auditoria | — | [T06](../telas/T06-auditoria.md) | `/Auditoria` | 8 | ⬜ |
 | (novo) Migração | — | [T07](../telas/T07-migracao.md) | `/Migracao` | 3–5, 9 | 🟨 (errada) |
-| (novo) Painel | — | [T01](../telas/T01-layout-menu.md) | `/` | 1 | ⬜ |
+| (novo) Painel | — | [T01](../telas/T01-layout-menu.md) | `/` | 1 | ✅ |
 
 ## Formulários de base (sem tela própria — viram padrões)
 | Unit Delphi | Padrão v2 |

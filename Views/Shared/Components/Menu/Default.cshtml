@@ -1,0 +1,17 @@
+@model IReadOnlyList<SecaoMenu>
+@{
+    var atual = ViewContext.RouteData.Values["controller"]?.ToString();
+    var acao = ViewContext.RouteData.Values["action"]?.ToString();
+}
+@foreach (var secao in Model)
+{
+    <span class="nav-section">@secao.Titulo</span>
+    @foreach (var item in secao.Itens)
+    {
+        var ativo = string.Equals(item.Controller, atual, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(item.Action, acao, StringComparison.OrdinalIgnoreCase);
+        <a class="nav-link @(ativo ? "active" : null)" href="@item.Href" aria-current="@(ativo ? "page" : null)">
+            <i class="bi @item.Icone me-2"></i>@item.Texto
+        </a>
+    }
+}

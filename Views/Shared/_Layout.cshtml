@@ -49,14 +49,12 @@
     }
 
     <div class="d-flex">
-        @* Menu: só telas já reescritas. O menu completo da T01, filtrado por permissão, é a tarefa 1.2 *@
-        <div class="sidebar">
+        @* Menu da T01: itens filtrados por permissão e só de telas já reescritas (Infra/Menu.cs) *@
+        <div class="sidebar d-flex flex-column">
             <nav class="d-flex flex-column py-2">
-                <span class="nav-section">Principal</span>
-                <a class="nav-link" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-house me-2"></i>Início
-                </a>
+                @await Component.InvokeAsync("Menu")
             </nav>
+            <div class="sidebar-versao mt-auto px-3 py-2" title="Sobre o sistema">LabControl @Versao.Atual</div>
         </div>
 
         <main class="content-wrapper flex-grow-1">
