@@ -22,13 +22,14 @@ public sealed class ProfissionalService(LabDbContext db, IEmpresaContexto ctx, V
     public async Task<ProfissionalListaVM> ListarAsync(ProfissionalFiltroVM f)
     {
         var q = db.VwProfissionais.AsNoTracking();
-        if (!f.Inativos) q = q.Where(p => !p.Inativo);
         if (!string.IsNullOrWhiteSpace(f.Texto))
         {
             var t = f.Texto.Trim();
             q = q.Where(p => p.Nome.Contains(t) || (p.Sobrenome != null && p.Sobrenome.Contains(t)) || (p.Login != null && p.Login.Contains(t))
                              || (p.NrRegistroProfissional != null && p.NrRegistroProfissional.Contains(t)));
         }
+        var ocultos = f.Inativos ? 0 : await q.CountAsync(p => p.Inativo);
+        if (!f.Inativos) q = q.Where(p => !p.Inativo);
         var total = await q.CountAsync();
         f.Pagina = Math.Clamp(f.Pagina, 1, Math.Max(1, (total + ProfissionalFiltroVM.TamanhoPagina - 1) / ProfissionalFiltroVM.TamanhoPagina));
         var itens = await q.OrderBy(p => p.Nome).ThenBy(p => p.Sobrenome)
@@ -36,7 +37,7 @@ public sealed class ProfissionalService(LabDbContext db, IEmpresaContexto ctx, V
             .Select(p => new ProfissionalListaItemVM(p.IdEntidades, p.NomeCompleto ?? p.Nome, p.Cargo, p.RegistroCompleto,
                 p.AssinaBoletim, p.ExecutaAnalise, p.TemAssinatura == 1, p.Login, p.Inativo))
             .ToListAsync();
-        return new ProfissionalListaVM { Filtro = f, Total = total, Itens = itens };
+        return new ProfissionalListaVM { Filtro = f, Total = total, Itens = itens, InativosOcultos = ocultos };
     }
 
     public async Task<ProfissionalVM> NovoAsync()

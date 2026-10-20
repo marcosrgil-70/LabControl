@@ -61,7 +61,7 @@ public sealed class AuxiliaresController(AuxiliarService auxiliares) : Controlle
     {
         if (CatalogoAuxiliares.Encontrar(tabela) is not { } def) return NotFound();
         this.AplicarNoTempData(await def.DefinirAtivoAsync(auxiliares, id, ativo),
-            def.Frase(ativo ? "reativado" : "inativado"));
+            def.Frase(ativo ? "reativado" : "inativado") + (ativo ? "" : " Não aparece mais na lista nem nos combos de inclusão (marque “Mostrar inativos” para vê-lo)."));
         return VoltarParaLista(def, filtro);
     }
 

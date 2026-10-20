@@ -44,3 +44,4 @@
 ## Definição de pronto
 - [ ] Cadastros principais com regras do legado e correções.
 - [ ] Cadastros reais do legado carregados num banco limpo, conferidos.
+- [ ] CRUD de cada tela provado no navegador (P26) — T12 e T13 já cobertos (20/10/2026).

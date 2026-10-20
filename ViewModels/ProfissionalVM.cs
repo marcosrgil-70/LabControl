@@ -19,6 +19,7 @@ public sealed class ProfissionalListaVM
     public required ProfissionalFiltroVM Filtro { get; init; }
     public required IReadOnlyList<ProfissionalListaItemVM> Itens { get; init; }
     public int Total { get; init; }
+    public int InativosOcultos { get; init; }
     public int Paginas => Math.Max(1, (Total + ProfissionalFiltroVM.TamanhoPagina - 1) / ProfissionalFiltroVM.TamanhoPagina);
 }
 

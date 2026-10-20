@@ -91,19 +91,20 @@
                         <td class="text-end text-nowrap">
                             <button type="button" class="btn btn-outline-secondary btn-sm" title="Alterar" lc-permissao="AUXILIARES.ALTERAR"
                                     data-form="@Url.Action("Editar", new { tabela = d.Tabela, id = item.Id })">
-                                <i class="bi bi-pencil"></i>
+                                <i class="bi bi-pencil me-1"></i>Alterar
                             </button>
-                            <form method="post" asp-action="Ativo" asp-route-tabela="@d.Tabela" asp-route-id="@item.Id" class="d-inline" lc-permissao="AUXILIARES.ALTERAR">
+                            <form method="post" asp-action="Ativo" asp-route-tabela="@d.Tabela" asp-route-id="@item.Id" class="d-inline" lc-permissao="AUXILIARES.ALTERAR"
+                                  data-confirmar="@(item.Ativo ? $"Inativar \"{item.Valores.FirstOrDefault()}\"? Ele sai da lista e dos combos de inclusão (marque “Mostrar inativos” para vê-lo e reativá-lo)." : null)">
                                 @{ FiltroOculto(); }
                                 <input type="hidden" name="ativo" value="@(item.Ativo ? "false" : "true")" />
                                 <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(item.Ativo ? "Inativar" : "Reativar")">
-                                    <i class="bi @(item.Ativo ? "bi-eye-slash" : "bi-eye")"></i>
+                                    <i class="bi @(item.Ativo ? "bi-eye-slash" : "bi-eye") me-1"></i>@(item.Ativo ? "Inativar" : "Reativar")
                                 </button>
                             </form>
                             <form method="post" asp-action="Excluir" asp-route-tabela="@d.Tabela" asp-route-id="@item.Id" class="d-inline" lc-permissao="AUXILIARES.EXCLUIR"
                                   data-confirmar="Deseja realmente excluir &quot;@item.Valores.FirstOrDefault()&quot;?">
                                 @{ FiltroOculto(); }
-                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash"></i></button>
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash me-1"></i>Excluir</button>
                             </form>
                         </td>
                     </tr>
@@ -117,6 +118,10 @@
     </div>
     <div class="card-footer d-flex align-items-center small py-2">
         <span class="text-body-secondary">@Model.Total registro(s)</span>
+        @if (Model.InativosOcultos > 0)
+        {
+            <a href="@Url.Action("Lista", new { tabela = d.Tabela, f.Busca, Inativos = true })" class="ms-3 small link-warning"><i class="bi bi-eye-slash me-1"></i>@Model.InativosOcultos inativo(s) também correspondem à pesquisa — mostrar</a>
+        }
         @if (Model.Paginas > 1)
         {
             <nav class="ms-auto" aria-label="Páginas">

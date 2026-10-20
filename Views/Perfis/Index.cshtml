@@ -25,13 +25,13 @@
                         <td class="text-end">@p.Usuarios</td>
                         <td>@if (p.Ativo) { <span class="badge text-bg-success">Ativo</span> } else { <span class="badge text-bg-secondary">Inativo</span> }</td>
                         <td class="text-end text-nowrap">
-                            <a asp-action="Editar" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm" lc-permissao="PERFIS.ALTERAR" title="@(p.Administrador ? "Ver" : "Alterar")"><i class="bi @(p.Administrador ? "bi-eye" : "bi-pencil")"></i></a>
-                            <a asp-action="Copiar" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm" lc-permissao="PERFIS.INCLUIR" title="Copiar"><i class="bi bi-copy"></i></a>
+                            <a asp-action="Editar" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm" lc-permissao="PERFIS.ALTERAR" title="@(p.Administrador ? "Ver" : "Alterar")"><i class="bi @(p.Administrador ? "bi-eye" : "bi-pencil") me-1"></i>@(p.Administrador ? "Ver" : "Alterar")</a>
+                            <a asp-action="Copiar" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm" lc-permissao="PERFIS.INCLUIR" title="Copiar"><i class="bi bi-copy me-1"></i>Copiar</a>
                             @if (!p.Administrador)
                             {
                                 <form asp-action="Excluir" asp-route-id="@p.Id" method="post" class="d-inline" lc-permissao="PERFIS.EXCLUIR"
                                       data-confirmar="Excluir o perfil &quot;@p.Nome&quot;?">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash"></i></button>
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash me-1"></i>Excluir</button>
                                 </form>
                             }
                         </td>

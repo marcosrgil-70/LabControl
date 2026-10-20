@@ -59,7 +59,7 @@ public sealed class ClientesController(ClienteService clientes, ContatosService 
     [HttpPost, Permissao("CLIENTES.ALTERAR")]
     public async Task<IActionResult> Inativo(int id, bool inativo)
     {
-        this.AplicarNoTempData(await clientes.DefinirInativoAsync(id, inativo), inativo ? "Cadastro inativado." : "Cadastro reativado.");
+        this.AplicarNoTempData(await clientes.DefinirInativoAsync(id, inativo), inativo ? "Cadastro inativado: não aparece mais na lista (marque “Mostrar inativos” para vê-lo e reativá-lo)." : "Cadastro reativado.");
         return RedirectToAction(nameof(Index));
     }
 

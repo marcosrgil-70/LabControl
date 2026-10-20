@@ -16,7 +16,9 @@ Responda em português do Brasil. Datas no formato `dd/mm/aaaa` (data de hoje).
 3. Se a tarefa criou/alterou tela:
    - toda action de escrita tem `[Permissao("TELA.ACAO")]` (ou `[SomenteAdminGlobal]`);
    - o item da tela existe em `Infra/Menu.cs` com o mesmo controller/action e permissão;
-   - os **critérios de aceite** do MD da tela (`docs/telas/T*.md` › "Critérios de aceite") têm teste automatizado ou foram verificados — liste qual teste cobre cada um.
+   - os **critérios de aceite** do MD da tela (`docs/telas/T*.md` › "Critérios de aceite") têm teste automatizado ou foram verificados — liste qual teste cobre cada um;
+   - **teste no navegador** (`tests/LabControl.Tests/Navegador/`, P26) com o CRUD completo da tela (incluir, pesquisar, alterar, inativar com confirmação, excluir) ou o fluxo principal — o usuário pediu que todo CRUD seja provado pela tela, não só pelo serviço;
+   - botões das listas com ícone **e texto**; "Inativar" com confirmação; aviso de inativos ocultos na pesquisa (padrão do P26 §5).
 4. Mudou o banco nesta tarefa? Então a skill `mudanca-banco` precisa ter sido seguida (roteiro SQL, MDs dos objetos, entidades regeneradas).
 
 ## 2. Atualizar a documentação (sempre os 5 lugares)

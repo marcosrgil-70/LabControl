@@ -23,6 +23,8 @@ public sealed class ClienteListaVM
     public required ClienteFiltroVM Filtro { get; init; }
     public required IReadOnlyList<ClienteListaItemVM> Itens { get; init; }
     public int Total { get; init; }
+    /// <summary>Inativos que a pesquisa acharia com "mostrar inativos" (aviso na lista).</summary>
+    public int InativosOcultos { get; init; }
     public int Paginas => Math.Max(1, (Total + ClienteFiltroVM.TamanhoPagina - 1) / ClienteFiltroVM.TamanhoPagina);
 }
 

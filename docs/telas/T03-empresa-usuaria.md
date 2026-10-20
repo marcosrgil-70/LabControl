@@ -55,3 +55,5 @@ Testes: `tests/LabControl.Tests/EmpresaServiceTests.cs`.
 - Testes: `CadastrosEntidadesTests` (contatos tipados, espelho da razão social) e `CadastrosTelasTests` (abas e e-mail pela tela).
 
 **Status:** ✅ concluída na tarefa 1.5 (19/10/2026); contatos múltiplos tipados em 20/10/2026 — falta só o logo no PDF (5.4).
+
+> **Teste no navegador (20/10/2026, [P26](../processos/P26-testes-ponta-a-ponta.md)):** `Empresa_dados_contatos_e_parametros` (dados + telefone persistido após recarregar) e `Empresas_admin_global_cria_e_altera` (escolha de empresa, nova empresa já com a entidade, alterar).

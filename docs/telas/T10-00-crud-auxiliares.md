@@ -62,4 +62,9 @@ Um único controller/serviço genérico atende os 20 cadastros auxiliares, porqu
 - Tamanho e obrigatoriedade vêm do modelo do EF (gerado de `Scripts/v2`); texto aparado; duplicidade pela `UNIQUE` do banco (collation sem maiúsculas/acentos: "português" = "Português"); exclusão por `DELETE` direto filtrado pela empresa — em uso o banco recusa (1451) e a lista oferece **Inativar**. Erro ao gravar reabre o modal com a mensagem no campo; fechar com alterações pede confirmação (como o legado).
 - Ganchos para a 2.2: `ValidarAntesDeGravar`, `PodeAlterarCampo` (campo bloqueado com cadeado). Mensagens com gênero (`Feminino`).
 
-**Status:** 🟨 padrão pronto e aprovado com Idiomas (2.1); faltam os outros 19 auxiliares (2.2) e o "+" nos combos (2.4).
+**Status:** 🟨 padrão pronto e aprovado com Idiomas (2.1) + T10-01…06 (20/10/2026); faltam T10-08…T10-20 (2.2) e o "+" nos combos (2.4).
+
+## Ajustes de 20/10/2026 (teste do usuário)
+- Botões da lista com **ícone + texto** (Alterar, Inativar/Reativar, Excluir); **Inativar pede confirmação** ("sai da lista e dos combos de inclusão — marque Mostrar inativos para vê-lo") e a mensagem depois de inativar repete onde ele foi parar.
+- A pesquisa avisa no rodapé quando há **inativos que também correspondem** ("N inativo(s) também correspondem à pesquisa — mostrar").
+- Testes no navegador ([P26](../processos/P26-testes-ponta-a-ponta.md)): `Auxiliar_idiomas_crud_completo`, `Auxiliar_com_opcoes_tipos_de_endereco`.

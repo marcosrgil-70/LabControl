@@ -26,6 +26,8 @@ public sealed class AuxiliarListaVM
     public required IReadOnlyList<CampoAuxiliar> Colunas { get; init; }
     public required IReadOnlyList<AuxiliarLinhaVM> Itens { get; init; }
     public int Total { get; init; }
+    /// <summary>Inativos que a pesquisa acharia com "mostrar inativos" (aviso na lista).</summary>
+    public int InativosOcultos { get; init; }
     public int Paginas => Math.Max(1, (Total + AuxiliarFiltroVM.TamanhoPagina - 1) / AuxiliarFiltroVM.TamanhoPagina);
     public AuxiliarFormVM? Form { get; set; }
     /// <summary>Registro que não pôde ser excluído por estar em uso: a tela oferece "Inativar".</summary>

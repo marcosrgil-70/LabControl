@@ -43,3 +43,4 @@
 ## Definição de pronto
 - [ ] 20 auxiliares + geografia por empresa (exceto geografia global), com cadastro rápido.
 - [ ] Códigos de tipo de amostra/análise protegidos.
+- [ ] CRUD de cada tela provado no navegador (P26).

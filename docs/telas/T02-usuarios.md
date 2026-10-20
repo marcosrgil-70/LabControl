@@ -73,3 +73,5 @@ Testes: `tests/LabControl.Tests/UsuarioServiceTests.cs`.
 - `CRIADO_POR`/`ALTERADO_POR` passaram a ser preenchidos pelo `LabDbContext` (usuário do request) em toda inclusão/alteração real.
 
 **Status:** ✅ concluída na tarefa 1.3 (19/10/2026).
+
+> **Teste no navegador (20/10/2026, [P26](../processos/P26-testes-ponta-a-ponta.md)):** `Usuario_crud_com_senha_provisoria` — incluir com perfil (senha provisória), pesquisar, alterar, resetar senha, excluir. Botão da lista com texto ("Alterar").

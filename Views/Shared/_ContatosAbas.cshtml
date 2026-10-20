@@ -30,10 +30,10 @@
                             {
                                 <button type="button" class="btn btn-outline-secondary btn-sm" title="Alterar" data-contato-editar="endereco"
                                         data-registro="@Json(new { e.Id, IdEnderecosTipos = e.IdTipo, e.Cep, IdTiposLogradouro = e.IdTipoLogradouro, e.Logradouro, e.Numero, e.Complemento, e.Bairro, e.IdEstado, IdCidades = e.IdCidade, Cidade = e.Cidade, e.Inativo })">
-                                    <i class="bi bi-pencil"></i>
+                                    <i class="bi bi-pencil me-1"></i>Alterar
                                 </button>
                                 <button type="button" class="btn btn-outline-danger btn-sm" title="Excluir" data-contato-excluir="Endereco" data-id="@e.Id"
-                                        data-descricao="@e.Tipo: @e.Linha1"><i class="bi bi-trash"></i></button>
+                                        data-descricao="@e.Tipo: @e.Linha1"><i class="bi bi-trash me-1"></i>Excluir</button>
                             }
                         </td>
                     </tr>
@@ -72,10 +72,10 @@
                             {
                                 <button type="button" class="btn btn-outline-secondary btn-sm" title="Alterar" data-contato-editar="fone"
                                         data-registro="@Json(new { f.Id, IdFonesTipos = f.IdTipo, f.Ddd, f.Fone, f.Contato, f.Departamento, f.Principal, f.Inativo })">
-                                    <i class="bi bi-pencil"></i>
+                                    <i class="bi bi-pencil me-1"></i>Alterar
                                 </button>
                                 <button type="button" class="btn btn-outline-danger btn-sm" title="Excluir" data-contato-excluir="Fone" data-id="@f.Id"
-                                        data-descricao="(@f.Ddd) @f.Fone"><i class="bi bi-trash"></i></button>
+                                        data-descricao="(@f.Ddd) @f.Fone"><i class="bi bi-trash me-1"></i>Excluir</button>
                             }
                         </td>
                     </tr>
@@ -118,10 +118,10 @@
                             {
                                 <button type="button" class="btn btn-outline-secondary btn-sm" title="Alterar" data-contato-editar="email"
                                         data-registro="@Json(new { m.Id, IdEmailsTipos = m.IdTipo, m.Email, m.NomeContato, m.Departamento, m.Principal, m.EnviarNfe, m.EnviarLaudo, m.Inativo })">
-                                    <i class="bi bi-pencil"></i>
+                                    <i class="bi bi-pencil me-1"></i>Alterar
                                 </button>
                                 <button type="button" class="btn btn-outline-danger btn-sm" title="Excluir" data-contato-excluir="Email" data-id="@m.Id"
-                                        data-descricao="@m.Email"><i class="bi bi-trash"></i></button>
+                                        data-descricao="@m.Email"><i class="bi bi-trash me-1"></i>Excluir</button>
                             }
                         </td>
                     </tr>

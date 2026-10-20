@@ -60,4 +60,9 @@ Filtros: nome/fantasia/documento (contém), tipo (cliente/fornecedor/...), inati
 - Abas **Dados básicos · Endereços · Telefones · E-mails · Observações**; ao incluir, grava os dados e abre a aba Endereços (as de contatos ficam desabilitadas antes de existir o cadastro); contatos gravados na hora, por AJAX. Textos em maiúsculas (e-mail em minúsculas). Detalhes, regras e testes: [P25](../processos/P25-cadastro-entidades-contatos.md).
 - Testes: `CadastrosEntidadesTests`, `CadastrosTelasTests`.
 
-**Status:** ✅ concluída em 20/10/2026 (antecipada da tarefa 3.1).
+## Ajustes depois do teste do usuário (20/10/2026)
+- **Relato:** "ao clicar no botão com formato de um olho cortado … apagou". Não apagou: era **Inativar** (só ícone, sem confirmação); o cadastro ficou `INATIVO = 1` com os contatos intactos e a lista, que esconde inativos, deixou de mostrá-lo — inclusive na pesquisa.
+- **Correções:** botões com texto (Abrir, Inativar/Reativar, Excluir); confirmação antes de inativar explicando que o cadastro não é apagado; mensagem pós-inativação com "marque Mostrar inativos"; aviso no rodapé quando a pesquisa encontrou inativos ocultos (com link para mostrá-los).
+- **Prova:** `Cliente_crud_completo_com_enderecos_telefones_e_emails` no navegador ([P26](../processos/P26-testes-ponta-a-ponta.md)) — incluir, endereço por UF/cidade e por **CEP (Buscar)**, recusa do 2º endereço ativo do mesmo tipo, telefones/e-mails com principal, alterar, pesquisar por CNPJ, inativar/reativar, excluir.
+
+**Status:** ✅ concluída em 20/10/2026 (antecipada da tarefa 3.1); ajustes de usabilidade e teste no navegador no mesmo dia.

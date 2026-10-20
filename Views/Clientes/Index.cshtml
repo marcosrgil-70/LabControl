@@ -53,14 +53,15 @@
                         <td class="small">@c.Tipos</td>
                         <td>@if (c.Inativo) { <span class="badge text-bg-secondary">Inativo</span> } else { <span class="badge text-bg-success">Ativo</span> }</td>
                         <td class="text-end text-nowrap">
-                            <a asp-action="Editar" asp-route-id="@c.Id" class="btn btn-outline-secondary btn-sm" title="Abrir"><i class="bi bi-pencil"></i></a>
-                            <form method="post" asp-action="Inativo" asp-route-id="@c.Id" class="d-inline" lc-permissao="CLIENTES.ALTERAR">
+                            <a asp-action="Editar" asp-route-id="@c.Id" class="btn btn-outline-secondary btn-sm" title="Abrir"><i class="bi bi-pencil me-1"></i>Abrir</a>
+                            <form method="post" asp-action="Inativo" asp-route-id="@c.Id" class="d-inline" lc-permissao="CLIENTES.ALTERAR"
+                                  data-confirmar="@(c.Inativo ? null : $"Inativar \"{c.Nome}\"? O cadastro não é apagado: sai da lista e dos combos (marque “Mostrar inativos” para vê-lo e reativá-lo).")">
                                 <input type="hidden" name="inativo" value="@(c.Inativo ? "false" : "true")" />
-                                <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(c.Inativo ? "Reativar" : "Inativar")"><i class="bi @(c.Inativo ? "bi-eye" : "bi-eye-slash")"></i></button>
+                                <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(c.Inativo ? "Reativar" : "Inativar")"><i class="bi @(c.Inativo ? "bi-eye" : "bi-eye-slash") me-1"></i>@(c.Inativo ? "Reativar" : "Inativar")</button>
                             </form>
                             <form method="post" asp-action="Excluir" asp-route-id="@c.Id" class="d-inline" lc-permissao="CLIENTES.EXCLUIR"
                                   data-confirmar="Excluir o cadastro de &quot;@c.Nome&quot;? Só é possível sem propostas ou amostras.">
-                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash"></i></button>
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash me-1"></i>Excluir</button>
                             </form>
                         </td>
                     </tr>
@@ -74,6 +75,10 @@
     </div>
     <div class="card-footer d-flex align-items-center small py-2">
         <span class="text-body-secondary">@Model.Total registro(s)</span>
+        @if (Model.InativosOcultos > 0)
+        {
+            <a href="@Url.Action("Index", new { f.Texto, f.Tipo, Inativos = true })" class="ms-3 small link-warning"><i class="bi bi-eye-slash me-1"></i>@Model.InativosOcultos inativo(s) também correspondem à pesquisa — mostrar</a>
+        }
         @if (Model.Paginas > 1)
         {
             <nav class="ms-auto" aria-label="Páginas">

@@ -42,3 +42,5 @@
 - Testes: `CadastrosEntidadesTests.Profissional_registro_assinatura_e_vinculo_com_usuario`, `CadastrosTelasTests`. Processo: [P25](../processos/P25-cadastro-entidades-contatos.md).
 
 **Status:** ✅ concluída em 20/10/2026 (antecipada da tarefa 3.2) — falta a assinatura no PDF do boletim (5.3/5.4).
+
+> **Teste no navegador (20/10/2026, [P26](../processos/P26-testes-ponta-a-ponta.md)):** `Profissional_crud_com_registro_e_contatos` — recusa sem registro, registro CRQ/UF, e-mail, alterar, pesquisar, excluir. Lista com botões com texto e aviso de inativos ocultos.

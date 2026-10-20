@@ -61,3 +61,5 @@ Testes: `tests/LabControl.Tests/PerfilServiceTests.cs`; roteiro SQL passo 1 (per
 - Mudança de perfil vale na próxima entrada ou troca de empresa (aviso ao gravar).
 
 **Status:** ✅ concluída na tarefa 1.4 (19/10/2026).
+
+> **Teste no navegador (20/10/2026, [P26](../processos/P26-testes-ponta-a-ponta.md)):** `Perfil_crud_matriz_e_copia` — incluir pela matriz (CONSULTAR automático), alterar, copiar, excluir. Botões da lista com texto; confirmação de exclusão sem o nome dentro de string JavaScript (XSS corrigido).

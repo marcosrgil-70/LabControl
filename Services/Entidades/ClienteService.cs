@@ -22,7 +22,6 @@ public sealed class ClienteService(LabDbContext db)
     public async Task<ClienteListaVM> ListarAsync(ClienteFiltroVM f)
     {
         var q = DaTela().AsNoTracking();
-        if (!f.Inativos) q = q.Where(e => !e.Inativo);
         q = f.Tipo switch
         {
             "cliente" => q.Where(e => e.TipoCliente),
@@ -39,6 +38,9 @@ public sealed class ClienteService(LabDbContext db)
                              || (e.CpfCnpj != null && (e.CpfCnpj.Contains(t) || (digitos.Length >= 3 &&
                                  e.CpfCnpj.Replace(".", "").Replace("/", "").Replace("-", "").Contains(digitos)))));
         }
+        // inativos que a pesquisa acharia: a tela avisa (senão o cadastro "some" depois de inativado)
+        var ocultos = f.Inativos ? 0 : await q.CountAsync(e => e.Inativo);
+        if (!f.Inativos) q = q.Where(e => !e.Inativo);
         var total = await q.CountAsync();
         f.Pagina = Math.Clamp(f.Pagina, 1, Math.Max(1, (total + ClienteFiltroVM.TamanhoPagina - 1) / ClienteFiltroVM.TamanhoPagina));
         var itens = await q.OrderBy(e => e.Nome).Skip((f.Pagina - 1) * ClienteFiltroVM.TamanhoPagina).Take(ClienteFiltroVM.TamanhoPagina)
@@ -53,7 +55,7 @@ public sealed class ClienteService(LabDbContext db)
             }).ToListAsync();
         return new ClienteListaVM
         {
-            Filtro = f, Total = total,
+            Filtro = f, Total = total, InativosOcultos = ocultos,
             Itens = itens.Select(e => new ClienteListaItemVM(e.IdEntidades, e.Categoria, e.DataCadastro, e.Nome, e.NomeFantasia, e.CpfCnpj,
                 e.Fone, e.Email, Tipos(e.TipoCliente, e.TipoFornecedor, e.TipoVendedor, e.TipoTransportador, e.TipoFuncionario), e.Inativo)).ToList(),
         };

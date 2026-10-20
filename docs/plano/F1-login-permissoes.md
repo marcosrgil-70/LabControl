@@ -69,3 +69,4 @@
 - [x] Login seguro, empresa ativa, permissões e profissional do usuário funcionando.
 - [x] Nova empresa nasce utilizável (status, perfis, parâmetros).
 - [x] Nenhuma action de escrita sem `[Permissao]`.
+- [x] CRUD de T02, T03, T04 e T05 provado no navegador (P26, 20/10/2026).

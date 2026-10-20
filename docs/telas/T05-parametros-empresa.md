@@ -45,3 +45,5 @@ Validações: dias ≥ 0 (`DIAS_RETROATIVOS_ENTREGA` entre 0 e 365, com aviso se
 - Aceite em `ParametrosEmpresaServiceTests` (4 testes).
 
 **Status:** ✅ concluída na tarefa 1.6 (20/10/2026).
+
+> **Teste no navegador (20/10/2026, [P26](../processos/P26-testes-ponta-a-ponta.md)):** `Empresa_dados_contatos_e_parametros` — alterar os dias retroativos e conferir o valor gravado.

@@ -22,8 +22,9 @@ public sealed partial class AuxiliarService(LabDbContext db)
     public async Task<AuxiliarListaVM> ListarAsync<T>(AuxiliarDefinicao<T> def, AuxiliarFiltroVM filtro) where T : class, IPorEmpresa, new()
     {
         var q = db.Set<T>().AsNoTracking();
-        if (!filtro.Inativos) q = q.Where(e => EF.Property<bool>(e, Ativo));
         if (!string.IsNullOrWhiteSpace(filtro.Busca)) q = q.Where(Busca<T>(def, filtro.Busca.Trim()));
+        var ocultos = filtro.Inativos ? 0 : await q.CountAsync(e => !EF.Property<bool>(e, Ativo));
+        if (!filtro.Inativos) q = q.Where(e => EF.Property<bool>(e, Ativo));
 
         var total = await q.CountAsync();
         filtro.Pagina = Math.Clamp(filtro.Pagina, 1, Math.Max(1, (total + AuxiliarFiltroVM.TamanhoPagina - 1) / AuxiliarFiltroVM.TamanhoPagina));
@@ -34,7 +35,7 @@ public sealed partial class AuxiliarService(LabDbContext db)
         var colunas = def.Campos.Where(c => c.NaLista).ToList();
         return new AuxiliarListaVM
         {
-            Definicao = def, Filtro = filtro, Colunas = colunas, Total = total,
+            Definicao = def, Filtro = filtro, Colunas = colunas, Total = total, InativosOcultos = ocultos,
             Itens = entidades.Select(e => new AuxiliarLinhaVM(Id(tipo, e), (bool)Valor(tipo, e, Ativo)!,
                 colunas.Select(c => Exibir(c, tipo.FindProperty(c.Propriedade)!, Valor(tipo, e, c.Propriedade))).ToList())).ToList(),
         };
