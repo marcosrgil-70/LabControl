@@ -59,6 +59,13 @@ Regra prática: **se a tarefa exige decidir algo que não está escrito no MD �
 ### Comandos úteis
 `/code-review` ao fim de cada fase (`high` nas fases 0, 4 e 5) · `/security-review` ao fim da fase 1 e antes da virada · `/simplify` depois de fases grandes · `/run` para ver a tela funcionando.
 
+### Skills do projeto (`.claude/skills/`)
+| Skill | Quando |
+|---|---|
+| `/concluir-tarefa X.Y` | ao terminar cada tarefa: build + testes, checklists (plano e fase), Status/Implementação da tela, matriz, Diário, ponto de retorno e commit |
+| `/mudanca-banco` | qualquer mudança em `Scripts/v2` (tabela, view, rotina, trigger, seed): script → docs → roteiro 12 §7 → recriar → gerar entidades → testes |
+| `/novo-auxiliar` | **a criar ao fim da 2.1**, a partir do CRUD de Idiomas aprovado; usada na 2.2 para os outros 19 auxiliares |
+
 ## 4. Visão geral das fases
 
 Esforço: **S** = 1 sessão · **M** = 2–3 sessões · **G** = 4+ sessões (sessão ≈ meio dia de trabalho com o Claude).

@@ -10,6 +10,7 @@
 ### 2.1 CRUD genérico com um auxiliar (Idiomas)
 - **Passos:** `AuxiliarDefinicao`, `AuxiliaresController`, `AuxiliarService<T>`, views Index (busca, inativos, paginação) e modal; tradução de duplicidade (1062) e de uso (1451 → "inativar"); cadastro rápido (`/Auxiliares/{tabela}/Rapido`).
 - **Aceite:** [aceite do padrão T10-00](../telas/T10-00-crud-auxiliares.md#critérios-de-aceite-valem-para-todos) para Idiomas; aprovação do usuário do visual.
+- **Ao concluir:** criar a skill `.claude/skills/novo-auxiliar/SKILL.md` a partir do CRUD de Idiomas aprovado (definição, permissões, menu, views, teste, docs), para a 2.2 replicar os 19 auxiliares por ela.
 - **Esforço:** M
 
 ### 2.2 Replicar para os outros 19 auxiliares ⚪⚡
