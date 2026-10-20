@@ -8,6 +8,7 @@
 ---
 
 ### 1.1 T00 — Login, troca de senha, seleção/troca de empresa
+> ✅ **Concluída em 19/10/2026** — aceite da T00 coberto por `ContaServiceTests` e `ContaFluxoTests`; ver [P02 › Implementação](../processos/P02-autenticacao-permissoes.md#implementação-tarefa-11). Admin de desenvolvimento: `.\Scripts\v2\recriar.ps1 -Dev` → `ADMIN` / `Admin123` (troca obrigatória).
 - **Passos:** `ContaController` + `ContaService`; Cookie Authentication; PBKDF2; bloqueio 5 tentativas/15 min; troca obrigatória; seleção de empresa com claims (`EmpresaId`, `ProfissionalId`, permissões); trocar empresa; sair; auditoria L. Criar o primeiro usuário ADMIN_GLOBAL por script de seed de desenvolvimento (fora do `05_seed.sql`).
 - **Aceite:** itens do [aceite da T00](../telas/T00-login-empresa.md#aceite).
 - **Esforço:** M

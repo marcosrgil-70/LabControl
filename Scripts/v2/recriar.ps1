@@ -9,7 +9,9 @@
      trocando "labcontrol_v2" pelo nome do banco, e PARA no primeiro erro;
   3. confere as contagens de objetos (59 tabelas, 10 views, 8 funções,
      21 procedures, 42 triggers, 109 permissões);
-  4. com -Teste: cria um banco temporário labcontrol_teste_<id>, roda
+  4. com -Dev: roda dev/*.sql (empresa 001 + usuário ADMIN / senha provisória
+     Admin123, só para desenvolvimento);
+  5. com -Teste: cria um banco temporário labcontrol_teste_<id>, roda
      teste/roteiro_12_7.sql e apaga o banco no final (a não ser que -Manter).
 
   A senha é pedida no console (não fica em arquivo). Se a variável de
@@ -17,6 +19,7 @@
 
 .EXAMPLE
   .\Scripts\v2\recriar.ps1                       # recria labcontrol_v2
+  .\Scripts\v2\recriar.ps1 -Dev                  # recria labcontrol_v2 com empresa 001 + usuário ADMIN
   .\Scripts\v2\recriar.ps1 -Teste                # banco temporário + roteiro 12 §7
   .\Scripts\v2\recriar.ps1 -Banco labcontrol_v2_hml -Forcar
 #>
@@ -28,6 +31,7 @@ param(
   [string]$Usuario = 'root',
   [string]$MySql = '',
   [switch]$Teste,
+  [switch]$Dev,
   [switch]$Manter,
   [switch]$Forcar
 )
@@ -123,6 +127,14 @@ SELECT
   }
   if ($divergente) {
     Write-Host 'AVISO: contagens diferentes do esperado. Se o schema mudou de propósito, atualize $esperado neste script e o doc 11.' -ForegroundColor Yellow
+  }
+
+  if ($Dev) {
+    foreach ($arq in Get-ChildItem (Join-Path $pasta 'dev') -Filter '*.sql' | Sort-Object Name) {
+      try { [void](Sql '' $arq.FullName @("-D$Banco")) } catch { throw "dev/$($arq.Name): $($_.Exception.Message)" }
+      Write-Host ("  dev/{0,-22} ok" -f $arq.Name) -ForegroundColor Green
+    }
+    Write-Host '  login de desenvolvimento: ADMIN / Admin123 (troca obrigatória no 1º acesso)' -ForegroundColor Cyan
   }
 
   if ($Teste) {

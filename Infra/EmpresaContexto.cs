@@ -15,15 +15,24 @@ public interface IEmpresaContexto
     bool AdminGlobal { get; }
     /// <summary>IP do cliente (gravado na AUDITORIA).</summary>
     string? Ip { get; }
+    /// <summary>Permissão <c>TELA.ACAO</c> na empresa ativa (ADMIN_GLOBAL tem todas).</summary>
+    bool TemPermissao(string codigo);
 }
 
-/// <summary>Nomes das claims gravadas no login/troca de empresa (Fase 1, T00).</summary>
+/// <summary>Nomes das claims gravadas no login/troca de empresa (T00, Services/ContaService.cs).</summary>
 public static class LabClaims
 {
     public const string UsuarioId = ClaimTypes.NameIdentifier;
+    public const string Login = "lc:login";
     public const string EmpresaId = "lc:empresa";
+    public const string EmpresaCodigo = "lc:empresa_codigo";
+    public const string EmpresaNome = "lc:empresa_nome";
     public const string ProfissionalId = "lc:profissional";
     public const string AdminGlobal = "lc:admin_global";
+    /// <summary>Uma claim por código de permissão (união dos perfis ativos do usuário na empresa).</summary>
+    public const string Permissao = "lc:permissao";
+    /// <summary>Troca de senha obrigatória pendente: só /Conta/TrocarSenha e /Conta/Sair.</summary>
+    public const string TrocarSenha = "lc:trocar_senha";
 }
 
 /// <summary>Lê o contexto das claims do usuário autenticado.</summary>
@@ -38,4 +47,6 @@ public sealed class EmpresaContexto(IHttpContextAccessor http) : IEmpresaContext
     public int? ProfissionalId => Inteiro(LabClaims.ProfissionalId);
     public bool AdminGlobal => Usuario?.FindFirstValue(LabClaims.AdminGlobal) == "1";
     public string? Ip => http.HttpContext?.Connection.RemoteIpAddress?.ToString();
+    public bool TemPermissao(string codigo) =>
+        AdminGlobal || (EmpresaId is not null && Usuario?.HasClaim(LabClaims.Permissao, codigo) == true);
 }

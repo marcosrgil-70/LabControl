@@ -48,3 +48,19 @@ body {
   .sidebar .nav-section { display: none; }
   .content-wrapper { padding: 1rem; }
 }
+
+/* Telas de conta (Views/Shared/_LayoutConta.cshtml): login, troca de senha, escolha de empresa */
+.conta-fundo {
+  background: linear-gradient(135deg, var(--lc-azul) 0%, #2d5986 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.conta-cartao { width: 100%; max-width: 420px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); }
+.conta-cabecalho { background: var(--lc-azul); color: #fff; border-radius: 12px 12px 0 0; padding: 2rem; text-align: center; }
+.conta-cabecalho i { font-size: 2.5rem; opacity: 0.9; }
+.conta-cabecalho h4 { margin: 0.5rem 0 0; font-weight: 700; letter-spacing: 0.05em; }
+.conta-cabecalho small { opacity: 0.65; }
+.topbar-empresa:hover { text-decoration: underline !important; }

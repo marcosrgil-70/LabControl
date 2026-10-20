@@ -37,6 +37,7 @@ Garantir que cada request trabalhe com **uma** empresa (a ativa) e que nenhum da
 - `SaveChanges`: inclusão recebe a empresa ativa (ou é recusada se vier outra); alteração/exclusão só de registro da empresa ativa e sem trocar `ID_EMPRESAS`; **sem empresa ativa nada é lido nem gravado** (fail-closed).
 - Alterar = carregar pela consulta filtrada e copiar os campos do formulário; **nunca** `db.Update(entidadeDoFormulario)` (o `UPDATE … WHERE ID = x` não leva a empresa).
 - `Infra/ExigirEmpresaMiddleware.cs`: usuário autenticado sem empresa → `/Conta/Empresa` (actions MVC, exceto o controller `Conta`).
+- Exceção ao filtro no **login** (tarefa 1.1): ao montar as permissões ainda não há empresa ativa; `ContaService.MontarIdentidadeAsync` confere o vínculo e lê `PERFIS_PERMISSOES` com `IgnoreQueryFilters()` e a empresa escolhida no `Where`.
 - Migração (F3) grava várias empresas: usará um contexto/modo próprio (a decidir na 3.5), nunca `?? 1`.
 - Testes: `tests/LabControl.Tests/MultiempresaTests.cs` (2 empresas) e `ExigirEmpresaMiddlewareTests.cs`.
 

@@ -13,7 +13,8 @@ Documentação: [doc 11 — modelo](../../docs/banco/11-MODELO-MYSQL.md) · [doc
 | 4 | `04_views.sql` | 10 views |
 | 5 | `05_seed.sql` | Brasil + 27 UFs e catálogo de 109 permissões |
 | — | `teste/roteiro_12_7.sql` | roteiro de teste do doc 12 §7 (39 verificações) — **só em banco temporário** |
-| — | `recriar.ps1` | recria um banco do zero e confere as contagens; `-Teste` roda o roteiro |
+| — | `recriar.ps1` | recria um banco do zero e confere as contagens; `-Teste` roda o roteiro; `-Dev` roda `dev/*.sql` |
+| — | `dev/admin_dev.sql` | **só desenvolvimento**: empresa `001` + usuário `ADMIN` / senha provisória `Admin123` (ADMIN_GLOBAL, troca obrigatória no 1º acesso) |
 
 Empresas, usuários e cadastros **não** estão no seed: vêm da migração ([doc 13](../../docs/banco/13-MIGRACAO-DADOS.md)) ou do cadastro de nova empresa (`SP_INICIALIZAR_EMPRESA`).
 
@@ -21,6 +22,7 @@ Empresas, usuários e cadastros **não** estão no seed: vêm da migração ([do
 
 ```powershell
 .\Scripts\v2\recriar.ps1                 # recria labcontrol_v2 (pede a senha e, se o banco existir, confirmação)
+.\Scripts\v2\recriar.ps1 -Dev            # idem + empresa 001 e usuário ADMIN / Admin123 (desenvolvimento)
 .\Scripts\v2\recriar.ps1 -Teste          # cria labcontrol_teste_<id>, roda o roteiro 12 §7 e apaga o banco
 .\Scripts\v2\recriar.ps1 -Teste -Manter  # idem, mas mantém o banco temporário para inspeção
 ```

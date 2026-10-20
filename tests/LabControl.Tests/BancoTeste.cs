@@ -145,4 +145,6 @@ public sealed class EmpresaFixa : IEmpresaContexto
     public int? ProfissionalId { get; set; }
     public bool AdminGlobal { get; set; }
     public string? Ip { get; set; } = "127.0.0.1";
+    public HashSet<string> Permissoes { get; } = [];
+    public bool TemPermissao(string codigo) => AdminGlobal || Permissoes.Contains(codigo);
 }

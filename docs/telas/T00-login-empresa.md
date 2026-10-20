@@ -32,9 +32,11 @@
 - Empresa fixa `?? 1` em controllers (`HttpContext.Session.GetInt32("EmpresaId") ?? 1`) → sem empresa na claim = redireciona para seleção.
 
 ## Aceite
-- [ ] Usuário com 2 empresas escolhe a empresa; com 1 entra direto.
-- [ ] Usuário migrado é obrigado a trocar a senha.
-- [ ] 5 erros bloqueiam por 15 min.
-- [ ] Trocar a empresa muda todos os dados exibidos (filtro global).
+- [x] Usuário com 2 empresas escolhe a empresa; com 1 entra direto.
+- [x] Usuário migrado é obrigado a trocar a senha.
+- [x] 5 erros bloqueiam por 15 min.
+- [x] Trocar a empresa muda todos os dados exibidos (filtro global).
 
-**Status:** ⬜ não iniciado
+Testes: `tests/LabControl.Tests/ContaServiceTests.cs` (serviço) e `ContaFluxoTests.cs` (app inteiro: cookie, antiforgery, redirecionamentos).
+
+**Status:** ✅ concluída na tarefa 1.1 (19/10/2026) — `Controllers/ContaController.cs`, `Services/ContaService.cs`, `Views/Conta/*`. Detalhes em [P02 › Implementação](../processos/P02-autenticacao-permissoes.md#implementação-tarefa-11).

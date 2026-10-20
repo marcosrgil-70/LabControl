@@ -7,12 +7,16 @@ namespace LabControl.Tests;
 
 public class ExigirEmpresaMiddlewareTests
 {
-    private static async Task<(bool Passou, string? Destino)> ExecutarAsync(bool autenticado, int? empresa, string? controller)
+    private static async Task<(bool Passou, string? Destino)> ExecutarAsync(bool autenticado, int? empresa, string? controller,
+                                                                            string action = "Index", bool trocarSenha = false)
     {
         var ctx = new DefaultHttpContext();
-        if (autenticado) ctx.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(LabClaims.UsuarioId, "1")], "teste"));
+        var claims = new List<Claim> { new(LabClaims.UsuarioId, "1") };
+        if (trocarSenha) claims.Add(new(LabClaims.TrocarSenha, "1"));
+        if (autenticado) ctx.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "teste"));
         if (controller is not null)
-            ctx.SetEndpoint(new Endpoint(null, new EndpointMetadataCollection(new ControllerActionDescriptor { ControllerName = controller }), controller));
+            ctx.SetEndpoint(new Endpoint(null, new EndpointMetadataCollection(
+                new ControllerActionDescriptor { ControllerName = controller, ActionName = action }), controller));
         var passou = false;
         var mw = new ExigirEmpresaMiddleware(_ => { passou = true; return Task.CompletedTask; });
         await mw.InvokeAsync(ctx, new EmpresaFixa { EmpresaId = empresa });
@@ -36,5 +40,17 @@ public class ExigirEmpresaMiddlewareTests
     {
         var r = await ExecutarAsync(autenticado, empresa, controller);
         Assert.True(r.Passou);
+    }
+
+    [Theory]
+    [InlineData("Home", "Index", false)]
+    [InlineData("Conta", "Empresa", false)]   // nem a escolha de empresa antes de trocar a senha
+    [InlineData("Conta", "TrocarSenha", true)]
+    [InlineData("Conta", "Sair", true)]
+    public async Task Troca_de_senha_pendente_libera_so_a_troca_e_sair(string controller, string action, bool passa)
+    {
+        var r = await ExecutarAsync(autenticado: true, empresa: 1, controller, action, trocarSenha: true);
+        Assert.Equal(passa, r.Passou);
+        if (!passa) Assert.Equal(ExigirEmpresaMiddleware.RotaTrocarSenha, r.Destino);
     }
 }

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - LabControl</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="conta-fundo">
+    @* Login, troca de senha e escolha de empresa (T00): cartão centralizado, sem menu *@
+    <main class="card conta-cartao">
+        <div class="conta-cabecalho">
+            <i class="bi bi-flask"></i>
+            <h4>LabControl</h4>
+            <small>Sistema de Gestão Laboratorial</small>
+        </div>
+        <div class="card-body p-4">
+            @if (TempData[Mensagens.Sucesso] is { } sucesso)
+            {
+                <div class="alert alert-success py-2 small"><i class="bi bi-check-circle me-1"></i>@sucesso</div>
+            }
+            @RenderBody()
+        </div>
+    </main>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

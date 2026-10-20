@@ -32,6 +32,23 @@
 ## Variáveis de sessão MySQL
 `SessaoMySqlInterceptor` em **toda** abertura de conexão: `SET @LC_ID_USUARIOS = {UsuarioId}, @LC_MIGRACAO = 0, @LC_PERMITE_RETROATIVO = 0;` (o pool reutiliza conexões — sempre zerar).
 
+## Implementação (tarefa 1.1)
+| Peça | Arquivo | O que faz |
+|---|---|---|
+| Serviço | `Services/ContaService.cs` | `EntrarAsync` (login em maiúsculas; mensagem única; hash fictício quando o usuário não existe, para o tempo não revelar o login; falha = um `UPDATE` atômico que incrementa e bloqueia na 5ª; rehash quando necessário; evento L de sucesso/falha com o motivo, nunca a senha), `TrocarSenhaAsync`, `EmpresasDoUsuarioAsync` (pré-seleção: última → padrão), `MontarIdentidadeAsync` (claims), `SessaoValidaAsync` |
+| Tela | `Controllers/ContaController.cs`, `Views/Conta/*`, `Views/Shared/_LayoutConta.cshtml` | Login → troca obrigatória → empresa (uma só: entra direto; nenhuma: recusa) → Home; trocar empresa pelo topo sem senha; Sair por POST |
+| Cookie | `Program.cs` | `LabControl.Auth`: HttpOnly, Secure, SameSite=Lax, 8 h deslizantes (`Autenticacao:ExpiracaoHoras`); política de fallback = autenticado (só o login, a página de erro e os estáticos são anônimos); antiforgery automático em todo POST |
+| Etapas obrigatórias | `Infra/ExigirEmpresaMiddleware.cs` | claim `lc:trocar_senha` → só TrocarSenha/Sair; sem empresa → `/Conta/Empresa` |
+| Revalidação | `Infra/ValidarSessao.cs` | a cada request: usuário ativo e vínculo/empresa ativos, senão encerra a sessão. **O bloqueio por tentativas não derruba sessão aberta** (errar 5 vezes a senha de alguém não pode encerrar a sessão dessa pessoa) |
+| Claims | `Infra/EmpresaContexto.cs` (`LabClaims`) | `UsuarioId`, `Name` (nome), `lc:login`, `lc:empresa`, `lc:empresa_codigo`, `lc:empresa_nome`, `lc:profissional`, `lc:admin_global`, `lc:trocar_senha`, `lc:permissao` (uma por código); `IEmpresaContexto.TemPermissao(codigo)` |
+| Topo | `Views/Shared/_Layout.cshtml` | código + nome da empresa (link para trocar), menu do usuário (trocar empresa/senha, sair) e aviso "sem profissional vinculado" |
+| Admin de desenvolvimento | `Scripts/v2/dev/admin_dev.sql` (`recriar.ps1 -Dev`) | empresa `001` + usuário `ADMIN` / senha provisória `Admin123` (troca obrigatória). Nunca em produção: lá os usuários vêm da migração (M-09) |
+
+- As permissões são lidas na entrada/troca de empresa: mudança de perfil vale a partir da próxima entrada ou troca de empresa.
+- Ainda não há empresa ativa quando as permissões são montadas: `PERFIS_PERMISSOES` é lido com `IgnoreQueryFilters()` e a empresa **conferida** fixada no `Where` (exceção registrada no [P01](P01-multiempresa.md)).
+- A troca de senha é auditada pelo `SaveChanges` (A em `USUARIOS`, `SENHA_HASH = "***"`); o contador de falhas e o último acesso são gravados por SQL direto, cobertos pelo evento L.
+- Produção (F9): chaves do Data Protection persistidas (senão o cookie se perde a cada reinício do servidor).
+
 ## Cenários de teste
 - 5 senhas erradas bloqueiam por 15 min; a 6ª tentativa correta dentro do prazo é recusada.
 - Usuário migrado obrigado a trocar a senha.
