@@ -1,4 +1,10 @@
 using System.Net;
+using System.Security.Claims;
+using LabControl.Infra;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 
 namespace LabControl.Tests;
@@ -127,5 +133,34 @@ public class ContaFluxoTests(AppWeb app) : IClassFixture<AppWeb>
         Assert.Equal(HttpStatusCode.OK, r.StatusCode);
         Assert.Contains("não tem acesso a nenhuma empresa ativa", await r.HtmlAsync());
         Assert.StartsWith("https://localhost/Conta/Login", (await c.GetAsync("/")).Destino());
+    }
+
+    [Fact]
+    public async Task Cookie_de_outra_execucao_do_app_volta_para_o_login()
+    {
+        // abrir o sistema depois de reiniciar o app sempre pede login, mesmo com o cookie guardado pelo navegador
+        await using var e = await Cenario.CriarAsync();
+        var usu = await UsuariosTeste.CriarAsync();
+        await UsuariosTeste.VincularAsync(usu.IdUsuarios, e.Empresa.IdEmpresas);
+        var atual = (await UsuariosTeste.Servico(e.Db, e.Ativa).MontarIdentidadeAsync(usu.IdUsuarios, e.Empresa.IdEmpresas)).Valor;
+        Assert.True(await SessaoAceitaAsync(atual));
+
+        var anterior = new ClaimsPrincipal(new ClaimsIdentity(
+            atual.Claims.Where(x => x.Type != LabClaims.Instancia).Append(new Claim(LabClaims.Instancia, "execucao-anterior")),
+            CookieAuthenticationDefaults.AuthenticationScheme));
+        Assert.False(await SessaoAceitaAsync(anterior));
+        var semInstancia = new ClaimsPrincipal(new ClaimsIdentity(
+            atual.Claims.Where(x => x.Type != LabClaims.Instancia), CookieAuthenticationDefaults.AuthenticationScheme));
+        Assert.False(await SessaoAceitaAsync(semInstancia)); // cookie de antes desta correção
+    }
+
+    private async Task<bool> SessaoAceitaAsync(ClaimsPrincipal principal)
+    {
+        using var escopo = app.Services.CreateScope();
+        var http = new DefaultHttpContext { RequestServices = escopo.ServiceProvider };
+        var esquema = new AuthenticationScheme(CookieAuthenticationDefaults.AuthenticationScheme, null, typeof(CookieAuthenticationHandler));
+        var ctx = new CookieValidatePrincipalContext(http, esquema, new CookieAuthenticationOptions(), new AuthenticationTicket(principal, esquema.Name));
+        await new ValidarSessao().ValidatePrincipal(ctx);
+        return ctx.Principal is not null;
     }
 }

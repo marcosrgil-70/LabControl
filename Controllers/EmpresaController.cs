@@ -26,7 +26,7 @@ public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresa
     {
         vm.Id = Ativa;
         ModelState.Remove(nameof(vm.CodEmpresa)); // o código não muda (não vem no formulário)
-        if (ModelState.IsValid && this.AplicarNoFormulario(await empresas.AlterarAsync(vm), "Dados da empresa gravados."))
+        if (ModelState.IsValid && this.AplicarNoFormulario(await empresas.AlterarAsync(vm), "Dados da empresa usuária gravados."))
         {
             await AtualizarTopoAsync();
             return RedirectToAction(nameof(Dados));

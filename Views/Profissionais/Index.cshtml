@@ -82,6 +82,6 @@
 @section Scripts {
     <script>
         document.querySelectorAll('form[data-confirmar]').forEach(f =>
-            f.addEventListener('submit', e => { if (!confirm(f.dataset.confirmar)) e.preventDefault(); }));
+            f.addEventListener('submit', e => { if (f.dataset.confirmar && !confirm(f.dataset.confirmar)) e.preventDefault(); }));
     </script>
 }

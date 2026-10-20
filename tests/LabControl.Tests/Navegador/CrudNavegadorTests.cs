@@ -50,6 +50,8 @@ public class CrudNavegadorTests(AppNavegador app)
         await Assertions.Expect(Linha(p, nome)).ToContainTextAsync("Inativo");
         await Linha(p, nome).Locator("button[title=Reativar]").ClickAsync();
         Assert.Equal("Idioma reativado.", await s.AlertaAsync());
+        Assert.Contains(s.Dialogos, d => d.StartsWith("Reativar"));
+        Assert.DoesNotContain(s.Dialogos, string.IsNullOrWhiteSpace); // nenhum confirm() vazio
 
         // excluir
         await Linha(p, nome).Locator("button[title=Excluir]").ClickAsync();
@@ -195,6 +197,8 @@ public class CrudNavegadorTests(AppNavegador app)
         await p.ClickAsync("form.card button[type=submit]");
         await Linha(p, nome).Locator("button[title=Reativar]").ClickAsync();
         Assert.Contains("reativado", await s.AlertaAsync());
+        Assert.Contains(s.Dialogos, d => d.StartsWith("Reativar"));
+        Assert.DoesNotContain(s.Dialogos, string.IsNullOrWhiteSpace); // nenhum confirm() vazio
 
         // excluir (sem movimento) → contatos vão junto
         await p.FillAsync("#Texto", nome);

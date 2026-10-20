@@ -55,7 +55,7 @@
                         <td class="text-end text-nowrap">
                             <a asp-action="Editar" asp-route-id="@c.Id" class="btn btn-outline-secondary btn-sm" title="Abrir"><i class="bi bi-pencil me-1"></i>Abrir</a>
                             <form method="post" asp-action="Inativo" asp-route-id="@c.Id" class="d-inline" lc-permissao="CLIENTES.ALTERAR"
-                                  data-confirmar="@(c.Inativo ? null : $"Inativar \"{c.Nome}\"? O cadastro não é apagado: sai da lista e dos combos (marque “Mostrar inativos” para vê-lo e reativá-lo).")">
+                                  data-confirmar="@(c.Inativo ? $"Reativar \"{c.Nome}\"? O cadastro volta para a lista e para os combos." : $"Inativar \"{c.Nome}\"? O cadastro não é apagado: sai da lista e dos combos (marque “Mostrar inativos” para vê-lo e reativá-lo).")">
                                 <input type="hidden" name="inativo" value="@(c.Inativo ? "false" : "true")" />
                                 <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(c.Inativo ? "Reativar" : "Inativar")"><i class="bi @(c.Inativo ? "bi-eye" : "bi-eye-slash") me-1"></i>@(c.Inativo ? "Reativar" : "Inativar")</button>
                             </form>
@@ -99,6 +99,6 @@
 @section Scripts {
     <script>
         document.querySelectorAll('form[data-confirmar]').forEach(f =>
-            f.addEventListener('submit', e => { if (!confirm(f.dataset.confirmar)) e.preventDefault(); }));
+            f.addEventListener('submit', e => { if (f.dataset.confirmar && !confirm(f.dataset.confirmar)) e.preventDefault(); }));
     </script>
 }

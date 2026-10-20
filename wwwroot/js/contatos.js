@@ -3,7 +3,7 @@
 //   GET  {url}/Contatos                          → HTML das abas (_ContatosAbas)
 //   POST {url}/ContatoEndereco|ContatoFone|ContatoEmail → { ok, id } ou 422 { erro, campo }
 //   POST {url}/ContatoExcluir (tipo, id)         → { ok } ou 422 { erro }
-//   GET  /Geografia/Cidades?idEstado=  ·  GET /Geografia/Cep/{cep}
+//   GET  /Geografia/CidadesDaUf?idEstado=  ·  GET /Geografia/Cep/{cep}
 (() => {
     const config = document.getElementById('contatos');
     if (!config) return;
@@ -36,7 +36,7 @@
         const cidade = form.querySelector('[data-cidade]');
         cidade.innerHTML = '<option value="">' + (idEstado ? '—' : '— selecione a UF —') + '</option>';
         if (!idEstado) return;
-        const r = await fetch('/Geografia/Cidades?idEstado=' + encodeURIComponent(idEstado), { headers: ajax });
+        const r = await fetch('/Geografia/CidadesDaUf?idEstado=' + encodeURIComponent(idEstado), { headers: ajax });
         if (!r.ok) return;
         for (const c of await r.json()) cidade.add(new Option(c.nome, c.id));
         if (selecionada) cidade.value = String(selecionada);

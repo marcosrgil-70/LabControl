@@ -187,8 +187,9 @@ public class EmpresaServiceTests(AppWeb app) : IClassFixture<AppWeb>
             Assert.Equal(HttpStatusCode.OK, dados.StatusCode);
             Assert.Contains(c.Empresa.CodEmpresa, await dados.HtmlAsync());
             Assert.Equal(HttpStatusCode.Forbidden, (await web.PostarAsync("/Empresa/Dados", "/Empresa/Dados", ("RazaoSocial", "X"))).StatusCode);
-            Assert.Equal(HttpStatusCode.Forbidden, (await web.GetAsync("/Empresas")).StatusCode);
-            Assert.Equal(HttpStatusCode.OK, (await web.GetAsync($"/Geografia/Cidades?idEstado={await c.Db.Estados.Select(x => x.IdEstados).FirstAsync()}")).StatusCode);
+            Assert.Equal("/Empresa/Dados", (await web.GetAsync("/Empresas")).Destino()); // um item só no menu: cai na empresa ativa
+            Assert.Equal(HttpStatusCode.Forbidden, (await web.GetAsync("/Empresas/Criar")).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await web.GetAsync($"/Geografia/CidadesDaUf?idEstado={await c.Db.Estados.Select(x => x.IdEstados).FirstAsync()}")).StatusCode);
         }
 
         var admin = await UsuariosTeste.CriarAsync(adminGlobal: true);

@@ -136,6 +136,7 @@ public sealed class ContaService(LabDbContext db, IAuditoria auditoria, TimeProv
             new(LabClaims.UsuarioId, usu.IdUsuarios.ToString()),
             new(ClaimTypes.Name, usu.Nome),
             new(LabClaims.Login, usu.Login),
+            new(LabClaims.Instancia, ValidarSessao.Instancia),
         };
         if (usu.AdminGlobal) claims.Add(new(LabClaims.AdminGlobal, "1"));
         if (usu.TrocarSenha) claims.Add(new(LabClaims.TrocarSenha, "1"));

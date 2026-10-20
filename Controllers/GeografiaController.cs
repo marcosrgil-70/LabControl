@@ -14,7 +14,8 @@ public sealed class GeografiaController(LabDbContext db, ConsultaCepService cep)
 {
     /// <summary>Cidades da UF para o combo (JSON <c>[{ id, nome }]</c>).</summary>
     [HttpGet]
-    public async Task<IActionResult> Cidades(int idEstado) =>
+    // não se chama "Cidades": o menu acharia que a tela T11-03 (tarefa 2.3) já existe e abriria este JSON
+    public async Task<IActionResult> CidadesDaUf(int idEstado) =>
         Json(await db.Cidades.AsNoTracking().Where(c => c.IdEstados == idEstado).OrderBy(c => c.Nome)
             .Select(c => new OpcaoVM(c.IdCidades, c.Nome)).ToListAsync());
 

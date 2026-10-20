@@ -216,4 +216,25 @@ public class UsuarioServiceTests(AppWeb app) : IClassFixture<AppWeb>
         Assert.Contains("somente agora", html);
         Assert.Contains(login.ToUpperInvariant(), html);
     }
+
+    [Fact]
+    public async Task Novo_usuario_ja_vem_com_a_empresa_ativa_e_aparece_no_combo_do_profissional()
+    {
+        // cadastrado pelo ADMIN_GLOBAL sem mexer na grade de empresas: tem que entrar no combo "Usuário do sistema" (T13)
+        await using var c = await Cenario.CriarAsync();
+        var global = new EmpresaFixa { EmpresaId = c.Empresa.IdEmpresas, AdminGlobal = true };
+        var vm = await Servico(c.Db, global).NovoAsync();
+        Assert.Equal(c.Empresa.IdEmpresas, vm.EmpresaPadrao);
+        Assert.Equal([c.Empresa.IdEmpresas], vm.Empresas.Where(e => e.Acesso).Select(e => e.IdEmpresa));
+
+        vm.Login = "n" + Guid.NewGuid().ToString("N")[..12];
+        vm.Nome = "USUÁRIO SEM PROFISSIONAL";
+        vm.Empresas.Single(e => e.Acesso).Perfis = [await PerfilAdministradorAsync(c)];
+        var r = await Servico(c.Db, global).IncluirAsync(vm);
+        Assert.True(r.Sucesso, r.Mensagem);
+
+        var profissionais = new LabControl.Services.Entidades.ProfissionalService(c.Db, c.Ativa, new VinculoUsuarioProfissionalService(c.Db, c.Ativa));
+        var prof = await profissionais.NovoAsync();
+        Assert.Contains(prof.Usuarios, u => u.Id == r.Valor.IdUsuario);
+    }
 }

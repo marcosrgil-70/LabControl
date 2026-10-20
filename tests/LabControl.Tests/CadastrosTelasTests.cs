@@ -76,7 +76,7 @@ public class CadastrosTelasTests(AppWeb app) : IClassFixture<AppWeb>
         Assert.Contains(email, await (await web.GetAsync("/Empresa/Contatos")).HtmlAsync());
 
         var uf = await c.Db.Estados.Where(e => e.Sigla == "SP").Select(e => e.IdEstados).SingleAsync();
-        var cidades = await (await web.GetAsync($"/Geografia/Cidades?idEstado={uf}")).Content.ReadAsStringAsync();
+        var cidades = await (await web.GetAsync($"/Geografia/CidadesDaUf?idEstado={uf}")).Content.ReadAsStringAsync();
         Assert.Contains("CAMPINAS", cidades);
         Assert.True(JsonDocument.Parse(cidades).RootElement.GetArrayLength() >= 645); // 645 municípios de SP (IBGE)
         Assert.Equal(HttpStatusCode.UnprocessableEntity, (await web.GetAsync("/Geografia/Cep/123")).StatusCode);

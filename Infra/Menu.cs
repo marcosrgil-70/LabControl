@@ -56,8 +56,8 @@ public static class Menu
         ]),
         new("Sistema",
         [
-            I("Empresa", "bi-building-gear", "Empresa", "EMPRESAS.CONSULTAR", "Dados"),
-            new ItemMenu("Empresas", "bi-buildings", "Empresas", "Index", "/Empresas", null, SoAdminGlobal: true),
+            // um item só (T03): ADMIN_GLOBAL vê a lista de todas; os demais caem direto na empresa ativa
+            I("Empresas Usuárias do Sistema", "bi-buildings", "Empresas", "EMPRESAS.CONSULTAR"),
             I("Parâmetros da Empresa", "bi-gear", "Empresa", "PARAMETROS_EMPRESA.CONSULTAR", "Parametros"),
             I("Usuários", "bi-people-fill", "Usuarios", "USUARIOS.CONSULTAR"),
             I("Perfis de Acesso", "bi-shield-lock", "Perfis", "PERFIS.CONSULTAR"),

@@ -70,7 +70,7 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         await s.IrAsync("/Empresa/Dados");
         await p.FillAsync("#NomeFantasia", fantasia);
         await p.ClickAsync("#aba-dados button[type=submit]");
-        Assert.Equal("Dados da empresa gravados.", await s.AlertaAsync());
+        Assert.Equal("Dados da empresa usuária gravados.", await s.AlertaAsync());
         await Assertions.Expect(p.Locator("body")).ToContainTextAsync(fantasia); // topo atualizado
 
         await p.ClickAsync("button[data-bs-target='#aba-telefones']");
@@ -180,15 +180,15 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         while (await c.Db.Empresas.AnyAsync(e => e.CodEmpresa == codigo));
 
         await s.IrAsync("/Empresas");
-        await p.ClickAsync("a:has-text('Nova empresa')");
+        await p.ClickAsync("a:has-text('Nova empresa usuária')");
         await p.FillAsync("#CodEmpresa", codigo);
         await p.FillAsync("#RazaoSocial", "EMPRESA PELO NAVEGADOR");
         await p.ClickAsync("form[action*=Empresas] button[type=submit]");
-        Assert.StartsWith($"Empresa {codigo} criada.", await s.AlertaAsync());
+        Assert.StartsWith($"Empresa usuária {codigo} criada.", await s.AlertaAsync());
         await Linha(p, codigo).Locator("a[title=Alterar]").ClickAsync();
         await p.FillAsync("#NomeFantasia", "NAVEGADOR");
         await p.ClickAsync("form[action*=Empresas] button[type=submit]");
-        Assert.Equal("Empresa gravada.", await s.AlertaAsync());
+        Assert.Equal("Empresa usuária gravada.", await s.AlertaAsync());
         var e = await c.Db.Empresas.AsNoTracking().SingleAsync(x => x.CodEmpresa == codigo);
         Assert.Equal("NAVEGADOR", e.NomeFantasia);
         Assert.NotNull(e.IdEntidades); // já nasce com a entidade (contatos)

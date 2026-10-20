@@ -52,13 +52,15 @@ public sealed partial class UsuarioService(LabDbContext db, IEmpresaContexto ctx
             .ToList();
     }
 
-    /// <summary>Formulário de inclusão: linhas das empresas editáveis (administrador local: só a ativa, já marcada).</summary>
+    /// <summary>
+    /// Formulário de inclusão: linhas das empresas editáveis (administrador local: só a ativa). A empresa ativa já vem
+    /// marcada e como padrão, também para o ADMIN_GLOBAL: sem o acesso, o usuário não aparece no combo do profissional (T13).
+    /// </summary>
     public async Task<UsuarioVM> NovoAsync()
     {
-        var vm = new UsuarioVM { PodeMarcarAdminGlobal = ctx.AdminGlobal, TrocarSenha = true };
-        if (!ctx.AdminGlobal) vm.EmpresaPadrao = ctx.EmpresaId;
+        var vm = new UsuarioVM { PodeMarcarAdminGlobal = ctx.AdminGlobal, TrocarSenha = true, EmpresaPadrao = ctx.EmpresaId };
         await PrepararFormularioAsync(vm, null);
-        if (!ctx.AdminGlobal) vm.Empresas.ForEach(e => e.Acesso = true);
+        vm.Empresas.Where(e => e.IdEmpresa == ctx.EmpresaId).ToList().ForEach(e => e.Acesso = true);
         return vm;
     }
 

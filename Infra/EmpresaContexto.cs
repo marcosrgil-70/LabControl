@@ -33,6 +33,8 @@ public static class LabClaims
     public const string Permissao = "lc:permissao";
     /// <summary>Troca de senha obrigatória pendente: só /Conta/TrocarSenha e /Conta/Sair.</summary>
     public const string TrocarSenha = "lc:trocar_senha";
+    /// <summary>Execução do app em que o login foi feito (<see cref="ValidarSessao.Instancia"/>): app reiniciado pede login de novo.</summary>
+    public const string Instancia = "lc:instancia";
 }
 
 /// <summary>Lê o contexto das claims do usuário autenticado.</summary>

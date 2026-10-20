@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LabControl.Tests;
 
@@ -89,6 +90,18 @@ public class PermissoesMenuPainelTests(AppWeb app) : IClassFixture<AppWeb>
         // todo item exige uma permissão do catálogo do 05_seed (ou é Início/Migração)
         Assert.All(Menu.Catalogo.SelectMany(s => s.Itens).Where(i => i.Permissao is not null),
                    i => Assert.Matches(@"^[A-Z_]+\.[A-Z_]+$", i.Permissao!));
+    }
+
+    [Fact]
+    public void Menu_real_sem_tela_inexistente_e_com_uma_entrada_de_empresa()
+    {
+        var telas = app.Services.GetRequiredService<TelasExistentes>();
+        var admin = Menu.Visivel(new EmpresaFixa { EmpresaId = 1, AdminGlobal = true }, telas.Existe).SelectMany(s => s.Itens).ToList();
+        // Cidades (T11-03) é da 2.3: o JSON do combo não pode se passar pela tela
+        Assert.DoesNotContain(admin, i => i.Texto == "Cidades");
+        // empresa usuária: um item só, com nome explícito (T03)
+        Assert.Single(admin, i => i.Controller is "Empresa" or "Empresas" && i.Action is "Index" or "Dados");
+        Assert.Contains(admin, i => i.Texto == "Empresas Usuárias do Sistema");
     }
 
     [Fact]

@@ -112,7 +112,7 @@
                             <label asp-for="IdUsuario" class="form-label small"></label>
                             <select asp-for="IdUsuario" asp-items="@(new SelectList(Model.Usuarios, "Id", "Nome"))" class="form-select"><option value="">— sem usuário —</option></select>
                             <span asp-validation-for="IdUsuario" class="text-danger small"></span>
-                            <div class="form-text">Usuários desta empresa ainda sem profissional. O usuário passa a ser este profissional (digitador/recebedor). Profissional inativo fica sem usuário.</div>
+                            <div class="form-text">Usuários com acesso a esta empresa e ainda sem profissional. O usuário passa a ser este profissional (digitador/recebedor). Profissional inativo fica sem usuário. Não achou o usuário? Em <a asp-controller="Usuarios" asp-action="Index">Usuários</a>, marque o acesso dele a esta empresa.</div>
                         </div>
                     </div>
                 </div>

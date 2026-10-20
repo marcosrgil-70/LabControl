@@ -1,10 +1,10 @@
 @model EmpresaVM
 @{
-    ViewData["Title"] = "Empresa";
+    ViewData["Title"] = "Empresa Usuária do Sistema";
     var contatos = ViewData["Contatos"] as ContatosVM;
 }
 
-<h5 class="mb-3"><i class="bi bi-building-gear me-2 text-primary"></i>Dados da empresa <span class="badge text-bg-secondary">@Model.CodEmpresa</span></h5>
+<h5 class="mb-3"><i class="bi bi-building-gear me-2 text-primary"></i>Empresa usuária do sistema <span class="badge text-bg-secondary">@Model.CodEmpresa</span> <span class="badge text-bg-primary">empresa ativa</span></h5>
 
 <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#aba-dados" type="button" role="tab">Dados</button></li>
@@ -22,7 +22,7 @@
             <partial name="_EmpresaCampos" model="Model" />
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary" lc-permissao="EMPRESAS.ALTERAR"><i class="bi bi-check-lg me-1"></i>Gravar</button>
-                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+                <a asp-controller="@(User.HasClaim(LabClaims.AdminGlobal, "1") ? "Empresas" : "Home")" asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
             </div>
         </form>
     </div>

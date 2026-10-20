@@ -56,7 +56,7 @@ Filtros: nome/fantasia/documento (contém), tipo (cliente/fornecedor/...), inati
 - [x] Sem `CLIENTES.ALTERAR` a tela abre só para consulta.
 
 ## Implementação (antecipada em 20/10/2026 — pedido do usuário)
-- `Controllers/ClientesController.cs` (`/Clientes`, `Criar`, `Editar/{id}`, `Excluir`, `Inativo`; contatos em `/Clientes/{idEntidade}/Contatos|ContatoEndereco|ContatoFone|ContatoEmail|ContatoExcluir`) · `Services/Entidades/ClienteService.cs` · `Services/Entidades/ContatosService.cs` · `Views/Clientes/{Index,Form}.cshtml` · componente `_ContatosAbas`/`_ContatosModais` + `wwwroot/js/contatos.js` · `/Geografia/Cidades` e `/Geografia/Cep/{cep}`.
+- `Controllers/ClientesController.cs` (`/Clientes`, `Criar`, `Editar/{id}`, `Excluir`, `Inativo`; contatos em `/Clientes/{idEntidade}/Contatos|ContatoEndereco|ContatoFone|ContatoEmail|ContatoExcluir`) · `Services/Entidades/ClienteService.cs` · `Services/Entidades/ContatosService.cs` · `Views/Clientes/{Index,Form}.cshtml` · componente `_ContatosAbas`/`_ContatosModais` + `wwwroot/js/contatos.js` · `/Geografia/CidadesDaUf` e `/Geografia/Cep/{cep}`.
 - Abas **Dados básicos · Endereços · Telefones · E-mails · Observações**; ao incluir, grava os dados e abre a aba Endereços (as de contatos ficam desabilitadas antes de existir o cadastro); contatos gravados na hora, por AJAX. Textos em maiúsculas (e-mail em minúsculas). Detalhes, regras e testes: [P25](../processos/P25-cadastro-entidades-contatos.md).
 - Testes: `CadastrosEntidadesTests`, `CadastrosTelasTests`.
 

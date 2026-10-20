@@ -26,4 +26,6 @@ Botão "Importar municípios IBGE" (CSV oficial: código, nome, UF): insere os q
 - [x] Sem internet o endereço pode ser digitado (mensagem "Serviço de CEP indisponível…" e preenchimento manual).
 - [x] Importação IBGE idempotente — feita como **seed** `Scripts/v2/06_cidades.sql` (5.571 municípios, `INSERT IGNORE` pelo código IBGE; gerador `tools/gerador-cidades`). A tela de manutenção de países/estados/cidades continua na 2.3.
 
+> **20/10/2026 (relato do usuário: "cadastro de cidades não funciona"):** a tela ainda não existe (2.3), mas o item *Cidades* aparecia no menu porque o JSON do combo se chamava `/Geografia/Cidades` e o menu o tomava pela tela. O JSON passou a `/Geografia/CidadesDaUf`; o item volta ao menu quando a tela for feita. Teste: `PermissoesMenuPainelTests.Menu_real_sem_tela_inexistente_e_com_uma_entrada_de_empresa`.
+
 **Status:** 🟨 cidades IBGE, busca de CEP e componente de endereço prontos em 20/10/2026 (P25); falta a tela de manutenção T11-01…03 (2.3).

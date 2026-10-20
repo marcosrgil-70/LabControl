@@ -72,6 +72,8 @@ Testes: `tests/LabControl.Tests/UsuarioServiceTests.cs`.
 - Excluir: só quem nunca gravou nada — sem `AUDITORIA` como autor, sem `LAB_HIST_AMOSTRAS_LOG` e sem `CRIADO_POR`/`ALTERADO_POR` em nenhuma tabela (busca no `information_schema`); senão "inative-o em vez de excluir".
 - `CRIADO_POR`/`ALTERADO_POR` passaram a ser preenchidos pelo `LabDbContext` (usuário do request) em toda inclusão/alteração real.
 
+> **20/10/2026 (relato do usuário: usuário recém-cadastrado não aparecia no combo do profissional):** o combo "Usuário do sistema" da T13 lista só usuários com acesso à empresa ativa, e a inclusão feita por ADMIN_GLOBAL vinha **sem nenhuma empresa marcada** (o usuário foi gravado sem `USUARIOS_EMPRESAS`). Agora o novo usuário já vem com a **empresa ativa marcada e como padrão** (também para ADMIN_GLOBAL; desmarca quem não quiser) e a T13 explica no campo onde dar o acesso. Teste: `UsuarioServiceTests.Novo_usuario_ja_vem_com_a_empresa_ativa_e_aparece_no_combo_do_profissional`.
+
 **Status:** ✅ concluída na tarefa 1.3 (19/10/2026).
 
 > **Teste no navegador (20/10/2026, [P26](../processos/P26-testes-ponta-a-ponta.md)):** `Usuario_crud_com_senha_provisoria` — incluir com perfil (senha provisória), pesquisar, alterar, resetar senha, excluir. Botão da lista com texto ("Alterar").

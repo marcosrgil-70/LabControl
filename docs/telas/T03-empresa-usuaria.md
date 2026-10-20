@@ -1,6 +1,6 @@
-# T03 — Empresa Usuária (dados da empresa e nova empresa)
+# T03 — Empresas Usuárias do Sistema (dados da empresa e nova empresa)
 
-**Fase:** 1 · **Rotas:** `/Empresas` (lista, só ADMIN_GLOBAL), `/Empresa/Dados` (empresa ativa) · **Permissões:** `EMPRESAS.CONSULTAR/INCLUIR/ALTERAR` · **Criticidade:** 🟠
+**Fase:** 1 · **Menu:** *Sistema → Empresas Usuárias do Sistema* (um item só) · **Rotas:** `/Empresas` (lista; ADMIN_GLOBAL — os demais são levados a `/Empresa/Dados`), `/Empresa/Dados` (empresa ativa, com contatos) · **Permissões:** `EMPRESAS.CONSULTAR/INCLUIR/ALTERAR` · **Criticidade:** 🟠
 **Legado:** menu *Cadastros → Empresa Usuária* = `Standards/un_Entidades.pas` em modo `teEMP` (entidade com `TIPO_EMPRESA_USUARIA`, que *"não pode coexistir com nenhum outro tipo"*) + tabela `EMPRESAS` (`COD_EMPRESAS`, `ID_ENTIDADES`). Troca de empresa: *Utilitários → Ativar Empresa*.
 **Objetos do banco:** [`EMPRESAS`](../banco/objetos/tabelas/EMPRESAS.md), [`EMPRESAS_PARAMETROS`](../banco/objetos/tabelas/EMPRESAS_PARAMETROS.md), [`USUARIOS_EMPRESAS`](../banco/objetos/tabelas/USUARIOS_EMPRESAS.md), [`SP_INICIALIZAR_EMPRESA`](../banco/objetos/rotinas/SP_INICIALIZAR_EMPRESA.md), [`CIDADES`](../banco/objetos/tabelas/CIDADES.md)
 **Processos:** [P23 Nova empresa e cópia de cadastros](../processos/P23-nova-empresa.md) · [P01 Multiempresa](../processos/P01-multiempresa.md) · **Regras:** [RN-01](../regras/RN-01-gerais-multiempresa.md)
@@ -53,6 +53,9 @@ Testes: `tests/LabControl.Tests/EmpresaServiceTests.cs`.
 - `/Empresa/Dados` com abas **Dados · Endereços · Telefones · E-mails** (`Views/Empresa/Dados.cshtml` + `_ContatosAbas`/`_ContatosModais` + `wwwroot/js/contatos.js`); contatos gravados na hora por AJAX em `/Empresa/ContatoEndereco|ContatoFone|ContatoEmail|ContatoExcluir` (`EMPRESAS.ALTERAR`), lidos em `/Empresa/Contatos` (`EMPRESAS.CONSULTAR`).
 - Nova empresa: só os dados de identificação; os contatos ficam disponíveis em Dados depois de criar (a entidade nasce no `SP_INICIALIZAR_EMPRESA`). Lista de empresas mostra a cidade do 1º endereço ativo.
 - Testes: `CadastrosEntidadesTests` (contatos tipados, espelho da razão social) e `CadastrosTelasTests` (abas e e-mail pela tela).
+
+## Nomenclatura (20/10/2026 — pedido do usuário)
+- Havia dois itens no menu, *Empresa* (`/Empresa/Dados`) e *Empresas* (`/Empresas`), que eram **o mesmo cadastro** (tabela `EMPRESAS`, os laboratórios que usam o sistema): o primeiro editava só a empresa ativa (administrador do laboratório), o segundo listava/incluía todas (ADMIN_GLOBAL). Nenhum foi excluído, mas viraram **um item só: "Empresas Usuárias do Sistema"** (`/Empresas`, `EMPRESAS.CONSULTAR`): ADMIN_GLOBAL vê a lista; os demais caem direto nos dados da empresa ativa. Na lista, *Alterar* da empresa ativa abre `/Empresa/Dados` (com contatos); as outras abrem só a identificação. Títulos e mensagens dizem "empresa usuária".
 
 **Status:** ✅ concluída na tarefa 1.5 (19/10/2026); contatos múltiplos tipados em 20/10/2026 — falta só o logo no PDF (5.4).
 

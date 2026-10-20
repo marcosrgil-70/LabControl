@@ -94,7 +94,7 @@
                                 <i class="bi bi-pencil me-1"></i>Alterar
                             </button>
                             <form method="post" asp-action="Ativo" asp-route-tabela="@d.Tabela" asp-route-id="@item.Id" class="d-inline" lc-permissao="AUXILIARES.ALTERAR"
-                                  data-confirmar="@(item.Ativo ? $"Inativar \"{item.Valores.FirstOrDefault()}\"? Ele sai da lista e dos combos de inclusão (marque “Mostrar inativos” para vê-lo e reativá-lo)." : null)">
+                                  data-confirmar="@(item.Ativo ? $"Inativar \"{item.Valores.FirstOrDefault()}\"? Ele sai da lista e dos combos de inclusão (marque “Mostrar inativos” para vê-lo e reativá-lo)." : $"Reativar \"{item.Valores.FirstOrDefault()}\"? Ele volta para a lista e para os combos de inclusão.")">
                                 @{ FiltroOculto(); }
                                 <input type="hidden" name="ativo" value="@(item.Ativo ? "false" : "true")" />
                                 <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(item.Ativo ? "Inativar" : "Reativar")">
@@ -184,7 +184,7 @@
             }));
 
             document.querySelectorAll('form[data-confirmar]').forEach(f =>
-                f.addEventListener('submit', e => { if (!confirm(f.dataset.confirmar)) e.preventDefault(); }));
+                f.addEventListener('submit', e => { if (f.dataset.confirmar && !confirm(f.dataset.confirmar)) e.preventDefault(); }));
 
             // gravação com erro: a lista volta com o formulário já no modal
             if (conteudo.querySelector('form')) { preparar(); alterado = true; modal.show(); }
