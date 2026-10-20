@@ -13,13 +13,11 @@ Comentário do script: _Atualiza o pedido para a revisão vigente da proposta (a
 
 ## Assinatura
 ```sql
-CREATE PROCEDURE SP_ATUALIZAR_PEDIDO_REVISAO(IN p_id_pedido INT, IN p_id_usuario INT)
+
 ```
 
 | Direção | Parâmetro | Tipo |
 |---|---|---|
-| IN | `p_id_pedido` | INT |
-| IN | `p_id_usuario` | INT |
 
 ## Quem chama
 - **Uso previsto:** "Atualizar para revisão vigente" da T21 (`PEDIDOS_VENDA.ALTERAR`).
@@ -39,6 +37,7 @@ CREATE PROCEDURE SP_ATUALIZAR_PEDIDO_REVISAO(IN p_id_pedido INT, IN p_id_usuario
 ## Mensagens de negócio (SQLSTATE 45000)
 - "Pedido não encontrado."
 - "Pedido concluído/cancelado não pode ser atualizado."
+- "Revisão atual da proposta não encontrada."
 
 ## Processos
 - [P08 Pedido de venda](../../../processos/P08-pedido-venda.md)
@@ -49,8 +48,6 @@ CREATE PROCEDURE SP_ATUALIZAR_PEDIDO_REVISAO(IN p_id_pedido INT, IN p_id_usuario
 await using var cmd = db.Database.GetDbConnection().CreateCommand();
 cmd.CommandText = "SP_ATUALIZAR_PEDIDO_REVISAO";
 cmd.CommandType = CommandType.StoredProcedure;
-cmd.Parameters.Add(new MySqlParameter("p_id_pedido", id_pedido));
-cmd.Parameters.Add(new MySqlParameter("p_id_usuario", id_usuario));
 if (cmd.Connection!.State != ConnectionState.Open) await cmd.Connection.OpenAsync();
 try { await cmd.ExecuteNonQueryAsync(); }
 catch (MySqlException ex) when (ex.SqlState == "45000") { return Resultado.Erro(ex.Message); } // mensagem de negócio
@@ -59,7 +56,7 @@ catch (MySqlException ex) when (ex.SqlState == "45000") { return Resultado.Erro(
 ## Código
 ```sql
 CREATE PROCEDURE SP_ATUALIZAR_PEDIDO_REVISAO(IN p_id_pedido INT, IN p_id_usuario INT)
-BEGIN
+corpo: BEGIN
   DECLARE v_emp, v_cod, v_ano, v_nova, v_antiga INT;
   DECLARE v_sit VARCHAR(20);
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
@@ -74,6 +71,14 @@ BEGIN
   END IF;
   SELECT ID_LAB_PROPOSTAS INTO v_nova FROM LAB_PROPOSTAS
    WHERE ID_EMPRESAS = v_emp AND ANO_PROPOSTA = v_ano AND COD_PROPOSTA = v_cod AND ULTIMA_REVISAO = 1;
+  -- sem revisão atual os itens seriam apagados e nada reinserido; já na revisão atual não há o que atualizar
+  IF v_nova IS NULL THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Revisão atual da proposta não encontrada.';
+  END IF;
+  IF v_nova = v_antiga THEN
+    COMMIT;
+    LEAVE corpo;
+  END IF;
 
   UPDATE PEDIDOS_VENDA PV JOIN LAB_PROPOSTAS P ON P.ID_LAB_PROPOSTAS = v_nova
      SET PV.ID_LAB_PROPOSTAS = v_nova, PV.VR_TOTAL = P.VR_TOTAL_PROPOSTA,

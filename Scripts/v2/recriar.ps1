@@ -14,8 +14,9 @@
   5. com -Teste: cria um banco temporário labcontrol_teste_<id>, roda
      teste/roteiro_12_7.sql e apaga o banco no final (a não ser que -Manter).
 
-  A senha é pedida no console (não fica em arquivo). Se a variável de
-  ambiente MYSQL_PWD já estiver definida, ela é usada.
+  Senha: MYSQL_PWD, se definida; senão a do user-secret ConnectionStrings:LabControl
+  (fora do repositório, a mesma do app e dos testes) quando o usuário é o mesmo;
+  senão é pedida no console. Nunca fica em arquivo versionado.
 
 .EXAMPLE
   .\Scripts\v2\recriar.ps1                       # recria labcontrol_v2
@@ -59,6 +60,22 @@ if (-not (Test-Path $MySql)) { Falhar "mysql.exe não encontrado ($MySql). Infor
 
 # --- senha ---------------------------------------------------------------
 $senhaAntes = $env:MYSQL_PWD
+# 1º MYSQL_PWD; 2º a senha do user-secret ConnectionStrings:LabControl (a mesma do app e dos testes,
+# fora do repositório) quando o usuário bate; 3º pergunta no console
+if (-not $env:MYSQL_PWD) {
+  $csproj = Join-Path $pasta '..\..\LabControl.csproj'
+  if ((Test-Path $csproj) -and ((Get-Content $csproj -Raw) -match '<UserSecretsId>([^<]+)</UserSecretsId>')) {
+    $segredos = Join-Path $env:APPDATA "Microsoft\UserSecrets\$($Matches[1])\secrets.json"
+    if (Test-Path $segredos) {
+      $cs = (Get-Content $segredos -Raw | ConvertFrom-Json).'ConnectionStrings:LabControl'
+      if ($cs -and $cs -match '(?i)(^|;)\s*(User|Uid|User Id)\s*=\s*([^;]+)' -and $Matches[3].Trim() -eq $Usuario -and
+          $cs -match '(?i)(^|;)\s*(Password|Pwd)\s*=\s*([^;]*)') {
+        $env:MYSQL_PWD = $Matches[3]
+        Write-Host "Senha lida do user-secret ConnectionStrings:LabControl." -ForegroundColor DarkGray
+      }
+    }
+  }
+}
 if (-not $env:MYSQL_PWD) {
   $seg = Read-Host "Senha do usuário '$Usuario' em ${Servidor}:$Porta" -AsSecureString
   $env:MYSQL_PWD = [Runtime.InteropServices.Marshal]::PtrToStringAuto(

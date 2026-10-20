@@ -21,7 +21,7 @@ Empresas, usuários e cadastros **não** estão no seed: vêm da migração ([do
 ## Recriar o banco (um comando)
 
 ```powershell
-.\Scripts\v2\recriar.ps1                 # recria labcontrol_v2 (pede a senha e, se o banco existir, confirmação)
+.\Scripts\v2\recriar.ps1                 # recria labcontrol_v2 (se o banco existir, pede confirmação)
 .\Scripts\v2\recriar.ps1 -Dev            # idem + empresa 001 e usuário ADMIN / Admin123 (desenvolvimento)
 .\Scripts\v2\recriar.ps1 -Teste          # cria labcontrol_teste_<id>, roda o roteiro 12 §7 e apaga o banco
 .\Scripts\v2\recriar.ps1 -Teste -Manter  # idem, mas mantém o banco temporário para inspeção
@@ -35,7 +35,7 @@ O script:
 3. confere as contagens (59 tabelas, 10 views, 8 funções, 22 procedures, 42 triggers, 109 permissões) — se o schema mudou de propósito, atualize `$esperado` no script;
 4. com `-Teste`, roda `teste/roteiro_12_7.sql` e falha se alguma verificação falhar.
 
-A senha é pedida no console. Para rodar sem pergunta (ex.: CI), defina antes `$env:MYSQL_PWD`.
+Senha, nesta ordem: `$env:MYSQL_PWD` (ex.: CI) → a do user-secret `ConnectionStrings:LabControl` (quando o `-Usuario` é o mesmo da connection string) → pergunta no console.
 Leva ~3 minutos por banco no MySQL local (DDL lento no Windows).
 
 ## Senha do MySQL (onde fica e como trocar)
@@ -45,7 +45,7 @@ A senha **nunca** vai para arquivo versionado (`appsettings*.json`, scripts, doc
 | Quem usa | Onde | Observação |
 |---|---|---|
 | App (`dotnet run`) e testes (`dotnet test`) | user-secret `ConnectionStrings:LabControl` — arquivo `%APPDATA%\Microsoft\UserSecrets\labcontrol-v2-0b6c1d2e\secrets.json` (fora do repositório) | o projeto de testes usa o mesmo `UserSecretsId` e troca só o nome do banco para `labcontrol_teste` |
-| `recriar.ps1` | digitada no console, ou `$env:MYSQL_PWD` da sessão | não grava em lugar nenhum |
+| `recriar.ps1` | `$env:MYSQL_PWD` da sessão, senão lê o mesmo user-secret acima, senão pergunta no console | não grava em lugar nenhum |
 | Migração (Firebird) | user-secret `Firebird:Password` | idem |
 | CI / outra máquina | variável de ambiente `LABCONTROL_TESTE_CS` (testes) ou `ConnectionStrings__LabControl` (app) | definida no ambiente, não no repositório |
 

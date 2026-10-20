@@ -167,12 +167,16 @@ public sealed class ContaService(LabDbContext db, IAuditoria auditoria, TimeProv
         return Resultado.Ok(new ClaimsPrincipal(identidade));
     }
 
-    /// <summary>Sessão ainda válida? Usuário ativo e, com empresa, acesso ainda ativo (revalidação a cada request).</summary>
-    public async Task<bool> SessaoValidaAsync(int idUsuario, int? idEmpresa)
+    /// <summary>
+    /// Sessão ainda válida? Usuário ativo, ADMIN_GLOBAL igual ao do cookie e, com empresa, acesso ainda ativo
+    /// (revalidação a cada request). ADMIN_GLOBAL retirado (ou dado) derruba a sessão: a claim vale para tudo
+    /// (inclusive para se promover de novo), então não pode sobreviver à mudança até a próxima entrada.
+    /// </summary>
+    public async Task<bool> SessaoValidaAsync(int idUsuario, int? idEmpresa, bool adminGlobalNoCookie)
     {
         var usu = await db.Usuarios.AsNoTracking().Where(u => u.IdUsuarios == idUsuario)
             .Select(u => new { u.Ativo, u.AdminGlobal }).SingleOrDefaultAsync();
-        if (usu is not { Ativo: true }) return false;
+        if (usu is not { Ativo: true } || usu.AdminGlobal != adminGlobalNoCookie) return false;
         if (idEmpresa is not { } emp) return true;
         return usu.AdminGlobal
             ? await db.Empresas.AnyAsync(e => e.IdEmpresas == emp && e.Ativa)

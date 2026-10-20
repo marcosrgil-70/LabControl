@@ -63,8 +63,10 @@ public partial class LabDbContext(DbContextOptions<LabDbContext> options, IEmpre
 
     /// <summary>
     /// Confere a empresa e grava a AUDITORIA das tabelas críticas na MESMA transação: usa a transação aberta
-    /// pelo serviço ou abre uma própria. Se a auditoria ou o commit falharem, a alteração também é desfeita e o
-    /// rastreador continua com as alterações pendentes (só é aceito depois do commit).
+    /// pelo serviço ou abre uma própria. Com transação própria, se a auditoria ou o commit falharem, a alteração
+    /// também é desfeita e o rastreador continua com as alterações pendentes (só é aceito depois do commit). Dentro
+    /// da transação do serviço o rastreador é aceito ao fim do SaveChanges, como no EF: se o serviço fizer rollback
+    /// depois, o contexto não deve ser reaproveitado (os serviços devolvem o erro e o request termina).
     /// </summary>
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {

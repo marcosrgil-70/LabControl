@@ -9,6 +9,7 @@ namespace LabControl.Controllers;
 [Permissao("USUARIOS.CONSULTAR")]
 public sealed class UsuariosController(UsuarioService usuarios) : Controller
 {
+    [HttpGet]
     public async Task<IActionResult> Index(UsuarioFiltroVM filtro) =>
         View(new UsuarioListaVM { Filtro = filtro, Itens = await usuarios.ListarAsync(filtro) });
 

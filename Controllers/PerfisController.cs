@@ -9,6 +9,7 @@ namespace LabControl.Controllers;
 [Permissao("PERFIS.CONSULTAR")]
 public sealed class PerfisController(PerfilService perfis) : Controller
 {
+    [HttpGet]
     public async Task<IActionResult> Index() => View(await perfis.ListarAsync());
 
     [HttpGet, Permissao("PERFIS.INCLUIR")]

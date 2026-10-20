@@ -907,7 +907,7 @@ END$$
 
 -- Atualiza o pedido para a revisão vigente da proposta (após revisão aprovada pelo cliente)
 CREATE PROCEDURE SP_ATUALIZAR_PEDIDO_REVISAO(IN p_id_pedido INT, IN p_id_usuario INT)
-BEGIN
+corpo: BEGIN
   DECLARE v_emp, v_cod, v_ano, v_nova, v_antiga INT;
   DECLARE v_sit VARCHAR(20);
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
@@ -922,6 +922,14 @@ BEGIN
   END IF;
   SELECT ID_LAB_PROPOSTAS INTO v_nova FROM LAB_PROPOSTAS
    WHERE ID_EMPRESAS = v_emp AND ANO_PROPOSTA = v_ano AND COD_PROPOSTA = v_cod AND ULTIMA_REVISAO = 1;
+  -- sem revisão atual os itens seriam apagados e nada reinserido; já na revisão atual não há o que atualizar
+  IF v_nova IS NULL THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Revisão atual da proposta não encontrada.';
+  END IF;
+  IF v_nova = v_antiga THEN
+    COMMIT;
+    LEAVE corpo;
+  END IF;
 
   UPDATE PEDIDOS_VENDA PV JOIN LAB_PROPOSTAS P ON P.ID_LAB_PROPOSTAS = v_nova
      SET PV.ID_LAB_PROPOSTAS = v_nova, PV.VR_TOTAL = P.VR_TOTAL_PROPOSTA,

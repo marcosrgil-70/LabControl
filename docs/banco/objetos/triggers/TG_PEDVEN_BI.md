@@ -12,6 +12,7 @@ Número sequencial do pedido de venda (por empresa, não anual) quando não info
 Comentário do script: _Pedido de Venda: número sequencial por empresa (não anual)_
 
 ## Colunas que a trigger preenche/ajusta
+- `NEW.ID_EMPRESAS`
 - `NEW.NR_PEDIDO`
 
 ## Validações (mensagens SQLSTATE 45000)
@@ -26,7 +27,7 @@ Comentário do script: _Pedido de Venda: número sequencial por empresa (não an
 - **Chama:** [`SP_PROXIMO_NUMERO`](../rotinas/SP_PROXIMO_NUMERO.md), [`PR_CONFERIR_EMPRESA`](../rotinas/PR_CONFERIR_EMPRESA.md)
 
 ## Impacto na aplicação
-- A aplicação não precisa (e não deve depender de) enviar: `NR_PEDIDO`. Reler a linha depois de gravar.
+- A aplicação não precisa (e não deve depender de) enviar: `ID_EMPRESAS`, `NR_PEDIDO`. Reler a linha depois de gravar.
 - Com `@LC_MIGRACAO = 1` (só na migração) as validações/numeração ficam desligadas.
 
 ## Telas e processos relacionados
@@ -37,8 +38,10 @@ Comentário do script: _Pedido de Venda: número sequencial por empresa (não an
 ```sql
 CREATE TRIGGER TG_PEDVEN_BI BEFORE INSERT ON PEDIDOS_VENDA FOR EACH ROW
 BEGIN
-  DECLARE v_num INT;
-  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, (SELECT ID_EMPRESAS FROM LAB_PROPOSTAS WHERE ID_LAB_PROPOSTAS = NEW.ID_LAB_PROPOSTAS));
+  DECLARE v_num, v_emp INT;
+  SELECT ID_EMPRESAS INTO v_emp FROM LAB_PROPOSTAS WHERE ID_LAB_PROPOSTAS = NEW.ID_LAB_PROPOSTAS;
+  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, v_emp);
+  SET NEW.ID_EMPRESAS = v_emp; -- a numeração abaixo usa a empresa: nunca 0/NULL
   -- número SEMPRE do banco; só na migração o número legado (ID_PEDIDOS_VENDAS) é informado e preservado
   IF COALESCE(@LC_MIGRACAO, 0) = 0 OR COALESCE(NEW.NR_PEDIDO, 0) = 0 THEN
     CALL SP_PROXIMO_NUMERO(NEW.ID_EMPRESAS, 'PEDIDO_VENDA', 0, v_num);

@@ -17,7 +17,7 @@ Comentário do script: _7. PEDIDOS DE VENDA (novo: no Firebird era só um númer
 | # | Coluna | Tipo | Nulo | Padrão | Preenchida por | Descrição |
 |---:|---|---|---|---|---|---|
 | 1 | `ID_PEDIDOS_VENDA` | INT | não |  | auto-incremento |  |
-| 2 | `ID_EMPRESAS` | INT | não |  | aplicação |  |
+| 2 | `ID_EMPRESAS` | INT | não |  | trigger TG_PEDVEN_BI |  |
 | 3 | `NR_PEDIDO` | INT | não |  | trigger TG_PEDVEN_BI | Sequencial por empresa (não anual, como no legado) |
 | 4 | `DT_PEDIDO` | DATE | não |  | aplicação |  |
 | 5 | `ID_LAB_PROPOSTAS` | INT | não |  | aplicação | Revisão da proposta vigente no pedido |
@@ -84,7 +84,7 @@ Comentário do script: _7. PEDIDOS DE VENDA (novo: no Firebird era só um númer
 
 ## Implementação no C# (EF Core)
 - **Multiempresa:** entra no Global Query Filter por `ID_EMPRESAS` (empresa ativa) e o `SaveChanges` preenche `ID_EMPRESAS` na inclusão.
-- **Preenchidas pelo banco (trigger):** `NR_PEDIDO` — não depender do valor enviado; reler a linha após gravar.
+- **Preenchidas pelo banco (trigger):** `ID_EMPRESAS`, `NR_PEDIDO` — não depender do valor enviado; reler a linha após gravar.
 - Chave auto-incremento: `ID_PEDIDOS_VENDA`.
 - `ENUM` → enum C# com conversão para string: `SITUACAO` ('ABERTO','EM_EXECUCAO','CONCLUIDO','CANCELADO').
 - `DATE` → `DateOnly`: `DT_PEDIDO`, `DT_AUTORIZACAO`.

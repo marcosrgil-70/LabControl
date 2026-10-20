@@ -17,7 +17,7 @@ Comentário do script: _Relatório de Ensaio (documento livre, alternativo ao bo
 | # | Coluna | Tipo | Nulo | Padrão | Preenchida por | Descrição |
 |---:|---|---|---|---|---|---|
 | 1 | `ID_LAB_RELATORIO_ENSAIO` | INT | não |  | auto-incremento |  |
-| 2 | `ID_EMPRESAS` | INT | não |  | aplicação |  |
+| 2 | `ID_EMPRESAS` | INT | não |  | trigger TG_RE_BI |  |
 | 3 | `NR_RELATORIO` | INT | não |  | trigger TG_RE_BI |  |
 | 4 | `ANO_RELATORIO` | SMALLINT | não |  | trigger TG_RE_BI |  |
 | 5 | `ID_LAB_HIST_AMOSTRAS` | INT | não |  | aplicação |  |
@@ -63,7 +63,7 @@ Comentário do script: _Relatório de Ensaio (documento livre, alternativo ao bo
 
 ## Implementação no C# (EF Core)
 - **Multiempresa:** entra no Global Query Filter por `ID_EMPRESAS` (empresa ativa) e o `SaveChanges` preenche `ID_EMPRESAS` na inclusão.
-- **Preenchidas pelo banco (trigger):** `ANO_RELATORIO`, `NR_RELATORIO` — não depender do valor enviado; reler a linha após gravar.
+- **Preenchidas pelo banco (trigger):** `ID_EMPRESAS`, `ANO_RELATORIO`, `NR_RELATORIO` — não depender do valor enviado; reler a linha após gravar.
 - Chave auto-incremento: `ID_LAB_RELATORIO_ENSAIO`.
 - Datas mantidas pelo MySQL (`DEFAULT/ON UPDATE CURRENT_TIMESTAMP`): `DH_GERACAO` — mapear como gerado pelo banco.
 

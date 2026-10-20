@@ -44,11 +44,28 @@
 - **Esforço:** M · **Depende de:** 1.5
 
 ### 1.7 Revisão da fase
+> ✅ **Concluída em 20/10/2026** — `AutorizacaoActionsTests` (verbo HTTP explícito em toda action; escrita só com `[Permissao]` de escrita ou `[SomenteAdminGlobal]`; anônimo só no login e na página de erro), `RevisaoFase1Tests` e correções abaixo.
+
 `/security-review` + `/code-review`; testes de autorização (cada action com `[Permissao]` — teste de reflexão que falha se alguma action de escrita não tiver o atributo).
+
+**Achados e destino:**
+| Origem | Achado | Destino |
+|---|---|---|
+| reflexão | 4 `Index` sem verbo HTTP (aceitavam POST) | `[HttpGet]` |
+| security | ADMIN_GLOBAL só na claim: rebaixado continuava global e podia se promover de novo | `SessaoValidaAsync` compara com o banco e derruba a sessão (`ContaFluxoTests`) |
+| code-review | `TG_MOV_BI` trocava a empresa pela da amostra em silêncio (movimento em outra empresa) | `PR_CONFERIR_EMPRESA` |
+| code-review | `TG_PEDVEN_BI`/`TG_RE_BI` numeravam com a empresa informada (podia ser 0/NULL) | empresa vem do pai antes de numerar |
+| code-review | `SP_ATUALIZAR_PEDIDO_REVISAO` sem revisão atual apagava os itens; sem mudança auditava | erro 45000 / saída sem alterar |
+| code-review | IP com scope id/longo estourava `AUDITORIA.IP` (VARCHAR 45) e abortava a operação | `EmpresaContexto.IpParaAuditoria` |
+| code-review | comentário do `SaveChangesAsync` prometia aceitar o rastreador só após o commit também na transação do serviço | comentário corrigido (comportamento = EF) |
+| code-review | retry de SaveChanges após falha com chaves geradas na entidade | registrado: nenhum serviço repete o SaveChanges no mesmo contexto |
+| code-review | `PR_CONFERIR_EMPRESA` sem desvio na migração | mantido de propósito: empresa divergente deve parar a carga (fase 3/M-xx) |
+| code-review | auditoria com um INSERT por linha; SaveChanges síncrono duplicado | otimização/simplificação → `/simplify` ao fim da fase 2 |
+| futuro | carimbo de segurança (`SECURITY_STAMP`) para derrubar sessões ao mudar perfis, vínculos ou senha | melhoria registrada (exige coluna em `USUARIOS`) |
 
 ---
 
 ## Definição de pronto
-- [ ] Login seguro, empresa ativa, permissões e profissional do usuário funcionando.
-- [ ] Nova empresa nasce utilizável (status, perfis, parâmetros).
-- [ ] Nenhuma action de escrita sem `[Permissao]`.
+- [x] Login seguro, empresa ativa, permissões e profissional do usuário funcionando.
+- [x] Nova empresa nasce utilizável (status, perfis, parâmetros).
+- [x] Nenhuma action de escrita sem `[Permissao]`.

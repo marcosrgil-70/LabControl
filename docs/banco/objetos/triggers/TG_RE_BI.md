@@ -12,6 +12,7 @@ Número anual do relatório de ensaio.
 Comentário do script: _Relatório de Ensaio: número anual por empresa (o legado gravava ULT_COD_RE = ID_EMPRESAS por engano)_
 
 ## Colunas que a trigger preenche/ajusta
+- `NEW.ID_EMPRESAS`
 - `NEW.ANO_RELATORIO`
 - `NEW.NR_RELATORIO`
 
@@ -27,7 +28,7 @@ Comentário do script: _Relatório de Ensaio: número anual por empresa (o legad
 - **Chama:** [`SP_PROXIMO_NUMERO`](../rotinas/SP_PROXIMO_NUMERO.md), [`PR_CONFERIR_EMPRESA`](../rotinas/PR_CONFERIR_EMPRESA.md)
 
 ## Impacto na aplicação
-- A aplicação não precisa (e não deve depender de) enviar: `ANO_RELATORIO`, `NR_RELATORIO`. Reler a linha depois de gravar.
+- A aplicação não precisa (e não deve depender de) enviar: `ID_EMPRESAS`, `ANO_RELATORIO`, `NR_RELATORIO`. Reler a linha depois de gravar.
 - Com `@LC_MIGRACAO = 1` (só na migração) as validações/numeração ficam desligadas.
 
 ## Telas e processos relacionados
@@ -38,8 +39,10 @@ Comentário do script: _Relatório de Ensaio: número anual por empresa (o legad
 ```sql
 CREATE TRIGGER TG_RE_BI BEFORE INSERT ON LAB_RELATORIO_ENSAIO FOR EACH ROW
 BEGIN
-  DECLARE v_num INT;
-  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, (SELECT ID_EMPRESAS FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = NEW.ID_LAB_HIST_AMOSTRAS));
+  DECLARE v_num, v_emp INT;
+  SELECT ID_EMPRESAS INTO v_emp FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = NEW.ID_LAB_HIST_AMOSTRAS;
+  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, v_emp);
+  SET NEW.ID_EMPRESAS = v_emp; -- a numeração abaixo usa a empresa: nunca 0/NULL
   -- número e ano SEMPRE do banco; só na migração o número legado é informado e preservado
   IF COALESCE(@LC_MIGRACAO, 0) = 0 OR COALESCE(NEW.NR_RELATORIO, 0) = 0 THEN
     SET NEW.ANO_RELATORIO = YEAR(CURDATE());

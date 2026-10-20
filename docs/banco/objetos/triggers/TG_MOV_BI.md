@@ -24,7 +24,7 @@ Comentário do script: _Movimentação de amostras e saldo (TG_LAB_MOV_AMOSTRAS_
 ## O que acessa
 - **Altera outras tabelas:** —
 - **Lê outras tabelas:** [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md), [`LAB_HIST_AMOSTRAS_SALDO`](../tabelas/LAB_HIST_AMOSTRAS_SALDO.md)
-- **Chama:** —
+- **Chama:** [`PR_CONFERIR_EMPRESA`](../rotinas/PR_CONFERIR_EMPRESA.md)
 
 ## Impacto na aplicação
 - A aplicação não precisa (e não deve depender de) enviar: `ID_LAB_HIST_AMOSTRAS`, `ID_EMPRESAS`. Reler a linha depois de gravar.
@@ -44,6 +44,7 @@ BEGIN
   -- a movimentação é sempre da amostra física (revisão 0)
   SELECT COALESCE(ID_AMOSTRA_RAIZ, ID_LAB_HIST_AMOSTRAS), ID_EMPRESAS INTO v_raiz, v_emp
     FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = NEW.ID_LAB_HIST_AMOSTRAS;
+  CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, v_emp);
   SET NEW.ID_LAB_HIST_AMOSTRAS = v_raiz, NEW.ID_EMPRESAS = v_emp;
   IF COALESCE(@LC_MIGRACAO, 0) = 0 AND NEW.E_S = 'S' THEN
     SELECT COALESCE(SALDO_ATUAL, 0) INTO v_saldo FROM LAB_HIST_AMOSTRAS_SALDO WHERE ID_LAB_HIST_AMOSTRAS = v_raiz;

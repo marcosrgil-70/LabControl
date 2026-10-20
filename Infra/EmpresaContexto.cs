@@ -46,7 +46,15 @@ public sealed class EmpresaContexto(IHttpContextAccessor http) : IEmpresaContext
     public int? UsuarioId => Usuario?.Identity?.IsAuthenticated == true ? Inteiro(LabClaims.UsuarioId) : null;
     public int? ProfissionalId => Inteiro(LabClaims.ProfissionalId);
     public bool AdminGlobal => Usuario?.FindFirstValue(LabClaims.AdminGlobal) == "1";
-    public string? Ip => http.HttpContext?.Connection.RemoteIpAddress?.ToString();
+    public string? Ip => IpParaAuditoria(http.HttpContext?.Connection.RemoteIpAddress?.ToString());
+
+    /// <summary>AUDITORIA.IP é VARCHAR(45): sem o scope id do IPv6 (fe80::1%eth12) e limitado, para nunca abortar a operação auditada.</summary>
+    public static string? IpParaAuditoria(string? ip)
+    {
+        if (ip is null) return null;
+        var semEscopo = ip.Split('%')[0];
+        return semEscopo.Length > 45 ? semEscopo[..45] : semEscopo;
+    }
     public bool TemPermissao(string codigo) =>
         AdminGlobal || (EmpresaId is not null && Usuario?.HasClaim(LabClaims.Permissao, codigo) == true);
 }

@@ -10,6 +10,7 @@ namespace LabControl.Controllers;
 public class HomeController(PainelService painel) : Controller
 {
     /// <summary>Painel da T01: contadores da empresa ativa conforme as permissões do usuário.</summary>
+    [HttpGet]
     public async Task<IActionResult> Index() =>
         View(new PainelVM { EmpresaNome = User.FindFirst(LabClaims.EmpresaNome)?.Value ?? "", Contadores = await painel.ContadoresAsync() });
 

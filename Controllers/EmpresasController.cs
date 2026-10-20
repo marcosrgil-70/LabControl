@@ -9,6 +9,7 @@ namespace LabControl.Controllers;
 [SomenteAdminGlobal]
 public sealed class EmpresasController(EmpresaService empresas) : Controller
 {
+    [HttpGet]
     public async Task<IActionResult> Index() => View(await empresas.ListarAsync());
 
     [HttpGet]

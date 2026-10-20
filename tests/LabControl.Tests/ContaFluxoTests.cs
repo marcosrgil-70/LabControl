@@ -99,6 +99,26 @@ public class ContaFluxoTests(AppWeb app) : IClassFixture<AppWeb>
     }
 
     [Fact]
+    public async Task Admin_global_retirado_perde_a_sessao_e_nao_se_promove_de_novo()
+    {
+        // revisão de segurança da 1.7: a claim não pode sobreviver à retirada do ADMIN_GLOBAL no banco
+        await using var e = await Cenario.CriarAsync();
+        var usu = await UsuariosTeste.CriarAsync(adminGlobal: true);
+        await UsuariosTeste.VincularAsync(usu.IdUsuarios, e.Empresa.IdEmpresas); // continua com acesso à empresa
+        using var c = app.Cliente();
+        await c.EntrarAsync(usu.Login);
+        await c.PostarAsync("/Conta/Empresa", "/Conta/Empresa", ("IdEmpresa", e.Empresa.IdEmpresas.ToString()));
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("/Empresas")).StatusCode);
+
+        await e.Db.Database.ExecuteSqlInterpolatedAsync($"UPDATE USUARIOS SET ADMIN_GLOBAL = 0 WHERE ID_USUARIOS = {usu.IdUsuarios}");
+        Assert.StartsWith("https://localhost/Conta/Login", (await c.GetAsync("/Empresas")).Destino());
+        var promover = await c.PostarAsync($"/Usuarios/Editar/{usu.IdUsuarios}", $"/Usuarios/Editar/{usu.IdUsuarios}",
+            ("Login", usu.Login), ("Nome", usu.Nome), ("Ativo", "true"), ("AdminGlobal", "true"));
+        Assert.NotEqual(HttpStatusCode.OK, promover.StatusCode);
+        Assert.False(await e.Db.Usuarios.AsNoTracking().Where(u => u.IdUsuarios == usu.IdUsuarios).Select(u => u.AdminGlobal).SingleAsync());
+    }
+
+    [Fact]
     public async Task Usuario_sem_empresa_nao_entra()
     {
         var usu = await UsuariosTeste.CriarAsync();

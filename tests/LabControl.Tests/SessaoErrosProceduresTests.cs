@@ -150,6 +150,13 @@ public class SessaoErrosProceduresTests
         Assert.Equal($"000001/{hoje.Year % 100:00}-R1", prop2.NrProposta);
         Assert.Equal(270m, prop2.VrTotalProposta);
         Assert.True((await c.Procedures.AtualizarPedidoRevisaoAsync(pedido.Valor.IdPedido)).Sucesso);
+
+        // já na revisão atual: nada muda e não gera auditoria (revisão da 1.7)
+        int Eventos() => c.Db.Auditoria.Count(a => a.Tabela == "PEDIDOS_VENDA" && a.IdRegistro == pedido.Valor.IdPedido.ToString() && a.Acao == "A");
+        var antes = Eventos();
+        Assert.True((await c.Procedures.AtualizarPedidoRevisaoAsync(pedido.Valor.IdPedido)).Sucesso);
+        Assert.Equal(antes, Eventos());
+        Assert.NotEqual(0, await c.Db.PedidosVendaItens.CountAsync(i => i.IdPedidosVenda == pedido.Valor.IdPedido));
     }
 
     [Fact]

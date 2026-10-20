@@ -36,13 +36,13 @@ Convenções:
 4. Contagens mudaram (tabelas, views, funções, procedures, triggers, permissões)? Atualize `$esperado` em `Scripts/v2/recriar.ps1` e a tabela de arquivos de `Scripts/v2/README.md`.
 
 ## 3. Testar no MySQL
-O `recriar.ps1` pede a senha no console — o Claude não consegue digitá-la. Peça ao usuário para rodar, com o prefixo `!` na caixa de mensagem:
+Rode você mesmo (PowerShell): o `recriar.ps1` lê a senha do user-secret `ConnectionStrings:LabControl` (fora do repositório), sem pergunta. Leva ~3 min.
 ```
-! .\Scripts\v2\recriar.ps1 -Teste
+.\Scripts\v2\recriar.ps1 -Teste
 ```
-(ou rode você mesmo se `$env:MYSQL_PWD` já estiver definido na sessão). Leva ~3 min.
+Se ele pedir a senha (user-secret ausente ou de outro usuário), peça ao usuário para rodar com o prefixo `!` na caixa de mensagem.
 - Regra nova → acrescente verificação OK/FALHA em `Scripts/v2/teste/roteiro_12_7.sql` (positiva **e** negativa, com a mensagem exata) e atualize a contagem no README.
-- Tudo OK → recriar o banco local: `! .\Scripts\v2\recriar.ps1 -Dev` (apaga e recria `labcontrol_v2` com a empresa 001 e `ADMIN`/`Admin123`). **Avise antes**: apaga os dados de desenvolvimento.
+- Tudo OK → recriar o banco local: `.\Scripts\v2\recriar.ps1 -Dev -Forcar` (apaga e recria `labcontrol_v2` com a empresa 001 e `ADMIN`/`Admin123`). **Confirme com o usuário antes**: apaga os dados de desenvolvimento.
 - O script recusa `labcontrol` (v1). Nunca rode o roteiro no `labcontrol_v2` real.
 
 ## 4. Regenerar o C#
