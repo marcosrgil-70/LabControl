@@ -15,7 +15,7 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 | Tipos de Endereço | `Standards/un_Enderecos_Tipos` | [T10-02](../telas/T10-02-tipos-endereco.md) | `/Auxiliares/ENDERECOS_TIPOS` | 2 | ⬜ |
 | Registros Profissionais | `un_CadRegProfissional` | [T10-05](../telas/T10-05-registros-profissionais.md) | `/Auxiliares/TIPOS_REG_PROFISSIONAL` | 2 | ⬜ |
 | Cargos de Funcionários | `un_Cargo_Funcionarios` | [T10-06](../telas/T10-06-cargos-funcionarios.md) | `/Auxiliares/CARGOS_FUNCIONARIOS` | 2 | ⬜ |
-| Idiomas | `un_CadIdiomas` | [T10-07](../telas/T10-07-idiomas.md) | `/Auxiliares/IDIOMAS` | 2 | ⬜ |
+| Idiomas | `un_CadIdiomas` | [T10-07](../telas/T10-07-idiomas.md) | `/Auxiliares/IDIOMAS` | 2 | ✅ |
 | Unidades | `un_CadUnidades` | [T10-08](../telas/T10-08-unidades.md) | `/Auxiliares/UNIDADES` | 2 | ⬜ |
 | Tipo de Embalagens | `un_CadTipoEmbalagem` | [T10-09](../telas/T10-09-tipos-embalagem.md) | `/Auxiliares/EMBALAGENS_TIPOS` | 2 | ⬜ |
 | Tipo de Resultados | `un_TipoResultado` | [T10-10](../telas/T10-10-tipos-resultado.md) | `/Auxiliares/LAB_TIPOS_RESULTADOS` | 2 | ⬜ |

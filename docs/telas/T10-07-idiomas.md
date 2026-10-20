@@ -21,6 +21,6 @@
 Proposta (T20), testes da amostra (T22).
 
 ## Critérios de aceite
-- [ ] Itens do [padrão T10-00](T10-00-crud-auxiliares.md#critérios-de-aceite-valem-para-todos).
+- [x] Itens do [padrão T10-00](T10-00-crud-auxiliares.md#critérios-de-aceite-valem-para-todos).
 
-**Status:** ⬜
+**Status:** ✅ concluída na tarefa 2.1 (20/10/2026) — primeiro auxiliar do CRUD genérico, visual aprovado pelo usuário; aceite em `AuxiliaresTests`.

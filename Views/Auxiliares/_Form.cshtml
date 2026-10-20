@@ -1,0 +1,92 @@
+@using LabControl.Services.Auxiliares
+@model AuxiliarFormVM
+@* Formulário do modal (T10-00). Carregado por GET (Incluir/Editar) ou reexibido pela Lista quando a gravação falha. *@
+@{
+    var acao = Model.Id == 0 ? "Incluir" : "Editar";
+    var titulo = (Model.Id == 0 ? "Incluir " : "Alterar ") + Model.Singular;
+}
+
+<form method="post" asp-action="@acao" asp-route-tabela="@Model.Tabela" asp-route-id="@(Model.Id == 0 ? null : Model.Id)"
+      class="modal-content" id="formAuxiliar" novalidate>
+    <div class="modal-header">
+        <h6 class="modal-title">@titulo</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+    </div>
+    <div class="modal-body">
+        @if (Model.Erro is not null)
+        {
+            <div class="alert alert-danger py-2">@Model.Erro</div>
+        }
+        <input type="hidden" name="Busca" value="@Model.Busca" />
+        <input type="hidden" name="Inativos" value="@(Model.Inativos ? "true" : "false")" />
+        <input type="hidden" name="Pagina" value="@Model.Pagina" />
+
+        @foreach (var c in Model.Campos)
+        {
+            var id = "campo_" + c.Nome;
+            var nome = $"Valores[{c.Nome}]";
+            var valor = Model.Valores.GetValueOrDefault(c.Nome);
+            var erro = Model.Erros.GetValueOrDefault(c.Nome);
+            var classeErro = erro is null ? "" : " is-invalid";
+            <div class="mb-3">
+                @if (c.Tipo == TipoCampo.Logico)
+                {
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input@(classeErro)" id="@id" name="@nome" value="true" checked="@(valor == "true")" disabled="@c.Bloqueado" />
+                        <label class="form-check-label" for="@id">@c.Rotulo</label>
+                    </div>
+                }
+                else
+                {
+                    <label class="form-label small" for="@id">@c.Rotulo@(c.Obrigatorio ? " *" : "")</label>
+                    @switch (c.Tipo)
+                    {
+                        case TipoCampo.Opcoes:
+                            <select class="form-select@(classeErro)" id="@id" name="@nome" required="@c.Obrigatorio" disabled="@c.Bloqueado">
+                                <option value="">—</option>
+                                @foreach (var o in c.Opcoes)
+                                {
+                                    <option value="@o.Id" selected="@(valor == o.Id.ToString())">@o.Nome</option>
+                                }
+                            </select>
+                            break;
+                        case TipoCampo.Cor:
+                            <input type="color" class="form-control form-control-color@(classeErro)" id="@id" name="@nome" value="@(valor ?? "#6C757D")" disabled="@c.Bloqueado" />
+                            break;
+                        case TipoCampo.Inteiro:
+                            <input type="number" class="form-control@(classeErro)" id="@id" name="@nome" value="@valor" min="@c.Minimo" max="@c.Maximo" step="1" required="@c.Obrigatorio" disabled="@c.Bloqueado" />
+                            break;
+                        default:
+                            <input type="text" class="form-control@(classeErro)@(c.Maiusculas ? " text-uppercase" : "")" id="@id" name="@nome" value="@valor" maxlength="@c.Tamanho" required="@c.Obrigatorio" disabled="@c.Bloqueado" />
+                            break;
+                    }
+                }
+                @if (c.Bloqueado)
+                {
+                    @* campo desabilitado não é enviado: o valor atual vai escondido *@
+                    <input type="hidden" name="@nome" value="@valor" />
+                    <div class="form-text"><i class="bi bi-lock me-1"></i>Em uso: não pode ser alterado.</div>
+                }
+                else if (c.Ajuda is not null)
+                {
+                    <div class="form-text">@c.Ajuda</div>
+                }
+                @if (erro is not null)
+                {
+                    <div class="invalid-feedback d-block">@erro</div>
+                }
+            </div>
+        }
+
+        <div class="form-check form-switch">
+            <input type="checkbox" class="form-check-input" id="campo_Ativo" name="Ativo" value="true" checked="@Model.Ativo" />
+            <input type="hidden" name="Ativo" value="false" /> @* desmarcado: o binder lê o primeiro valor enviado *@
+            <label class="form-check-label" for="campo_Ativo">Ativo</label>
+            <div class="form-text">Inativo some dos combos de inclusão, mas continua nos registros que já o usam.</div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+    </div>
+</form>

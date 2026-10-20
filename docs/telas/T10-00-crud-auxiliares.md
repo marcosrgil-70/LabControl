@@ -50,10 +50,16 @@ Um único controller/serviço genérico atende os 20 cadastros auxiliares, porqu
 | [T10-20 Status das Propostas](T10-20-status-proposta.md) | [`LAB_PROPOSTAS_STATUS`](../banco/objetos/tabelas/LAB_PROPOSTAS_STATUS.md) | LabControl/un_CadStatusPropostas.pas |
 
 ## Critérios de aceite (valem para todos)
-- [ ] Incluir, alterar, inativar e excluir (sem uso) com busca e paginação.
-- [ ] Inativos não aparecem nos combos de inclusão, mas aparecem nos registros antigos.
-- [ ] Descrição/código duplicado na mesma empresa é recusado com mensagem clara.
-- [ ] Cada empresa vê só os seus registros.
-- [ ] Cadastro rápido devolve o item ao combo de origem.
+- [x] Incluir, alterar, inativar e excluir (sem uso) com busca e paginação.
+- [x] Inativos não aparecem nos combos de inclusão, mas aparecem nos registros antigos.
+- [x] Descrição/código duplicado na mesma empresa é recusado com mensagem clara.
+- [x] Cada empresa vê só os seus registros.
+- [ ] Cadastro rápido devolve o item ao combo de origem (endpoint pronto na 2.1; o "+" no combo é a 2.4).
 
-**Status:** ⬜ (v1 tem `TabelasAuxiliares` parcial e sem empresa — refazer genérico)
+## Implementação (tarefa 2.1)
+- `Services/Auxiliares/AuxiliarDefinicao.cs` (`AuxiliarDefinicao<T>` + `CatalogoAuxiliares`), `Services/Auxiliares/AuxiliarService.cs`, `Controllers/AuxiliaresController.cs`, `Views/Auxiliares/{Index,Lista,_Form}.cshtml`, `ViewModels/AuxiliarVM.cs`. Incluir um auxiliar = uma entrada no catálogo (skill `/novo-auxiliar`).
+- Rotas: `/Auxiliares` (cartões), `/Auxiliares/{tabela}` (lista: busca, "mostrar inativos", 20 por página), `GET {tabela}/Incluir|Editar/{id}` (formulário do modal), `POST {tabela}/Incluir|Editar/{id}|Excluir/{id}|Ativo/{id}`, `POST {tabela}/Rapido` → `{ id, texto }` (422 `{ erro, campo }`), `GET {tabela}/Opcoes?atual=` (ativos + o já escolhido; basta estar logado).
+- Tamanho e obrigatoriedade vêm do modelo do EF (gerado de `Scripts/v2`); texto aparado; duplicidade pela `UNIQUE` do banco (collation sem maiúsculas/acentos: "português" = "Português"); exclusão por `DELETE` direto filtrado pela empresa — em uso o banco recusa (1451) e a lista oferece **Inativar**. Erro ao gravar reabre o modal com a mensagem no campo; fechar com alterações pede confirmação (como o legado).
+- Ganchos para a 2.2: `ValidarAntesDeGravar`, `PodeAlterarCampo` (campo bloqueado com cadeado). Mensagens com gênero (`Feminino`).
+
+**Status:** 🟨 padrão pronto e aprovado com Idiomas (2.1); faltam os outros 19 auxiliares (2.2) e o "+" nos combos (2.4).

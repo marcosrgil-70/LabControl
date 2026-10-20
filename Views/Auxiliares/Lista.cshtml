@@ -1,0 +1,188 @@
+@using LabControl.Services.Auxiliares
+@model AuxiliarListaVM
+@{
+    var d = Model.Definicao;
+    var f = Model.Filtro;
+    ViewData["Title"] = d.Titulo;
+
+    // filtro atual, repetido nos formulários de excluir/ativar para voltar ao mesmo ponto da lista
+    void FiltroOculto()
+    {
+        <input type="hidden" name="Busca" value="@f.Busca" />
+        <input type="hidden" name="Inativos" value="@(f.Inativos ? "true" : "false")" />
+        <input type="hidden" name="Pagina" value="@f.Pagina" />
+    }
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-2">
+        <li class="breadcrumb-item"><a asp-action="Index">Cadastros auxiliares</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@d.Titulo</li>
+    </ol>
+</nav>
+
+<div class="d-flex align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi @d.Icone me-2 text-primary"></i>@d.Titulo</h5>
+    <button type="button" class="btn btn-primary btn-sm ms-auto" lc-permissao="AUXILIARES.INCLUIR"
+            data-form="@Url.Action("Incluir", new { tabela = d.Tabela })">
+        <i class="bi bi-plus-lg me-1"></i>Incluir
+    </button>
+</div>
+
+@if (Model.OferecerInativar is { } inativar)
+{
+    <div class="alert alert-warning d-flex align-items-center gap-2 py-2" lc-permissao="AUXILIARES.ALTERAR">
+        <i class="bi bi-info-circle"></i>
+        <span class="small">Este @d.Singular está em uso e não pode ser excluído. Inativado, ele some dos combos de inclusão e continua nos registros antigos.</span>
+        <form method="post" asp-action="Ativo" asp-route-tabela="@d.Tabela" asp-route-id="@inativar" class="ms-auto">
+            @{ FiltroOculto(); }
+            <input type="hidden" name="ativo" value="false" />
+            <button type="submit" class="btn btn-warning btn-sm"><i class="bi bi-eye-slash me-1"></i>Inativar</button>
+        </form>
+    </div>
+}
+
+<form method="get" class="card mb-3">
+    <div class="card-body py-2 d-flex flex-wrap gap-3 align-items-end">
+        <div class="flex-grow-1" style="max-width: 24rem">
+            <label class="form-label small mb-0" for="Busca">Pesquisar</label>
+            <input name="Busca" id="Busca" value="@f.Busca" class="form-control form-control-sm" placeholder="Parte da descrição" autofocus />
+        </div>
+        <div class="form-check mb-1">
+            <input type="checkbox" class="form-check-input" name="Inativos" id="Inativos" value="true" checked="@f.Inativos" />
+            <label class="form-check-label small" for="Inativos">Mostrar inativos</label>
+        </div>
+        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Pesquisar</button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    @foreach (var c in Model.Colunas)
+                    {
+                        <th>@c.Rotulo</th>
+                    }
+                    <th>Situação</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Itens)
+                {
+                    <tr class="@(item.Ativo ? "" : "text-body-secondary")">
+                        @for (var i = 0; i < Model.Colunas.Count; i++)
+                        {
+                            var valor = item.Valores[i];
+                            <td>
+                                @if (Model.Colunas[i].Tipo == TipoCampo.Cor && valor is not null)
+                                {
+                                    <span class="badge border" style="background-color: @valor">&nbsp;&nbsp;&nbsp;</span> <span class="small font-monospace">@valor</span>
+                                }
+                                else
+                                {
+                                    @valor
+                                }
+                            </td>
+                        }
+                        <td>@if (item.Ativo) { <span class="badge text-bg-success">Ativo</span> } else { <span class="badge text-bg-secondary">Inativo</span> }</td>
+                        <td class="text-end text-nowrap">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" title="Alterar" lc-permissao="AUXILIARES.ALTERAR"
+                                    data-form="@Url.Action("Editar", new { tabela = d.Tabela, id = item.Id })">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="post" asp-action="Ativo" asp-route-tabela="@d.Tabela" asp-route-id="@item.Id" class="d-inline" lc-permissao="AUXILIARES.ALTERAR">
+                                @{ FiltroOculto(); }
+                                <input type="hidden" name="ativo" value="@(item.Ativo ? "false" : "true")" />
+                                <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(item.Ativo ? "Inativar" : "Reativar")">
+                                    <i class="bi @(item.Ativo ? "bi-eye-slash" : "bi-eye")"></i>
+                                </button>
+                            </form>
+                            <form method="post" asp-action="Excluir" asp-route-tabela="@d.Tabela" asp-route-id="@item.Id" class="d-inline" lc-permissao="AUXILIARES.EXCLUIR"
+                                  data-confirmar="Deseja realmente excluir &quot;@item.Valores.FirstOrDefault()&quot;?">
+                                @{ FiltroOculto(); }
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (Model.Itens.Count == 0)
+                {
+                    <tr><td colspan="@(Model.Colunas.Count + 2)" class="text-center text-body-secondary small py-3">Nenhum @d.Singular encontrado.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center small py-2">
+        <span class="text-body-secondary">@Model.Total registro(s)</span>
+        @if (Model.Paginas > 1)
+        {
+            <nav class="ms-auto" aria-label="Páginas">
+                <ul class="pagination pagination-sm mb-0">
+                    @for (var p = 1; p <= Model.Paginas; p++)
+                    {
+                        <li class="page-item @(p == f.Pagina ? "active" : "")">
+                            <a class="page-link" asp-action="Lista" asp-route-tabela="@d.Tabela" asp-route-Busca="@f.Busca"
+                               asp-route-Inativos="@(f.Inativos ? "true" : null)" asp-route-Pagina="@p">@p</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="modalAuxiliar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog" id="modalAuxiliarConteudo">
+        @if (Model.Form is not null)
+        {
+            <partial name="_Form" model="Model.Form" />
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const modalEl = document.getElementById('modalAuxiliar');
+            const conteudo = document.getElementById('modalAuxiliarConteudo');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            let alterado = false;
+
+            const preparar = () => {
+                alterado = false;
+                const form = conteudo.querySelector('form');
+                if (!form) return;
+                form.addEventListener('input', () => alterado = true);
+                form.addEventListener('submit', () => alterado = false);
+                // filtro atual da lista, para voltar ao mesmo ponto depois de gravar
+                const filtro = new URLSearchParams(location.search);
+                for (const nome of ['Busca', 'Pagina'])
+                    if (filtro.has(nome)) form.querySelector(`[name="${nome}"]`).value = filtro.get(nome);
+                if (filtro.get('Inativos') === 'true') form.querySelector('[name="Inativos"]').value = 'true';
+            };
+
+            // aviso do legado: fechar com alterações não gravadas
+            modalEl.addEventListener('hide.bs.modal', e => {
+                if (alterado && !confirm('As alterações não foram salvas. Deseja realmente fechar?')) e.preventDefault();
+            });
+            modalEl.addEventListener('shown.bs.modal', () => conteudo.querySelector('input:not([type=hidden]),select')?.focus());
+
+            document.querySelectorAll('[data-form]').forEach(b => b.addEventListener('click', async () => {
+                const r = await fetch(b.dataset.form, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!r.ok) { alert(r.status === 403 ? 'Você não tem permissão para esta ação.' : 'Registro não encontrado. Atualize a tela.'); return; }
+                conteudo.innerHTML = await r.text();
+                preparar();
+                modal.show();
+            }));
+
+            document.querySelectorAll('form[data-confirmar]').forEach(f =>
+                f.addEventListener('submit', e => { if (!confirm(f.dataset.confirmar)) e.preventDefault(); }));
+
+            // gravação com erro: a lista volta com o formulário já no modal
+            if (conteudo.querySelector('form')) { preparar(); alterado = true; modal.show(); }
+        })();
+    </script>
+}
