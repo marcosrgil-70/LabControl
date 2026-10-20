@@ -41,7 +41,7 @@ Perfis de acesso por empresa (ex.: ADMINISTRADOR, Recepção, Analista).
 
 ## Usada por
 - **Views:** —
-- **Rotinas que alteram:** [`SP_INICIALIZAR_EMPRESA`](../rotinas/SP_INICIALIZAR_EMPRESA.md)
+- **Rotinas que alteram:** [`PR_CRIAR_PERFIL`](../rotinas/PR_CRIAR_PERFIL.md), [`SP_INICIALIZAR_EMPRESA`](../rotinas/SP_INICIALIZAR_EMPRESA.md)
 - **Rotinas que leem:** —
 - **Triggers de outras tabelas que alteram:** —
 - **Triggers de outras tabelas que leem:** —

@@ -31,7 +31,7 @@ CREATE PROCEDURE SP_GERAR_PEDIDO_VENDA(IN p_id_proposta INT, IN p_dt_autorizacao
 ## Quem chama
 - **Uso previsto:** "Gerar pedido" da T20/T21 (`PEDIDOS_VENDA.GERAR`).
 - **Chamada por rotinas:** —
-- **Chamada por triggers:** [`TG_AMOSTRAS_BU`](../triggers/TG_AMOSTRAS_BU.md)
+- **Chamada por triggers:** —
 - **Usada em views:** —
 
 ## Transação

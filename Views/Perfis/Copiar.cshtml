@@ -1,0 +1,38 @@
+@model CopiarPerfilVM
+@{
+    ViewData["Title"] = "Copiar perfil";
+}
+
+<h5 class="mb-3"><i class="bi bi-copy me-2 text-primary"></i>Copiar perfil</h5>
+
+<form method="post" asp-action="Copiar" class="card" style="max-width: 640px" novalidate>
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        <div class="mb-3">
+            <label asp-for="IdOrigem" class="form-label small"></label>
+            <select asp-for="IdOrigem" class="form-select">
+                <option value="">— selecione —</option>
+                @foreach (var empresa in Model.Origens.GroupBy(o => o.Empresa))
+                {
+                    <optgroup label="@empresa.Key">
+                        @foreach (var o in empresa)
+                        {
+                            <option value="@o.Id" selected="@(o.Id == Model.IdOrigem)">@o.Nome</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+            <span asp-validation-for="IdOrigem" class="text-danger small"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Nome" class="form-label small"></label>
+            <input asp-for="Nome" class="form-control text-uppercase" maxlength="60" />
+            <span asp-validation-for="Nome" class="text-danger small"></span>
+            <div class="form-text">O novo perfil é criado na empresa ativa, com as mesmas permissões da origem.</div>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Copiar</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </div>
+</form>

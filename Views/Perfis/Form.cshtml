@@ -1,0 +1,141 @@
+@model PerfilVM
+@{
+    var inclusao = Model.Id == 0;
+    var leitura = Model.Administrador;
+    ViewData["Title"] = inclusao ? "Incluir perfil" : leitura ? "Perfil ADMINISTRADOR" : "Alterar perfil";
+    var marcadas = Model.Permissoes.ToHashSet();
+}
+
+<h5 class="mb-3"><i class="bi bi-shield-lock me-2 text-primary"></i>@ViewData["Title"]</h5>
+
+<form method="post" asp-action="@(inclusao ? "Criar" : "Editar")" asp-route-id="@(inclusao ? null : Model.Id)" novalidate>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+    @if (leitura)
+    {
+        <div class="alert alert-info py-2 small"><i class="bi bi-info-circle me-1"></i>@LabControl.Services.PerfilService.MensagemAdministrador</div>
+    }
+
+    <div class="card mb-3">
+        <div class="card-body row g-3">
+            <div class="col-md-4">
+                <label asp-for="Nome" class="form-label small"></label>
+                <input asp-for="Nome" class="form-control text-uppercase" maxlength="60" readonly="@leitura" />
+                <span asp-validation-for="Nome" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Descricao" class="form-label small"></label>
+                <input asp-for="Descricao" class="form-control" readonly="@leitura" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                    <input asp-for="Ativo" class="form-check-input" disabled="@leitura" />
+                    <label asp-for="Ativo" class="form-check-label"></label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header py-2 d-flex align-items-center gap-2">
+            <span class="fw-semibold"><i class="bi bi-grid-3x3 me-1"></i>Permissões</span>
+            @if (!leitura)
+            {
+                <button type="button" class="btn btn-outline-secondary btn-sm ms-auto" data-matriz="somente-consulta">Somente consulta</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-matriz="limpar">Limpar</button>
+            }
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0 matriz-permissoes">
+                <thead>
+                    <tr>
+                        <th>Tela</th>
+                        @foreach (var a in PerfilVM.AcoesPadrao)
+                        {
+                            <th class="text-center">
+                                @if (leitura) { @a[..1]@a[1..].ToLowerInvariant() }
+                                else { <button type="button" class="btn btn-link btn-sm p-0 text-reset" data-coluna="@a" title="Marcar/desmarcar a coluna">@a[..1]@a[1..].ToLowerInvariant()</button> }
+                            </th>
+                        }
+                        <th>Ações especiais</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var modulo in Model.Matriz.GroupBy(t => t.Modulo))
+                    {
+                        <tr class="table-light"><td colspan="@(PerfilVM.AcoesPadrao.Length + 2)" class="small fw-semibold text-uppercase">@modulo.Key</td></tr>
+                        @foreach (var tela in modulo)
+                        {
+                            <tr data-tela="@tela.Tela">
+                                <td>
+                                    @if (leitura) { @tela.Nome }
+                                    else { <button type="button" class="btn btn-link btn-sm p-0 text-reset text-start" data-linha title="Marcar/desmarcar a linha">@tela.Nome</button> }
+                                </td>
+                                @foreach (var a in PerfilVM.AcoesPadrao)
+                                {
+                                    <td class="text-center">
+                                        @if (tela.Padrao.TryGetValue(a, out var c))
+                                        {
+                                            <input type="checkbox" class="form-check-input" name="Permissoes" value="@c.Id" checked="@marcadas.Contains(c.Id)"
+                                                   data-acao="@a" disabled="@leitura" title="@c.Codigo" aria-label="@c.Codigo" />
+                                        }
+                                    </td>
+                                }
+                                <td>
+                                    @foreach (var c in tela.Especiais)
+                                    {
+                                        <div class="form-check form-check-inline small mb-0">
+                                            <input type="checkbox" class="form-check-input" id="perm-@c.Id" name="Permissoes" value="@c.Id" checked="@marcadas.Contains(c.Id)"
+                                                   data-acao="@c.Acao" disabled="@leitura" title="@c.Codigo" />
+                                            <label class="form-check-label" for="perm-@c.Id">@c.Descricao</label>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        @if (!leitura)
+        {
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+        }
+        <a asp-action="Index" class="btn btn-outline-secondary">@(leitura ? "Voltar" : "Cancelar")</a>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        // Matriz: qualquer ação marca o CONSULTAR da tela; desmarcar o CONSULTAR desmarca a linha (o servidor confere de novo)
+        (function () {
+            const tabela = document.querySelector('.matriz-permissoes');
+            if (!tabela) return;
+            const caixas = linha => [...linha.querySelectorAll('input[type=checkbox]:not(:disabled)')];
+            const consultar = linha => linha.querySelector('input[data-acao=CONSULTAR]');
+            tabela.addEventListener('change', e => {
+                const cx = e.target, linha = cx.closest('tr[data-tela]');
+                if (!linha || cx.type !== 'checkbox') return;
+                if (cx.dataset.acao === 'CONSULTAR' && !cx.checked) caixas(linha).forEach(c => c.checked = false);
+                else if (cx.checked && consultar(linha)) consultar(linha).checked = true;
+            });
+            tabela.addEventListener('click', e => {
+                const b = e.target.closest('button');
+                if (!b) return;
+                if (b.hasAttribute('data-linha')) {
+                    const linha = b.closest('tr'), todas = caixas(linha), marcar = todas.some(c => !c.checked);
+                    todas.forEach(c => c.checked = marcar);
+                } else if (b.dataset.coluna) {
+                    const col = [...tabela.querySelectorAll(`input[data-acao=${b.dataset.coluna}]:not(:disabled)`)], marcar = col.some(c => !c.checked);
+                    col.forEach(c => { c.checked = marcar; if (marcar && consultar(c.closest('tr'))) consultar(c.closest('tr')).checked = true; });
+                }
+            });
+            document.querySelectorAll('[data-matriz]').forEach(b => b.addEventListener('click', () => {
+                tabela.querySelectorAll('input[type=checkbox]:not(:disabled)').forEach(c =>
+                    c.checked = b.dataset.matriz === 'somente-consulta' && c.dataset.acao === 'CONSULTAR');
+            }));
+        })();
+    </script>
+}

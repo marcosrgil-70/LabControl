@@ -4,7 +4,7 @@
 > Cada arquivo traz: finalidade, origem no legado, colunas, chaves, relacionamentos, triggers, quem usa, telas, processos, regras de negócio, cuidados no C# e o código SQL.
 > Legenda: 🔴 crítico · 🟠 importante · ⚪ normal.
 
-**Totais:** 59 tabelas · 10 views · 8 funções · 21 procedures · 42 triggers.
+**Totais:** 59 tabelas · 10 views · 8 funções · 22 procedures · 42 triggers.
 
 ## Tabelas
 
@@ -119,6 +119,7 @@
 | [`SP_PROXIMO_NUMERO`](rotinas/SP_PROXIMO_NUMERO.md) | Pública | 🔴 | Numeração segura por (empresa, tipo, ano): `INSERT … ON DUPLICATE KEY UPDATE` com trava exclusiva até o COMMIT (sem deadlock em gravações simultâneas). |
 | [`PR_AUDITAR`](rotinas/PR_AUDITAR.md) | Interna | 🔴 | Grava um evento em `AUDITORIA` (usuário `@LC_ID_USUARIOS`, IP `@LC_IP`) dentro da transação da procedure que a chama: revisão R, emissão M, desfazer revisão D, pedido I/A, troca de produto A. |
 | [`PR_CONFERIR_EMPRESA`](rotinas/PR_CONFERIR_EMPRESA.md) | Interna | 🔴 | Recusa (45000 "Registro pertence a outra empresa.") um filho gravado com `ID_EMPRESAS` diferente da empresa do pai; 0/NULL = não informado. |
+| [`PR_CRIAR_PERFIL`](rotinas/PR_CRIAR_PERFIL.md) | Interna | 🟠 | Cria um perfil sugerido da empresa com as permissões listadas (códigos ou TELA.*), só se ele ainda não existir — reinicializar não devolve permissão que a empresa retirou. |
 | [`PR_ATUALIZA_SALDO`](rotinas/PR_ATUALIZA_SALDO.md) | Interna | 🟠 | Recalcula o saldo físico da amostra (Σ entradas − Σ saídas). |
 | [`SP_RECALCULAR_PROPOSTA`](rotinas/SP_RECALCULAR_PROPOSTA.md) | Pública | 🔴 | Recalcula os totais da proposta a partir das análises e do desconto geral. |
 | [`SP_AMOSTRA_GERAR_TESTES`](rotinas/SP_AMOSTRA_GERAR_TESTES.md) | Pública | 🔴 | Apaga e recria os testes da amostra a partir das análises do item da proposta (com data prevista). Recusa se houver resultado. |

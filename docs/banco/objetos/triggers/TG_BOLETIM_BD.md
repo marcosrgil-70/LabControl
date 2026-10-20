@@ -22,7 +22,7 @@ Emitido não se exclui; revisão > 0 só por "Desfazer revisão".
 
 ## O que acessa
 - **Altera outras tabelas:** —
-- **Lê outras tabelas:** [`LAB_BOLETIM_PARAMETROS`](../tabelas/LAB_BOLETIM_PARAMETROS.md)
+- **Lê outras tabelas:** —
 - **Chama:** —
 
 ## Impacto na aplicação

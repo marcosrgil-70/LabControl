@@ -53,7 +53,7 @@ Comentário do script: _Parâmetros ESCOLHIDOS para o boletim (subconjunto dos r
 - **Rotinas que alteram:** [`PR_REVISAO_BOLETIM`](../rotinas/PR_REVISAO_BOLETIM.md)
 - **Rotinas que leem:** [`SP_EMITIR_BOLETIM`](../rotinas/SP_EMITIR_BOLETIM.md)
 - **Triggers de outras tabelas que alteram:** —
-- **Triggers de outras tabelas que leem:** [`TG_RESPAR_BD`](../triggers/TG_RESPAR_BD.md), [`TG_BOLETIM_BD`](../triggers/TG_BOLETIM_BD.md)
+- **Triggers de outras tabelas que leem:** [`TG_RESPAR_BD`](../triggers/TG_RESPAR_BD.md)
 
 ## Telas e processos
 - **Telas:** [T27 Boletim](../../../telas/T27-boletim.md)

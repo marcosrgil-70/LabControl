@@ -71,7 +71,7 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 |---|---|---|---|---|---|
 | (lançador externo MAIS_Acesso) | `uAcesso` (validação dos parâmetros) | [T00](../telas/T00-login-empresa.md) | `/Conta/Login` | 1 | ✅ |
 | Ativar Empresa | `un_Menu` | [T00](../telas/T00-login-empresa.md) (trocar empresa) | `/Conta/Empresa` | 1 | ✅ |
-| Atualizar Direitos de Acesso | `un_DireitoAcesso01`, `un_DirAcesso01` | [T02](../telas/T02-usuarios.md) + [T04](../telas/T04-perfis-permissoes.md) | `/Usuarios`, `/Perfis` | 1 | 🟨 |
+| Atualizar Direitos de Acesso | `un_DireitoAcesso01`, `un_DirAcesso01` | [T02](../telas/T02-usuarios.md) + [T04](../telas/T04-perfis-permissoes.md) | `/Usuarios`, `/Perfis` | 1 | ✅ |
 | Atualizar Componentes | `un_Menu` / `SYS_COMPONENTES` | [T04](../telas/T04-perfis-permissoes.md) (catálogo pelo seed) | — | — | ⛔ |
 | Lado a Lado / Cascata | MDI | — | — | — | ⛔ |
 | Sobre o Sistema | `un_About` | [T01](../telas/T01-layout-menu.md) (versão no menu) | — | 1 | ✅ |

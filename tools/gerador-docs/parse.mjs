@@ -112,7 +112,14 @@ export function messages(body) {
   return r;
 }
 
+// Sem textos entre aspas e comentários: 'PEDIDOS_VENDA.*' (código de permissão) ou uma mensagem citando
+// uma tabela não são referências a ela.
+function codigo(body) {
+  return body.replace(/'(?:[^'\\]|\\.|'')*'/g, "''").replace(/--[^\n]*/g, '');
+}
+
 export function refs(body, names) {
+  body = codigo(body);
   const r = { read: new Set(), write: new Set() };
   for (const n of names) {
     const rx = new RegExp(`\\b${n}\\b`);
@@ -124,6 +131,7 @@ export function refs(body, names) {
 }
 
 export function calls(body, names) {
+  body = codigo(body);
   return names.filter(n => new RegExp(`\\b${n}\\b`).test(body));
 }
 

@@ -41,7 +41,7 @@ Travas de alteração da amostra (revisão antiga, boletim emitido, resultados, 
 ## O que acessa
 - **Altera outras tabelas:** —
 - **Lê outras tabelas:** [`LAB_PROPOSTAS_PRODUTOS`](../tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`LAB_MOV_AMOSTRAS`](../tabelas/LAB_MOV_AMOSTRAS.md), [`LAB_RESULTADOS_ANALISES`](../tabelas/LAB_RESULTADOS_ANALISES.md), [`LAB_BOLETIM_ANALISES`](../tabelas/LAB_BOLETIM_ANALISES.md)
-- **Chama:** [`FN_NR_AMOSTRA_ID`](../rotinas/FN_NR_AMOSTRA_ID.md), [`SP_GERAR_PEDIDO_VENDA`](../rotinas/SP_GERAR_PEDIDO_VENDA.md)
+- **Chama:** [`FN_NR_AMOSTRA_ID`](../rotinas/FN_NR_AMOSTRA_ID.md)
 
 ## Impacto na aplicação
 - A aplicação não precisa (e não deve depender de) enviar: `VALIDADE_DIA`, `VALIDADE_MES`, `VALIDADE_ANO`, `FABRICACAO_DIA`, `FABRICACAO_MES`, `FABRICACAO_ANO`, `ID_PRODUTOS`, `DT_VALIDADE`, `DT_FABRICACAO`, `NR_AMOSTRA`. Reler a linha depois de gravar.

@@ -1,0 +1,43 @@
+@model IReadOnlyList<PerfilListaItemVM>
+@{
+    ViewData["Title"] = "Perfis de acesso";
+}
+
+<div class="d-flex align-items-center mb-3 gap-2">
+    <h5 class="mb-0"><i class="bi bi-shield-lock me-2 text-primary"></i>Perfis de acesso</h5>
+    <permissao codigo="PERFIS.INCLUIR">
+        <a asp-action="Copiar" class="btn btn-outline-primary btn-sm ms-auto"><i class="bi bi-copy me-1"></i>Copiar perfil</a>
+        <a asp-action="Criar" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Incluir</a>
+    </permissao>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead><tr><th>Perfil</th><th>Descrição</th><th class="text-end">Permissões</th><th class="text-end">Usuários</th><th>Situação</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@p.Nome @if (p.Administrador) { <span class="badge text-bg-dark ms-1">todas</span> }</td>
+                        <td class="small">@p.Descricao</td>
+                        <td class="text-end">@p.Permissoes</td>
+                        <td class="text-end">@p.Usuarios</td>
+                        <td>@if (p.Ativo) { <span class="badge text-bg-success">Ativo</span> } else { <span class="badge text-bg-secondary">Inativo</span> }</td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Editar" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm" lc-permissao="PERFIS.ALTERAR" title="@(p.Administrador ? "Ver" : "Alterar")"><i class="bi @(p.Administrador ? "bi-eye" : "bi-pencil")"></i></a>
+                            <a asp-action="Copiar" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm" lc-permissao="PERFIS.INCLUIR" title="Copiar"><i class="bi bi-copy"></i></a>
+                            @if (!p.Administrador)
+                            {
+                                <form asp-action="Excluir" asp-route-id="@p.Id" method="post" class="d-inline" lc-permissao="PERFIS.EXCLUIR"
+                                      onsubmit="return confirm('Excluir o perfil @p.Nome?')">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash"></i></button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -28,7 +28,7 @@ Substituir milhares de linhas de direito por componente por **perfis por empresa
 | Copiar perfil | da mesma empresa ou de outra (ADMIN_GLOBAL) — novo nome obrigatório |
 | Excluir | proibido para o perfil `ADMINISTRADOR` (criado por `SP_INICIALIZAR_EMPRESA`) e para perfis com usuários (remover dos usuários antes ou inativar) |
 
-## Perfis sugeridos (confirmar com o usuário — dúvida 4 do plano)
+## Perfis sugeridos (criados em toda empresa nova — dúvida 4 respondida em 19/10/2026)
 | Perfil | Permissões principais |
 |---|---|
 | ADMINISTRADOR | todas (criado automaticamente) |
@@ -44,8 +44,20 @@ Substituir milhares de linhas de direito por componente por **perfis por empresa
 - Nova tela no sistema = nova linha no `05_seed.sql` (o catálogo não é editável pela tela).
 
 ## Critérios de aceite
-- [ ] Perfil sem `AMOSTRAS.INCLUIR`: botão oculto e POST retorna 403.
-- [ ] Copiar perfil entre empresas.
-- [ ] ADMINISTRADOR não pode ser excluído.
+- [x] Perfil sem `AMOSTRAS.INCLUIR`: botão oculto e POST retorna 403 (`PermissoesMenuPainelTests`; na própria T04: `PERFIS.INCLUIR`).
+- [x] Copiar perfil entre empresas (ADMIN_GLOBAL).
+- [x] ADMINISTRADOR não pode ser excluído.
 
-**Status:** ⬜ (v1 tem Perfis/Permissões sem empresa — refazer)
+Testes: `tests/LabControl.Tests/PerfilServiceTests.cs`; roteiro SQL passo 1 (perfis sugeridos).
+
+## Implementação (tarefa 1.4)
+- `Controllers/PerfisController.cs` (`[Permissao("PERFIS.*")]`) · `Services/PerfilService.cs` · `Views/Perfis/*` (lista, matriz, copiar).
+- **Matriz**: telas agrupadas por módulo na ordem de `PERMISSOES.ORDEM`; colunas Consultar…Imprimir + ações especiais por tela; atalhos de linha, coluna, "Somente consulta" e "Limpar". Marcar uma ação marca o CONSULTAR (no navegador e de novo no servidor); IDs fora do catálogo são ignorados.
+- Gravação só da diferença em `PERFIS_PERMISSOES` (a auditoria mostra exatamente o que entrou/saiu), em transação. Nome em maiúsculas, único na empresa; `ADMINISTRADOR` é reservado.
+- **ADMINISTRADOR** é somente leitura (sempre todas as permissões, mantidas pelo `SP_INICIALIZAR_EMPRESA`): não é alterado, inativado nem excluído.
+- **Excluir**: recusado para perfil com usuários ("remova-o dos usuários antes ou inative").
+- **Copiar**: da empresa ativa; ADMIN_GLOBAL também de outras empresas ativas (o novo perfil nasce na empresa ativa).
+- **Perfis sugeridos**: `SP_INICIALIZAR_EMPRESA` → `PR_CRIAR_PERFIL` (RECEPÇÃO, ANALISTA, RESPONSÁVEL TÉCNICO, COMERCIAL com as permissões da tabela acima). Só cria se o perfil não existir: reinicializar a empresa não devolve permissão que ela retirou.
+- Mudança de perfil vale na próxima entrada ou troca de empresa (aviso ao gravar).
+
+**Status:** ✅ concluída na tarefa 1.4 (19/10/2026).

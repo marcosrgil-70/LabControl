@@ -28,7 +28,7 @@ Comentário do script: _Propostas_
 ## O que acessa
 - **Altera outras tabelas:** —
 - **Lê outras tabelas:** —
-- **Chama:** [`FN_NR_PROPOSTA`](../rotinas/FN_NR_PROPOSTA.md), [`SP_PROXIMO_NUMERO`](../rotinas/SP_PROXIMO_NUMERO.md), [`SP_GERAR_REVISAO_PROPOSTA`](../rotinas/SP_GERAR_REVISAO_PROPOSTA.md)
+- **Chama:** [`FN_NR_PROPOSTA`](../rotinas/FN_NR_PROPOSTA.md), [`SP_PROXIMO_NUMERO`](../rotinas/SP_PROXIMO_NUMERO.md)
 
 ## Impacto na aplicação
 - A aplicação não precisa (e não deve depender de) enviar: `ANO_PROPOSTA`, `COD_PROPOSTA`, `DT_SOLICITACAO`, `NR_PROPOSTA`. Reler a linha depois de gravar.

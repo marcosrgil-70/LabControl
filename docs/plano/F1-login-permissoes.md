@@ -26,6 +26,7 @@
 - **Esforço:** M · **Depende de:** 1.1
 
 ### 1.4 T04 — Perfis e permissões
+> ✅ **Concluída em 19/10/2026** — ver [T04 › Implementação](../telas/T04-perfis-permissoes.md#implementação-tarefa-14); perfis sugeridos confirmados pelo usuário (dúvida 4) e criados pelo `SP_INICIALIZAR_EMPRESA`.
 - **Passos:** CRUD de perfis com matriz `TELA × AÇÃO` a partir de `PERMISSOES`; copiar perfil; proteger ADMINISTRADOR. Criar os perfis sugeridos após confirmação do usuário (dúvida 4).
 - **Aceite:** [aceite da T04](../telas/T04-perfis-permissoes.md#critérios-de-aceite).
 - **Esforço:** M · **Depende de:** 1.2

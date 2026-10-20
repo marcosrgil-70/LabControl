@@ -43,7 +43,7 @@ Comentário do script: _Catálogo global de permissões (tela + ação). Ex.: AM
 ## Usada por
 - **Views:** —
 - **Rotinas que alteram:** —
-- **Rotinas que leem:** [`SP_INICIALIZAR_EMPRESA`](../rotinas/SP_INICIALIZAR_EMPRESA.md)
+- **Rotinas que leem:** [`PR_CRIAR_PERFIL`](../rotinas/PR_CRIAR_PERFIL.md), [`SP_INICIALIZAR_EMPRESA`](../rotinas/SP_INICIALIZAR_EMPRESA.md)
 - **Triggers de outras tabelas que alteram:** —
 - **Triggers de outras tabelas que leem:** —
 

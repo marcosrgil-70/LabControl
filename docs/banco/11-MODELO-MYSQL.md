@@ -2,7 +2,7 @@
 
 > Scripts: `Scripts/v2/01_schema.sql` → `02_funcoes_procedures.sql` → `03_triggers.sql` → `04_views.sql` → `05_seed.sql`
 > Banco: **`labcontrol_v2`** (convive com o `labcontrol` antigo até a virada). MySQL 8.0+, `utf8mb4_0900_ai_ci`.
-> **Validado em 16/10/2026** no MySQL 8.0.46 local (banco temporário, depois removido): 69 tabelas/views, 8 funções, 19 procedures (21 desde a revisão da Fase 0, 19/10/2026: `PR_AUDITAR`, `PR_CONFERIR_EMPRESA`), 42 triggers, 109 permissões; fluxo completo proposta → pedido → amostra → resultado → boletim → emissão → revisões (amostra/resultado/proposta) e travas negativas testados.
+> **Validado em 16/10/2026** no MySQL 8.0.46 local (banco temporário, depois removido): 69 tabelas/views, 8 funções, 19 procedures (22 desde 19/10/2026: `PR_AUDITAR`, `PR_CONFERIR_EMPRESA` na revisão da Fase 0 e `PR_CRIAR_PERFIL` na T04), 42 triggers, 109 permissões; fluxo completo proposta → pedido → amostra → resultado → boletim → emissão → revisões (amostra/resultado/proposta) e travas negativas testados.
 
 ## 1. Decisões de modelagem
 
@@ -60,6 +60,7 @@
 | `SP_TROCAR_PRODUTO_PROPOSTA` | Proc com transação | Utilitário da proposta |
 | `SP_INICIALIZAR_EMPRESA(id)` | Proc | Ao criar empresa nova e na migração |
 | `PR_AUDITAR(emp, tabela, id, ação, antes, depois)` | Proc interna | Chamada pelas `SP_*` com transação: o evento (R, M, D, I/A) fica na transação da procedure |
+| `PR_CRIAR_PERFIL(emp, nome, descrição, permissões)` | Proc interna | Chamada pelo `SP_INICIALIZAR_EMPRESA`: perfis sugeridos (só se ainda não existirem) |
 | `PR_CONFERIR_EMPRESA(informada, do_pai)` | Proc interna | Triggers dos filhos: recusa `ID_EMPRESAS` diferente da empresa do pai |
 | `FN_NR_AMOSTRA`, `FN_NR_AMOSTRA_ID`, `FN_NR_PROPOSTA`, `FN_DATA_PARCIAL`, `FN_FORMATA_DECIMAL`, `FN_FORMATA_RESULTADO`, `FN_ACREDITADO`, `FN_OBS_METODOS` | Funções | Views, triggers, boletim |
 

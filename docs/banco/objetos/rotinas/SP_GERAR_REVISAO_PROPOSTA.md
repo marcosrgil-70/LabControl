@@ -28,7 +28,7 @@ CREATE PROCEDURE SP_GERAR_REVISAO_PROPOSTA(IN p_id_origem INT, IN p_motivo VARCH
 ## Quem chama
 - **Uso previsto:** Botão "Gerar revisão" da T20 (`PROPOSTAS.REVISAR`).
 - **Chamada por rotinas:** —
-- **Chamada por triggers:** [`TG_PROPOSTAS_BI`](../triggers/TG_PROPOSTAS_BI.md)
+- **Chamada por triggers:** —
 - **Usada em views:** —
 
 ## Transação

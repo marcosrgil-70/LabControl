@@ -8,7 +8,7 @@
   2. executa 01_schema -> 02_funcoes_procedures -> 03_triggers -> 04_views -> 05_seed,
      trocando "labcontrol_v2" pelo nome do banco, e PARA no primeiro erro;
   3. confere as contagens de objetos (59 tabelas, 10 views, 8 funções,
-     21 procedures, 42 triggers, 109 permissões);
+     22 procedures, 42 triggers, 109 permissões);
   4. com -Dev: roda dev/*.sql (empresa 001 + usuário ADMIN / senha provisória
      Admin123, só para desenvolvimento);
   5. com -Teste: cria um banco temporário labcontrol_teste_<id>, roda
@@ -39,7 +39,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $pasta = $PSScriptRoot
 $scripts = '01_schema', '02_funcoes_procedures', '03_triggers', '04_views', '05_seed'
-$esperado = [ordered]@{ TABELAS = 59; VIEWS = 10; FUNCOES = 8; PROCEDURES = 21; TRIGGERS = 42; PERMISSOES = 109 }
+$esperado = [ordered]@{ TABELAS = 59; VIEWS = 10; FUNCOES = 8; PROCEDURES = 22; TRIGGERS = 42; PERMISSOES = 109 }
 
 function Falhar([string]$msg) { Write-Host "ERRO: $msg" -ForegroundColor Red; exit 1 }
 
