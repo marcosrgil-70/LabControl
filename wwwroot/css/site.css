@@ -66,3 +66,4 @@ body {
 .topbar-empresa:hover { text-decoration: underline !important; }
 .sidebar-versao { color: #6c757d; font-size: 0.72rem; }
 .painel-contador:hover { box-shadow: 0 2px 10px rgba(0, 0, 0, .12); }
+.empresa-logo { max-height: 80px; max-width: 220px; }

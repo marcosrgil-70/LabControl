@@ -23,6 +23,7 @@
 - **Esforço:** G · **Depende de:** 5.2
 
 ### 5.4 Layout do PDF do boletim (QuestPDF) 🔵
+> Pendente da T03 (1.5): o **logo da empresa** (`EMPRESAS.LOGO`, servido por `EmpresaService.LogoAsync`) e o nº de acreditação no cabeçalho — último item do aceite da T03.
 - **Passos:** reproduzir o layout do `frxRboletin` com os dados do [P16](../processos/P16-montagem-boletim.md#layout-do-pdf-dados-do-qry_impbolet-do-legado); expoente sobrescrito; coluna de especificação condicional; acreditação; assinaturas só no emitido; 2ª via de boletim migrado. Validar **lado a lado** com 3 boletins reais do legado (pedir PDFs/papel — dúvida 5).
 - **Aceite:** usuário aprova o layout.
 - **Esforço:** M · **Depende de:** 5.3

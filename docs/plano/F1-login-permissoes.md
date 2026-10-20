@@ -32,6 +32,7 @@
 - **Esforço:** M · **Depende de:** 1.2
 
 ### 1.5 T03 — Empresa usuária + nova empresa + cópia de cadastros 🔵
+> ✅ **Concluída em 19/10/2026** — ver [T03 › Implementação](../telas/T03-empresa-usuaria.md#implementação-tarefa-15); aceite em `EmpresaServiceTests` (o logo no PDF do boletim fica para a 5.4).
 - **Passos:** dados da empresa ativa (com logo e componente de endereço — pode usar combo de cidade simples até a fase 2); lista de empresas e "nova empresa" (ADMIN_GLOBAL) com `SP_INICIALIZAR_EMPRESA` e `CopiarCadastros` ([P23](../processos/P23-nova-empresa.md)).
 - **Aceite:** [aceite da T03](../telas/T03-empresa-usuaria.md#critérios-de-aceite).
 - **Esforço:** G · **Depende de:** 1.3

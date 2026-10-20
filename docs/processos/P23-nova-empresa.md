@@ -21,6 +21,9 @@
 4. Vincula o usuário criador (`USUARIOS_EMPRESAS` + perfil ADMINISTRADOR).
 5. `AUDITORIA` com o resumo da cópia (quantidades por tabela).
 
+## Implementação (tarefa 1.5)
+Ver [T03 › Implementação](../telas/T03-empresa-usuaria.md#implementação-tarefa-15). A cópia é `Services/CopiaCadastros.cs` (em vez de `EmpresaService.CopiarCadastros`): grupos AUXILIARES, METODOS, PARAMETROS, PRODUTOS, CONDICOES, PRAZOS, TIPOS_RESULTADO; casa por descrição/código/sigla (as chaves únicas do banco; `ANALISES_METODOS` pela descrição); o resumo vai para `AUDITORIA` (ação I em `EMPRESAS`, `COPIA_CADASTROS`). Testes em `EmpresaServiceTests`.
+
 ## Cenários de teste
 - Empresa nova sem cópia: consegue cadastrar cliente/proposta/amostra (status e parâmetros existem).
 - Com cópia: parâmetros apontam para tipos/métodos **da nova empresa** (nunca para IDs da origem).

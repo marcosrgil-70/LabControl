@@ -33,8 +33,16 @@
 - A empresa ativa (código + nome) aparece sempre no topo (Delphi `lbDBEmpresaAtiva`).
 
 ## Critérios de aceite
-- [ ] Nova empresa já nasce com status, perfis e parâmetros; aparece na seleção de empresa do criador.
-- [ ] Copiar auxiliares/parâmetros/produtos de outra empresa sem copiar clientes.
-- [ ] Logo aparece no PDF do boletim.
+- [x] Nova empresa já nasce com status, perfis e parâmetros; aparece na seleção de empresa do criador.
+- [x] Copiar auxiliares/parâmetros/produtos de outra empresa sem copiar clientes.
+- [ ] Logo aparece no PDF do boletim — **na tarefa 5.4** (PDF do boletim). O logo já é gravado (PNG/JPG validados pelo conteúdo, até 1 MB) e servido em `/Empresa/Logo/{id}`.
 
-**Status:** ⬜ (v1 tem "Empresa" parcial — refazer sobre `EMPRESAS` v2)
+Testes: `tests/LabControl.Tests/EmpresaServiceTests.cs`.
+
+## Implementação (tarefa 1.5)
+- `Controllers/EmpresaController.cs` (`/Empresa/Dados` da empresa ativa: `EMPRESAS.CONSULTAR` para ver, `EMPRESAS.ALTERAR` para gravar; `/Empresa/Logo`; `/Empresa/Cidades` para o combo) · `Controllers/EmpresasController.cs` (`/Empresas`, só ADMIN_GLOBAL — `[SomenteAdminGlobal]`) · `Services/EmpresaService.cs` · `Services/CopiaCadastros.cs` · `Views/Shared/_EmpresaCampos.cshtml`.
+- Código imutável; CNPJ com dígito verificador, gravado como `00.000.000/0000-00`; IE em maiúsculas (aceita "ISENTO"); endereço com UF → cidade (combo simples; o componente com ViaCEP vem na T11-03); usuário comum não altera "Ativa"; ADMIN_GLOBAL não inativa a empresa ativa. Gravar os dados da empresa ativa atualiza o nome no topo (claims).
+- **Nova empresa** (ADMIN_GLOBAL), numa transação: `EMPRESAS` → `SP_INICIALIZAR_EMPRESA` (status, parâmetros, ADMINISTRADOR + perfis sugeridos) → cópia opcional → acesso do criador com o perfil ADMINISTRADOR → evento de auditoria com o resumo da cópia (linhas por tabela).
+- **Cópia** (`CopiaCadastros`): INSERT … SELECT por tabela, colunas lidas do `information_schema`; não duplica o que já existe no destino (mesma chave única); FKs remapeadas pela chave natural (parâmetro → tipo/método, produto → unidade/embalagem, parcela → condição); grupos puxam as tabelas de que dependem; a sequência `PRODUTO` do destino sobe até o maior código copiado (o próximo produto não repete). Nunca copia entidades, propostas, amostras, resultados, boletins nem sequências de documentos. Um teste confere que as chaves e FKs declaradas batem com o banco.
+
+**Status:** ✅ concluída na tarefa 1.5 (19/10/2026) — falta só o logo no PDF (5.4).

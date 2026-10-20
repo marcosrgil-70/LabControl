@@ -56,7 +56,8 @@ public static class Menu
         ]),
         new("Sistema",
         [
-            I("Empresa", "bi-building-gear", "Empresa", "EMPRESAS.CONSULTAR"),
+            I("Empresa", "bi-building-gear", "Empresa", "EMPRESAS.CONSULTAR", "Dados"),
+            new ItemMenu("Empresas", "bi-buildings", "Empresas", "Index", "/Empresas", null, SoAdminGlobal: true),
             I("Parâmetros da Empresa", "bi-gear", "Empresa", "PARAMETROS_EMPRESA.CONSULTAR", "Parametros"),
             I("Usuários", "bi-people-fill", "Usuarios", "USUARIOS.CONSULTAR"),
             I("Perfis de Acesso", "bi-shield-lock", "Perfis", "PERFIS.CONSULTAR"),

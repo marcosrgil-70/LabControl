@@ -1,0 +1,53 @@
+@model EmpresaVM
+@{
+    var inclusao = Model.Id == 0;
+    ViewData["Title"] = inclusao ? "Nova empresa" : "Alterar empresa";
+}
+
+<h5 class="mb-3"><i class="bi bi-buildings me-2 text-primary"></i>@ViewData["Title"]</h5>
+
+<form method="post" asp-action="@(inclusao ? "Criar" : "Editar")" asp-route-id="@(inclusao ? null : Model.Id)" enctype="multipart/form-data" novalidate>
+    <partial name="_EmpresaCampos" model="Model" />
+
+    @if (inclusao)
+    {
+        <div class="card mb-3">
+            <div class="card-header fw-semibold py-2"><i class="bi bi-copy me-1"></i>Cadastros iniciais</div>
+            <div class="card-body">
+                <p class="small text-muted">
+                    A empresa nasce com status, idiomas, moedas, tipos de endereço/telefone/e-mail, parâmetros e os perfis
+                    (ADMINISTRADOR + sugeridos). Você recebe acesso a ela com o perfil ADMINISTRADOR.
+                    Opcionalmente, copie cadastros de outra empresa — <strong>clientes, propostas e movimentos nunca são copiados</strong>.
+                </p>
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label asp-for="CopiarDe" class="form-label small"></label>
+                        <select asp-for="CopiarDe" class="form-select">
+                            <option value="">— não copiar —</option>
+                            @foreach (var e in Model.EmpresasOrigem)
+                            {
+                                <option value="@e.Id" selected="@(e.Id == Model.CopiarDe)">@e.Nome</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CopiarDe" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-7">
+                        @foreach (var g in Model.GruposDisponiveis)
+                        {
+                            <div class="form-check small">
+                                <input type="checkbox" class="form-check-input" id="grupo-@g.Codigo" name="Grupos" value="@g.Codigo" checked="@Model.Grupos.Contains(g.Codigo)" />
+                                <label class="form-check-label" for="grupo-@g.Codigo">@g.Nome</label>
+                            </div>
+                        }
+                        <span class="text-danger small">@Html.ValidationMessage("Grupos")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>@(inclusao ? "Criar empresa" : "Gravar")</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>

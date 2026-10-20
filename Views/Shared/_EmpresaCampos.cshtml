@@ -1,0 +1,169 @@
+@model EmpresaVM
+@* Campos da empresa (T03), usados em /Empresa/Dados e /Empresas/Criar|Editar. O form que inclui precisa de enctype multipart (logo). *@
+@{
+    var inclusao = Model.Id == 0;
+}
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+<div class="card mb-3">
+    <div class="card-header fw-semibold py-2">Identificação</div>
+    <div class="card-body row g-3">
+        <div class="col-sm-2">
+            <label asp-for="CodEmpresa" class="form-label small"></label>
+            @if (inclusao)
+            {
+                <input asp-for="CodEmpresa" class="form-control text-uppercase" maxlength="3" />
+            }
+            else
+            {
+                <input value="@Model.CodEmpresa" class="form-control" readonly title="O código não muda depois de criado" />
+            }
+            <span asp-validation-for="CodEmpresa" class="text-danger small"></span>
+        </div>
+        <div class="col-sm-5">
+            <label asp-for="RazaoSocial" class="form-label small"></label>
+            <input asp-for="RazaoSocial" class="form-control" />
+            <span asp-validation-for="RazaoSocial" class="text-danger small"></span>
+        </div>
+        <div class="col-sm-5">
+            <label asp-for="NomeFantasia" class="form-label small"></label>
+            <input asp-for="NomeFantasia" class="form-control" />
+            <div class="form-text">Aparece no topo do sistema.</div>
+        </div>
+        <div class="col-sm-4">
+            <label asp-for="Cnpj" class="form-label small"></label>
+            <input asp-for="Cnpj" class="form-control" placeholder="00.000.000/0000-00" />
+            <span asp-validation-for="Cnpj" class="text-danger small"></span>
+        </div>
+        <div class="col-sm-4">
+            <label asp-for="InscEstadual" class="form-label small"></label>
+            <input asp-for="InscEstadual" class="form-control" placeholder="ou ISENTO" />
+        </div>
+        <div class="col-sm-4">
+            <label asp-for="InscMunicipal" class="form-label small"></label>
+            <input asp-for="InscMunicipal" class="form-control" />
+        </div>
+        @if (Model.AdminGlobal && !inclusao)
+        {
+            <div class="col-12 form-check ms-2">
+                <input asp-for="Ativa" class="form-check-input" />
+                <label asp-for="Ativa" class="form-check-label">Ativa (empresa inativa some da escolha de empresa no login)</label>
+                <span asp-validation-for="Ativa" class="text-danger small d-block"></span>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header fw-semibold py-2">Endereço e contato</div>
+    <div class="card-body row g-3">
+        <div class="col-sm-2">
+            <label asp-for="Cep" class="form-label small"></label>
+            <input asp-for="Cep" class="form-control" placeholder="00000-000" />
+        </div>
+        <div class="col-sm-6">
+            <label asp-for="Logradouro" class="form-label small"></label>
+            <input asp-for="Logradouro" class="form-control" />
+        </div>
+        <div class="col-sm-2">
+            <label asp-for="Numero" class="form-label small"></label>
+            <input asp-for="Numero" class="form-control" />
+        </div>
+        <div class="col-sm-2">
+            <label asp-for="Complemento" class="form-label small"></label>
+            <input asp-for="Complemento" class="form-control" />
+        </div>
+        <div class="col-sm-4">
+            <label asp-for="Bairro" class="form-label small"></label>
+            <input asp-for="Bairro" class="form-control" />
+        </div>
+        <div class="col-sm-2">
+            <label asp-for="IdEstado" class="form-label small"></label>
+            <select asp-for="IdEstado" class="form-select" id="empresa-uf">
+                <option value="">—</option>
+                @foreach (var uf in Model.Estados)
+                {
+                    <option value="@uf.Id" selected="@(uf.Id == Model.IdEstado)">@uf.Nome</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-6">
+            <label asp-for="IdCidades" class="form-label small"></label>
+            <select asp-for="IdCidades" class="form-select" id="empresa-cidade">
+                <option value="">@(Model.IdEstado is null ? "— selecione a UF —" : "—")</option>
+                @foreach (var c in Model.Cidades)
+                {
+                    <option value="@c.Id" selected="@(c.Id == Model.IdCidades)">@c.Nome</option>
+                }
+            </select>
+            <span asp-validation-for="IdCidades" class="text-danger small"></span>
+        </div>
+        <div class="col-sm-1">
+            <label asp-for="Ddd" class="form-label small"></label>
+            <input asp-for="Ddd" class="form-control" maxlength="3" />
+        </div>
+        <div class="col-sm-3">
+            <label asp-for="Fone" class="form-label small"></label>
+            <input asp-for="Fone" class="form-control" />
+        </div>
+        <div class="col-sm-4">
+            <label asp-for="Email" class="form-label small"></label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+        <div class="col-sm-4">
+            <label asp-for="Site" class="form-label small"></label>
+            <input asp-for="Site" class="form-control" placeholder="https://" />
+            <span asp-validation-for="Site" class="text-danger small"></span>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header fw-semibold py-2">Laudos e boletins</div>
+    <div class="card-body row g-3">
+        <div class="col-md-4">
+            <label asp-for="NovoLogo" class="form-label small"></label>
+            @if (Model.TemLogo)
+            {
+                <div class="mb-2"><img src="/Empresa/Logo/@Model.Id" alt="Logo atual" class="empresa-logo border rounded p-1" /></div>
+                <div class="form-check small mb-2">
+                    <input asp-for="RemoverLogo" class="form-check-input" />
+                    <label asp-for="RemoverLogo" class="form-check-label"></label>
+                </div>
+            }
+            <input asp-for="NovoLogo" type="file" class="form-control form-control-sm" accept="image/png,image/jpeg" />
+            <span asp-validation-for="NovoLogo" class="text-danger small"></span>
+            <div class="form-text">Impresso no boletim, na proposta, no pedido e no comprovante.</div>
+        </div>
+        <div class="col-md-8 row g-3">
+            <div class="col-sm-6">
+                <label asp-for="NrAcreditacao" class="form-label small"></label>
+                <input asp-for="NrAcreditacao" class="form-control" placeholder="ex.: CRL 0000" />
+                <div class="form-text">Impresso no boletim acreditado.</div>
+            </div>
+            <div class="col-12">
+                <label asp-for="CabecalhoLaudo" class="form-label small"></label>
+                <textarea asp-for="CabecalhoLaudo" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="col-12">
+                <label asp-for="RodapeLaudo" class="form-label small"></label>
+                <textarea asp-for="RodapeLaudo" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // UF → cidades (JSON de /Empresa/Cidades); o servidor confere a cidade de novo
+    document.getElementById('empresa-uf')?.addEventListener('change', async e => {
+        const cidade = document.getElementById('empresa-cidade');
+        cidade.innerHTML = '<option value="">—</option>';
+        if (!e.target.value) return;
+        const r = await fetch('/Empresa/Cidades?idEstado=' + encodeURIComponent(e.target.value), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!r.ok) return;
+        for (const c of await r.json()) cidade.add(new Option(c.nome, c.id));
+        if (cidade.options.length === 1) cidade.options[0].text = '— nenhuma cidade cadastrada nesta UF —';
+    });
+</script>

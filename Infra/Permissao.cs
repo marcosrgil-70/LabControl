@@ -44,6 +44,19 @@ public sealed class PermissaoAttribute(string codigo) : Attribute, IAuthorizatio
     }
 }
 
+/// <summary>Só ADMIN_GLOBAL (RN-02.11: criar empresas, migrar dados, ajustar numeração). Sem ele: 403.</summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+public sealed class SomenteAdminGlobalAttribute : Attribute, IAuthorizationFilter
+{
+    public void OnAuthorization(AuthorizationFilterContext context)
+    {
+        if (context.Result is not null) return;
+        if (context.HttpContext.User.Identity?.IsAuthenticated != true) context.Result = new ChallengeResult();
+        else if (!context.HttpContext.RequestServices.GetRequiredService<IEmpresaContexto>().AdminGlobal)
+            context.Result = PermissaoAttribute.AcessoNegado(context.HttpContext, context.ModelState, "ADMIN_GLOBAL");
+    }
+}
+
 /// <summary>
 /// Mostra o conteúdo só com a permissão (menu e botões — RN-02.07):
 /// <c>&lt;permissao codigo="AMOSTRAS.INCLUIR"&gt;…&lt;/permissao&gt;</c> ou, num elemento,
