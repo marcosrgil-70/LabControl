@@ -43,8 +43,9 @@ public static class AuditoriaAlteracoes
 
     private static readonly HashSet<string> Sigilosas = new(StringComparer.OrdinalIgnoreCase) { "SENHA_HASH" };
 
-    // mudam a cada login (o evento de login já é auditado com ACAO = L)
-    private static readonly HashSet<string> Ignoradas = new(StringComparer.OrdinalIgnoreCase) { "ULTIMO_ACESSO" };
+    // ULTIMO_ACESSO muda a cada login (o evento de login já é auditado com ACAO = L);
+    // ALTERADO_POR repete AUDITORIA.ID_USUARIOS (preenchido pelo LabDbContext em toda alteração real)
+    private static readonly HashSet<string> Ignoradas = new(StringComparer.OrdinalIgnoreCase) { "ULTIMO_ACESSO", "ALTERADO_POR" };
 
     /// <summary>Alteração capturada antes do SaveChanges; a linha de AUDITORIA é montada depois (IDs gerados).</summary>
     public sealed class Pendente(EntityEntry entrada, string acao, Dictionary<string, object?>? antes, IReadOnlyList<IProperty> alteradas)

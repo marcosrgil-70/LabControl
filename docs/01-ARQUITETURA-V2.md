@@ -42,7 +42,7 @@ LabControl/
 
 - Permissão = `TELA.ACAO` (catálogo `PERMISSOES`). Atributo `[Permissao("AMOSTRAS.INCLUIR")]` nas actions; menu e botões ocultos sem permissão (equivale ao `unClassAcessos` do Delphi).
 - `ADMIN_GLOBAL` ignora permissões.
-- Toda ação de escrita grava `CRIADO_POR/ALTERADO_POR` e, para tabelas críticas, `AUDITORIA` (antes/depois em JSON).
+- Toda ação de escrita grava `CRIADO_POR/ALTERADO_POR` (preenchidos pelo `LabDbContext` com o usuário do request, nas tabelas que têm as colunas) e, para tabelas críticas, `AUDITORIA` (antes/depois em JSON).
 - Bloqueio após 5 tentativas de login (15 min); troca de senha obrigatória no 1º acesso.
 
 ## 5. Conexão e variáveis de sessão MySQL

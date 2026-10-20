@@ -1,0 +1,145 @@
+@model UsuarioVM
+@{
+    var inclusao = Model.Id == 0;
+    ViewData["Title"] = inclusao ? "Incluir usuário" : "Alterar usuário";
+    var somenteLeitura = !Model.PodeEditarDados;
+}
+
+<div class="d-flex align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-person-gear me-2 text-primary"></i>@ViewData["Title"]</h5>
+    @if (!inclusao)
+    {
+        <div class="ms-auto d-flex gap-2">
+            @if (Model.BloqueadoAte > DateTime.Now)
+            {
+                <button type="submit" form="form-desbloquear" class="btn btn-outline-warning btn-sm"><i class="bi bi-unlock me-1"></i>Desbloquear</button>
+            }
+            @if (Model.PodeEditarDados)
+            {
+                <button type="submit" form="form-resetar" class="btn btn-outline-secondary btn-sm"
+                        onclick="return confirm('Gerar uma nova senha provisória para este usuário?')"><i class="bi bi-key me-1"></i>Resetar senha</button>
+                <permissao codigo="USUARIOS.EXCLUIR">
+                    <button type="submit" form="form-excluir" class="btn btn-outline-danger btn-sm"
+                            onclick="return confirm('Excluir este usuário? Só é possível se ele nunca gravou nada; senão, inative.')"><i class="bi bi-trash me-1"></i>Excluir</button>
+                </permissao>
+            }
+        </div>
+    }
+</div>
+
+<form method="post" asp-action="@(inclusao ? "Criar" : "Editar")" asp-route-id="@(inclusao ? null : Model.Id)" novalidate>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+    @if (somenteLeitura)
+    {
+        <div class="alert alert-info py-2 small"><i class="bi bi-info-circle me-1"></i>@LabControl.Services.UsuarioService.MensagemSoAdminGlobal Aqui você altera só o acesso à empresa ativa.</div>
+    }
+
+    <div class="card mb-3">
+        <div class="card-body row g-3">
+            <div class="col-md-3">
+                <label asp-for="Login" class="form-label small"></label>
+                <input asp-for="Login" class="form-control text-uppercase" maxlength="30" readonly="@somenteLeitura" />
+                <span asp-validation-for="Login" class="text-danger small"></span>
+            </div>
+            <div class="col-md-5">
+                <label asp-for="Nome" class="form-label small"></label>
+                <input asp-for="Nome" class="form-control" readonly="@somenteLeitura" />
+                <span asp-validation-for="Nome" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Email" class="form-label small"></label>
+                <input asp-for="Email" class="form-control" readonly="@somenteLeitura" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+            <div class="col-12 d-flex flex-wrap gap-4">
+                <div class="form-check">
+                    <input asp-for="Ativo" class="form-check-input" disabled="@somenteLeitura" />
+                    <label asp-for="Ativo" class="form-check-label"></label>
+                </div>
+                @if (Model.PodeMarcarAdminGlobal)
+                {
+                    <div class="form-check">
+                        <input asp-for="AdminGlobal" class="form-check-input" />
+                        <label asp-for="AdminGlobal" class="form-check-label"></label>
+                        <span asp-validation-for="AdminGlobal" class="text-danger small d-block"></span>
+                    </div>
+                }
+                @if (!inclusao)
+                {
+                    <span class="small text-muted">Último acesso: @(Model.UltimoAcesso?.ToString("dd/MM/yyyy HH:mm") ?? "nunca")</span>
+                    @if (Model.TrocarSenha) { <span class="badge text-bg-warning align-self-center">troca de senha pendente</span> }
+                    @if (Model.BloqueadoAte > DateTime.Now) { <span class="badge text-bg-danger align-self-center">bloqueado até @Model.BloqueadoAte?.ToString("HH:mm")</span> }
+                }
+                else
+                {
+                    <span class="small text-muted">Uma senha provisória será gerada e exibida uma única vez; o usuário troca no primeiro acesso.</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold py-2"><i class="bi bi-building me-1"></i>Empresas do usuário</div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr><th>Acesso</th><th>Empresa</th><th>Profissional vinculado</th><th>Perfis</th><th>Padrão</th><th>Ativo</th></tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Empresas.Count; i++)
+                    {
+                        var e = Model.Empresas[i];
+                        <tr>
+                            <td>
+                                <input type="hidden" name="Empresas[@i].IdEmpresa" value="@e.IdEmpresa" />
+                                <input type="checkbox" class="form-check-input" name="Empresas[@i].Acesso" value="true" checked="@e.Acesso" aria-label="Acesso à empresa @e.Codigo" />
+                                <input type="hidden" name="Empresas[@i].Acesso" value="false" />
+                            </td>
+                            <td class="text-nowrap"><span class="badge text-bg-secondary">@e.Codigo</span> @e.Nome</td>
+                            <td>
+                                <select name="Empresas[@i].IdProfissional" class="form-select form-select-sm">
+                                    <option value="">— nenhum —</option>
+                                    @foreach (var p in e.Profissionais)
+                                    {
+                                        var deOutro = p.IdUsuarioVinculado is { } u && u != Model.Id;
+                                        <option value="@p.IdEntidades" selected="@(p.IdEntidades == e.IdProfissional)" disabled="@deOutro">
+                                            @p.Nome@(deOutro ? $" (usuário {p.LoginVinculado})" : "")
+                                        </option>
+                                    }
+                                </select>
+                                <span class="text-danger small" data-valmsg-for="Empresas[@i].IdProfissional">@Html.ValidationMessage($"Empresas[{i}].IdProfissional")</span>
+                            </td>
+                            <td>
+                                @foreach (var p in e.PerfisDisponiveis)
+                                {
+                                    <div class="form-check form-check-inline small">
+                                        <input type="checkbox" class="form-check-input" id="perfil-@i-@p.Id" name="Empresas[@i].Perfis" value="@p.Id" checked="@e.Perfis.Contains(p.Id)" />
+                                        <label class="form-check-label" for="perfil-@i-@p.Id">@p.Nome</label>
+                                    </div>
+                                }
+                                <span class="text-danger small d-block">@Html.ValidationMessage($"Empresas[{i}].Perfis")</span>
+                            </td>
+                            <td><input type="radio" class="form-check-input" name="EmpresaPadrao" value="@e.IdEmpresa" checked="@(Model.EmpresaPadrao == e.IdEmpresa)" disabled="@somenteLeitura" aria-label="Empresa padrão" /></td>
+                            <td>
+                                <input type="checkbox" class="form-check-input" name="Empresas[@i].Ativo" value="true" checked="@e.Ativo" aria-label="Acesso ativo" />
+                                <input type="hidden" name="Empresas[@i].Ativo" value="false" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+
+@if (!inclusao)
+{
+    <form id="form-resetar" asp-action="ResetarSenha" asp-route-id="@Model.Id" method="post"></form>
+    <form id="form-desbloquear" asp-action="Desbloquear" asp-route-id="@Model.Id" method="post"></form>
+    <form id="form-excluir" asp-action="Excluir" asp-route-id="@Model.Id" method="post"></form>
+}

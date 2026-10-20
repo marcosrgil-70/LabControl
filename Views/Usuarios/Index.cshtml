@@ -1,0 +1,61 @@
+@model UsuarioListaVM
+@{
+    ViewData["Title"] = "Usuários";
+}
+
+<div class="d-flex align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>Usuários</h5>
+    <a asp-action="Criar" class="btn btn-primary btn-sm ms-auto" lc-permissao="USUARIOS.INCLUIR"><i class="bi bi-plus-lg me-1"></i>Incluir</a>
+</div>
+
+<form method="get" class="card mb-3">
+    <div class="card-body py-2 d-flex flex-wrap gap-2 align-items-end">
+        <div>
+            <label class="form-label small mb-0" for="Texto">Login, nome ou e-mail</label>
+            <input name="Texto" id="Texto" value="@Model.Filtro.Texto" class="form-control form-control-sm" />
+        </div>
+        <div>
+            <label class="form-label small mb-0" for="Ativos">Situação</label>
+            <select name="Ativos" id="Ativos" class="form-select form-select-sm">
+                <option value="true" selected="@(Model.Filtro.Ativos == true)">Ativos</option>
+                <option value="false" selected="@(Model.Filtro.Ativos == false)">Inativos</option>
+                <option value="" selected="@(Model.Filtro.Ativos is null)">Todos</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Pesquisar</button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead>
+                <tr><th>Login</th><th>Nome</th><th>E-mail</th><th>Empresas</th><th>Último acesso</th><th>Situação</th><th></th></tr>
+            </thead>
+            <tbody>
+                @if (Model.Itens.Count == 0)
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">Nenhum usuário encontrado.</td></tr>
+                }
+                @foreach (var u in Model.Itens)
+                {
+                    <tr>
+                        <td class="fw-semibold">@u.Login @if (u.AdminGlobal) { <span class="badge text-bg-dark ms-1" title="Administrador global">ADMIN</span> }</td>
+                        <td>@u.Nome</td>
+                        <td class="small">@u.Email</td>
+                        <td class="small">@u.Empresas</td>
+                        <td class="small">@u.UltimoAcesso?.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            @if (!u.Ativo) { <span class="badge text-bg-secondary">Inativo</span> }
+                            else if (u.Bloqueado) { <span class="badge text-bg-danger">Bloqueado</span> }
+                            else { <span class="badge text-bg-success">Ativo</span> }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Editar" asp-route-id="@u.Id" class="btn btn-outline-secondary btn-sm" lc-permissao="USUARIOS.ALTERAR" title="Alterar"><i class="bi bi-pencil"></i></a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

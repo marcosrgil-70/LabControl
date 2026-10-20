@@ -20,6 +20,7 @@
 - **Esforço:** M · **Depende de:** 1.1
 
 ### 1.3 T02 — Usuários
+> ✅ **Concluída em 19/10/2026** — ver [T02 › Implementação](../telas/T02-usuarios.md#implementação-tarefa-13); aceite em `UsuarioServiceTests`.
 - **Passos:** CRUD + grid de empresas (profissional vinculado, perfis, padrão, ativo); resetar senha; desbloquear; inativar; serviço único de vínculo usuário ↔ profissional (reusado na T13).
 - **Aceite:** [aceite da T02](../telas/T02-usuarios.md#critérios-de-aceite).
 - **Esforço:** M · **Depende de:** 1.1

@@ -48,6 +48,7 @@ public partial class LabDbContext(DbContextOptions<LabDbContext> options, IEmpre
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
+        PreencherAutoria();
         ConferirEmpresa();
         var pendentes = AuditoriaAlteracoes.Capturar(ChangeTracker);
         if (pendentes.Count == 0) return base.SaveChanges(acceptAllChangesOnSuccess);
@@ -67,6 +68,7 @@ public partial class LabDbContext(DbContextOptions<LabDbContext> options, IEmpre
     /// </summary>
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
+        PreencherAutoria();
         ConferirEmpresa();
         var pendentes = AuditoriaAlteracoes.Capturar(ChangeTracker);
         if (pendentes.Count == 0) return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
@@ -77,6 +79,24 @@ public partial class LabDbContext(DbContextOptions<LabDbContext> options, IEmpre
         if (propria is not null) await propria.CommitAsync(cancellationToken);
         if (acceptAllChangesOnSuccess) ChangeTracker.AcceptAllChanges();
         return n;
+    }
+
+    /// <summary>
+    /// CRIADO_POR na inclusão e ALTERADO_POR na alteração (tabelas que têm as colunas), com o usuário do request.
+    /// Alteração sem mudança real não ganha ALTERADO_POR (senão viraria um UPDATE e uma linha de auditoria à toa).
+    /// </summary>
+    private void PreencherAutoria()
+    {
+        if (empresa.UsuarioId is not { } usuario) return;
+        foreach (var entrada in ChangeTracker.Entries())
+        {
+            if (entrada.State == EntityState.Added && entrada.Metadata.FindProperty("CriadoPor") is { } criado
+                && entrada.Property(criado.Name).CurrentValue is null)
+                entrada.Property(criado.Name).CurrentValue = usuario;
+            else if (entrada.State == EntityState.Modified && entrada.Metadata.FindProperty("AlteradoPor") is { } alterado
+                     && entrada.Properties.Any(p => p.IsModified && p.Metadata.Name != alterado.Name && !Equals(p.OriginalValue, p.CurrentValue)))
+                entrada.Property(alterado.Name).CurrentValue = usuario;
+        }
     }
 
     /// <summary>

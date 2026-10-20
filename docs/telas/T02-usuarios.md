@@ -52,9 +52,24 @@
 - Usuários sem empresa e senha SHA-256 sem salt → PBKDF2 + `USUARIOS_EMPRESAS`.
 
 ## Critérios de aceite
-- [ ] Senha provisória exibida uma vez e troca obrigatória no 1º acesso.
-- [ ] Não é possível vincular o mesmo profissional a dois usuários na mesma empresa (mensagem clara).
-- [ ] Usuário sem `USUARIOS.INCLUIR` não vê o botão e recebe 403 ao postar.
-- [ ] Alterações aparecem na Auditoria (T06).
+- [x] Senha provisória exibida uma vez e troca obrigatória no 1º acesso.
+- [x] Não é possível vincular o mesmo profissional a dois usuários na mesma empresa (mensagem clara).
+- [x] Usuário sem `USUARIOS.INCLUIR` não vê o botão e recebe 403 ao postar.
+- [x] Alterações aparecem na Auditoria (T06) — gravadas em `AUDITORIA` (`USUARIOS`, `USUARIOS_EMPRESAS`, `USUARIOS_PERFIS`); a tela T06 é da Fase 8.
 
-**Status:** ⬜ (v1 tem Usuários sem empresa — refazer)
+Testes: `tests/LabControl.Tests/UsuarioServiceTests.cs`.
+
+## Implementação (tarefa 1.3)
+- `Controllers/UsuariosController.cs` (`[Permissao]` por ação) · `Services/UsuarioService.cs` · `Services/VinculoUsuarioProfissionalService.cs` (o serviço único do vínculo, a reutilizar na T13) · `Views/Usuarios/*`.
+- **Quem vê e edita o quê** (`USUARIOS` é global, o acesso é por empresa):
+  - ADMIN_GLOBAL: todos os usuários e todas as empresas (grid com uma linha por empresa ativa);
+  - administrador de empresa (`USUARIOS.*`, sem ADMIN_GLOBAL): só usuários com acesso à empresa ativa e só a linha dessa empresa; linhas de outras empresas no POST são ignoradas;
+  - **dados globais** (login, nome, e-mail, ativo, padrão, resetar senha, excluir) só se o usuário tiver acesso **apenas** à empresa ativa e não for ADMIN_GLOBAL — senão um administrador local mudaria (ou descobriria a senha de) um usuário de outra empresa. Desbloquear é permitido.
+- Senha provisória de 12 caracteres (letras e números, sem ambíguos), mostrada **na própria resposta** do POST (sem redirect/TempData, `Cache-Control: no-store`) com botão "Copiar".
+- Profissional: combo com os profissionais ativos da empresa da linha; os já vinculados a outro usuário aparecem desabilitados com o login; recusa com "Este profissional já está vinculado a outro usuário nesta empresa." (e o `UQ_USUEMP_FUNC` continua valendo).
+- Perfis: ao menos um perfil ativo por empresa marcada (exceto para ADMIN_GLOBAL).
+- Proteções: não inativar o próprio usuário, não remover o próprio ADMIN_GLOBAL nem o próprio acesso à empresa ativa, não se excluir.
+- Excluir: só quem nunca gravou nada — sem `AUDITORIA` como autor, sem `LAB_HIST_AMOSTRAS_LOG` e sem `CRIADO_POR`/`ALTERADO_POR` em nenhuma tabela (busca no `information_schema`); senão "inative-o em vez de excluir".
+- `CRIADO_POR`/`ALTERADO_POR` passaram a ser preenchidos pelo `LabDbContext` (usuário do request) em toda inclusão/alteração real.
+
+**Status:** ✅ concluída na tarefa 1.3 (19/10/2026).
