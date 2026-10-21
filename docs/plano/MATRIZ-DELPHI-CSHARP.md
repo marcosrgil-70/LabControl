@@ -35,7 +35,7 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 | Tipos de Análises | `un_CadTipoAnalise` | [T10-16](../telas/T10-16-tipos-analise.md) | `/Auxiliares/ANALISES_TIPO` | 2 | ✅ |
 | Status das Análises | `un_CadStatusAnalise` | [T10-17](../telas/T10-17-status-analise.md) | `/Auxiliares/ANALISES_STATUS` | 2 | ✅ |
 | Métodos de Análise | `un_CadMetodoAnalise` | [T10-18](../telas/T10-18-metodos-analise.md) | `/Auxiliares/ANALISES_METODOS` | 2 | ✅ |
-| Parâmetros para Análises | `un_ParametrosAnalises` | [T15](../telas/T15-parametros-analise.md) | `/ParametrosAnalise` | 3 | 🟨 |
+| Parâmetros para Análises | `un_ParametrosAnalises` | [T15](../telas/T15-parametros-analise.md) | `/ParametrosAnalise` | 3 | ✅ |
 | Status dos Boletins | `un_CadStatusBoletim` | [T10-19](../telas/T10-19-status-boletim.md) | `/Auxiliares/BOLETINS_STATUS` | 2 | ✅ |
 | Status das Propostas | `un_CadStatusPropostas` | [T10-20](../telas/T10-20-status-proposta.md) | `/Auxiliares/LAB_PROPOSTAS_STATUS` | 2 | ✅ |
 | Produtos | `Standards/un_Produtos` | [T14](../telas/T14-produtos.md) | `/Produtos` | 3 | ✅ |

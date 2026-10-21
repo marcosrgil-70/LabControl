@@ -25,4 +25,18 @@
 ## Consulta
 Código, descrição, tipo de análise, método, valor, acreditado — filtros por tipo e acreditado.
 
-**Status:** 🟨 v1 existe — ajustar (desc. reduzida obrigatória, método padrão, acreditado)
+## Critérios de aceite
+- [x] Sem descrição reduzida não grava (mensagem no campo) — `ParametrosAnaliseTests.Grava_com_descricao_reduzida_metodo_valor_e_acreditado` e navegador.
+- [x] Tipo de análise obrigatório; método padrão, descrição do método, valor unitário (R$ "1.234,56") e acreditado gravados — mesmo teste.
+- [x] Descrição única por empresa, recusada no campo — mesmo teste.
+- [x] Consulta com filtros por tipo e acreditado; inativo some com aviso; em uso não exclui — `Em_uso_nao_exclui_inativo_some_e_outra_empresa_nao_ve`.
+- [x] Método padrão disponível para a proposta (gravado em `ID_ANALISES_METODOS`; o filtro do combo é da T20, 4.2).
+- [x] CRUD pela tela, no navegador (método novo pelo "+") — `CrudNavegadorTelasTests.Parametro_de_analise_crud_com_metodo_pelo_mais`.
+
+## Implementação (tarefa 3.4)
+- `Controllers/ParametrosAnaliseController.cs`, `Services/ParametroAnaliseService.cs`, `ViewModels/ParametroAnaliseVM.cs`, `Views/ParametrosAnalise/{Index,Form}.cshtml` — mesmo visual e fluxo da T14: lista com busca (parâmetro ou descrição reduzida), filtros por tipo e acreditado, "mostrar inativos", 20 por página; depois de gravar **volta para a lista** ("Parâmetro X gravado."), como o usuário pediu na T14.
+- Parâmetro, descrição reduzida e descrição do método em maiúsculas (150). Tipo de análise obrigatório (combo "01 — DESCRIÇÃO", ordem do código = AA do número da amostra); método padrão opcional; os dois com ativos + o já escolhido e com o "+" (`lc-rapido`).
+- Valor unitário em reais: "1.234,56" ou "1234.56", ≥ 0, 2 casas; vazio = 0,00 (sugerido na proposta só quando a linha estiver com 0).
+- Excluir só sem uso (1451 → inativar); inativar/reativar com confirmação.
+
+**Status:** ✅ concluída na tarefa 3.4 (21/10/2026).

@@ -1,0 +1,101 @@
+@model ParametroAnaliseListaVM
+@{
+    ViewData["Title"] = "Parâmetros de análise";
+    var f = Model.Filtro;
+}
+
+<div class="d-flex align-items-center mb-1">
+    <h5 class="mb-0"><i class="bi bi-sliders me-2 text-primary"></i>Parâmetros de análise</h5>
+    <a asp-action="Criar" class="btn btn-primary btn-sm ms-auto" lc-permissao="PARAMETROS_ANALISE.INCLUIR"><i class="bi bi-plus-lg me-1"></i>Incluir</a>
+</div>
+<p class="small text-body-secondary mb-3">Parâmetros analisados nas propostas e amostras. A descrição reduzida é o texto impresso no boletim; "acreditado" separa as metodologias do boletim.</p>
+
+<form method="get" class="card mb-3">
+    <div class="card-body py-2 d-flex flex-wrap gap-3 align-items-end">
+        <div class="flex-grow-1" style="max-width: 24rem">
+            <label class="form-label small mb-0" for="Texto">Parâmetro ou descrição reduzida</label>
+            <input name="Texto" id="Texto" value="@f.Texto" class="form-control form-control-sm" autofocus />
+        </div>
+        <div>
+            <label class="form-label small mb-0" for="IdAnalisesTipo">Tipo de análise</label>
+            <select name="IdAnalisesTipo" id="IdAnalisesTipo" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                @foreach (var t in Model.Tipos) { <option value="@t.Id" selected="@(t.Id == f.IdAnalisesTipo)">@t.Nome</option> }
+            </select>
+        </div>
+        <div>
+            <label class="form-label small mb-0" for="Acreditado">Acreditado</label>
+            <select name="Acreditado" id="Acreditado" class="form-select form-select-sm">
+                <option value="" selected="@(f.Acreditado is null)">Todos</option>
+                <option value="sim" selected="@(f.Acreditado == "sim")">Acreditados</option>
+                <option value="nao" selected="@(f.Acreditado == "nao")">Não acreditados</option>
+            </select>
+        </div>
+        <div class="form-check mb-1">
+            <input type="checkbox" class="form-check-input" name="Inativos" id="Inativos" value="true" checked="@f.Inativos" />
+            <label class="form-check-label small" for="Inativos">Mostrar inativos</label>
+        </div>
+        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Pesquisar</button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead>
+                <tr><th>Parâmetro</th><th>Descrição reduzida</th><th>Tipo de análise</th><th>Método padrão</th><th class="text-end">Valor (R$)</th><th>Acreditado</th><th>Situação</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.Itens)
+                {
+                    <tr class="@(p.Inativo ? "text-body-secondary" : "")">
+                        <td class="fw-semibold"><a asp-action="Editar" asp-route-id="@p.Id" class="text-decoration-none">@p.Descricao</a></td>
+                        <td class="small">@p.DescReduzida</td>
+                        <td class="small">@p.Tipo</td>
+                        <td class="small">@p.Metodo</td>
+                        <td class="small text-end">@p.VrUnitario</td>
+                        <td>@if (p.Acreditado) { <span class="badge text-bg-primary">Acreditado</span> } else { <span class="small text-body-secondary">Não</span> }</td>
+                        <td>@if (p.Inativo) { <span class="badge text-bg-secondary">Inativo</span> } else { <span class="badge text-bg-success">Ativo</span> }</td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Editar" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm" title="Abrir"><i class="bi bi-pencil me-1"></i>Abrir</a>
+                            <form method="post" asp-action="Inativo" asp-route-id="@p.Id" class="d-inline" lc-permissao="PARAMETROS_ANALISE.ALTERAR"
+                                  data-confirmar="@(p.Inativo ? $"Reativar \"{p.Descricao}\"? O parâmetro volta para a lista e para a proposta." : $"Inativar \"{p.Descricao}\"? O parâmetro não é apagado: sai da lista e da proposta (marque “Mostrar inativos” para vê-lo e reativá-lo).")">
+                                <input type="hidden" name="inativo" value="@(p.Inativo ? "false" : "true")" />
+                                <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(p.Inativo ? "Reativar" : "Inativar")"><i class="bi @(p.Inativo ? "bi-eye" : "bi-eye-slash") me-1"></i>@(p.Inativo ? "Reativar" : "Inativar")</button>
+                            </form>
+                            <form method="post" asp-action="Excluir" asp-route-id="@p.Id" class="d-inline" lc-permissao="PARAMETROS_ANALISE.EXCLUIR"
+                                  data-confirmar="Excluir o parâmetro &quot;@p.Descricao&quot;? Só é possível se nenhuma proposta ou amostra o usa.">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash me-1"></i>Excluir</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (Model.Itens.Count == 0)
+                {
+                    <tr><td colspan="8" class="text-center text-body-secondary small py-3">Nenhum parâmetro encontrado.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center small py-2">
+        <span class="text-body-secondary">@Model.Total registro(s)</span>
+        @if (Model.InativosOcultos > 0)
+        {
+            <a href="@Url.Action("Index", new { f.Texto, f.IdAnalisesTipo, f.Acreditado, Inativos = true })" class="ms-3 small link-warning"><i class="bi bi-eye-slash me-1"></i>@Model.InativosOcultos inativo(s) também correspondem à pesquisa — mostrar</a>
+        }
+        @if (Model.Paginas > 1)
+        {
+            <nav class="ms-auto" aria-label="Páginas">
+                <ul class="pagination pagination-sm mb-0">
+                    @for (var n = 1; n <= Model.Paginas; n++)
+                    {
+                        <li class="page-item @(n == f.Pagina ? "active" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-Texto="@f.Texto" asp-route-IdAnalisesTipo="@f.IdAnalisesTipo" asp-route-Acreditado="@f.Acreditado"
+                               asp-route-Inativos="@(f.Inativos ? "true" : null)" asp-route-Pagina="@n">@n</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</div>

@@ -27,6 +27,7 @@
 - **Esforço:** S
 
 ### 3.4 T15 — Parâmetros de análise
+> ✅ **Concluída em 21/10/2026** — ver [T15 › Implementação](../telas/T15-parametros-analise.md#implementação-tarefa-34); aceite em `ParametrosAnaliseTests` + navegador `CrudNavegadorTelasTests.Parametro_de_analise_crud_com_metodo_pelo_mais`.
 - **Passos:** CRUD com descrição reduzida obrigatória, tipo de análise, método padrão, descrição do método, valor unitário, acreditado; filtros por tipo e acreditado.
 - **Aceite:** sem descrição reduzida não grava; método padrão disponível para a proposta.
 - **Esforço:** S

@@ -407,16 +407,19 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         await p.SelectOptionAsync("#IdEmbalagensTipos", new SelectOptionValue { Label = "SACO PLÁSTICO" });
         await p.FillAsync("#QtdeEmbalagem", "1,5");
         await p.ClickAsync("#formProduto button[type=submit]");
-        Assert.Equal("Produto gravado.", await s.AlertaAsync());
-        await Assertions.Expect(p.Locator("#Codigo")).ToHaveValueAsync("000002");
+        // volta para a lista com o código gerado (pedido do usuário: já pode incluir o próximo)
+        Assert.Equal($"Produto 000002 — {nome} gravado.", await s.AlertaAsync());
+        await p.WaitForURLAsync(u => u.EndsWith("/Produtos"));
+        await Assertions.Expect(p.Locator("a:has-text('Incluir')")).ToBeVisibleAsync();
 
         // alterar
+        await Linha(p, nome).Locator("a[title=Abrir]").ClickAsync();
+        await Assertions.Expect(p.Locator("#Codigo")).ToHaveValueAsync("000002");
         await p.FillAsync("#Descricao", nome + " CREMOSO");
         await p.ClickAsync("#formProduto button[type=submit]");
-        Assert.Equal("Produto gravado.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator(".alert-success")).ToContainTextAsync($"Produto 000002 — {nome} CREMOSO gravado.");
 
         // pesquisar, inativar (confirmação), mostrar inativos, reativar, excluir
-        await s.IrAsync("/Produtos");
         await p.FillAsync("#Texto", "000002");
         await p.PressAsync("#Texto", "Enter");
         await Assertions.Expect(Linha(p, nome + " CREMOSO")).ToContainTextAsync("1,5");
@@ -431,6 +434,57 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         await Linha(p, nome).Locator("button[title=Excluir]").ClickAsync();
         Assert.Equal("Produto excluído.", await s.AlertaAsync());
         Assert.False(await c.Db.Produtos.AnyAsync(x => x.Descricao.StartsWith(nome)));
+        Assert.DoesNotContain(s.Dialogos, string.IsNullOrWhiteSpace);
+        Assert.Empty(s.ErrosJs);
+    }
+
+    [Fact]
+    public async Task Parametro_de_analise_crud_com_metodo_pelo_mais()
+    {
+        await using var c = await Cenario.CriarAsync();
+        await using var s = await app.EntrarAsync(c);
+        var p = s.Pagina;
+        var nome = Unico("ESTAFILOCOCOS");
+        var metodo = Unico("ISO 6888");
+
+        // incluir: sem descrição reduzida volta com o erro; método novo pelo "+"
+        await s.IrAsync("/ParametrosAnalise");
+        await p.ClickAsync("a:has-text('Incluir')");
+        await p.FillAsync("#Descricao", nome);
+        await p.SelectOptionAsync("#IdAnalisesTipo", new SelectOptionValue { Label = "01 — MICROBIOLÓGICA" });
+        await p.ClickAsync("#formParametro button[type=submit]");
+        await Assertions.Expect(p.Locator("body")).ToContainTextAsync("Informe a descrição reduzida");
+        await p.FillAsync("#DescReduzida", "estafilococos");
+        await p.ClickAsync("button[data-rapido-botao=ANALISES_METODOS]");
+        await p.FillAsync(".modal-rapido #campo_Descricao", metodo);
+        await p.ClickAsync(".modal-rapido button[type=submit]");
+        await Assertions.Expect(p.Locator("#IdAnalisesMetodos option:checked")).ToHaveTextAsync(metodo);
+        await p.FillAsync("#VrUnitario", "95,50");
+        await p.CheckAsync("#Auditado");
+        await p.ClickAsync("#formParametro button[type=submit]");
+        Assert.Equal($"Parâmetro {nome} gravado.", await s.AlertaAsync());
+        await p.WaitForURLAsync(u => u.EndsWith("/ParametrosAnalise"));
+
+        // filtro acreditado + alterar + inativar/reativar + excluir
+        await p.SelectOptionAsync("#Acreditado", "sim");
+        await p.FillAsync("#Texto", nome);
+        await p.PressAsync("#Texto", "Enter");
+        await Assertions.Expect(Linha(p, nome)).ToContainTextAsync("95,50");
+        await Assertions.Expect(Linha(p, nome)).ToContainTextAsync(metodo);
+        await Linha(p, nome).Locator("a[title=Abrir]").ClickAsync();
+        await p.UncheckAsync("#Auditado");
+        await p.ClickAsync("#formParametro button[type=submit]");
+        await Assertions.Expect(p.Locator(".alert-success")).ToContainTextAsync($"Parâmetro {nome} gravado.");
+        await Assertions.Expect(Linha(p, nome)).ToContainTextAsync("Não");
+        await Linha(p, nome).Locator("button[title=Inativar]").ClickAsync();
+        Assert.StartsWith("Parâmetro inativado", await s.AlertaAsync());
+        await p.CheckAsync("#Inativos");
+        await p.ClickAsync("form.card button[type=submit]");
+        await Linha(p, nome).Locator("button[title=Reativar]").ClickAsync();
+        Assert.Equal("Parâmetro reativado.", await s.AlertaAsync());
+        await Linha(p, nome).Locator("button[title=Excluir]").ClickAsync();
+        Assert.Equal("Parâmetro de análise excluído.", await s.AlertaAsync());
+        Assert.False(await c.Db.LabParametrosAnalises.AnyAsync(x => x.Descricao == nome));
         Assert.DoesNotContain(s.Dialogos, string.IsNullOrWhiteSpace);
         Assert.Empty(s.ErrosJs);
     }
