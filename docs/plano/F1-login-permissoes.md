@@ -9,18 +9,21 @@
 
 ### 1.1 T00 — Login, troca de senha, seleção/troca de empresa
 > ✅ **Concluída em 19/10/2026** — aceite da T00 coberto por `ContaServiceTests` e `ContaFluxoTests`; ver [P02 › Implementação](../processos/P02-autenticacao-permissoes.md#implementação-tarefa-11). Admin de desenvolvimento: `.\Scripts\v2\recriar.ps1 -Dev` → `ADMIN` / `Admin123` (troca obrigatória).
+> 🔧 **Correção pós-teste (20/10/2026):** app reiniciado sempre pede login — claim `lc:instancia` por execução, conferida no `ValidarSessao` (antes o cookie de 8 h sobrevivia ao reinício). Teste `ContaFluxoTests.Cookie_de_outra_execucao_do_app_volta_para_o_login`. Ver [T00](../telas/T00-login-empresa.md).
 - **Passos:** `ContaController` + `ContaService`; Cookie Authentication; PBKDF2; bloqueio 5 tentativas/15 min; troca obrigatória; seleção de empresa com claims (`EmpresaId`, `ProfissionalId`, permissões); trocar empresa; sair; auditoria L. Criar o primeiro usuário ADMIN_GLOBAL por script de seed de desenvolvimento (fora do `05_seed.sql`).
 - **Aceite:** itens do [aceite da T00](../telas/T00-login-empresa.md#aceite).
 - **Esforço:** M
 
 ### 1.2 T01 — Layout, menu por permissão e painel
 > ✅ **Concluída em 19/10/2026** — ver [T01 › Implementação](../telas/T01-layout-menu.md#implementação-tarefa-12); aceite em `PermissoesMenuPainelTests`.
+> 🔧 **Correção pós-teste (20/10/2026):** menu com um item só "Empresas Usuárias do Sistema"; *Cidades* fora do menu até a 2.3 (a action JSON `Geografia/Cidades` virou `CidadesDaUf`). Teste `PermissoesMenuPainelTests.Menu_real_sem_tela_inexistente_e_com_uma_entrada_de_empresa`.
 - **Passos:** `_Layout` com empresa ativa no topo, aviso "sem profissional vinculado", menu da T01 com itens filtrados por `[Permissao]`; atributo `PermissaoAttribute` + tag helper; painel com contadores (pode começar com 2: recebidas hoje e testes pendentes).
 - **Aceite:** menu respeita permissões; empresa visível em todas as páginas.
 - **Esforço:** M · **Depende de:** 1.1
 
 ### 1.3 T02 — Usuários
 > ✅ **Concluída em 19/10/2026** — ver [T02 › Implementação](../telas/T02-usuarios.md#implementação-tarefa-13); aceite em `UsuarioServiceTests`.
+> 🔧 **Correção pós-teste (20/10/2026):** novo usuário já vem com a empresa ativa marcada e padrão (também para ADMIN_GLOBAL) — sem isso não aparecia no combo do profissional (T13). Ver [T02](../telas/T02-usuarios.md).
 - **Passos:** CRUD + grid de empresas (profissional vinculado, perfis, padrão, ativo); resetar senha; desbloquear; inativar; serviço único de vínculo usuário ↔ profissional (reusado na T13).
 - **Aceite:** [aceite da T02](../telas/T02-usuarios.md#critérios-de-aceite).
 - **Esforço:** M · **Depende de:** 1.1
@@ -33,6 +36,7 @@
 
 ### 1.5 T03 — Empresa usuária + nova empresa + cópia de cadastros 🔵
 > ✅ **Concluída em 19/10/2026** — ver [T03 › Implementação](../telas/T03-empresa-usuaria.md#implementação-tarefa-15); aceite em `EmpresaServiceTests` (o logo no PDF do boletim fica para a 5.4).
+> 🔧 **Correção pós-teste (20/10/2026):** *Empresa* (`/Empresa/Dados`) e *Empresas* (`/Empresas`) eram o mesmo cadastro → um item **"Empresas Usuárias do Sistema"** (ADMIN_GLOBAL vê a lista; os demais caem na empresa ativa); títulos e mensagens "empresa usuária". Ver [T03 › Nomenclatura](../telas/T03-empresa-usuaria.md#nomenclatura-20102026--pedido-do-usuário).
 - **Passos:** dados da empresa ativa (com logo e componente de endereço — pode usar combo de cidade simples até a fase 2); lista de empresas e "nova empresa" (ADMIN_GLOBAL) com `SP_INICIALIZAR_EMPRESA` e `CopiarCadastros` ([P23](../processos/P23-nova-empresa.md)).
 - **Aceite:** [aceite da T03](../telas/T03-empresa-usuaria.md#critérios-de-aceite).
 - **Esforço:** G · **Depende de:** 1.3

@@ -217,7 +217,7 @@ Itens adiados nas tarefas já feitas — cada um tem dono (tarefa) e está tamb�
 | 10 | Carimbo de segurança (`SECURITY_STAMP` em `USUARIOS`) para derrubar sessões ao mudar perfis, vínculos ou senha (hoje só o ADMIN_GLOBAL derruba) | a agendar (exige `/mudanca-banco`) | security-review 1.7 |
 | 11 | Retry de `SaveChanges` depois de falha com chaves geradas na entidade (nenhum serviço faz hoje) | só se algum serviço passar a repetir | code-review 1.7 |
 | 12 | Trocar a senha `root` do MySQL (ficou no histórico do git até a 0.3) e atualizar o user-secret | usuário | ponto de retorno |
-| 13 | Teste no navegador (P26) para toda tela nova; padrão das listas (botões com texto, confirmação ao inativar, aviso de inativos ocultos) | toda tarefa de tela (skill `/concluir-tarefa`) | teste do usuário 20/10/2026 |
+| 13 | Teste no navegador (P26) para toda tela nova; padrão das listas (botões com texto, confirmação com texto ao inativar **e ao reativar** — nunca `data-confirmar` vazio, aviso de inativos ocultos; item de menu só quando a tela existe) | toda tarefa de tela (skill `/concluir-tarefa`) | teste do usuário 20/10/2026 |
 | 14 | Dúvidas em aberto do §7 (T28, SMTP, etiquetas, modelos de PDF, onde guardar PDFs, senha dos migrados, dias úteis, relatórios) | quando a fase chegar | §7 |
 
 ## 9. Diário de execução

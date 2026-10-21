@@ -28,6 +28,7 @@
 
 ### 2.3 Geografia + importação IBGE + componente de endereço
 > 🟨 **Parte feita em 20/10/2026:** 5.571 municípios IBGE no seed `06_cidades.sql`, `/Geografia/CidadesDaUf` (combo; o nome `/Geografia/Cidades` fica para a tela T11-03), `/Geografia/Cep/{cep}` (ViaCEP no servidor) e o componente de endereço/contatos (`_ContatosAbas`/`_ContatosModais`/`contatos.js`). Falta a tela de manutenção T11-01…03.
+> 🔧 **20/10/2026:** o item *Cidades* aparecia no menu sem a tela existir (era o JSON do combo) — saiu do menu; volta quando a T11-03 for feita nesta tarefa. Ver [T11-03](../telas/T11-03-cidades.md).
 - **Passos:** T11-01/02/03 (só ADMIN_GLOBAL altera); importação do CSV do IBGE; endpoint `/Geografia/Cep/{cep}` (ViaCEP no servidor, cache, timeout); componente Razor/JS "Endereço" reutilizável (usado depois em T12 e T03).
 - **Aceite:** [aceite da T11-03](../telas/T11-03-cidades.md#critérios-de-aceite).
 - **Esforço:** M
