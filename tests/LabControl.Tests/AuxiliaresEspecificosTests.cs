@@ -197,6 +197,38 @@ public class AuxiliaresEspecificosTests(AppWeb app) : IClassFixture<AppWeb>
         Assert.True((await def.DefinirAtivoAsync(s, liberada.IdAmostrasStatus, true)).Sucesso);
         var semResultado = await def.GravarAsync(s, Form(valores: [("Descricao", Unico("EM ESPERA"))]));
         Assert.True((await def.ExcluirAsync(s, semResultado.Valor)).Sucesso);
+
+        // 2.5 (code-review): empresa sem nenhum que permite (migrada, copiada) ainda edita e inativa os outros status
+        await c.Db.AmostrasStatus.ExecuteUpdateAsync(x => x.SetProperty(st => st.PermiteResultado, false));
+        c.Db.ChangeTracker.Clear();
+        var bloqueada = await c.Db.AmostrasStatus.AsNoTracking().FirstAsync(x => x.Descricao == "BLOQUEADA");
+        var renomear = (await def.CarregarAsync(s, bloqueada.IdAmostrasStatus))!;
+        renomear.Valores["Descricao"] = Unico("BLOQUEADA");
+        renomear.Valores["Cor"] = "#123456";
+        Assert.True((await def.GravarAsync(s, renomear)).Sucesso);
+        Assert.True((await def.DefinirAtivoAsync(s, bloqueada.IdAmostrasStatus, false)).Sucesso);
+    }
+
+    [Fact]
+    public async Task Excluir_so_oferece_inativar_quando_o_registro_esta_em_uso()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var editor = await UsuariosTeste.ComPermissoesAsync(c, "AUXILIARES.CONSULTAR", "AUXILIARES.ALTERAR", "AUXILIARES.EXCLUIR");
+        var liberada = await c.Db.AmostrasStatus.Where(x => x.PermiteResultado).Select(x => x.IdAmostrasStatus).SingleAsync();
+        using var web = app.Cliente();
+        await web.EntrarAsync(editor.Login);
+
+        // regra do auxiliar (último que permite resultado) e registro inexistente: só a mensagem, sem "Inativar"
+        foreach (var id in new[] { liberada, 999_999_999 })
+        {
+            var r = await web.PostarAsync("/Auxiliares/AMOSTRAS_STATUS", $"/Auxiliares/AMOSTRAS_STATUS/Excluir/{id}");
+            var html = await (await web.GetAsync(r.Destino()!)).HtmlAsync();
+            Assert.DoesNotContain("está em uso", html); // o aviso com o botão "Inativar"
+        }
+
+        // em uso (FK): oferece inativar, com o gênero certo
+        var r2 = await web.PostarAsync("/Auxiliares/UNIDADES", $"/Auxiliares/UNIDADES/Excluir/{c.Unidade.IdUnidades}");
+        Assert.Contains("Esta unidade está em uso e não pode ser excluída.", await (await web.GetAsync(r2.Destino()!)).HtmlAsync());
     }
 
     [Fact]

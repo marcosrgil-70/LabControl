@@ -233,8 +233,14 @@ public static class CatalogoAuxiliares
     /// <summary>T10-15: sem um status ativo que permita resultado, nenhuma amostra chegaria a Resultados/Boletim.</summary>
     private static async Task<Resultado> RestaStatusComResultadoAsync(LabDbContext db, AmostraStatus e, bool excluindo)
     {
-        // gravar um que permite, ou excluir um que não permite, não tira o último
-        if ((e.Ativo && e.PermiteResultado) != excluindo) return Resultado.Ok();
+        // só barra quando a operação tira um status que permitia (ativo + permite): editar outro status, ou a cor
+        // e a descrição deste, nunca é bloqueado — nem numa empresa que ainda não tem nenhum que permite
+        var entrada = db.Entry(e);
+        var permitia = entrada.State is EntityState.Unchanged or EntityState.Modified
+            ? (bool)entrada.OriginalValues[nameof(AmostraStatus.Ativo)]! && (bool)entrada.OriginalValues[nameof(AmostraStatus.PermiteResultado)]!
+            : e.Ativo && e.PermiteResultado; // exclusão: carregado sem rastrear
+        var continua = !excluindo && e.Ativo && e.PermiteResultado;
+        if (!permitia || continua) return Resultado.Ok();
         var outro = await db.AmostrasStatus.AnyAsync(s => s.IdAmostrasStatus != e.IdAmostrasStatus && s.Ativo && s.PermiteResultado);
         return outro ? Resultado.Ok()
             : Resultado.Erro("Deve existir ao menos um status ativo que permite resultado (sem ele nenhuma amostra chega a Resultados e Boletim).", "PermiteResultado");

@@ -28,7 +28,9 @@ public sealed class ContatosService(LabDbContext db)
     {
         CadastroDono.Empresa => await db.Entidades.AnyAsync(e => e.IdEntidades == idEntidade && e.TipoEmpresaUsuaria),
         CadastroDono.Profissional => await db.Entidades.AnyAsync(e => e.IdEntidades == idEntidade && e.TipoFuncionario),
-        _ => await db.Entidades.AnyAsync(e => e.IdEntidades == idEntidade && !e.TipoEmpresaUsuaria),
+        // o mesmo critério da lista da T12: um profissional só (sem tipo comercial) não é mexido pela tela de clientes
+        _ => await db.Entidades.AnyAsync(e => e.IdEntidades == idEntidade && !e.TipoEmpresaUsuaria
+            && (e.TipoCliente || e.TipoFornecedor || e.TipoVendedor || e.TipoTransportador)),
     };
 
     public async Task<ContatosVM?> CarregarAsync(CadastroDono dono, int idEntidade, string urlBase, bool podeAlterar)

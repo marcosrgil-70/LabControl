@@ -12,6 +12,9 @@ public static partial class ErrosMySql
 {
     public const string SqlStateNegocio = "45000";
 
+    /// <summary>FK recusou a exclusão (1451): as telas oferecem "Inativar" só nesse caso.</summary>
+    public const string MensagemEmUso = "Registro em uso por outros cadastros ou movimentos: não pode ser excluído (inative-o em vez de excluir).";
+
     /// <summary>Mensagem para o usuário, ou null se o erro for técnico.</summary>
     public static string? MensagemDeNegocio(Exception ex)
     {
@@ -21,8 +24,7 @@ public static partial class ErrosMySql
         return my.ErrorCode switch
         {
             MySqlErrorCode.DuplicateKeyEntry => Duplicado(my.Message),
-            MySqlErrorCode.RowIsReferenced2 or MySqlErrorCode.RowIsReferenced =>
-                "Registro em uso por outros cadastros ou movimentos: não pode ser excluído (inative-o em vez de excluir).",
+            MySqlErrorCode.RowIsReferenced2 or MySqlErrorCode.RowIsReferenced => MensagemEmUso,
             MySqlErrorCode.NoReferencedRow2 or MySqlErrorCode.NoReferencedRow =>
                 "Registro relacionado não encontrado (pode ter sido excluído). Atualize a tela e tente de novo.",
             _ => null,

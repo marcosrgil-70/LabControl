@@ -42,8 +42,22 @@
 
 ### 2.5 Revisão
 `/code-review`; atualizar diário.
+> ✅ **Concluída em 21/10/2026** — `/code-review medium` de `f0c1ee7^..HEAD` (2.1–2.4 + T03/T12/T13/contatos antecipados): **10 achados**, verificados no código.
+
+| # | Achado | Decisão |
+|---|---|---|
+| 1 | Contatos pela tela de clientes aceitavam qualquer entidade não-empresa (um profissional podia ter endereços/fones/e-mails alterados com só `CLIENTES.ALTERAR`) | ✅ corrigido: `ContatosService.PertenceAsync` usa o mesmo critério da lista da T12 (algum tipo comercial) — `Contatos_da_tela_de_clientes_nao_mexem_em_profissional` |
+| 2 | A entidade da empresa usuária copia o CNPJ e ocupa o `UQ_ENT_DOC`: cliente com o CNPJ do próprio laboratório é recusado sem registro visível, e trocar o CNPJ da empresa para o de um cliente dá 1062 na trigger | ⏳ pendência 15 (exige `/mudanca-banco` e decisão do usuário) |
+| 3 | Qualquer falha ao excluir oferecia "Inativar" ("está em uso") — inclusive "não encontrado" e regra do auxiliar | ✅ corrigido: só com `ErrosMySql.MensagemEmUso` (1451) — `Excluir_so_oferece_inativar_quando_o_registro_esta_em_uso` |
+| 4 | CEP sem código IBGE virava `CODIGO_IBGE IS NULL` e pegava uma cidade digitada qualquer | ✅ corrigido em `ConsultaCepService` — caso novo em `Cep_liga_a_cidade_pelo_ibge…` |
+| 5 | GUID da instância derruba todas as sessões em reciclagem do IIS e entre instâncias balanceadas | ⏳ pendência 16: comportamento **pedido pelo usuário** (2ª correção pós-teste); rever antes da virada (9.3) com o tipo de hospedagem |
+| 6 | Regra do T10-15 bloqueava qualquer edição de status numa empresa sem status que permite resultado | ✅ corrigido: só barra quando a operação **tira** um que permitia (valores originais do EF) — caso novo em `Sempre_resta_um_status…` |
+| 7 | Aviso "Este unidade está em uso" sem gênero | ✅ corrigido (`Feminino`) |
+| 8 | Lista de empresas mostrava a cidade do 1º endereço, de qualquer tipo | ✅ corrigido: prefere o endereço de nota fiscal |
+| 9 | Cidades da UF e combo de UF repetidos (controller + 3 serviços) | ⏳ `/simplify` (pendência 5) |
+| 10 | Paginação/contagem de inativos e normalização de texto copiadas em 4 serviços | ⏳ `/simplify` (pendência 5) |
 
 ## Definição de pronto
-- [ ] 20 auxiliares + geografia por empresa (exceto geografia global), com cadastro rápido.
+- [x] 20 auxiliares + geografia por empresa (exceto geografia global), com cadastro rápido (2.2–2.4).
 - [x] Códigos de tipo de amostra/análise protegidos (2.2).
-- [ ] CRUD de cada tela provado no navegador (P26).
+- [x] CRUD de cada tela provado no navegador (P26) — `CrudNavegadorTests`/`CrudNavegadorTelasTests`: Idiomas, Tipos de endereço, tipos de amostra/status, parcelas, geografia, cadastro rápido (os demais auxiliares usam as mesmas views do genérico).

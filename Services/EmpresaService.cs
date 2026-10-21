@@ -19,9 +19,10 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
     public async Task<IReadOnlyList<EmpresaListaItemVM>> ListarAsync() =>
         await db.Empresas.AsNoTracking().OrderBy(e => e.CodEmpresa)
             .Select(e => new EmpresaListaItemVM(e.IdEmpresas, e.CodEmpresa, e.NomeFantasia ?? e.RazaoSocial, e.Cnpj,
-                // cidade do 1º endereço ativo da entidade da empresa (lista só do ADMIN_GLOBAL: lê as outras empresas)
+                // cidade do endereço ativo de nota fiscal (senão o 1º ativo) da entidade da empresa
+                // (lista só do ADMIN_GLOBAL: lê as outras empresas)
                 db.EntidadesEnderecos.IgnoreQueryFilters().Where(a => a.IdEntidades == e.IdEntidades && !a.Inativo)
-                    .OrderBy(a => a.IdEntidadesEnderecos).Select(a => a.Cidade.Nome + "/" + a.Cidade.Estado.Sigla).FirstOrDefault(),
+                    .OrderBy(a => a.EnderecoTipo.Finalidade == FinalidadeEndereco.NotaFiscal ? 0 : 1).ThenBy(a => a.IdEntidadesEnderecos).Select(a => a.Cidade.Nome + "/" + a.Cidade.Estado.Sigla).FirstOrDefault(),
                 e.Ativa, db.UsuariosEmpresas.Count(v => v.IdEmpresas == e.IdEmpresas && v.Ativo)))
             .ToListAsync();
 

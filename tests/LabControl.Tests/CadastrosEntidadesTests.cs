@@ -294,6 +294,21 @@ public class CadastrosEntidadesTests
         Assert.Equal("CEP não encontrado.", (await inexistente.ConsultarAsync("99999999")).Mensagem);
         var foraDoAr = new ConsultaCepService(new CepFixo(null, falha: true), new MemoryCache(new MemoryCacheOptions()), c.Db, NullLogger<ConsultaCepService>.Instance);
         Assert.Equal("Serviço de CEP indisponível no momento. Preencha o endereço manualmente.", (await foraDoAr.ConsultarAsync("01310100")).Mensagem);
+
+        // 2.5 (code-review): resposta sem IBGE não pode cair numa cidade digitada sem código (CODIGO_IBGE IS NULL)
+        var semIbge = new ConsultaCepService(new CepFixo(new CepBruto("Rua A", null, "Centro", null, "SP")), new MemoryCache(new MemoryCacheOptions()), c.Db, NullLogger<ConsultaCepService>.Instance);
+        Assert.Equal("A cidade deste CEP não está cadastrada. Escolha a cidade manualmente.", (await semIbge.ConsultarAsync("01001000")).Mensagem);
+    }
+
+    [Fact]
+    public async Task Contatos_da_tela_de_clientes_nao_mexem_em_profissional()
+    {
+        await using var c = await Cenario.CriarAsync(); // o profissional do cenário é só funcionário (sem tipo comercial)
+        var s = new LabControl.Services.Entidades.ContatosService(c.Db);
+        var profissional = c.Ativa.ProfissionalId!.Value;
+        Assert.False(await s.PertenceAsync(LabControl.Services.Entidades.CadastroDono.Cliente, profissional));
+        Assert.True(await s.PertenceAsync(LabControl.Services.Entidades.CadastroDono.Profissional, profissional));
+        Assert.True(await s.PertenceAsync(LabControl.Services.Entidades.CadastroDono.Cliente, c.Cliente.IdEntidades));
     }
 
     private static (string?, string?) Erro(IResultado r) => (r.Mensagem, r.Campo);

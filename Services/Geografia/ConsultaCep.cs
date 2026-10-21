@@ -68,6 +68,8 @@ public sealed class ConsultaCepService(IFonteCep fonte, IMemoryCache cache, LabD
             return Resultado.Erro("Serviço de CEP indisponível no momento. Preencha o endereço manualmente.");
         }
         if (bruto is null) return Resultado.Erro("CEP não encontrado.");
+        // sem código IBGE a busca abaixo viraria "CODIGO_IBGE IS NULL" e pegaria uma cidade digitada qualquer
+        if (string.IsNullOrWhiteSpace(bruto.Ibge)) return Resultado.Erro("A cidade deste CEP não está cadastrada. Escolha a cidade manualmente.");
 
         var cidade = await db.Cidades.AsNoTracking().Where(c => c.CodigoIbge == bruto.Ibge)
             .Select(c => new { c.IdCidades, c.IdEstados, c.Nome, Uf = c.Estado.Sigla }).FirstOrDefaultAsync();

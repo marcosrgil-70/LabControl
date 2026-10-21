@@ -33,7 +33,7 @@
 {
     <div class="alert alert-warning d-flex align-items-center gap-2 py-2" lc-permissao="AUXILIARES.ALTERAR">
         <i class="bi bi-info-circle"></i>
-        <span class="small">Este @d.Singular está em uso e não pode ser excluído. Inativado, ele some dos combos de inclusão e continua nos registros antigos.</span>
+        <span class="small">@(d.Feminino ? "Esta" : "Este") @d.Singular está em uso e não pode ser excluíd@(d.Feminino ? "a" : "o"). Inativad@(d.Feminino ? "a" : "o"), @(d.Feminino ? "ela" : "ele") some dos combos de inclusão e continua nos registros antigos.</span>
         <form method="post" asp-action="Ativo" asp-route-tabela="@d.Tabela" asp-route-id="@inativar" class="ms-auto">
             @{ FiltroOculto(); }
             <input type="hidden" name="ativo" value="false" />
