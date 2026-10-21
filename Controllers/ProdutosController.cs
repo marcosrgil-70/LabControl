@@ -21,8 +21,8 @@ public sealed class ProdutosController(ProdutoService produtos) : Controller
     public async Task<IActionResult> Criar(ProdutoVM vm)
     {
         vm.Id = 0;
-        if (ModelState.IsValid && await produtos.GravarAsync(vm) is var r && this.AplicarNoFormulario(r, "Produto gravado."))
-            return RedirectToAction(nameof(Editar), new { id = r.Valor });
+        if (ModelState.IsValid && await produtos.GravarAsync(vm) is var r && this.AplicarNoFormulario(r))
+            return await VoltarParaListaAsync(r.Valor);
         await produtos.PrepararAsync(vm);
         return View("Form", vm);
     }
@@ -36,10 +36,18 @@ public sealed class ProdutosController(ProdutoService produtos) : Controller
     public async Task<IActionResult> Editar(int id, ProdutoVM vm)
     {
         vm.Id = id;
-        if (ModelState.IsValid && this.AplicarNoFormulario(await produtos.GravarAsync(vm), "Produto gravado."))
-            return RedirectToAction(nameof(Editar), new { id });
+        if (ModelState.IsValid && this.AplicarNoFormulario(await produtos.GravarAsync(vm)))
+            return await VoltarParaListaAsync(id);
         await produtos.PrepararAsync(vm);
         return View("Form", vm);
+    }
+
+    /// <summary>Depois de gravar volta para a lista (pedido do usuário): de lá já se inclui o próximo. A mensagem traz o código gerado.</summary>
+    private async Task<IActionResult> VoltarParaListaAsync(int id)
+    {
+        var gravado = await produtos.CarregarAsync(id);
+        TempData[Mensagens.Sucesso] = $"Produto {gravado?.Codigo} — {gravado?.Descricao} gravado.";
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost, Permissao("PRODUTOS.EXCLUIR")]

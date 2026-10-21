@@ -107,7 +107,7 @@ public class ProdutosTests(AppWeb app) : IClassFixture<AppWeb>
             var nome = Unico("MANTEIGA");
             var criar = await web.PostarAsync("/Produtos/Criar", "/Produtos/Criar", ("Descricao", nome), ("IdUnidades", c.Unidade.IdUnidades.ToString()), ("Inativo", "false"));
             var id = await c.Db.Produtos.Where(p => p.Descricao == nome).Select(p => p.IdProdutos).SingleAsync();
-            Assert.Equal($"/Produtos/Editar/{id}", criar.Destino());
+            Assert.Equal("/Produtos", criar.Destino()); // volta para a lista (pedido do usuário)
 
             // erro volta para o formulário com a mensagem
             var dup = await (await web.PostarAsync("/Produtos/Criar", "/Produtos/Criar", ("Codigo", "000001"), ("Descricao", "X"), ("IdUnidades", c.Unidade.IdUnidades.ToString()))).HtmlAsync();
