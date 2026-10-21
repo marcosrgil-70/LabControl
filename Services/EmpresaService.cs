@@ -78,7 +78,7 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
         if (vm.CopiarDe is { } de && !await db.Empresas.AnyAsync(e => e.IdEmpresas == de)) return Resultado.Erro("Empresa de origem não encontrada.", nameof(vm.CopiarDe));
 
         var empresa = new Empresa { CodEmpresa = vm.CodEmpresa.Trim().ToUpperInvariant() };
-        if (await AplicarAsync(empresa, vm) is { Sucesso: false } invalido) return Resultado.Erro(invalido.Mensagem!, invalido.Campo);
+        if (await AplicarAsync(empresa, vm) is { Sucesso: false } invalido) return invalido.Falha;
 
         await using var tx = await db.Database.BeginTransactionAsync();
         db.Add(empresa);
@@ -161,14 +161,14 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
         else if (vm.RemoverLogo) (e.Logo, e.LogoMime) = (null, null);
 
         e.RazaoSocial = vm.RazaoSocial.Trim();
-        e.NomeFantasia = Vazio(vm.NomeFantasia);
+        e.NomeFantasia = Textos.Limpo(vm.NomeFantasia);
         e.Cnpj = cnpj;
-        e.InscEstadual = Vazio(vm.InscEstadual)?.ToUpperInvariant();
-        e.InscMunicipal = Vazio(vm.InscMunicipal);
-        e.Site = Vazio(vm.Site);
-        e.CabecalhoLaudo = Vazio(vm.CabecalhoLaudo);
-        e.RodapeLaudo = Vazio(vm.RodapeLaudo);
-        e.NrAcreditacao = Vazio(vm.NrAcreditacao);
+        e.InscEstadual = Textos.Limpo(vm.InscEstadual)?.ToUpperInvariant();
+        e.InscMunicipal = Textos.Limpo(vm.InscMunicipal);
+        e.Site = Textos.Limpo(vm.Site);
+        e.CabecalhoLaudo = Textos.Limpo(vm.CabecalhoLaudo);
+        e.RodapeLaudo = Textos.Limpo(vm.RodapeLaudo);
+        e.NrAcreditacao = Textos.Limpo(vm.NrAcreditacao);
         if (ctx.AdminGlobal) e.Ativa = vm.Ativa; // usuário comum não inativa a própria empresa
         return Resultado.Ok();
     }
@@ -180,5 +180,4 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
         _ => null,
     };
 
-    private static string? Vazio(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }

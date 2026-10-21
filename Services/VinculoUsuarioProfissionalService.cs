@@ -46,7 +46,7 @@ public sealed class VinculoUsuarioProfissionalService(LabDbContext db, IEmpresaC
         if (!ok.Sucesso) return ok;
         vinculo.IdEntidadesFunc = idProfissional;
         var r = await ErrosMySql.CapturarAsync(() => db.SaveChangesAsync()); // UQ_USUEMP_FUNC continua valendo (concorrência)
-        return r.Sucesso ? Resultado.Ok() : Resultado.Erro(r.Mensagem!);
+        return r.Sucesso ? Resultado.Ok() : r.Falha;
     }
 
     private IQueryable<Models.VwProfissional> Profissionais(int idEmpresa)

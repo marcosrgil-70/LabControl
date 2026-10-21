@@ -43,7 +43,7 @@ public sealed partial class GeografiaService(LabDbContext db, IAuditoria auditor
         };
 
         var total = await q.CountAsync();
-        f.Pagina = Math.Clamp(f.Pagina, 1, Math.Max(1, (total + GeoFiltroVM.TamanhoPagina - 1) / GeoFiltroVM.TamanhoPagina));
+        f.Pagina = Paginacao.Ajustar(f.Pagina, total, GeoFiltroVM.TamanhoPagina);
         var itens = await q.Skip((f.Pagina - 1) * GeoFiltroVM.TamanhoPagina).Take(GeoFiltroVM.TamanhoPagina).ToListAsync();
 
         return new GeoListaVM
@@ -56,6 +56,9 @@ public sealed partial class GeografiaService(LabDbContext db, IAuditoria auditor
                 : [],
         };
     }
+
+    /// <summary>Combo de cidades da UF (componente de endereço, P25).</summary>
+    public Task<List<OpcaoVM>> CidadesDaUfAsync(int idEstado) => db.CidadesDaUfAsync(idEstado);
 
     // ------------------------------------------------------------- gravar
 
@@ -71,9 +74,9 @@ public sealed partial class GeografiaService(LabDbContext db, IAuditoria auditor
     private async Task<Resultado<int>> GravarPaisAsync(GeoFormVM vm)
     {
         if (Texto(vm.Nome, "nome", 80, out var nome) is { } e1) return e1;
-        var sigla = Maiusculas(vm.Sigla);
+        var sigla = Textos.Maiusculas(vm.Sigla);
         if (sigla?.Length > 5) return Resultado.Erro("Sigla: no máximo 5 caracteres.", "Sigla");
-        var codigo = Limpo(vm.Codigo);
+        var codigo = Textos.Limpo(vm.Codigo);
         if (codigo is not null && !RegexDigitos().IsMatch(codigo) || codigo?.Length > 10)
             return Resultado.Erro("Código BACEN: até 10 dígitos.", "Codigo");
 
@@ -87,9 +90,9 @@ public sealed partial class GeografiaService(LabDbContext db, IAuditoria auditor
     {
         if (vm.IdPai is not { } idPais || !await db.Paises.AnyAsync(p => p.IdPaises == idPais)) return Resultado.Erro("Escolha o país.", "IdPai");
         if (Texto(vm.Nome, "nome", 100, out var nome) is { } e1) return e1;
-        var sigla = Maiusculas(vm.Sigla);
+        var sigla = Textos.Maiusculas(vm.Sigla);
         if (sigla is null || !RegexUf().IsMatch(sigla)) return Resultado.Erro("Sigla: 2 letras (ex.: SP).", "Sigla");
-        var codigo = Limpo(vm.Codigo);
+        var codigo = Textos.Limpo(vm.Codigo);
         if (codigo is not null && !RegexIbgeUf().IsMatch(codigo)) return Resultado.Erro("Código IBGE: 2 dígitos (ex.: 35).", "Codigo");
 
         var e = vm.Id == 0 ? db.Estados.Add(new Estado()).Entity : await db.Estados.FindAsync(vm.Id);
@@ -103,7 +106,7 @@ public sealed partial class GeografiaService(LabDbContext db, IAuditoria auditor
         var uf = vm.IdPai is { } idEstado ? await db.Estados.AsNoTracking().SingleOrDefaultAsync(e => e.IdEstados == idEstado) : null;
         if (uf is null) return Resultado.Erro("Escolha o estado.", "IdPai");
         if (Texto(vm.Nome, "nome", 150, out var nome) is { } e1) return e1;
-        var codigo = Limpo(vm.Codigo);
+        var codigo = Textos.Limpo(vm.Codigo);
         if (codigo is not null && !RegexIbgeCidade().IsMatch(codigo)) return Resultado.Erro("Código IBGE: 7 dígitos (ex.: 3550308).", "Codigo");
         // o código do município começa pelo da UF: evita cidade de SP com código de MG (a busca de CEP casa pelo código)
         if (codigo is not null && uf.CodigoIbge is { } cuf && !codigo.StartsWith(cuf, StringComparison.Ordinal))
@@ -120,7 +123,7 @@ public sealed partial class GeografiaService(LabDbContext db, IAuditoria auditor
         var r = await ErrosMySql.CapturarAsync(() => db.SaveChangesAsync());
         if (r.Sucesso) return Resultado.Ok(id());
         db.ChangeTracker.Clear();
-        return Resultado.Erro(r.Mensagem!, r.Mensagem!.StartsWith("Já existe") ? campoDuplicado : null);
+        return Resultado.Erro(r.Mensagem!, r.Tipo == TipoFalha.Duplicado ? campoDuplicado : null, r.Tipo);
     }
 
     // ------------------------------------------------------------- excluir
@@ -145,7 +148,7 @@ public sealed partial class GeografiaService(LabDbContext db, IAuditoria auditor
             Estados => db.Estados.Where(e => e.IdEstados == id).ExecuteDeleteAsync(),
             _ => db.Cidades.Where(c => c.IdCidades == id).ExecuteDeleteAsync(),
         });
-        if (!r.Sucesso) return Resultado.Erro(r.Mensagem!);
+        if (!r.Sucesso) return r.Falha;
         return r.Valor == 0 ? Resultado.Erro("Registro não encontrado (pode ter sido excluído).") : Resultado.Ok();
     }
 
@@ -217,7 +220,7 @@ public sealed partial class GeografiaService(LabDbContext db, IAuditoria auditor
         if (!r.Sucesso)
         {
             db.ChangeTracker.Clear();
-            return Resultado.Erro(r.Mensagem!);
+            return r.Falha;
         }
         return Resultado.Ok(resumo);
 
@@ -237,13 +240,11 @@ public sealed partial class GeografiaService(LabDbContext db, IAuditoria auditor
 
     // ------------------------------------------------------------- apoio
 
-    private static string? Limpo(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
-    private static string? Maiusculas(string? s) => Limpo(s)?.ToUpperInvariant();
 
     /// <summary>Texto obrigatório em maiúsculas; devolve o erro (ou null) e o valor.</summary>
     private static Falha? Texto(string? valor, string rotulo, int maximo, out string? texto)
     {
-        texto = Maiusculas(valor);
+        texto = Textos.Maiusculas(valor);
         if (texto is null) return Resultado.Erro($"Informe o {rotulo}.", "Nome");
         if (texto.Length > maximo) return Resultado.Erro($"{char.ToUpperInvariant(rotulo[0])}{rotulo[1..]}: no máximo {maximo} caracteres.", "Nome");
         return null;

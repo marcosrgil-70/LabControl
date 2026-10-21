@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using LabControl.Data;
 using LabControl.Infra;
 using LabControl.Models;
+using LabControl.Services.Geografia;
 using LabControl.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,7 +32,7 @@ public sealed class ProfissionalService(LabDbContext db, IEmpresaContexto ctx, V
         var ocultos = f.Inativos ? 0 : await q.CountAsync(p => p.Inativo);
         if (!f.Inativos) q = q.Where(p => !p.Inativo);
         var total = await q.CountAsync();
-        f.Pagina = Math.Clamp(f.Pagina, 1, Math.Max(1, (total + ProfissionalFiltroVM.TamanhoPagina - 1) / ProfissionalFiltroVM.TamanhoPagina));
+        f.Pagina = Paginacao.Ajustar(f.Pagina, total, ProfissionalFiltroVM.TamanhoPagina);
         var itens = await q.OrderBy(p => p.Nome).ThenBy(p => p.Sobrenome)
             .Skip((f.Pagina - 1) * ProfissionalFiltroVM.TamanhoPagina).Take(ProfissionalFiltroVM.TamanhoPagina)
             .Select(p => new ProfissionalListaItemVM(p.IdEntidades, p.NomeCompleto ?? p.Nome, p.Cargo, p.RegistroCompleto,
@@ -78,7 +79,7 @@ public sealed class ProfissionalService(LabDbContext db, IEmpresaContexto ctx, V
             .OrderBy(c => c.Descricao).Select(c => new OpcaoVM(c.IdCargosFuncionarios, c.Descricao)).ToListAsync();
         vm.TiposRegistro = await db.TiposRegProfissional.AsNoTracking().Where(t => t.Ativo || t.IdTiposRegProfissional == registro)
             .OrderBy(t => t.Descricao).Select(t => new OpcaoVM(t.IdTiposRegProfissional, t.Descricao)).ToListAsync();
-        vm.Ufs = await db.Estados.AsNoTracking().OrderBy(e => e.Sigla).Select(e => e.Sigla).ToListAsync();
+        vm.Ufs = (await db.UfsAsync()).Select(u => u.Nome).ToList();
         var empresa = Ativa;
         vm.Usuarios = await db.UsuariosEmpresas.AsNoTracking()
             .Where(v => v.IdEmpresas == empresa && v.Ativo && v.Usuario.Ativo && (v.IdEntidadesFunc == null || v.IdEntidadesFunc == vm.Id))
@@ -101,9 +102,9 @@ public sealed class ProfissionalService(LabDbContext db, IEmpresaContexto ctx, V
             return Resultado.Erro("Cargo não encontrado.", nameof(vm.IdCargosFuncionarios));
         if (vm.IdTiposRegProfissional is { } tr && !await db.TiposRegProfissional.AnyAsync(t => t.IdTiposRegProfissional == tr))
             return Resultado.Erro("Tipo de registro não encontrado.", nameof(vm.IdTiposRegProfissional));
-        var uf = string.IsNullOrWhiteSpace(vm.UfRegistro) ? null : vm.UfRegistro.Trim().ToUpperInvariant();
+        var uf = Textos.Maiusculas(vm.UfRegistro);
         if (uf is not null && !await db.Estados.AnyAsync(e => e.Sigla == uf)) return Resultado.Erro("UF inválida.", nameof(vm.UfRegistro));
-        var nrRegistro = string.IsNullOrWhiteSpace(vm.NrRegistroProfissional) ? null : vm.NrRegistroProfissional.Trim().ToUpperInvariant();
+        var nrRegistro = Textos.Maiusculas(vm.NrRegistroProfissional);
         // RN-03.15: quem assina boletim precisa de tipo, nº e UF do registro (impressos no boletim)
         if (vm.AssinaBoletim && (vm.IdTiposRegProfissional is null || nrRegistro is null || uf is null))
             return Resultado.Erro("Quem assina boletim precisa de tipo, nº e UF do registro profissional.", nameof(vm.IdTiposRegProfissional));
@@ -135,9 +136,9 @@ public sealed class ProfissionalService(LabDbContext db, IEmpresaContexto ctx, V
             e = f.Entidade;
         }
         e.Nome = vm.Nome.Trim().ToUpperInvariant();
-        e.NomeFantasia = string.IsNullOrWhiteSpace(vm.Sobrenome) ? null : vm.Sobrenome.Trim().ToUpperInvariant();
+        e.NomeFantasia = Textos.Maiusculas(vm.Sobrenome);
         e.CpfCnpj = cpf;
-        e.RgIe = string.IsNullOrWhiteSpace(vm.Rg) ? null : vm.Rg.Trim().ToUpperInvariant();
+        e.RgIe = Textos.Maiusculas(vm.Rg);
         e.Inativo = vm.Inativo;
         f.IdCargosFuncionarios = vm.IdCargosFuncionarios;
         f.IdTiposRegProfissional = vm.IdTiposRegProfissional;
@@ -152,7 +153,7 @@ public sealed class ProfissionalService(LabDbContext db, IEmpresaContexto ctx, V
         if (!gravou.Sucesso)
         {
             db.ChangeTracker.Clear();
-            return Resultado.Erro(gravou.Mensagem!, gravou.Mensagem!.Contains("CPF/CNPJ") ? nameof(vm.Cpf) : null);
+            return Resultado.Erro(gravou.Mensagem!, gravou.Tipo == TipoFalha.Duplicado ? nameof(vm.Cpf) : null, gravou.Tipo);
         }
 
         // vínculo com o usuário (T02 ↔ T13): inativo fica sem usuário (o usuário perde o "profissional ativo")
@@ -179,7 +180,7 @@ public sealed class ProfissionalService(LabDbContext db, IEmpresaContexto ctx, V
         if (await UsuarioVinculadoAsync(id) is not null)
             return Resultado.Erro("Profissional vinculado a um usuário: retire o vínculo (ou inative o profissional) antes de excluir.");
         var r = await ErrosMySql.CapturarAsync(() => db.Entidades.Where(x => x.IdEntidades == id).ExecuteDeleteAsync());
-        return r.Sucesso ? Resultado.Ok() : Resultado.Erro(r.Mensagem!);
+        return r.Sucesso ? Resultado.Ok() : r.Falha;
     }
 
     /// <summary>Imagem da assinatura (só da empresa ativa).</summary>

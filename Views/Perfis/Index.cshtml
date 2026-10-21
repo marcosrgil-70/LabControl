@@ -41,11 +41,3 @@
         </table>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        // nome no data-*: nunca dentro de string JavaScript (XSS com apóstrofo no nome)
-        document.querySelectorAll('form[data-confirmar]').forEach(f =>
-            f.addEventListener('submit', e => { if (f.dataset.confirmar && !confirm(f.dataset.confirmar)) e.preventDefault(); }));
-    </script>
-}

@@ -247,9 +247,6 @@
 @section Scripts {
     <script>
         (() => {
-            document.querySelectorAll('form[data-confirmar]').forEach(f =>
-                f.addEventListener('submit', e => { if (f.dataset.confirmar && !confirm(f.dataset.confirmar)) e.preventDefault(); }));
-
             const modalEl = document.getElementById('modalGeo');
             if (!modalEl) return;
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);

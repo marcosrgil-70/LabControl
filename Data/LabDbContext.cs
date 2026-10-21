@@ -46,11 +46,10 @@ public partial class LabDbContext(DbContextOptions<LabDbContext> options, IEmpre
         modelBuilder.Entity<PerfilPermissao>().HasQueryFilter(e => e.Perfil.IdEmpresas == EmpresaAtivaId);
     }
 
+    // mesmo fluxo do SaveChangesAsync (comentado abaixo); nenhum serviço usa o síncrono, mas ele não pode escapar da auditoria
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
-        PreencherAutoria();
-        ConferirEmpresa();
-        var pendentes = AuditoriaAlteracoes.Capturar(ChangeTracker);
+        var pendentes = Preparar();
         if (pendentes.Count == 0) return base.SaveChanges(acceptAllChangesOnSuccess);
 
         using var propria = Database.CurrentTransaction is null ? Database.BeginTransaction() : null;
@@ -70,9 +69,7 @@ public partial class LabDbContext(DbContextOptions<LabDbContext> options, IEmpre
     /// </summary>
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
-        PreencherAutoria();
-        ConferirEmpresa();
-        var pendentes = AuditoriaAlteracoes.Capturar(ChangeTracker);
+        var pendentes = Preparar();
         if (pendentes.Count == 0) return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
 
         await using var propria = Database.CurrentTransaction is null ? await Database.BeginTransactionAsync(cancellationToken) : null;
@@ -81,6 +78,14 @@ public partial class LabDbContext(DbContextOptions<LabDbContext> options, IEmpre
         if (propria is not null) await propria.CommitAsync(cancellationToken);
         if (acceptAllChangesOnSuccess) ChangeTracker.AcceptAllChanges();
         return n;
+    }
+
+    /// <summary>Autoria, empresa e captura da auditoria — antes de qualquer SaveChanges.</summary>
+    private List<AuditoriaAlteracoes.Pendente> Preparar()
+    {
+        PreencherAutoria();
+        ConferirEmpresa();
+        return AuditoriaAlteracoes.Capturar(ChangeTracker);
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using LabControl.Infra;
 using LabControl.Services.Auxiliares;
 
 namespace LabControl.ViewModels;
@@ -28,7 +29,7 @@ public sealed class AuxiliarListaVM
     public int Total { get; init; }
     /// <summary>Inativos que a pesquisa acharia com "mostrar inativos" (aviso na lista).</summary>
     public int InativosOcultos { get; init; }
-    public int Paginas => Math.Max(1, (Total + AuxiliarFiltroVM.TamanhoPagina - 1) / AuxiliarFiltroVM.TamanhoPagina);
+    public int Paginas => Paginacao.Paginas(Total, AuxiliarFiltroVM.TamanhoPagina);
     public AuxiliarFormVM? Form { get; set; }
     /// <summary>Registro que não pôde ser excluído por estar em uso: a tela oferece "Inativar".</summary>
     public int? OferecerInativar { get; set; }

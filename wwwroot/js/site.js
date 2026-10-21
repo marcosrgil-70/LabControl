@@ -1,5 +1,12 @@
 // LabControl v2 — scripts comuns a todas as telas (carregado pelo _Layout).
 
+// <form data-confirmar="texto">: pede confirmação antes de enviar (texto vazio = sem pergunta). O texto vai no
+// data-*, nunca dentro de string JavaScript (XSS com apóstrofo num nome).
+document.addEventListener('submit', e => {
+    const f = e.target;
+    if (f instanceof HTMLFormElement && f.dataset.confirmar && !confirm(f.dataset.confirmar)) e.preventDefault();
+});
+
 // Cadastro rápido "+" (T10-00, tarefa 2.4): <select lc-rapido="TABELA"> ganha um botão que abre o formulário do
 // auxiliar (GET /Auxiliares/{tabela}/Incluir), grava por POST /Auxiliares/{tabela}/Rapido → { id, texto } e já deixa
 // o item escolhido (também entra nos outros combos da mesma tabela na página). Erro → 422 { erro, campo } no campo.
@@ -26,7 +33,7 @@
                 if (dono !== document.body) document.body.classList.add('modal-open');
             });
         }
-        return { el, modal: bootstrap.Modal.getOrCreateInstance(el, { backdrop: dono === document.body ? true : false }) };
+        return { el, modal: bootstrap.Modal.getOrCreateInstance(el, { backdrop: dono === document.body }) };
     };
 
     const incluirOpcao = (select, id, texto) => {

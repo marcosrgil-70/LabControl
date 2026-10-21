@@ -189,8 +189,6 @@
                 modal.show();
             }));
 
-            document.querySelectorAll('form[data-confirmar]').forEach(f =>
-                f.addEventListener('submit', e => { if (f.dataset.confirmar && !confirm(f.dataset.confirmar)) e.preventDefault(); }));
 
             // gravação com erro: a lista volta com o formulário já no modal
             if (conteudo.querySelector('form')) { preparar(); alterado = true; modal.show(); }

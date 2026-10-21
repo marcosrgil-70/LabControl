@@ -1,3 +1,4 @@
+using LabControl.Infra;
 using System.ComponentModel.DataAnnotations;
 using LabControl.Models;
 
@@ -25,7 +26,7 @@ public sealed class ClienteListaVM
     public int Total { get; init; }
     /// <summary>Inativos que a pesquisa acharia com "mostrar inativos" (aviso na lista).</summary>
     public int InativosOcultos { get; init; }
-    public int Paginas => Math.Max(1, (Total + ClienteFiltroVM.TamanhoPagina - 1) / ClienteFiltroVM.TamanhoPagina);
+    public int Paginas => Paginacao.Paginas(Total, ClienteFiltroVM.TamanhoPagina);
 }
 
 /// <summary>Dados básicos + observações do cliente/fornecedor (as abas de contatos são o componente <c>_Contatos</c>).</summary>

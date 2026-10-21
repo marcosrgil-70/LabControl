@@ -54,7 +54,7 @@ public sealed class PerfilService(LabDbContext db, IEmpresaContexto ctx)
     {
         var nome = Normalizar(vm.Nome);
         if (nome == Administrador) return Resultado.Erro("O nome ADMINISTRADOR é reservado.", nameof(vm.Nome));
-        var perfil = new Perfil { Nome = nome, Descricao = Vazio(vm.Descricao), Ativo = vm.Ativo };
+        var perfil = new Perfil { Nome = nome, Descricao = Textos.Limpo(vm.Descricao), Ativo = vm.Ativo };
         await using var tx = await db.Database.BeginTransactionAsync();
         db.Add(perfil);
         var r = await ErrosMySql.CapturarAsync(() => db.SaveChangesAsync());
@@ -73,7 +73,7 @@ public sealed class PerfilService(LabDbContext db, IEmpresaContexto ctx)
         var nome = Normalizar(vm.Nome);
         if (nome == Administrador) return Resultado.Erro("O nome ADMINISTRADOR é reservado.", nameof(vm.Nome));
         perfil.Nome = nome;
-        perfil.Descricao = Vazio(vm.Descricao);
+        perfil.Descricao = Textos.Limpo(vm.Descricao);
         perfil.Ativo = vm.Ativo;
         await using var tx = await db.Database.BeginTransactionAsync();
         await GravarPermissoesAsync(perfil.IdPerfis, vm.Permissoes);
@@ -143,5 +143,4 @@ public sealed class PerfilService(LabDbContext db, IEmpresaContexto ctx)
     private static string NomeDaTela(string descricao) => descricao.Split(" — ")[0];
     private static PermissaoCelula Celula(Permissao p) => new(p.IdPermissoes, p.Codigo, p.Acao, p.Descricao.Split(" — ").Last());
     private static string Normalizar(string nome) => nome.Trim().ToUpperInvariant();
-    private static string? Vazio(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }

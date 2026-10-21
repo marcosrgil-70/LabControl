@@ -1,3 +1,4 @@
+using LabControl.Infra;
 namespace LabControl.ViewModels;
 
 /// <summary>Filtro das listas de países, estados e cidades (T11-01…03).</summary>
@@ -45,7 +46,7 @@ public sealed class GeoListaVM
     public required GeoFiltroVM Filtro { get; init; }
     public required IReadOnlyList<GeoLinhaVM> Itens { get; init; }
     public int Total { get; init; }
-    public int Paginas => Math.Max(1, (Total + GeoFiltroVM.TamanhoPagina - 1) / GeoFiltroVM.TamanhoPagina);
+    public int Paginas => Paginacao.Paginas(Total, GeoFiltroVM.TamanhoPagina);
     /// <summary>Combos: países (estados e filtro de cidades) e estados do país (cidades).</summary>
     public IReadOnlyList<OpcaoVM> Paises { get; init; } = [];
     public IReadOnlyList<OpcaoVM> Estados { get; init; } = [];

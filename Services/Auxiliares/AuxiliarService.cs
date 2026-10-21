@@ -27,7 +27,7 @@ public sealed partial class AuxiliarService(LabDbContext db)
         if (!filtro.Inativos) q = q.Where(e => EF.Property<bool>(e, Ativo));
 
         var total = await q.CountAsync();
-        filtro.Pagina = Math.Clamp(filtro.Pagina, 1, Math.Max(1, (total + AuxiliarFiltroVM.TamanhoPagina - 1) / AuxiliarFiltroVM.TamanhoPagina));
+        filtro.Pagina = Paginacao.Ajustar(filtro.Pagina, total, AuxiliarFiltroVM.TamanhoPagina);
         var entidades = await q.OrderBy(e => EF.Property<string>(e, def.CampoTexto))
             .Skip((filtro.Pagina - 1) * AuxiliarFiltroVM.TamanhoPagina).Take(AuxiliarFiltroVM.TamanhoPagina).ToListAsync();
 
@@ -37,7 +37,7 @@ public sealed partial class AuxiliarService(LabDbContext db)
         {
             Definicao = def, Filtro = filtro, Colunas = colunas, Total = total, InativosOcultos = ocultos,
             Itens = entidades.Select(e => new AuxiliarLinhaVM(Id(tipo, e), (bool)Valor(tipo, e, Ativo)!,
-                colunas.Select(c => Exibir(c, tipo.FindProperty(c.Propriedade)!, Valor(tipo, e, c.Propriedade))).ToList())).ToList(),
+                colunas.Select(c => Exibir(Valor(tipo, e, c.Propriedade))).ToList())).ToList(),
         };
     }
 
@@ -52,7 +52,7 @@ public sealed partial class AuxiliarService(LabDbContext db)
             var tipo = Tipo<T>();
             vm.Id = id;
             vm.Ativo = (bool)Valor(tipo, e, Ativo)!;
-            foreach (var c in def.Campos) vm.Valores[c.Propriedade] = ParaFormulario(c, Valor(tipo, e, c.Propriedade));
+            foreach (var c in def.Campos) vm.Valores[c.Propriedade] = ParaFormulario(Valor(tipo, e, c.Propriedade));
         }
         await PrepararAsync(def, vm);
         return vm;
@@ -96,14 +96,14 @@ public sealed partial class AuxiliarService(LabDbContext db)
         entrada.Property(Ativo).CurrentValue = vm.Ativo;
 
         if (def.ValidarAntesDeGravar is not null && await def.ValidarAntesDeGravar(db, entidade) is { Sucesso: false } invalido)
-            return Resultado.Erro(invalido.Mensagem!, invalido.Campo);
+            return invalido.Falha;
 
         if (vm.Id == 0) db.Add(entidade);
         var gravou = await ErrosMySql.CapturarAsync(() => db.SaveChangesAsync());
         if (!gravou.Sucesso)
         {
             db.ChangeTracker.Clear();
-            return Resultado.Erro(gravou.Mensagem!, gravou.Mensagem!.StartsWith("Já existe") ? CampoDuplicado(def, gravou.Mensagem) : null);
+            return Resultado.Erro(gravou.Mensagem!, gravou.Tipo == TipoFalha.Duplicado ? CampoDuplicado(def, gravou.Mensagem!) : null, gravou.Tipo);
         }
         return Resultado.Ok(Id(tipo, entidade));
     }
@@ -123,7 +123,7 @@ public sealed partial class AuxiliarService(LabDbContext db)
             && await def.ValidarAntesDeExcluir(db, atual) is { Sucesso: false } invalido)
             return invalido;
         var r = await ErrosMySql.CapturarAsync(() => db.Set<T>().Where(e => EF.Property<int>(e, chave) == id).ExecuteDeleteAsync());
-        if (!r.Sucesso) return Resultado.Erro(r.Mensagem!);
+        if (!r.Sucesso) return r.Falha;
         return r.Valor == 0 ? Resultado.Erro(def.NaoEncontrado) : Resultado.Ok();
     }
 
@@ -202,7 +202,7 @@ public sealed partial class AuxiliarService(LabDbContext db)
         return s.Length == 0 ? s : s[0] + s[1..].ToLowerInvariant();
     }
 
-    private static string? ParaFormulario(CampoAuxiliar c, object? valor) => valor switch
+    private static string? ParaFormulario(object? valor) => valor switch
     {
         null => null,
         bool b => b ? "true" : "false",
@@ -211,12 +211,12 @@ public sealed partial class AuxiliarService(LabDbContext db)
         _ => valor.ToString(),
     };
 
-    private static string? Exibir(CampoAuxiliar c, IProperty p, object? valor) => valor switch
+    private static string? Exibir(object? valor) => valor switch
     {
         null => null,
         bool b => b ? "Sim" : "Não",
         Enum en => Rotulo(en),
-        _ => ParaFormulario(c, valor),
+        _ => ParaFormulario(valor),
     };
 
     /// <summary>Texto do formulário → valor da propriedade, com as validações de tamanho, faixa e formato.</summary>

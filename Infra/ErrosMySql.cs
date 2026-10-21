@@ -12,8 +12,8 @@ public static partial class ErrosMySql
 {
     public const string SqlStateNegocio = "45000";
 
-    /// <summary>FK recusou a exclusão (1451): as telas oferecem "Inativar" só nesse caso.</summary>
-    public const string MensagemEmUso = "Registro em uso por outros cadastros ou movimentos: não pode ser excluído (inative-o em vez de excluir).";
+    /// <summary>FK recusou a exclusão (1451) — <see cref="TipoFalha.EmUso"/>.</summary>
+    private const string MensagemEmUso = "Registro em uso por outros cadastros ou movimentos: não pode ser excluído (inative-o em vez de excluir).";
 
     /// <summary>Mensagem para o usuário, ou null se o erro for técnico.</summary>
     public static string? MensagemDeNegocio(Exception ex)
@@ -33,18 +33,28 @@ public static partial class ErrosMySql
 
     public static bool EhErroDeNegocio(Exception ex) => MensagemDeNegocio(ex) is not null;
 
+    /// <summary>Tipo do erro de negócio (para a tela decidir sem comparar a mensagem).</summary>
+    public static TipoFalha TipoDe(Exception ex) => Encontrar(ex) switch
+    {
+        { SqlState: SqlStateNegocio } => TipoFalha.Negocio,
+        { ErrorCode: MySqlErrorCode.DuplicateKeyEntry } => TipoFalha.Duplicado,
+        { ErrorCode: MySqlErrorCode.RowIsReferenced2 or MySqlErrorCode.RowIsReferenced } => TipoFalha.EmUso,
+        { ErrorCode: MySqlErrorCode.NoReferencedRow2 or MySqlErrorCode.NoReferencedRow } => TipoFalha.ReferenciaAusente,
+        _ => TipoFalha.Negocio,
+    };
+
     /// <summary>Executa a ação e converte erro de negócio em <see cref="Resultado"/>; erro técnico continua subindo.</summary>
     public static async Task<Resultado> CapturarAsync(Func<Task> acao)
     {
         try { await acao(); return Resultado.Ok(); }
-        catch (Exception ex) when (MensagemDeNegocio(ex) is { } msg) { return Resultado.Erro(msg); }
+        catch (Exception ex) when (MensagemDeNegocio(ex) is { } msg) { return Resultado.Erro(msg, tipo: TipoDe(ex)); }
     }
 
     /// <inheritdoc cref="CapturarAsync(Func{Task})"/>
     public static async Task<Resultado<T>> CapturarAsync<T>(Func<Task<T>> acao)
     {
         try { return Resultado.Ok(await acao()); }
-        catch (Exception ex) when (MensagemDeNegocio(ex) is { } msg) { return Resultado.Erro(msg); }
+        catch (Exception ex) when (MensagemDeNegocio(ex) is { } msg) { return Resultado.Erro(msg, tipo: TipoDe(ex)); }
     }
 
     /// <summary>MySqlException na cadeia (o EF embrulha em DbUpdateException).</summary>

@@ -16,8 +16,7 @@ public sealed class ClienteService(LabDbContext db)
     public const string MensagemNaoEncontrado = "Cadastro não encontrado (pode ter sido excluído).";
 
     /// <summary>Entidades da tela: não é a empresa usuária e tem algum tipo comercial.</summary>
-    private IQueryable<Entidade> DaTela() => db.Entidades.Where(e => !e.TipoEmpresaUsuaria
-        && (e.TipoCliente || e.TipoFornecedor || e.TipoVendedor || e.TipoTransportador));
+    private IQueryable<Entidade> DaTela() => db.Entidades.Where(Entidade.DaTelaDeClientes);
 
     public async Task<ClienteListaVM> ListarAsync(ClienteFiltroVM f)
     {
@@ -42,7 +41,7 @@ public sealed class ClienteService(LabDbContext db)
         var ocultos = f.Inativos ? 0 : await q.CountAsync(e => e.Inativo);
         if (!f.Inativos) q = q.Where(e => !e.Inativo);
         var total = await q.CountAsync();
-        f.Pagina = Math.Clamp(f.Pagina, 1, Math.Max(1, (total + ClienteFiltroVM.TamanhoPagina - 1) / ClienteFiltroVM.TamanhoPagina));
+        f.Pagina = Paginacao.Ajustar(f.Pagina, total, ClienteFiltroVM.TamanhoPagina);
         var itens = await q.OrderBy(e => e.Nome).Skip((f.Pagina - 1) * ClienteFiltroVM.TamanhoPagina).Take(ClienteFiltroVM.TamanhoPagina)
             .Select(e => new
             {
@@ -100,12 +99,12 @@ public sealed class ClienteService(LabDbContext db)
         var pf = vm.Categoria == Categoria.Fisica;
         e.Categoria = vm.Categoria;
         e.Nome = vm.Nome.Trim().ToUpperInvariant();
-        e.NomeFantasia = Texto(vm.NomeFantasia)?.ToUpperInvariant();
+        e.NomeFantasia = Textos.Maiusculas(vm.NomeFantasia);
         e.CpfCnpj = doc;
-        e.RgIe = Texto(vm.RgIe)?.ToUpperInvariant();
+        e.RgIe = Textos.Maiusculas(vm.RgIe);
         // campos só de PF / só de PJ (trocar a categoria limpa os da outra)
-        e.InscMunicipal = pf ? null : Texto(vm.InscMunicipal);
-        e.InscSuframa = pf ? null : Texto(vm.InscSuframa);
+        e.InscMunicipal = pf ? null : Textos.Limpo(vm.InscMunicipal);
+        e.InscSuframa = pf ? null : Textos.Limpo(vm.InscSuframa);
         e.Sexo = pf ? vm.Sexo : null;
         e.DtNascimento = pf ? vm.DtNascimento : null;
         e.EstadoCivil = pf ? vm.EstadoCivil : null;
@@ -113,8 +112,8 @@ public sealed class ClienteService(LabDbContext db)
         e.TipoFornecedor = vm.TipoFornecedor;
         e.TipoVendedor = vm.TipoVendedor;
         e.TipoTransportador = vm.TipoTransportador;
-        e.Avaliacao = Texto(vm.Avaliacao)?.ToUpperInvariant();
-        e.Observacao = Texto(vm.Observacao);
+        e.Avaliacao = Textos.Maiusculas(vm.Avaliacao);
+        e.Observacao = Textos.Limpo(vm.Observacao);
         e.ObsIncluirFaturamento = vm.ObsIncluirFaturamento;
         e.Inativo = vm.Inativo;
 
@@ -122,7 +121,7 @@ public sealed class ClienteService(LabDbContext db)
         if (!r.Sucesso)
         {
             db.ChangeTracker.Clear();
-            return Resultado.Erro(r.Mensagem!, r.Mensagem!.Contains("CPF/CNPJ") ? nameof(vm.CpfCnpj) : null);
+            return Resultado.Erro(r.Mensagem!, r.Tipo == TipoFalha.Duplicado ? nameof(vm.CpfCnpj) : null, r.Tipo);
         }
         return Resultado.Ok(e.IdEntidades);
     }
@@ -134,7 +133,7 @@ public sealed class ClienteService(LabDbContext db)
         if (await db.Entidades.AnyAsync(e => e.IdEntidades == id && e.TipoFuncionario))
             return Resultado.Erro("Este cadastro também é profissional: inative-o em vez de excluir.");
         var r = await ErrosMySql.CapturarAsync(() => DaTela().Where(e => e.IdEntidades == id).ExecuteDeleteAsync());
-        return r.Sucesso ? Resultado.Ok() : Resultado.Erro(r.Mensagem!);
+        return r.Sucesso ? Resultado.Ok() : r.Falha;
     }
 
     public async Task<Resultado> DefinirInativoAsync(int id, bool inativo)
@@ -147,5 +146,4 @@ public sealed class ClienteService(LabDbContext db)
         string.Join(", ", new[] { (cliente, "Cliente"), (fornecedor, "Fornecedor"), (comercial, "Comercial"),
             (transportador, "Transportador"), (funcionario, "Profissional") }.Where(t => t.Item1).Select(t => t.Item2));
 
-    private static string? Texto(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }

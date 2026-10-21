@@ -79,18 +79,26 @@ public static class AuditoriaAlteracoes
     /// </summary>
     public static void Inserir(DatabaseFacade db, IEnumerable<Auditoria> linhas)
     {
-        foreach (var a in linhas) db.ExecuteSql(Insert(a));
+        foreach (var (sql, args) in Lotes(linhas)) db.ExecuteSqlRaw(sql, args!);
     }
 
     public static async Task InserirAsync(DatabaseFacade db, IEnumerable<Auditoria> linhas, CancellationToken cancellationToken = default)
     {
-        foreach (var a in linhas) await db.ExecuteSqlAsync(Insert(a), cancellationToken);
+        foreach (var (sql, args) in Lotes(linhas)) await db.ExecuteSqlRawAsync(sql, args!, cancellationToken); // nulos viram NULL, como na interpolação
     }
 
-    private static FormattableString Insert(Auditoria a) => $"""
-        INSERT INTO AUDITORIA (ID_EMPRESAS, ID_USUARIOS, TABELA, ID_REGISTRO, ACAO, DADOS_ANTES, DADOS_DEPOIS, IP)
-        VALUES ({a.IdEmpresas}, {a.IdUsuarios}, {a.Tabela}, {a.IdRegistro}, {a.Acao}, {a.DadosAntes}, {a.DadosDepois}, {a.Ip})
-        """;
+    // um INSERT com várias linhas por lote (8 parâmetros por linha: 500 linhas = 4.000, longe do limite do MySQL)
+    private const int LinhasPorLote = 500;
+
+    private static IEnumerable<(string Sql, object?[] Args)> Lotes(IEnumerable<Auditoria> linhas)
+    {
+        foreach (var lote in linhas.Chunk(LinhasPorLote))
+        {
+            var args = lote.SelectMany(a => new object?[] { a.IdEmpresas, a.IdUsuarios, a.Tabela, a.IdRegistro, a.Acao, a.DadosAntes, a.DadosDepois, a.Ip }).ToArray();
+            var valores = string.Join(", ", lote.Select((_, i) => "(" + string.Join(", ", Enumerable.Range(i * 8, 8).Select(p => $"{{{p}}}")) + ")"));
+            yield return ("INSERT INTO AUDITORIA (ID_EMPRESAS, ID_USUARIOS, TABELA, ID_REGISTRO, ACAO, DADOS_ANTES, DADOS_DEPOIS, IP) VALUES " + valores, args);
+        }
+    }
 
     /// <summary>Entradas auditáveis do ChangeTracker (chamar antes do SaveChanges).</summary>
     public static List<Pendente> Capturar(ChangeTracker tracker)

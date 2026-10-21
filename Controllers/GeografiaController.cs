@@ -1,9 +1,7 @@
-using LabControl.Data;
 using LabControl.Infra;
 using LabControl.Services.Geografia;
 using LabControl.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace LabControl.Controllers;
 
@@ -11,7 +9,7 @@ namespace LabControl.Controllers;
 /// T11-01…03 — países, estados e cidades (tabelas globais): consulta com GEOGRAFIA.CONSULTAR; incluir, alterar,
 /// excluir e importar IBGE só ADMIN_GLOBAL. Também o apoio ao componente de endereço (P25): cidades da UF e CEP.
 /// </summary>
-public sealed class GeografiaController(LabDbContext db, ConsultaCepService cep, GeografiaService geografia) : Controller
+public sealed class GeografiaController(ConsultaCepService cep, GeografiaService geografia) : Controller
 {
     private static readonly string[] Telas = [GeografiaService.Paises, GeografiaService.Estados, GeografiaService.Cidades];
 
@@ -76,9 +74,7 @@ public sealed class GeografiaController(LabDbContext db, ConsultaCepService cep,
     /// <summary>Cidades da UF para o combo (JSON <c>[{ id, nome }]</c>).</summary>
     [HttpGet]
     // não se chama "Cidades": esse nome é a tela T11-03
-    public async Task<IActionResult> CidadesDaUf(int idEstado) =>
-        Json(await db.Cidades.AsNoTracking().Where(c => c.IdEstados == idEstado).OrderBy(c => c.Nome)
-            .Select(c => new OpcaoVM(c.IdCidades, c.Nome)).ToListAsync());
+    public async Task<IActionResult> CidadesDaUf(int idEstado) => Json(await geografia.CidadesDaUfAsync(idEstado));
 
     /// <summary>Endereço do CEP (ViaCEP no servidor, cache de 1 dia); erro → 422 <c>{ erro }</c>.</summary>
     [HttpGet("Geografia/Cep/{numero}")]

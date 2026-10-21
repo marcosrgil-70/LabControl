@@ -52,7 +52,7 @@ public sealed class AuxiliaresController(AuxiliarService auxiliares) : Controlle
         if (CatalogoAuxiliares.Encontrar(tabela) is not { } def) return NotFound();
         var r = await def.ExcluirAsync(auxiliares, id);
         // "Inativar" só quando o banco recusou por uso (não para "não encontrado" ou regra do auxiliar)
-        if (!this.AplicarNoTempData(r, def.Frase("excluído")) && r.Mensagem == ErrosMySql.MensagemEmUso) TempData[ChaveInativar] = id;
+        if (!this.AplicarNoTempData(r, def.Frase("excluído")) && r.Tipo == TipoFalha.EmUso) TempData[ChaveInativar] = id;
         return VoltarParaLista(def, filtro);
     }
 

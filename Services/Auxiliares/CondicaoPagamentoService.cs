@@ -67,8 +67,9 @@ public sealed class CondicaoPagamentoService(LabDbContext db)
             (p.NrParcela, p.DiasVencimento, p.PorcVencimento) = (i + 1, parcelas[i].Dias, parcelas[i].Porc);
         }
         var r = await ErrosMySql.CapturarAsync(() => db.SaveChangesAsync());
-        if (!r.Sucesso) db.ChangeTracker.Clear();
-        return r.Sucesso ? Resultado.Ok() : Resultado.Erro(r.Mensagem!);
+        if (r.Sucesso) return Resultado.Ok();
+        db.ChangeTracker.Clear();
+        return r.Falha;
     }
 
     // aceita "33,3333" (tela) e "33.3333"

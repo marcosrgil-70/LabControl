@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using LabControl.Data;
 using LabControl.Infra;
 using LabControl.Models;
+using LabControl.Services.Geografia;
 using LabControl.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,9 +29,7 @@ public sealed class ContatosService(LabDbContext db)
     {
         CadastroDono.Empresa => await db.Entidades.AnyAsync(e => e.IdEntidades == idEntidade && e.TipoEmpresaUsuaria),
         CadastroDono.Profissional => await db.Entidades.AnyAsync(e => e.IdEntidades == idEntidade && e.TipoFuncionario),
-        // o mesmo critério da lista da T12: um profissional só (sem tipo comercial) não é mexido pela tela de clientes
-        _ => await db.Entidades.AnyAsync(e => e.IdEntidades == idEntidade && !e.TipoEmpresaUsuaria
-            && (e.TipoCliente || e.TipoFornecedor || e.TipoVendedor || e.TipoTransportador)),
+        _ => await db.Entidades.Where(Entidade.DaTelaDeClientes).AnyAsync(e => e.IdEntidades == idEntidade),
     };
 
     public async Task<ContatosVM?> CarregarAsync(CadastroDono dono, int idEntidade, string urlBase, bool podeAlterar)
@@ -78,7 +77,7 @@ public sealed class ContatosService(LabDbContext db)
                 .OrderBy(t => t.Descricao).Select(t => new OpcaoVM(t.IdFonesTipos, t.Descricao)).ToListAsync(),
             TiposEmail = await db.EmailsTipos.AsNoTracking().Where(t => t.Ativo || usadosEmail.Contains(t.IdEmailsTipos))
                 .OrderBy(t => t.Descricao).Select(t => new OpcaoVM(t.IdEmailsTipos, t.Descricao)).ToListAsync(),
-            Estados = await db.Estados.AsNoTracking().OrderBy(e => e.Sigla).Select(e => new OpcaoVM(e.IdEstados, e.Sigla)).ToListAsync(),
+            Estados = await db.UfsAsync(),
         };
     }
 
@@ -107,10 +106,10 @@ public sealed class ContatosService(LabDbContext db)
             return Resultado.Erro("Endereço não encontrado (pode ter sido excluído).");
         e.IdEnderecosTipos = tipo;
         e.IdTiposLogradouro = vm.IdTiposLogradouro;
-        e.Logradouro = Texto(vm.Logradouro)!.ToUpperInvariant();
-        e.Numero = Texto(vm.Numero)?.ToUpperInvariant();
-        e.Complemento = Texto(vm.Complemento)?.ToUpperInvariant();
-        e.Bairro = Texto(vm.Bairro)?.ToUpperInvariant();
+        e.Logradouro = Textos.Maiusculas(vm.Logradouro)!;
+        e.Numero = Textos.Maiusculas(vm.Numero);
+        e.Complemento = Textos.Maiusculas(vm.Complemento);
+        e.Bairro = Textos.Maiusculas(vm.Bairro);
         e.Cep = cep;
         e.IdCidades = cidade;
         e.Inativo = vm.Inativo;
@@ -139,8 +138,8 @@ public sealed class ContatosService(LabDbContext db)
         f.IdFonesTipos = tipo;
         f.Ddd = ddd;
         f.Fone = fone.Length == 9 ? $"{fone[..5]}-{fone[5..]}" : $"{fone[..4]}-{fone[4..]}";
-        f.Contato = Texto(vm.Contato)?.ToUpperInvariant();
-        f.Departamento = Texto(vm.Departamento)?.ToUpperInvariant();
+        f.Contato = Textos.Maiusculas(vm.Contato);
+        f.Departamento = Textos.Maiusculas(vm.Departamento);
         f.Inativo = vm.Inativo;
         f.Principal = vm.Principal && !vm.Inativo;
         // o novo principal tira a marca do anterior (o banco recusa dois)
@@ -157,7 +156,7 @@ public sealed class ContatosService(LabDbContext db)
     public async Task<Resultado<int>> GravarEmailAsync(CadastroDono dono, int idEntidade, EmailVM vm)
     {
         if (!await PertenceAsync(dono, idEntidade)) return Resultado.Erro(MensagemNaoEncontrado);
-        var email = Texto(vm.Email)?.ToLowerInvariant();
+        var email = Textos.Limpo(vm.Email)?.ToLowerInvariant();
         if (email is null || email.Length > 150 || !new EmailAddressAttribute().IsValid(email) || !email.Contains('.'))
             return Resultado.Erro("E-mail inválido.", nameof(vm.Email));
         if (vm.IdEmailsTipos is { } tipo && !await db.EmailsTipos.AnyAsync(t => t.IdEmailsTipos == tipo))
@@ -172,8 +171,8 @@ public sealed class ContatosService(LabDbContext db)
             return Resultado.Erro("E-mail não encontrado (pode ter sido excluído).");
         m.IdEmailsTipos = vm.IdEmailsTipos;
         m.Email = email;
-        m.NomeContato = Texto(vm.NomeContato)?.ToUpperInvariant();
-        m.Departamento = Texto(vm.Departamento)?.ToUpperInvariant();
+        m.NomeContato = Textos.Maiusculas(vm.NomeContato);
+        m.Departamento = Textos.Maiusculas(vm.Departamento);
         m.EnviarNfe = vm.EnviarNfe;
         m.EnviarLaudo = vm.EnviarLaudo;
         m.Inativo = vm.Inativo;
@@ -198,7 +197,7 @@ public sealed class ContatosService(LabDbContext db)
             TipoContato.Fone => db.EntidadesFones.Where(x => x.IdEntidadesFones == id && x.IdEntidades == idEntidade).ExecuteDeleteAsync(),
             _ => db.EntidadesEmails.Where(x => x.IdEntidadesEmails == id && x.IdEntidades == idEntidade).ExecuteDeleteAsync(),
         });
-        if (!r.Sucesso) return Resultado.Erro(r.Mensagem!);
+        if (!r.Sucesso) return r.Falha;
         return r.Valor == 0 ? Resultado.Erro("Contato não encontrado (pode ter sido excluído).") : Resultado.Ok();
     }
 
@@ -210,12 +209,11 @@ public sealed class ContatosService(LabDbContext db)
         if (!r.Sucesso)
         {
             db.ChangeTracker.Clear();
-            return Resultado.Erro(r.Mensagem!);
+            return r.Falha;
         }
         return Resultado.Ok(id());
     }
 
-    private static string? Texto(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 
     /// <summary>Primeiro texto acima do tamanho da coluna, como erro no campo (null = todos cabem).</summary>
     private static Falha? Longo(params (string? Valor, int Maximo, string Rotulo, string Campo)[] campos) =>

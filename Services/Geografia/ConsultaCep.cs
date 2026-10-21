@@ -85,8 +85,8 @@ public sealed class ConsultaCepService(IFonteCep fonte, IMemoryCache cache, LabD
                 (tipo, logradouro) = (t.IdTiposLogradouro, resto);
         }
         return Resultado.Ok(new EnderecoCepVM(Documentos.FormatarCep(digitos)!, logradouro, tipo,
-            string.IsNullOrWhiteSpace(bruto.Complemento) ? null : bruto.Complemento.Trim().ToUpperInvariant(),
-            string.IsNullOrWhiteSpace(bruto.Bairro) ? null : bruto.Bairro.Trim().ToUpperInvariant(),
+            Textos.Maiusculas(bruto.Complemento),
+            Textos.Maiusculas(bruto.Bairro),
             cidade.IdEstados, cidade.IdCidades, cidade.Nome, cidade.Uf));
     }
 }

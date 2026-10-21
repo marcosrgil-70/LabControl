@@ -95,10 +95,10 @@ public sealed class ParametrosEmpresaService(LabDbContext db, IEmpresaContexto c
         p.DiasValidadeProposta = vm.DiasValidadeProposta;
         p.DiasPesquisaPadrao = vm.DiasPesquisaPadrao;
         p.ExigeResp2Boletim = vm.ExigeResp2Boletim;
-        p.TextoPadraoLegenda = Vazio(vm.TextoPadraoLegenda);
-        p.TextoPadraoContrato = Vazio(vm.TextoPadraoContrato);
+        p.TextoPadraoLegenda = Textos.Limpo(vm.TextoPadraoLegenda);
+        p.TextoPadraoContrato = Textos.Limpo(vm.TextoPadraoContrato);
         var gravou = await ErrosMySql.CapturarAsync(() => db.SaveChangesAsync());
-        return gravou.Sucesso ? Resultado.Ok() : Resultado.Erro(gravou.Mensagem!);
+        return gravou.Sucesso ? Resultado.Ok() : gravou.Falha;
     }
 
     /// <summary>
@@ -150,5 +150,4 @@ public sealed class ParametrosEmpresaService(LabDbContext db, IEmpresaContexto c
         _ => throw new ArgumentOutOfRangeException(nameof(tipo)),
     };
 
-    private static string? Vazio(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }

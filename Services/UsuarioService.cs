@@ -123,7 +123,7 @@ public sealed partial class UsuarioService(LabDbContext db, IEmpresaContexto ctx
         var senha = GerarSenhaProvisoria();
         var usuario = new Usuario
         {
-            Login = ContaService.Normalizar(vm.Login), Nome = vm.Nome.Trim(), Email = Vazio(vm.Email), Ativo = vm.Ativo,
+            Login = ContaService.Normalizar(vm.Login), Nome = vm.Nome.Trim(), Email = Textos.Limpo(vm.Email), Ativo = vm.Ativo,
             AdminGlobal = vm.AdminGlobal, TrocarSenha = true, SenhaHash = ContaService.GerarHash(senha),
         };
         await using var tx = await db.Database.BeginTransactionAsync();
@@ -154,7 +154,7 @@ public sealed partial class UsuarioService(LabDbContext db, IEmpresaContexto ctx
             if (proprio && !vm.Ativo) return Resultado.Erro("Você não pode inativar o seu próprio usuário.", nameof(vm.Ativo));
             alvo.Login = ContaService.Normalizar(vm.Login);
             alvo.Nome = vm.Nome.Trim();
-            alvo.Email = Vazio(vm.Email);
+            alvo.Email = Textos.Limpo(vm.Email);
             alvo.Ativo = vm.Ativo;
             alvo.AdminGlobal = vm.AdminGlobal;
         }
@@ -211,7 +211,7 @@ public sealed partial class UsuarioService(LabDbContext db, IEmpresaContexto ctx
         db.RemoveRange(await db.UsuariosEmpresas.Where(v => v.IdUsuarios == id).ToListAsync());
         db.Remove(alvo);
         var r = await ErrosMySql.CapturarAsync(() => db.SaveChangesAsync());
-        if (!r.Sucesso) return Resultado.Erro(r.Mensagem!);
+        if (!r.Sucesso) return r.Falha;
         await tx.CommitAsync();
         return Resultado.Ok();
     }
@@ -317,5 +317,4 @@ public sealed partial class UsuarioService(LabDbContext db, IEmpresaContexto ctx
         }
     }
 
-    private static string? Vazio(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }

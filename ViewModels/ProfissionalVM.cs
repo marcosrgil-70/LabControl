@@ -1,3 +1,4 @@
+using LabControl.Infra;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 
@@ -20,7 +21,7 @@ public sealed class ProfissionalListaVM
     public required IReadOnlyList<ProfissionalListaItemVM> Itens { get; init; }
     public int Total { get; init; }
     public int InativosOcultos { get; init; }
-    public int Paginas => Math.Max(1, (Total + ProfissionalFiltroVM.TamanhoPagina - 1) / ProfissionalFiltroVM.TamanhoPagina);
+    public int Paginas => Paginacao.Paginas(Total, ProfissionalFiltroVM.TamanhoPagina);
 }
 
 /// <summary>Formulário da T13 (ENTIDADES categoria F + ENTIDADES_FUNCIONARIOS + vínculo com o usuário).</summary>
