@@ -25,4 +25,44 @@
 - [ ] Boletins migrados congelados (emitidos) e somente leitura.
 - [ ] Relatório de anomalias gerado.
 
-**Status:** ⬜ (v1 errada — reescrever como `Services/Migracao/MigracaoService.cs`)
+## Implementação — parte 1 (tarefa 3.5, 21/10/2026)
+- **Arquivos:**
+  - `Services/Migracao/`: `MigracaoService`, `MigracaoExecutor` (singleton, segundo plano), `ContextoMigracao`, `LeitorFirebird`, `Conversoes`, `RelatorioMigracao`;
+  - `Etapas/M01…M10`;
+  - `Controllers/MigracaoController.cs`, `ViewModels/MigracaoVM.cs`, `Views/Migracao/Index.cshtml`.
+- **Decisões do usuário:**
+  - destino = **banco separado e vazio** (padrão `labcontrol_migracao`, criado por `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`), executado a partir do app logado no `labcontrol_v2`;
+  - **senha provisória única** para todos (digitada na tela, nunca gravada em claro nem exibida; troca obrigatória no 1º acesso);
+  - **todos os usuários com o perfil ADMINISTRADOR** (USUCOD 1 → ADMIN_GLOBAL).
+- **Tela:**
+  - conexão Firebird (caminho/usuário de `appsettings` › `Firebird`, senha digitada), banco destino, senha provisória + confirmação;
+  - recusa destino com dados (empresas/usuários), inexistente ou proibido (`labcontrol`, `mysql`…) mostrando o comando de criação;
+  - execução **em segundo plano**, com a página se atualizando a cada 2 s;
+  - etapas (situação, gravados, tempo, erro), conferências esperado (lido no Firebird na hora) × encontrado, anomalias, log e **relatório CSV**.
+- **Diferença do desenho original:** executa a parte inteira em sequência (M-01 → M-10), parando na 1ª falha. Cada etapa tem a sua transação, então a falha desfaz só ela. Não há escolha de etapas soltas: os dicionários `idAntigo → idNovo` vivem em memória e o destino é recriado a cada execução. A parte 2 (4.1) reconstrói os mapas por `ID_LEGADO` e chaves únicas.
+- **Conexão destino:** própria, aberta à mão com `SET @LC_MIGRACAO = 1`; contexto sem usuário (o logado é do banco do app), empresa = a criada na M-01.
+- **Resultado contra o `DBMAIS.FDB` real** (`MigracaoParte1Tests`, banco `labcontrol_migracao_teste`):
+  - todas as conferências verdes;
+  - 527 entidades / 664 e-mails / 695 fones / 538 endereços / 1.915 produtos / 462 parâmetros (52 acreditados) / 176 métodos / 15 usuários;
+  - login de usuário migrado exige troca de senha;
+  - migração em ~1 min 23 s.
+- **Anomalias da 1ª execução (28, todas no relatório):**
+  - 11 cidades sem IBGE (grafia, bairro, UF trocada);
+  - 1 status repetido;
+  - tipos padrão do v2 incluídos;
+  - a entidade 4 (empresa e cliente) virou entidade da empresa + cliente com o mesmo CNPJ (D-22);
+  - 1 PF sem dados, 1 PF+PJ;
+  - 4 e-mails corrigidos, 1 CEP inválido;
+  - 2 profissionais sem dados;
+  - 1 parâmetro sem tipo → "NÃO INFORMADO" (99, inativo).
+
+## Critérios de aceite
+- [x] Parte 1: todas as conferências verdes num banco limpo — `MigracaoParte1Tests`.
+- [x] Login de usuário migrado com troca obrigatória — mesmo teste.
+- [ ] Todas as conferências do doc 13 §3 (partes 2 e 3: propostas, amostras, resultados, boletins) — 4.1, 5.1.
+- [ ] Nº das amostras idêntico ao legado (amostragem de 20) — 4.1.
+- [ ] Boletins migrados congelados (emitidos) e somente leitura — 5.1.
+- [x] Relatório de anomalias gerado (tela + CSV).
+- [ ] Teste no navegador da tela (`CrudNavegadorTelasTests.Migracao_tela_valida_o_pedido_sem_executar`) — escrito; **não passou ainda por máquina saturada** (CPU 100%, login > 30 s em todos os testes de navegador); rodar de novo (pendência 17).
+
+**Status:** 🟨 parte 1 (M-01…M-10) pronta na 3.5; partes 2 (4.1) e 3 (5.1) pendentes.

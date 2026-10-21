@@ -56,6 +56,8 @@
 | Saldo das raízes | igual a `LAB_HIST_AMOSTRAS_SALDO` do legado |
 | Anomalias listadas (doc 10 §8) | todas presentes no log |
 
+> **Parte 1 implementada (3.5, 21/10/2026):** destino num banco **separado e vazio**; senha provisória **única** para os usuários (dúvida 7) e perfil **ADMINISTRADOR** para todos; a entidade 4 (empresa + cliente) vira entidade da empresa + cliente com o mesmo CNPJ (D-22). Ver [P24](../processos/P24-migracao.md#decisões-do-usuário-e-implementação-parte-1-tarefa-35--21102026) e [T07](../telas/T07-migracao.md).
+
 ## 4. Após a migração
 
 1. `SET @LC_MIGRACAO = 0`.

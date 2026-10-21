@@ -27,7 +27,7 @@
 - Anomalias vão para o relatório da migração (não interrompem a etapa, salvo violação de integridade).
 
 ## Conferência ao final da etapa
-- [ ] 527 entidades.
-- [ ] Lista de documentos duplicados/ inválidos.
+- [x] 527 entidades.
+- [x] Lista de documentos duplicados/ inválidos.
 
-**Status:** ⬜
+**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M05*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoParte1Tests`).

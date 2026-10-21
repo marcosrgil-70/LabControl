@@ -24,6 +24,6 @@
 - Anomalias vão para o relatório da migração (não interrompem a etapa, salvo violação de integridade).
 
 ## Conferência ao final da etapa
-- [ ] Parâmetros apontam para status existentes da empresa 1.
+- [x] Parâmetros apontam para status existentes da empresa 1.
 
-**Status:** ⬜
+**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M04*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoParte1Tests`).

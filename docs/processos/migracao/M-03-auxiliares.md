@@ -46,7 +46,7 @@
 - Anomalias vão para o relatório da migração (não interrompem a etapa, salvo violação de integridade).
 
 ## Conferência ao final da etapa
-- [ ] Quantidades iguais às do legado por tabela.
-- [ ] Códigos de tipo de amostra/análise = IDs antigos.
+- [x] Quantidades iguais às do legado por tabela.
+- [x] Códigos de tipo de amostra/análise = IDs antigos.
 
-**Status:** ⬜
+**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M03*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoParte1Tests`).

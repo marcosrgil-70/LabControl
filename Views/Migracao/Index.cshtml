@@ -1,0 +1,161 @@
+@using LabControl.Services.Migracao
+@model MigracaoVM
+@{
+    ViewData["Title"] = "Migração de dados";
+    var r = Model.Relatorio;
+    var copia = r?.Copia();
+    var f = Model.Form;
+}
+
+<div class="d-flex align-items-center mb-1">
+    <h5 class="mb-0"><i class="bi bi-database-up me-2 text-primary"></i>Migração de dados (Firebird → v2)</h5>
+</div>
+<p class="small text-body-secondary mb-3">
+    Parte 1 — cadastros (M-01 a M-10): empresa, geografia, auxiliares, parâmetros, entidades, contatos, endereços, profissionais, usuários, produtos e parâmetros de análise.
+    A migração grava num <b>banco vazio</b>, recém-criado pelos scripts; repetir = recriar o banco (não há migração incremental). O legado só é lido.
+</p>
+
+@if (r is null || r.Terminou)
+{
+    <form method="post" asp-action="Executar" class="card mb-3" id="formMigracao" style="max-width: 56rem" novalidate
+          data-confirmar="Executar a migração parte 1 para o banco informado? O legado só é lido; o destino precisa estar vazio.">
+        <div class="card-header fw-semibold py-2">Nova execução</div>
+        <div class="card-body row g-3">
+            <div asp-validation-summary="All" class="col-12 alert alert-danger py-2 mb-0" data-erros></div>
+            <div class="col-md-8">
+                <label asp-for="Form.CaminhoFirebird" class="form-label small"></label>
+                <input asp-for="Form.CaminhoFirebird" name="CaminhoFirebird" class="form-control font-monospace" />
+            </div>
+            <div class="col-md-2">
+                <label asp-for="Form.UsuarioFirebird" class="form-label small"></label>
+                <input asp-for="Form.UsuarioFirebird" name="UsuarioFirebird" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label asp-for="Form.SenhaFirebird" class="form-label small"></label>
+                <input asp-for="Form.SenhaFirebird" name="SenhaFirebird" type="password" class="form-control" autocomplete="off" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Form.BancoDestino" class="form-label small"></label>
+                <input asp-for="Form.BancoDestino" name="BancoDestino" class="form-control font-monospace" />
+                <div class="form-text">Crie vazio antes: <code>@MigracaoService.ComandoRecriar(f.BancoDestino)</code></div>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Form.SenhaProvisoria" class="form-label small"></label>
+                <input asp-for="Form.SenhaProvisoria" name="SenhaProvisoria" type="password" class="form-control" autocomplete="new-password" />
+                <div class="form-text">A mesma para os 15 usuários do legado; cada um troca no 1º acesso. Não fica gravada.</div>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Form.ConfirmarSenha" class="form-label small"></label>
+                <input asp-for="Form.ConfirmarSenha" name="ConfirmarSenha" type="password" class="form-control" autocomplete="new-password" />
+            </div>
+        </div>
+        <div class="card-footer d-flex">
+            <button type="submit" class="btn btn-primary ms-auto">
+                <i class="bi bi-play-fill me-1"></i>Executar parte 1
+            </button>
+        </div>
+    </form>
+}
+
+@if (r is not null && copia is { } c)
+{
+    <div class="card mb-3" id="execucao" data-executando="@(!r.Terminou ? "1" : "0")">
+        <div class="card-header d-flex align-items-center py-2">
+            <span class="fw-semibold">Execução de @r.Inicio.ToString("dd/MM/yyyy HH:mm") → <span class="font-monospace">@r.Destino</span></span>
+            @if (!r.Terminou)
+            {
+                <span class="ms-3 small text-primary"><span class="spinner-border spinner-border-sm me-1"></span>executando…</span>
+            }
+            else if (r.Sucesso)
+            {
+                <span class="ms-3 badge text-bg-success" id="resultadoMigracao">Concluída</span>
+            }
+            else
+            {
+                <span class="ms-3 badge text-bg-danger" id="resultadoMigracao">Interrompida com erro</span>
+            }
+            @if (r.Terminou)
+            {
+                <a asp-action="Relatorio" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-filetype-csv me-1"></i>Baixar relatório (CSV)</a>
+            }
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0" id="etapas">
+                <thead><tr><th>Etapa</th><th>Descrição</th><th>Situação</th><th class="text-end">Gravados</th><th class="text-end">Tempo</th><th>Erro</th></tr></thead>
+                <tbody>
+                    @foreach (var e in r.Etapas)
+                    {
+                        <tr>
+                            <td class="font-monospace small">@e.Codigo</td>
+                            <td>@e.Nome</td>
+                            <td>
+                                @switch (e.Situacao)
+                                {
+                                    case SituacaoEtapa.Ok: <span class="badge text-bg-success">ok</span> break;
+                                    case SituacaoEtapa.Erro: <span class="badge text-bg-danger">erro</span> break;
+                                    case SituacaoEtapa.Executando: <span class="badge text-bg-primary">executando</span> break;
+                                    default: <span class="badge text-bg-light border">pendente</span> break;
+                                }
+                            </td>
+                            <td class="text-end small">@(e.Situacao == SituacaoEtapa.Ok ? e.Gravados.ToString("N0") : "")</td>
+                            <td class="text-end small">@(e.Tempo > TimeSpan.Zero ? $"{e.Tempo.TotalSeconds:0.0} s" : "")</td>
+                            <td class="small text-danger">@e.Erro</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @if (c.Conferencias.Count > 0)
+    {
+        var falhas = c.Conferencias.Count(x => !x.Ok);
+        <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold">
+                Conferências — @(falhas == 0 ? "todas verdes" : $"{falhas} com diferença")
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0" id="conferencias">
+                    <thead><tr><th>Etapa</th><th>Conferência</th><th class="text-end">Esperado (legado)</th><th class="text-end">Encontrado (v2)</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var x in c.Conferencias)
+                        {
+                            <tr class="@(x.Ok ? "" : "table-danger")">
+                                <td class="font-monospace small">@x.Etapa</td>
+                                <td>@x.Item</td>
+                                <td class="text-end small">@x.Esperado</td>
+                                <td class="text-end small">@x.Encontrado</td>
+                                <td>@if (x.Ok) { <i class="bi bi-check-circle-fill text-success" title="OK"></i> } else { <i class="bi bi-x-circle-fill text-danger" title="Diferente"></i> }</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @if (c.Anomalias.Count > 0)
+    {
+        <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold">Anomalias do legado tratadas (@c.Anomalias.Count)</div>
+            <ul class="list-group list-group-flush small" id="anomalias" style="max-height: 24rem; overflow-y: auto">
+                @foreach (var a in c.Anomalias)
+                {
+                    <li class="list-group-item py-1"><span class="font-monospace text-body-secondary me-2">@a.Etapa</span>@a.Texto</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <details class="mb-3">
+        <summary class="small">Log (@c.Log.Count linhas)</summary>
+        <pre class="small bg-body-tertiary border rounded p-2 mt-2" style="max-height: 20rem; overflow-y: auto">@string.Join("\n", c.Log)</pre>
+    </details>
+}
+
+@section Scripts {
+    <script>
+        // enquanto executa, a página se atualiza sozinha (a migração roda em segundo plano no servidor)
+        if (document.getElementById('execucao')?.dataset.executando === '1') setTimeout(() => location.reload(), 2000);
+    </script>
+}

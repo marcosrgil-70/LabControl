@@ -25,6 +25,6 @@
 - Anomalias vão para o relatório da migração (não interrompem a etapa, salvo violação de integridade).
 
 ## Conferência ao final da etapa
-- [ ] 1.915 / 462; 52 acreditados.
+- [x] 1.915 / 462; 52 acreditados.
 
-**Status:** ⬜
+**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M10*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoParte1Tests`).

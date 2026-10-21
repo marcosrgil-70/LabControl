@@ -23,6 +23,6 @@
 - Anomalias vão para o relatório da migração (não interrompem a etapa, salvo violação de integridade).
 
 ## Conferência ao final da etapa
-- [ ] 16 profissionais + criados listados.
+- [x] 16 profissionais + criados listados.
 
-**Status:** ⬜
+**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M08*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoParte1Tests`).

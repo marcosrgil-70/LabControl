@@ -33,6 +33,7 @@
 - **Esforço:** S
 
 ### 3.5 Migração parte 1 (M-01 a M-10) 🔵📐✋
+> ✅ **Concluída em 21/10/2026** (plano aprovado no plan mode) — ver [T07 › Implementação](../telas/T07-migracao.md#implementação--parte-1-tarefa-35-21102026); aceite em `MigracaoParte1Tests` (conferências verdes e login com troca de senha contra o `DBMAIS.FDB` real), `MigracaoConversoesTests`, `MigracaoTelaTests`. **Pendente:** passar o teste de navegador da T07 e a suíte completa com a máquina livre (pendência 17).
 - **Passos:**
   1. `Services/Migracao/MigracaoService.cs` (estrutura de etapas, dicionários `idAntigo → idNovo`, log, transação por etapa, `@LC_MIGRACAO = 1`).
   2. Tela T07 com seleção de etapas, log e conferências.

@@ -95,10 +95,23 @@ public static class BancoTeste
 
         if (await HashAtualAsync() == hash) return;
 
+        await RecriarAsync(NomeBanco);
+
+        await using var con = new MySqlConnection(ConnectionString);
+        await con.OpenAsync();
+        await using var cmd = con.CreateCommand();
+        cmd.CommandText = "CREATE TABLE _TESTE_VERSAO (HASH CHAR(64) NOT NULL); INSERT INTO _TESTE_VERSAO VALUES (@h);";
+        cmd.Parameters.AddWithValue("@h", hash);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>Apaga e recria <paramref name="banco"/> pelos scripts (<c>recriar.ps1 -Forcar</c>), no servidor dos testes.</summary>
+    public static async Task RecriarAsync(string banco)
+    {
         var cs = new MySqlConnectionStringBuilder(ConnectionString);
         var psi = new ProcessStartInfo("powershell.exe",
-            ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", Path.Combine(scripts, "recriar.ps1"),
-             "-Banco", NomeBanco, "-Servidor", cs.Server, "-Porta", cs.Port.ToString(), "-Usuario", cs.UserID, "-Forcar"])
+            ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", Path.Combine(RaizDoRepositorio(), "Scripts", "v2", "recriar.ps1"),
+             "-Banco", banco, "-Servidor", cs.Server, "-Porta", cs.Port.ToString(), "-Usuario", cs.UserID, "-Forcar"])
         { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
         psi.Environment["MYSQL_PWD"] = cs.Password;
         using var p = Process.Start(psi)!;
@@ -107,13 +120,6 @@ public static class BancoTeste
         await p.WaitForExitAsync();
         if (p.ExitCode != 0)
             throw new InvalidOperationException($"recriar.ps1 falhou ({p.ExitCode}):\n{await saida}\n{await erro}");
-
-        await using var con = new MySqlConnection(ConnectionString);
-        await con.OpenAsync();
-        await using var cmd = con.CreateCommand();
-        cmd.CommandText = "CREATE TABLE _TESTE_VERSAO (HASH CHAR(64) NOT NULL); INSERT INTO _TESTE_VERSAO VALUES (@h);";
-        cmd.Parameters.AddWithValue("@h", hash);
-        await cmd.ExecuteNonQueryAsync();
     }
 
     private static async Task<string?> HashAtualAsync()

@@ -35,3 +35,16 @@
 | Estoque duplicado | descartar movimentos de revisões > 0 e recalcular saldos |
 | Boletins editáveis depois da migração | `DH_EMISSAO = DH_GERACAO` em todos |
 | Encoding | conferir acentos em 20 nomes sorteados |
+
+## Decisões do usuário e implementação (parte 1, tarefa 3.5 — 21/10/2026)
+- **Destino:** banco **separado e vazio** (padrão `labcontrol_migracao`, `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`), executado pela T07 a partir do app no `labcontrol_v2`. Para usar o banco migrado, aponte o user-secret `ConnectionStrings:LabControl` para ele.
+- **Usuários:**
+  - **senha provisória única** para todos (dúvida 7 do plano), digitada na tela e nunca gravada em claro;
+  - troca obrigatória no 1º acesso;
+  - todos com o perfil **ADMINISTRADOR**; USUCOD 1 → ADMIN_GLOBAL.
+- **Entidade da empresa:**
+  - a entidade 4 do legado era empresa usuária **e** cliente: virou a entidade da empresa (M-01) + um cadastro de cliente com o mesmo CNPJ (M-05, D-22);
+  - os contatos dela vão para os dois;
+  - as propostas (parte 2) apontam para o cliente.
+- **Geografia:** cidades casadas por nome + UF com o seed IBGE; as que não casam são incluídas sem código e listadas.
+- **Código:** `Services/Migracao/` (um arquivo por etapa em `Etapas/`); integração real em `MigracaoParte1Tests`.

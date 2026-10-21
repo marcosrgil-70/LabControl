@@ -490,6 +490,27 @@ public class CrudNavegadorTelasTests(AppNavegador app)
     }
 
     [Fact]
+    public async Task Migracao_tela_valida_o_pedido_sem_executar()
+    {
+        // a execução completa (minutos, Firebird real) é provada em MigracaoParte1Tests; aqui o fluxo da tela
+        await using var c = await Cenario.CriarAsync();
+        await using var s = await app.EntrarAsync(c, adminGlobal: true);
+        var p = s.Pagina;
+        await s.IrAsync("/");
+        await p.ClickAsync("text=Migração de Dados");
+        await Assertions.Expect(p.Locator("h5")).ToContainTextAsync("Migração de dados");
+        await p.FillAsync("#Form_BancoDestino", BancoTeste.NomeBanco);
+        await p.FillAsync("#Form_SenhaFirebird", "masterkey");
+        await p.FillAsync("#Form_SenhaProvisoria", "Migracao#2026");
+        await p.FillAsync("#Form_ConfirmarSenha", "Migracao#2026");
+        await p.ClickAsync("#formMigracao button[type=submit]");
+        Assert.Contains(s.Dialogos, d => d.StartsWith("Executar a migração"));
+        await Assertions.Expect(p.Locator("[data-erros]")).ToContainTextAsync($"O banco {BancoTeste.NomeBanco} não está vazio");
+        await Assertions.Expect(p.Locator("#Form_SenhaProvisoria")).ToHaveValueAsync("");
+        Assert.Empty(s.ErrosJs);
+    }
+
+    [Fact]
     public async Task Condicao_de_pagamento_com_parcelas()
     {
         await using var c = await Cenario.CriarAsync();
