@@ -28,3 +28,6 @@ Ver [T03 › Implementação](../telas/T03-empresa-usuaria.md#implementação-ta
 - Empresa nova sem cópia: consegue cadastrar cliente/proposta/amostra (status e parâmetros existem).
 - Com cópia: parâmetros apontam para tipos/métodos **da nova empresa** (nunca para IDs da origem).
 - Primeira amostra da nova empresa = `…-00001-…`.
+
+> **Pendência 18 (21/10/2026, a investigar na 3.6):** no banco de testes (630 empresas) o `SP_INICIALIZAR_EMPRESA` levou **8,6 s em média** em 2.001 chamadas (`performance_schema`). Verificar se é o `PR_CRIAR_PERFIL`/permissões dos perfis crescendo com o número de empresas ou só a máquina saturada (CPU em 100% no dia). É o que deixa a suíte em 11–12 min.
+

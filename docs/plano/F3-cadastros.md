@@ -44,6 +44,8 @@
 
 ### 3.6 Revisão
 `/code-review`; atualizar diário e a [matriz](MATRIZ-DELPHI-CSHARP.md).
+- **Antes:** pendência 17 — rodar o teste de navegador da T07 e a suíte completa com a máquina livre (em 21/10/2026 a CPU em 100% fez todos os logins no navegador estourarem 30 s).
+- **Incluir:** pendência 18 — `SP_INICIALIZAR_EMPRESA` com 8,6 s de média no banco de testes ([P23](../processos/P23-nova-empresa.md)).
 
 ## Definição de pronto
 - [ ] Cadastros principais com regras do legado e correções.

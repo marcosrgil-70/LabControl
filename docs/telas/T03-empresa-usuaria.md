@@ -57,6 +57,8 @@ Testes: `tests/LabControl.Tests/EmpresaServiceTests.cs`.
 ## Nomenclatura (20/10/2026 — pedido do usuário)
 - Havia dois itens no menu, *Empresa* (`/Empresa/Dados`) e *Empresas* (`/Empresas`), que eram **o mesmo cadastro** (tabela `EMPRESAS`, os laboratórios que usam o sistema): o primeiro editava só a empresa ativa (administrador do laboratório), o segundo listava/incluía todas (ADMIN_GLOBAL). Nenhum foi excluído, mas viraram **um item só: "Empresas Usuárias do Sistema"** (`/Empresas`, `EMPRESAS.CONSULTAR`): ADMIN_GLOBAL vê a lista; os demais caem direto nos dados da empresa ativa. Na lista, *Alterar* da empresa ativa abre `/Empresa/Dados` (com contatos); as outras abrem só a identificação. Títulos e mensagens dizem "empresa usuária".
 
+> **Pendência 15 / D-22 (21/10/2026):** o CNPJ da empresa usuária pode ser igual ao de um cliente/fornecedor da própria empresa (a entidade da empresa fica fora do `UQ_ENT_DOC`); trocar o CNPJ da empresa para o de um cliente é aceito (roteiro SQL passo 14).
+
 **Status:** ✅ concluída na tarefa 1.5 (19/10/2026); contatos múltiplos tipados em 20/10/2026 — falta só o logo no PDF (5.4).
 
 > **Teste no navegador (20/10/2026, [P26](../processos/P26-testes-ponta-a-ponta.md)):** `Empresa_dados_contatos_e_parametros` (dados + telefone persistido após recarregar) e `Empresas_admin_global_cria_e_altera` (escolha de empresa, nova empresa já com a entidade, alterar).

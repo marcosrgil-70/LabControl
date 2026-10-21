@@ -41,4 +41,6 @@ Testes: `tests/LabControl.Tests/ContaServiceTests.cs` (serviço) e `ContaFluxoTe
 
 > **Sessão por execução do app (20/10/2026, relato do usuário: "não chama a tela de login e entra direto"):** o cookie (8 h deslizantes) e as chaves do Data Protection sobreviviam ao reinício do app, e o Edge restaura cookies de sessão — abrir o sistema entrava direto. Agora o login grava a claim `lc:instancia` (`ValidarSessao.Instancia`, um GUID por execução) e o `ValidarSessao` recusa cookie de outra execução: **app reiniciado → sempre tela de login**. Teste: `ContaFluxoTests.Cookie_de_outra_execucao_do_app_volta_para_o_login`.
 
+> **Pendência 16 — decisão do usuário (21/10/2026):** a sessão vale só para a execução do app (claim `lc:instancia`, GUID por processo): reiniciar o app pede login de novo, **inclusive na reciclagem do IIS**. Como haverá **um servidor só por cópia do sistema**, fica assim (o `/code-review` da Fase 2 apontou que duas instâncias balanceadas se derrubariam).
+
 **Status:** ✅ concluída na tarefa 1.1 (19/10/2026) — `Controllers/ContaController.cs`, `Services/ContaService.cs`, `Views/Conta/*`. Detalhes em [P02 › Implementação](../processos/P02-autenticacao-permissoes.md#implementação-tarefa-11).

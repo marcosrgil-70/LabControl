@@ -65,4 +65,6 @@ Filtros: nome/fantasia/documento (contém), tipo (cliente/fornecedor/...), inati
 - **Correções:** botões com texto (Abrir, Inativar/Reativar, Excluir); confirmação antes de inativar explicando que o cadastro não é apagado; mensagem pós-inativação com "marque Mostrar inativos"; aviso no rodapé quando a pesquisa encontrou inativos ocultos (com link para mostrá-los).
 - **Prova:** `Cliente_crud_completo_com_enderecos_telefones_e_emails` no navegador ([P26](../processos/P26-testes-ponta-a-ponta.md)) — incluir, endereço por UF/cidade e por **CEP (Buscar)**, recusa do 2º endereço ativo do mesmo tipo, telefones/e-mails com principal, alterar, pesquisar por CNPJ, inativar/reativar, excluir.
 
+> **Pendência 15 / D-22 (decisão do usuário, 21/10/2026):** o mesmo CNPJ pode ser **empresa usuária, cliente e fornecedor**. A unicidade do CPF/CNPJ (`UQ_ENT_DOC`) não vale para a entidade da empresa usuária: cadastrar o próprio laboratório como cliente/fornecedor é aceito; entre clientes/fornecedores o documento continua único. Teste: `CadastrosEntidadesTests.Cliente_pode_ter_o_cnpj_da_propria_empresa_usuaria`.
+
 **Status:** ✅ concluída em 20/10/2026 (antecipada da tarefa 3.1); ajustes de usabilidade e teste no navegador no mesmo dia.
