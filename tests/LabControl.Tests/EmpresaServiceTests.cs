@@ -22,7 +22,7 @@ public class EmpresaServiceTests(AppWeb app) : IClassFixture<AppWeb>
     }
 
     // banco de testes persistente: CNPJ (único) diferente a cada execução
-    private static string CnpjAleatorio()
+    internal static string CnpjAleatorio()
     {
         while (true)
         {

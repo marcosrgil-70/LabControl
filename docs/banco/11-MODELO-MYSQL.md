@@ -29,6 +29,7 @@
 | D-19 | **Empresa usuária = entidade** (`EMPRESAS.ID_ENTIDADES` → `ENTIDADES.TIPO_EMPRESA_USUARIA`, criada por `SP_INICIALIZAR_EMPRESA`): endereços, telefones e e-mails da empresa nas mesmas `ENTIDADES_*` de clientes e profissionais; `EMPRESAS` mantém a identidade global e `TG_EMPRESAS_AU` a espelha na entidade (20/10/2026, decisão do usuário) | Como o legado (`un_Entidades` em modo `teEMP`): vários contatos tipados; a 1ª versão tinha um endereço/fone/e-mail em colunas de `EMPRESAS` |
 | D-20 | Regras dos contatos no banco: um endereço **ativo** por tipo, um telefone e um e-mail principal, contato não muda de entidade, e-mail em minúsculas (`PR_CONFERIR_ENDERECO/FONE/EMAIL`, triggers `BI/BU`) | O Firebird usava `UNIQUE (entidade, tipo)` (não guardava o endereço antigo) e o "principal" ficava só na tela |
 | D-21 | Municípios do IBGE no seed `06_cidades.sql` (5.571, código de 7 dígitos) | Base da busca de CEP (ViaCEP casa pelo código IBGE); o legado tinha 190 cidades sem código |
+| D-22 | `UQ_ENT_DOC` ignora a entidade da empresa usuária (parte funcional `CASE WHEN TIPO_EMPRESA_USUARIA = 1 THEN NULL ELSE CPF_CNPJ END`): o mesmo CNPJ pode ser empresa usuária, cliente e fornecedor (21/10/2026, decisão do usuário; code-review 2.5) | A entidade da empresa espelha o CNPJ (D-19) e, com a UNIQUE simples, recusava um cliente com o CNPJ do próprio laboratório (sem registro visível) e dava 1062 ao trocar o CNPJ da empresa para o de um cliente |
 
 ## 2. Tabelas v2 (69 objetos)
 

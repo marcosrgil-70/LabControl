@@ -21,7 +21,16 @@ function leadingComments(text, idx) {
   return out.join(' ').trim();
 }
 
-function cols(s) { return s.split(',').map(x => x.trim()).filter(Boolean); }
+// separa por vírgula fora de parênteses (UNIQUE pode ter parte funcional: `(CASE WHEN … END)`)
+function cols(s) {
+  const r = []; let nivel = 0, atual = '';
+  for (const ch of s) {
+    if (ch === '(') nivel++; else if (ch === ')') nivel--;
+    if (ch === ',' && nivel === 0) { r.push(atual); atual = ''; } else atual += ch;
+  }
+  r.push(atual);
+  return r.map(x => x.trim()).filter(Boolean);
+}
 
 export function parseSchema(sql) {
   const tables = {};
@@ -37,7 +46,7 @@ export function parseSchema(sql) {
       l = l.replace(/,$/, '');
       let mm;
       if ((mm = l.match(/^PRIMARY KEY \(([^)]+)\)/))) { t.pk = cols(mm[1]); continue; }
-      if ((mm = l.match(/^CONSTRAINT (\w+) UNIQUE \(([^)]+)\)(?: COMMENT '([^']*)')?/))) { t.uniques.push({ name: mm[1], cols: cols(mm[2]), comment: mm[3] || '' }); continue; }
+      if ((mm = l.match(/^CONSTRAINT (\w+) UNIQUE \((.+?)\)(?: COMMENT '([^']*)')?$/))) { t.uniques.push({ name: mm[1], cols: cols(mm[2]), comment: mm[3] || '' }); continue; }
       if ((mm = l.match(/^CONSTRAINT (\w+) CHECK \((.*)\)$/))) { t.checks.push({ name: mm[1], expr: mm[2] }); continue; }
       if ((mm = l.match(/^CONSTRAINT (\w+) FOREIGN KEY \(([^)]+)\) REFERENCES (\w+) \(([^)]+)\)(?: ON DELETE (CASCADE|SET NULL|RESTRICT))?/))) {
         t.fks.push({ name: mm[1], cols: cols(mm[2]), ref: mm[3], refCols: cols(mm[4]), onDelete: mm[5] || '' }); continue;

@@ -163,6 +163,23 @@ public class CadastrosEntidadesTests
     // ------------------------------------------------------------- T12 clientes / fornecedores
 
     [Fact]
+    public async Task Cliente_pode_ter_o_cnpj_da_propria_empresa_usuaria()
+    {
+        // D-22 (decisão do usuário, 21/10/2026): o mesmo CNPJ pode ser empresa usuária, cliente e fornecedor
+        await using var c = await Cenario.CriarAsync();
+        var s = new ClienteService(c.Db);
+        var cnpj = Documentos.FormatarCnpj(EmpresaServiceTests.CnpjAleatorio()); // a empresa de teste nasce sem CNPJ
+        await c.Db.Empresas.Where(e => e.IdEmpresas == c.Empresa.IdEmpresas).ExecuteUpdateAsync(x => x.SetProperty(e => e.Cnpj, cnpj));
+        Assert.Equal(cnpj, await c.Db.Entidades.Where(e => e.TipoEmpresaUsuaria).Select(e => e.CpfCnpj).SingleAsync()); // espelhado (D-19)
+
+        var r = await s.GravarAsync(new ClienteVM { Nome = "O PRÓPRIO LABORATÓRIO", Categoria = Categoria.Juridica, CpfCnpj = cnpj, TipoCliente = true, TipoFornecedor = true });
+        Assert.True(r.Sucesso, r.Mensagem);
+        // entre clientes/fornecedores continua único
+        var dup = await s.GravarAsync(new ClienteVM { Nome = "OUTRO", Categoria = Categoria.Juridica, CpfCnpj = cnpj, TipoFornecedor = true });
+        Assert.Equal(("Já existe um cadastro com este CPF/CNPJ.", "CpfCnpj"), Erro(dup));
+    }
+
+    [Fact]
     public async Task Cliente_pf_pj_documento_tipos_e_lista()
     {
         await using var c = await Cenario.CriarAsync();

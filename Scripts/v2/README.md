@@ -13,7 +13,7 @@ Documentação: [doc 11 — modelo](../../docs/banco/11-MODELO-MYSQL.md) · [doc
 | 4 | `04_views.sql` | 10 views |
 | 5 | `05_seed.sql` | Brasil + 27 UFs e catálogo de 109 permissões |
 | 6 | `06_cidades.sql` | 5.571 municípios do IBGE (gerado por `tools/gerador-cidades`) |
-| — | `teste/roteiro_12_7.sql` | roteiro de teste do doc 12 §7 (62 verificações) — **só em banco temporário** |
+| — | `teste/roteiro_12_7.sql` | roteiro de teste do doc 12 §7 (65 verificações) — **só em banco temporário** |
 | — | `recriar.ps1` | recria um banco do zero e confere as contagens; `-Teste` roda o roteiro; `-Dev` roda `dev/*.sql` |
 | — | `dev/admin_dev.sql` | **só desenvolvimento**: empresa `001` + usuário `ADMIN` / senha provisória `Admin123` (ADMIN_GLOBAL, troca obrigatória no 1º acesso) |
 

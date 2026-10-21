@@ -13,6 +13,8 @@ Pessoa física ou jurídica: clientes, fornecedores, profissionais (funcionário
 
 Comentário do script: _4. ENTIDADES (clientes, fornecedores, profissionais, comerciais)    ENTIDADES_PF e ENTIDADES_PJ do Firebird foram incorporadas aqui._
 
+Notas do script: _D-22: o laboratório (entidade da empresa usuária) pode ter o mesmo CNPJ de um cliente/fornecedor da própria empresa_
+
 ## Colunas
 | # | Coluna | Tipo | Nulo | Padrão | Preenchida por | Descrição |
 |---:|---|---|---|---|---|---|
@@ -47,7 +49,7 @@ Comentário do script: _4. ENTIDADES (clientes, fornecedores, profissionais, com
 
 ## Chaves, restrições e índices
 - **PK:** `ID_ENTIDADES`
-- **Única** `UQ_ENT_DOC` (ID_EMPRESAS, CPF_CNPJ)
+- **Única** `UQ_ENT_DOC` (ID_EMPRESAS, (CASE WHEN TIPO_EMPRESA_USUARIA = 1 THEN NULL ELSE CPF_CNPJ END))
 
 - **Índice** `IX_ENT_NOME` (ID_EMPRESAS, NOME)
 - **Índice** `IX_ENT_TIPOS` (ID_EMPRESAS, TIPO_CLIENTE, TIPO_FUNCIONARIO, INATIVO)
@@ -90,7 +92,7 @@ Comentário do script: _4. ENTIDADES (clientes, fornecedores, profissionais, com
 - **Processos:** [P01 Multiempresa e empresa ativa](../../../processos/P01-multiempresa.md) · `P25-cadastro-entidades-contatos`
 
 ## Regras de negócio
-- `CPF_CNPJ` único por empresa, com dígito verificador ("Este CNPJ não é válido!", "CNPJ já cadastrado para: …").
+- `CPF_CNPJ` único por empresa, com dígito verificador ("Este CNPJ não é válido!", "CNPJ já cadastrado para: …") — **exceto** a entidade da empresa usuária (D-22): o laboratório pode ter o mesmo CNPJ de um cliente/fornecedor.
 - Ao menos um tipo marcado ("É obrigatório ter um Tipo de Cadastro preenchido.").
 - PF: `NOME_FANTASIA` = sobrenome, `RG_IE` = RG. PJ: `NOME_FANTASIA` = fantasia, `RG_IE` = inscrição estadual (aceita "ISENTO").
 - Trocar a categoria F↔J limpa os campos da outra categoria (o legado excluía o registro PF/PJ após confirmação).
@@ -139,7 +141,8 @@ CREATE TABLE ENTIDADES (
   CRIADO_POR         INT          NULL,
   ALTERADO_EM        DATETIME     NULL ON UPDATE CURRENT_TIMESTAMP,
   ALTERADO_POR       INT          NULL,
-  CONSTRAINT UQ_ENT_DOC UNIQUE (ID_EMPRESAS, CPF_CNPJ),
+  -- D-22: o laboratório (entidade da empresa usuária) pode ter o mesmo CNPJ de um cliente/fornecedor da própria empresa
+  CONSTRAINT UQ_ENT_DOC UNIQUE (ID_EMPRESAS, (CASE WHEN TIPO_EMPRESA_USUARIA = 1 THEN NULL ELSE CPF_CNPJ END)),
   INDEX IX_ENT_NOME (ID_EMPRESAS, NOME),
   INDEX IX_ENT_TIPOS (ID_EMPRESAS, TIPO_CLIENTE, TIPO_FUNCIONARIO, INATIVO),
   CONSTRAINT FK_ENT_EMP FOREIGN KEY (ID_EMPRESAS) REFERENCES EMPRESAS (ID_EMPRESAS)
