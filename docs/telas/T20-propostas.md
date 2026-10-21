@@ -123,4 +123,6 @@ Grid: nº proposta, status (cor), CPF/CNPJ, cliente, nº pedido, valor total. Na
 - [ ] Proposta com amostra recebida não pode ser alterada sem revisão.
 - [ ] PDF da proposta.
 
+> **Cadastro rápido "+" (pendência 3, pronto na 2.4/3.3):** método, idioma e prazo com `lc-rapido="TABELA"` no combo (T10-00); produto pelo `POST /Produtos/Rapido` (`{ id, texto }`, T14).
+
 **Status:** 🟨 v1 existe com modelo errado (sem tabela de produtos) — **refazer**

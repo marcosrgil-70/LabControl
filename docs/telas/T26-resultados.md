@@ -72,4 +72,6 @@ Atalho novo: **Fila de análises** (`VW_LAB_TESTES_PENDENTES`) — testes sem re
 - [ ] Teste de outra amostra recusado; resultado duplicado para o mesmo teste recusado.
 - [ ] Com boletim emitido, alterar exige revisão; a revisão leva todos os valores.
 
+> **Cadastro rápido "+" (pendência 3, pronto na 2.4):** tipo de resultado com `lc-rapido="LAB_TIPOS_RESULTADOS"` no combo (T10-00), no lugar da tecla Insert do legado.
+
 **Status:** 🟨 v1 existe incompleta — **refazer**

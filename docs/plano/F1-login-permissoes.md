@@ -64,7 +64,7 @@
 | code-review | comentário do `SaveChangesAsync` prometia aceitar o rastreador só após o commit também na transação do serviço | comentário corrigido (comportamento = EF) |
 | code-review | retry de SaveChanges após falha com chaves geradas na entidade | registrado: nenhum serviço repete o SaveChanges no mesmo contexto |
 | code-review | `PR_CONFERIR_EMPRESA` sem desvio na migração | mantido de propósito: empresa divergente deve parar a carga (fase 3/M-xx) |
-| code-review | auditoria com um INSERT por linha; SaveChanges síncrono duplicado | otimização/simplificação → `/simplify` ao fim da fase 2 |
+| code-review | auditoria com um INSERT por linha; SaveChanges síncrono duplicado | ✅ feito no `/simplify` do fim da Fase 2 (21/10/2026): INSERT em lote e prelúdio comum dos dois SaveChanges |
 | futuro | carimbo de segurança (`SECURITY_STAMP`) para derrubar sessões ao mudar perfis, vínculos ou senha | melhoria registrada (exige coluna em `USUARIOS`) |
 
 ---

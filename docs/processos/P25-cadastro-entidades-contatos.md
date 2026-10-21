@@ -85,6 +85,8 @@ CLIENTES / FORNECEDORES / COMERCIAIS / TRANSPORTADORES / PROFISSIONAIS
 Teste manual sugerido: Empresa → Dados → Endereços → Incluir → CEP `01310-100` → Buscar (preenche Av. Paulista, Bela Vista, São Paulo/SP) → número → Gravar; incluir um segundo endereço do mesmo tipo (recusado), inativar o primeiro e incluir de novo (aceito); telefones com dois "principal" (o segundo tira a marca do primeiro).
 
 ## 7. Migração (impacto)
+> ✅ **Feito na 3.5 (21/10/2026)** — ver [T07](../telas/T07-migracao.md#implementação--parte-1-tarefa-35-21102026): a entidade 4 (empresa **e** cliente no legado) virou a entidade da empresa + um cliente com o mesmo CNPJ (D-22); 178 cidades casadas por nome + UF, 11 incluídas sem código.
+
 - **M-01/M-05**: a entidade do legado apontada por `EMPRESAS.ID_ENTIDADES` (marcada `TIPO_EMPRESA_USUARIA`) migra como a entidade da empresa (com `@LC_MIGRACAO = 1`), e `EMPRESAS.ID_ENTIDADES` aponta para ela — o `SP_INICIALIZAR_EMPRESA` não cria outra.
 - **M-02**: as 190 cidades do legado não têm código IBGE: casar por **nome + UF** com as do seed `06_cidades.sql`; as não encontradas vão para a conferência.
 - **M-06/M-07**: telefones, e-mails e endereços migram com o tipo; duplicidades de "principal"/endereço ativo por tipo são listadas na conferência (as triggers não barram com `@LC_MIGRACAO = 1`).

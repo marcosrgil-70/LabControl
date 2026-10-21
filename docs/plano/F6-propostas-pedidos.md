@@ -22,4 +22,5 @@
 
 ## Definição de pronto
 - [ ] Proposta com revisão correta (sem copiar pedido/status) e PDF.
+> Dúvida 5 do plano (em aberto): pedir ao usuário os **modelos atuais (PDF/papel) da proposta e do pedido** antes de montar os PDFs.
 - [ ] Um pedido por proposta, recebido × contratado correto.

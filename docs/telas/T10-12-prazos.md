@@ -27,4 +27,6 @@ Proposta (T20), testes da amostra (T22), fila de análises (T26).
 ## Implementação (tarefa 2.2)
 Campos `Descricao`, `QtdeDias` (inteiro 0–3650) e `DiasUteis` (lógico, com aviso de que o cálculo ainda é em dias corridos). Teste: `Prazo_grava_dias_e_dias_uteis`. Comum a todos: `Cada_auxiliar_lista_e_abre_o_formulario` (`AuxiliaresEspecificosTests`) + padrão T10-00 em `AuxiliaresTests`.
 
+> **Dúvida 8 do plano (em aberto):** prazos em **dias úteis** são necessários? Hoje o campo é gravado mas o cálculo da data prevista continua em dias corridos (como o legado); se for sim, o cálculo passa a considerar fins de semana/feriados (definir na fase 4, recebimento).
+
 **Status:** ✅ concluída em 21/10/2026 (tarefa 2.2) — entrada no `CatalogoAuxiliares` (CRUD genérico da 2.1). Testes: `AuxiliaresEspecificosTests` e, no navegador, `CrudNavegadorTelasTests`.
