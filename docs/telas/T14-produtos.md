@@ -26,4 +26,17 @@ Fora do escopo (tabelas vazias): seção/grupo/subgrupo, NCM/fiscal, apresentaç
 - Consulta: código/descrição (contém), inativos.
 - "Trocar produto" de uma proposta (e das suas amostras) é feito na tela de Proposta via `SP_TROCAR_PRODUTO_PROPOSTA` (o `SP_TROCAPRODUTO` do legado alterava amostras de todas as propostas).
 
-**Status:** 🟨 v1 existe — ajustar ao schema v2
+## Critérios de aceite
+- [x] Código vazio → automático de 6 dígitos (sequência PRODUTO da empresa); código digitado vale como está — `ProdutosTests.Codigo_automatico_digitado_e_duplicado`.
+- [x] Código duplicado recusado com a mensagem no campo — mesmo teste e `Tela_permissoes_e_cadastro_rapido`.
+- [x] Em uso (proposta/pedido/amostra) não exclui; inativar some da lista e dos combos, com aviso de inativos ocultos — `Em_uso_nao_exclui_inativo_some_e_combo_mostra_o_escolhido`.
+- [x] CRUD pela tela, no navegador (incluir com unidade nova pelo "+", alterar, pesquisar por código, inativar/reativar com confirmação, excluir) — `CrudNavegadorTelasTests.Produto_crud_com_codigo_automatico_e_unidade_pelo_mais`.
+
+## Implementação (tarefa 3.3)
+- `Controllers/ProdutosController.cs`, `Services/ProdutoService.cs`, `ViewModels/ProdutoVM.cs`, `Views/Produtos/{Index,Form}.cshtml` — mesmo visual da T12 (lista com busca, "mostrar inativos", 20 por página; formulário em página, só consulta sem `PRODUTOS.ALTERAR`). O item "Produtos" do menu aparece sozinho (tela existente).
+- Código: vazio na inclusão → o EF omite a coluna e `TG_PRODUTOS_BI` gera `000001…` (relido após gravar); digitado → maiúsculas, até 10, único (`UQ_PROD_COD` → "Já existe um produto com este código." no campo); na alteração é obrigatório (não volta a ser gerado).
+- Descrição em maiúsculas (150). Unidade obrigatória e embalagem opcional: combos com ativos + o já escolhido; inativa só vale se já era a do produto. Qtde. por embalagem aceita vírgula ou ponto, > 0, até 4 casas. Unidade e embalagem com o cadastro rápido "+" (`lc-rapido`).
+- Excluir: `DELETE` filtrado pela empresa; em uso o banco recusa (1451) e a mensagem sugere inativar. Inativar/reativar com confirmação (texto no `data-confirmar`).
+- `POST /Produtos/Rapido` (`PRODUTOS.INCLUIR`): descrição + unidade, código automático → `{ id, texto }` (422 `{ erro, campo }`), para o "+" do combo de produto da proposta (4.2).
+
+**Status:** ✅ concluída na tarefa 3.3 (21/10/2026).

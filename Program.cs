@@ -47,6 +47,7 @@ builder.Services.AddScoped<LabControl.Services.Entidades.ClienteService>();
 builder.Services.AddScoped<LabControl.Services.Entidades.ProfissionalService>();
 builder.Services.AddScoped<LabControl.Services.Geografia.ConsultaCepService>();
 builder.Services.AddScoped<LabControl.Services.Geografia.GeografiaService>();
+builder.Services.AddScoped<ProdutoService>();
 builder.Services.AddMemoryCache();
 // ViaCEP chamado pelo servidor, com timeout curto (o componente de endereço continua manual se cair)
 builder.Services.AddHttpClient<LabControl.Services.Geografia.IFonteCep, LabControl.Services.Geografia.ViaCep>(c =>

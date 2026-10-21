@@ -20,6 +20,8 @@
 - **Esforço:** M · **Depende de:** 3.1
 
 ### 3.3 T14 — Produtos
+> ✅ **Concluída em 21/10/2026** — ver [T14 › Implementação](../telas/T14-produtos.md#implementação-tarefa-33); aceite em `ProdutosTests` + navegador `CrudNavegadorTelasTests.Produto_crud_com_codigo_automatico_e_unidade_pelo_mais`.
+> ✅ **Concluída em 21/10/2026** — ver [T14 › Implementação](../telas/T14-produtos.md#implementação-tarefa-33); aceite em `ProdutosTests` + navegador `CrudNavegadorTelasTests.Produto_crud_com_codigo_automatico_e_unidade_pelo_mais`.
 - **Passos:** CRUD (código vazio → banco gera; reler); unidade, embalagem, qtde por embalagem; cadastro rápido para a proposta.
 - **Aceite:** código automático de 6 dígitos; duplicidade recusada.
 - **Esforço:** S

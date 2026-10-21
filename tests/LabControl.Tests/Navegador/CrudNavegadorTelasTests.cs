@@ -387,6 +387,55 @@ public class CrudNavegadorTelasTests(AppNavegador app)
     }
 
     [Fact]
+    public async Task Produto_crud_com_codigo_automatico_e_unidade_pelo_mais()
+    {
+        await using var c = await Cenario.CriarAsync();
+        await using var s = await app.EntrarAsync(c);
+        var p = s.Pagina;
+        var nome = Unico("REQUEIJÃO");
+        var unidade = Unico("GRAMA");
+
+        // incluir: código vazio (automático), unidade nova pelo "+"
+        await s.IrAsync("/Produtos");
+        await p.ClickAsync("a:has-text('Incluir')");
+        await p.FillAsync("#Descricao", nome.ToLowerInvariant());
+        await p.ClickAsync("button[data-rapido-botao=UNIDADES]");
+        await p.FillAsync(".modal-rapido #campo_Descricao", unidade);
+        await p.FillAsync(".modal-rapido #campo_Sigla", "g" + unidade[^3..]);
+        await p.ClickAsync(".modal-rapido button[type=submit]");
+        await Assertions.Expect(p.Locator("#IdUnidades option:checked")).ToHaveTextAsync(unidade);
+        await p.SelectOptionAsync("#IdEmbalagensTipos", new SelectOptionValue { Label = "SACO PLÁSTICO" });
+        await p.FillAsync("#QtdeEmbalagem", "1,5");
+        await p.ClickAsync("#formProduto button[type=submit]");
+        Assert.Equal("Produto gravado.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#Codigo")).ToHaveValueAsync("000002");
+
+        // alterar
+        await p.FillAsync("#Descricao", nome + " CREMOSO");
+        await p.ClickAsync("#formProduto button[type=submit]");
+        Assert.Equal("Produto gravado.", await s.AlertaAsync());
+
+        // pesquisar, inativar (confirmação), mostrar inativos, reativar, excluir
+        await s.IrAsync("/Produtos");
+        await p.FillAsync("#Texto", "000002");
+        await p.PressAsync("#Texto", "Enter");
+        await Assertions.Expect(Linha(p, nome + " CREMOSO")).ToContainTextAsync("1,5");
+        await Linha(p, nome).Locator("button[title=Inativar]").ClickAsync();
+        Assert.StartsWith("Produto inativado", await s.AlertaAsync());
+        Assert.Contains(s.Dialogos, d => d.StartsWith("Inativar"));
+        await Assertions.Expect(Linha(p, nome)).ToHaveCountAsync(0);
+        await p.CheckAsync("#Inativos");
+        await p.ClickAsync("form.card button[type=submit]");
+        await Linha(p, nome).Locator("button[title=Reativar]").ClickAsync();
+        Assert.Equal("Produto reativado.", await s.AlertaAsync());
+        await Linha(p, nome).Locator("button[title=Excluir]").ClickAsync();
+        Assert.Equal("Produto excluído.", await s.AlertaAsync());
+        Assert.False(await c.Db.Produtos.AnyAsync(x => x.Descricao.StartsWith(nome)));
+        Assert.DoesNotContain(s.Dialogos, string.IsNullOrWhiteSpace);
+        Assert.Empty(s.ErrosJs);
+    }
+
+    [Fact]
     public async Task Condicao_de_pagamento_com_parcelas()
     {
         await using var c = await Cenario.CriarAsync();

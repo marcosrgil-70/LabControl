@@ -1,0 +1,63 @@
+@model ProdutoVM
+@inject IEmpresaContexto Usuario
+@{
+    var inclusao = Model.Id == 0;
+    ViewData["Title"] = inclusao ? "Novo produto" : Model.Descricao;
+    var podeGravar = Usuario.TemPermissao(inclusao ? "PRODUTOS.INCLUIR" : "PRODUTOS.ALTERAR");
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-2">
+        <li class="breadcrumb-item"><a asp-action="Index">Produtos</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@(inclusao ? "Novo" : $"{Model.Codigo} — {Model.Descricao}")</li>
+    </ol>
+</nav>
+
+<form method="post" asp-action="@(inclusao ? "Criar" : "Editar")" asp-route-id="@(inclusao ? null : Model.Id)" id="formProduto" novalidate style="max-width: 48rem">
+    <fieldset disabled="@(!podeGravar)">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+        <div class="card mb-3">
+            <div class="card-body row g-3">
+                <div class="col-sm-3">
+                    <label asp-for="Codigo" class="form-label small"></label>
+                    <input asp-for="Codigo" class="form-control font-monospace text-uppercase" placeholder="@(inclusao ? "automático" : null)" />
+                    <span asp-validation-for="Codigo" class="text-danger small"></span>
+                    @if (inclusao) { <div class="form-text">Vazio: o sistema gera (6 dígitos).</div> }
+                </div>
+                <div class="col-sm-9">
+                    <label asp-for="Descricao" class="form-label small"></label> <span class="text-danger">*</span>
+                    <input asp-for="Descricao" class="form-control text-uppercase" maxlength="150" autofocus />
+                    <span asp-validation-for="Descricao" class="text-danger small"></span>
+                </div>
+                <div class="col-sm-5">
+                    <label asp-for="IdUnidades" class="form-label small"></label> <span class="text-danger">*</span>
+                    <select asp-for="IdUnidades" lc-rapido="UNIDADES" asp-items="@(new SelectList(Model.Unidades, "Id", "Nome"))" class="form-select"><option value="">—</option></select>
+                    <span asp-validation-for="IdUnidades" class="text-danger small"></span>
+                </div>
+                <div class="col-sm-4">
+                    <label asp-for="IdEmbalagensTipos" class="form-label small"></label>
+                    <select asp-for="IdEmbalagensTipos" lc-rapido="EMBALAGENS_TIPOS" asp-items="@(new SelectList(Model.Embalagens, "Id", "Nome"))" class="form-select"><option value="">—</option></select>
+                    <span asp-validation-for="IdEmbalagensTipos" class="text-danger small"></span>
+                </div>
+                <div class="col-sm-3">
+                    <label asp-for="QtdeEmbalagem" class="form-label small"></label>
+                    <input asp-for="QtdeEmbalagem" class="form-control text-end" inputmode="decimal" />
+                    <span asp-validation-for="QtdeEmbalagem" class="text-danger small"></span>
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input asp-for="Inativo" class="form-check-input" />
+                        <label asp-for="Inativo" class="form-check-label">Inativo (some dos combos de inclusão)</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+        @if (podeGravar)
+        {
+            <button type="submit" class="btn btn-primary ms-auto"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+        }
+    </div>
+</form>

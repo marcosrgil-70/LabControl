@@ -38,7 +38,7 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 | Parâmetros para Análises | `un_ParametrosAnalises` | [T15](../telas/T15-parametros-analise.md) | `/ParametrosAnalise` | 3 | 🟨 |
 | Status dos Boletins | `un_CadStatusBoletim` | [T10-19](../telas/T10-19-status-boletim.md) | `/Auxiliares/BOLETINS_STATUS` | 2 | ✅ |
 | Status das Propostas | `un_CadStatusPropostas` | [T10-20](../telas/T10-20-status-proposta.md) | `/Auxiliares/LAB_PROPOSTAS_STATUS` | 2 | ✅ |
-| Produtos | `Standards/un_Produtos` | [T14](../telas/T14-produtos.md) | `/Produtos` | 3 | 🟨 |
+| Produtos | `Standards/un_Produtos` | [T14](../telas/T14-produtos.md) | `/Produtos` | 3 | ✅ |
 | Empresas Usuárias do Sistema | `Standards/un_Entidades` (`teEMP`) | [T03](../telas/T03-empresa-usuaria.md) | `/Empresas` (menu), `/Empresa/Dados` | 1 | ✅ |
 | Parâmetros do Sistema | `Standards/un_Parametros` | [T05](../telas/T05-parametros-empresa.md) | `/Empresa/Parametros` | 1 | ✅ |
 
