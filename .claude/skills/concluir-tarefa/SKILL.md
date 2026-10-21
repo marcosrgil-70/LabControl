@@ -41,6 +41,7 @@ Regras:
 - Confira `git status` e `git diff --stat`; não inclua segredos (`appsettings*.json` sem senha; senha só em user-secrets).
 - Mensagem no padrão do histórico: `<área>: <Tnn resumo curto> (tarefa X.Y)` — ex.: `parâmetros: T05 com numeração auditada e ajuste só ADMIN_GLOBAL (tarefa 1.6)`; corpo opcional com os pontos principais; termine com a linha de coautoria pedida pelo sistema.
 - Branch: o projeto trabalha direto na `master` (histórico) — mantenha, a menos que o usuário peça outra coisa.
+- **Depois do commit, sempre `git push`** para `origin` (pedido do usuário, 21/10/2026); push que falhar = avisar com a mensagem do erro.
 
 ## 4. Fechamento de fase
 Se a tarefa concluída for a **última da fase** (ou for a tarefa "Revisão da fase"), lembre o usuário dos comandos embutidos previstos no plano (§3 › Comandos úteis), sem rodá-los por conta própria:

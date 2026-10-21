@@ -20,6 +20,7 @@ Reescrita do sistema de laboratório **Delphi 7 + Firebird** (`C:\Project\Labora
 - **Revisões** (proposta, amostra, resultado, boletim) só pelas procedures `SP_GERAR_REVISAO_*`, fora de transação do EF. Revisão antiga e boletim emitido são somente leitura.
 - Erros SQLSTATE `45000` são mensagens de negócio: mostrar ao usuário.
 - Ao concluir: marcar o checklist do plano e do arquivo da fase, atualizar o "Status" do MD da tela, a matriz `docs/plano/MATRIZ-DELPHI-CSHARP.md` e o Diário.
+- **Todo commit é seguido de `git push`** para o remoto (`origin`, branch `master`) — pedido do usuário (21/10/2026). Se o push falhar, avisar o usuário com a mensagem do erro.
 
 ## Comandos
 - Recriar banco: `.\Scripts\v2\recriar.ps1` (senha lida do user-secret da connection string, sem pergunta; `-Teste` = banco temporário + roteiro do doc 12 §7; `-Dev` = empresa 001 + usuário `ADMIN` / `Admin123`, troca obrigatória no 1º acesso). Detalhes em `Scripts/v2/README.md`.
