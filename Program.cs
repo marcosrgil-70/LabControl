@@ -41,6 +41,7 @@ builder.Services.AddScoped<CopiaCadastros>();
 builder.Services.AddScoped<EmpresaService>();
 builder.Services.AddScoped<ParametrosEmpresaService>();
 builder.Services.AddScoped<LabControl.Services.Auxiliares.AuxiliarService>();
+builder.Services.AddScoped<LabControl.Services.Auxiliares.CondicaoPagamentoService>();
 builder.Services.AddScoped<LabControl.Services.Entidades.ContatosService>();
 builder.Services.AddScoped<LabControl.Services.Entidades.ClienteService>();
 builder.Services.AddScoped<LabControl.Services.Entidades.ProfissionalService>();

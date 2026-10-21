@@ -15,7 +15,7 @@
 - **Esforço:** M
 
 ### 2.2 Replicar para os outros 19 auxiliares ⚪⚡
-> 🟨 **6 de 19 feitos em 20/10/2026** (T10-01…T10-06: tipos de logradouro, endereço, telefone, e-mail, registros profissionais e cargos — usados pelos cadastros com contatos, [P25](../processos/P25-cadastro-entidades-contatos.md)). Faltam T10-08…T10-20 (skill `/novo-auxiliar`).
+> ✅ **Concluída em 21/10/2026** — T10-01…T10-06 em 20/10/2026 ([P25](../processos/P25-cadastro-entidades-contatos.md)) e T10-08…T10-20 em 21/10/2026: ver [T10-11 › Implementação](../telas/T10-11-condicoes-pagamento.md#implementação-tarefa-22) (parcelas em tela própria), [T10-14](../telas/T10-14-tipos-amostra.md#implementação-tarefa-22)/[T10-16](../telas/T10-16-tipos-analise.md#implementação-tarefa-22) (código travado) e [T10-15](../telas/T10-15-status-amostra.md#implementação-tarefa-22); aceite em `AuxiliaresEspecificosTests` + navegador `CrudNavegadorTelasTests`. Os 20 auxiliares aparecem como cartões em `/Auxiliares` (item único "Auxiliares" no menu).
 - **Passos:** uma `AuxiliarDefinicao` por tabela, conforme o MD de cada uma (campos, únicos, regras específicas). Atenção às regras especiais:
   - [T10-14](../telas/T10-14-tipos-amostra.md)/[T10-16](../telas/T10-16-tipos-analise.md): **código 1–99 imutável após uso** (validar `EXISTS` antes de permitir edição);
   - [T10-15](../telas/T10-15-status-amostra.md): ao menos um "permite resultado";

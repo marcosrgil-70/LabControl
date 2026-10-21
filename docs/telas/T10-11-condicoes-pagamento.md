@@ -22,6 +22,9 @@
 Proposta (T20) e Pedido de venda (T21).
 
 ## Critérios de aceite
-- [ ] Itens do [padrão T10-00](T10-00-crud-auxiliares.md#critérios-de-aceite-valem-para-todos).
+- [x] Itens do [padrão T10-00](T10-00-crud-auxiliares.md#critérios-de-aceite-valem-para-todos).
 
-**Status:** ⬜
+## Implementação (tarefa 2.2)
+Código (maiúsculas) e descrição no CRUD genérico; código repetido → mensagem no campo Código (`UQ_CONDPAG`). Botão **Parcelas** na linha (`AcaoLinhaAuxiliar`, novo na definição) abre a tela própria `Views/CondicoesPagamento/Parcelas.cshtml` (`CondicoesPagamentoController` + `CondicaoPagamentoService`): grade com adicionar/remover, **dividir igualmente** e total ao vivo; servidor valida dias 0–3650, % > 0 com até 4 casas e Σ = 100% (vírgula ou ponto); sem parcelas é permitido; parcelas regravadas **no lugar** (o nº é `UNIQUE`). Consulta com `AUXILIARES.CONSULTAR`, gravação com `AUXILIARES.ALTERAR`. Testes: `Parcelas_somam_100_e_sao_regravadas_no_lugar`, `Tela_de_parcelas_e_permissoes`, navegador `Condicao_de_pagamento_com_parcelas`. Comum a todos: `Cada_auxiliar_lista_e_abre_o_formulario` (`AuxiliaresEspecificosTests`) + padrão T10-00 em `AuxiliaresTests`.
+
+**Status:** ✅ concluída em 21/10/2026 (tarefa 2.2) — entrada no `CatalogoAuxiliares` (CRUD genérico da 2.1) — código + descrição no `CatalogoAuxiliares`; **parcelas** em tela própria (`/Auxiliares/CONDICOES_PAGTOS/Parcelas/{id}`, `CondicaoPagamentoService`: dias 0–3650, % > 0 com até 4 casas, Σ = 100%, sem parcelas permitido, regravadas no lugar). Testes: `AuxiliaresEspecificosTests` e, no navegador, `CrudNavegadorTelasTests`.

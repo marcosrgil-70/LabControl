@@ -89,6 +89,12 @@
                         }
                         <td>@if (item.Ativo) { <span class="badge text-bg-success">Ativo</span> } else { <span class="badge text-bg-secondary">Inativo</span> }</td>
                         <td class="text-end text-nowrap">
+                            @if (d.Acao is { } acao)
+                            {
+                                <a class="btn btn-outline-secondary btn-sm" title="@acao.Texto" href="@Url.Action(acao.Action, acao.Controller, new { id = item.Id })">
+                                    <i class="bi @acao.Icone me-1"></i>@acao.Texto
+                                </a>
+                            }
                             <button type="button" class="btn btn-outline-secondary btn-sm" title="Alterar" lc-permissao="AUXILIARES.ALTERAR"
                                     data-form="@Url.Action("Editar", new { tabela = d.Tabela, id = item.Id })">
                                 <i class="bi bi-pencil me-1"></i>Alterar

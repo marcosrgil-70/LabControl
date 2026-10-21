@@ -22,6 +22,9 @@
 Recebimento (T22), Resultados (T26), Boletim (T27), Etiquetas (T25).
 
 ## Critérios de aceite
-- [ ] Itens do [padrão T10-00](T10-00-crud-auxiliares.md#critérios-de-aceite-valem-para-todos).
+- [x] Itens do [padrão T10-00](T10-00-crud-auxiliares.md#critérios-de-aceite-valem-para-todos).
 
-**Status:** ⬜
+## Implementação (tarefa 2.2)
+Campos `Descricao`, `Cor` (`#RRGGBB`, badge na lista) e `PermiteResultado`. `ValidarAntesDeGravar` (gravar/inativar/reativar) e `ValidarAntesDeExcluir` (gancho novo na definição): sempre resta um status **ativo** que permite resultado. Testes: `Sempre_resta_um_status_de_amostra_que_permite_resultado`, navegador `Auxiliares_codigo_travado_cor_e_status_que_permite_resultado`. Comum a todos: `Cada_auxiliar_lista_e_abre_o_formulario` (`AuxiliaresEspecificosTests`) + padrão T10-00 em `AuxiliaresTests`.
+
+**Status:** ✅ concluída em 21/10/2026 (tarefa 2.2) — entrada no `CatalogoAuxiliares` (CRUD genérico da 2.1) — cor `#RRGGBB` e "permite resultado"; não deixa inativar, desmarcar nem excluir o último status ativo que permite resultado (`ValidarAntesDeGravar`/`ValidarAntesDeExcluir`). Testes: `AuxiliaresEspecificosTests` e, no navegador, `CrudNavegadorTelasTests`.

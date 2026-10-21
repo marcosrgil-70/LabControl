@@ -103,10 +103,14 @@ public sealed partial class AuxiliarService(LabDbContext db)
         if (!gravou.Sucesso)
         {
             db.ChangeTracker.Clear();
-            return Resultado.Erro(gravou.Mensagem!, gravou.Mensagem!.StartsWith("Já existe") ? def.Campos[0].Propriedade : null);
+            return Resultado.Erro(gravou.Mensagem!, gravou.Mensagem!.StartsWith("Já existe") ? CampoDuplicado(def, gravou.Mensagem) : null);
         }
         return Resultado.Ok(Id(tipo, entidade));
     }
+
+    // "Já existe uma unidade com esta sigla." → Sigla; sem campo citado na mensagem, o 1º do formulário
+    private static string CampoDuplicado(AuxiliarDefinicao def, string mensagem) =>
+        (def.Campos.FirstOrDefault(c => mensagem.Contains(c.Rotulo, StringComparison.OrdinalIgnoreCase)) ?? def.Campos[0]).Propriedade;
 
     /// <summary>
     /// Exclui só sem uso: com uso o banco recusa (1451) e a mensagem sugere inativar. DELETE direto (o filtro global
@@ -115,6 +119,9 @@ public sealed partial class AuxiliarService(LabDbContext db)
     public async Task<Resultado> ExcluirAsync<T>(AuxiliarDefinicao<T> def, int id) where T : class, IPorEmpresa, new()
     {
         var chave = Tipo<T>().FindPrimaryKey()!.Properties[0].Name;
+        if (def.ValidarAntesDeExcluir is not null && await PorIdAsync(def, id, rastrear: false) is { } atual
+            && await def.ValidarAntesDeExcluir(db, atual) is { Sucesso: false } invalido)
+            return invalido;
         var r = await ErrosMySql.CapturarAsync(() => db.Set<T>().Where(e => EF.Property<int>(e, chave) == id).ExecuteDeleteAsync());
         if (!r.Sucesso) return Resultado.Erro(r.Mensagem!);
         return r.Valor == 0 ? Resultado.Erro(def.NaoEncontrado) : Resultado.Ok();
@@ -247,7 +254,7 @@ public sealed partial class AuxiliarService(LabDbContext db)
             var min = c.Minimo ?? (tipo == typeof(short) ? short.MinValue : int.MinValue);
             var maxV = c.Maximo ?? (tipo == typeof(short) ? short.MaxValue : int.MaxValue);
             if (n < min || n > maxV) return Resultado.Erro($"{c.Rotulo}: informe de {min} a {maxV}.", c.Propriedade);
-            return Resultado.Ok<object?>(tipo == typeof(short) ? (short)n : (int)n);
+            return Resultado.Ok<object?>(tipo == typeof(short) ? (object)(short)n : (int)n); // sem o cast o ternário vira int
         }
         throw new NotSupportedException($"{p.DeclaringType.ClrType.Name}.{p.Name}: tipo {tipo.Name} não suportado pelo cadastro auxiliar.");
     }

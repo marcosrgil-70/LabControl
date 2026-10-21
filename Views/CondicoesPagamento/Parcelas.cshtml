@@ -1,0 +1,110 @@
+@model ParcelasCondicaoVM
+@{
+    ViewData["Title"] = "Parcelas da condição de pagamento";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-2">
+        <li class="breadcrumb-item"><a asp-controller="Auxiliares" asp-action="Index">Cadastros auxiliares</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Auxiliares" asp-action="Lista" asp-route-tabela="CONDICOES_PAGTOS">Condições de pagamento</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Parcelas</li>
+    </ol>
+</nav>
+
+<h5 class="mb-1"><i class="bi bi-list-ol me-2 text-primary"></i>Parcelas — @Model.Codigo · @Model.Descricao</h5>
+<p class="small text-body-secondary mb-3">Opcional: sem parcelas a condição vale como está descrita. Com parcelas, a soma das porcentagens deve ser 100%.</p>
+
+@if (Model.Erro is not null)
+{
+    <div class="alert alert-danger py-2 small"><i class="bi bi-exclamation-triangle me-1"></i>@Model.Erro</div>
+}
+
+<form method="post" asp-action="Parcelas" asp-route-id="@Model.Id" id="formParcelas" class="card" style="max-width: 36rem">
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 4rem">Nº</th>
+                    <th>Dias para vencimento</th>
+                    <th>%</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="linhas">
+                @for (var i = 0; i < Model.Linhas.Count; i++)
+                {
+                    <tr>
+                        <td class="nr">@(i + 1)</td>
+                        <td><input name="Linhas[@i].Dias" value="@Model.Linhas[i].Dias" class="form-control form-control-sm dias" inputmode="numeric" aria-label="Dias para vencimento" /></td>
+                        <td><input name="Linhas[@i].Porcentagem" value="@Model.Linhas[i].Porcentagem" class="form-control form-control-sm porc" inputmode="decimal" aria-label="Porcentagem" /></td>
+                        <td class="text-end"><button type="button" class="btn btn-outline-danger btn-sm remover" title="Remover"><i class="bi bi-trash me-1"></i>Remover</button></td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" class="text-end small">Total</td>
+                    <td class="small fw-semibold" id="total"></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <div class="card-footer d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-primary btn-sm" id="adicionar" lc-permissao="AUXILIARES.ALTERAR"><i class="bi bi-plus-lg me-1"></i>Adicionar parcela</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="dividir" lc-permissao="AUXILIARES.ALTERAR" title="Mesma porcentagem em todas as parcelas"><i class="bi bi-distribute-horizontal me-1"></i>Dividir igualmente</button>
+        <a class="btn btn-outline-secondary btn-sm ms-auto" asp-controller="Auxiliares" asp-action="Lista" asp-route-tabela="CONDICOES_PAGTOS">Voltar</a>
+        <button type="submit" class="btn btn-primary btn-sm" lc-permissao="AUXILIARES.ALTERAR"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+    </div>
+</form>
+
+<template id="modeloLinha">
+    <tr>
+        <td class="nr"></td>
+        <td><input class="form-control form-control-sm dias" inputmode="numeric" aria-label="Dias para vencimento" /></td>
+        <td><input class="form-control form-control-sm porc" inputmode="decimal" aria-label="Porcentagem" /></td>
+        <td class="text-end"><button type="button" class="btn btn-outline-danger btn-sm remover" title="Remover"><i class="bi bi-trash me-1"></i>Remover</button></td>
+    </tr>
+</template>
+
+@section Scripts {
+    <script>
+        (() => {
+            const corpo = document.getElementById('linhas');
+            const total = document.getElementById('total');
+            const numero = s => parseFloat((s || '').replace(',', '.')) || 0;
+            const fmt = v => v.toLocaleString('pt-BR', { maximumFractionDigits: 4 }) + '%';
+
+            // nº e nomes pela posição (o servidor numera as parcelas na ordem da grade)
+            const atualizar = () => {
+                let soma = 0;
+                [...corpo.rows].forEach((tr, i) => {
+                    tr.querySelector('.nr').textContent = i + 1;
+                    tr.querySelector('.dias').name = `Linhas[${i}].Dias`;
+                    tr.querySelector('.porc').name = `Linhas[${i}].Porcentagem`;
+                    soma += numero(tr.querySelector('.porc').value);
+                });
+                soma = Math.round(soma * 10000) / 10000;
+                total.textContent = corpo.rows.length ? fmt(soma) : '—';
+                total.classList.toggle('text-danger', corpo.rows.length > 0 && soma !== 100);
+            };
+
+            document.getElementById('adicionar')?.addEventListener('click', () => {
+                corpo.append(document.getElementById('modeloLinha').content.cloneNode(true));
+                atualizar();
+                corpo.rows[corpo.rows.length - 1].querySelector('.dias').focus();
+            });
+            document.getElementById('dividir')?.addEventListener('click', () => {
+                const n = corpo.rows.length;
+                if (!n) return;
+                const parte = Math.floor(1000000 / n) / 10000; // 4 casas; a última fica com o resto
+                [...corpo.rows].forEach((tr, i) => tr.querySelector('.porc').value =
+                    (i < n - 1 ? parte : Math.round((100 - parte * (n - 1)) * 10000) / 10000).toLocaleString('pt-BR', { maximumFractionDigits: 4 }));
+                atualizar();
+            });
+            corpo.addEventListener('click', e => { if (e.target.closest('.remover')) { e.target.closest('tr').remove(); atualizar(); } });
+            corpo.addEventListener('input', atualizar);
+            atualizar();
+        })();
+    </script>
+}

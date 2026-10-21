@@ -23,6 +23,9 @@
 Proposta (T20), Recebimento (T22).
 
 ## Critérios de aceite
-- [ ] Itens do [padrão T10-00](T10-00-crud-auxiliares.md#critérios-de-aceite-valem-para-todos).
+- [x] Itens do [padrão T10-00](T10-00-crud-auxiliares.md#critérios-de-aceite-valem-para-todos).
 
-**Status:** ⬜
+## Implementação (tarefa 2.2)
+Campos `Descricao`, `Cor` e `PermiteAmostra` (lógico; a recusa no recebimento fica para a T22). Teste: `Status_grava_cor_e_recusa_formato_invalido`. Comum a todos: `Cada_auxiliar_lista_e_abre_o_formulario` (`AuxiliaresEspecificosTests`) + padrão T10-00 em `AuxiliaresTests`.
+
+**Status:** ✅ concluída em 21/10/2026 (tarefa 2.2) — entrada no `CatalogoAuxiliares` (CRUD genérico da 2.1). Testes: `AuxiliaresEspecificosTests` e, no navegador, `CrudNavegadorTelasTests`.

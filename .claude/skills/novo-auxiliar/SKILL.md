@@ -31,8 +31,10 @@ new AuxiliarDefinicao<Unidade>
 ## 3. Regras específicas (ganchos)
 - `ValidarAntesDeGravar = async (db, e) => …` → `Resultado.Erro("mensagem", "Propriedade")` (também roda ao inativar/reativar). Ex.: T10-15 "ao menos um status com permite resultado".
 - `PodeAlterarCampo = async (db, e, campo) => …` → `false` bloqueia o campo no formulário (cadeado) e na gravação. Ex.: T10-14/T10-16 código 1–99 imutável depois de usado (`EXISTS` na amostra).
+- `ValidarAntesDeExcluir = (db, e) => …` → regra ao excluir um registro sem uso (o uso a FK já recusa). Ex.: T10-15 não excluir o último status que permite resultado.
 - Regra que o banco já garante (trigger 45000, `UNIQUE`, FK) **não** se repete no C#.
-- Grade de filhos (T10-11 parcelas) não cabe no genérico: tela própria seguindo o mesmo visual.
+- Grade de filhos não cabe no genérico: tela própria seguindo o mesmo visual, aberta por um botão na linha da lista com `Acao = new("Texto", "bi-…", "Controller", "Action")` (recebe `id`). Modelo: T10-11 parcelas (`CondicoesPagamentoController`, `CondicaoPagamentoService`, `Views/CondicoesPagamento/Parcelas.cshtml`).
+- Campos estáticos reutilizados (`Descricao`, `Cor`, `CodigoNumero`) ficam **antes** de `Todos` no catálogo (ordem de inicialização).
 
 ## 4. Mensagem de duplicidade
 `Infra/ErrosMySql.cs`: a `UNIQUE` (ID_EMPRESAS, DESCRICAO) já está em `UnicosDescricao`; uma `UNIQUE` de código/sigla precisa de texto próprio em `Unicos` (ex.: `UQ_UNIDADE` → "Já existe uma unidade com esta sigla."). Confira o nome da constraint no MD da tabela.

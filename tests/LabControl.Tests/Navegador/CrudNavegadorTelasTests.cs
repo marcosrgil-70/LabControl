@@ -218,4 +218,73 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         await Assertions.Expect(Linha(p, nome)).ToContainTextAsync("Entrega");
         Assert.Empty(s.ErrosJs);
     }
+
+    [Fact]
+    public async Task Auxiliares_codigo_travado_cor_e_status_que_permite_resultado()
+    {
+        await using var c = await Cenario.CriarAsync();
+        c.Db.Add(c.NovaAmostra(await c.HojeAsync())); // o tipo de amostra do cenário passa a estar em uso
+        await c.Db.SaveChangesAsync();
+        await using var s = await app.EntrarAsync(c);
+        var p = s.Pagina;
+
+        // T10-14: código em uso vem travado, a descrição continua editável
+        await s.IrAsync("/Auxiliares/AMOSTRAS_TIPO");
+        await Linha(p, c.TipoAmostra.Descricao).Locator("button[title=Alterar]").ClickAsync();
+        await Assertions.Expect(p.Locator("#campo_Codigo")).ToBeDisabledAsync();
+        await Assertions.Expect(p.Locator("#formAuxiliar")).ToContainTextAsync("Em uso: não pode ser alterado.");
+        await p.FillAsync("#campo_Descricao", c.TipoAmostra.Descricao + " E BEBIDAS");
+        await p.ClickAsync("#formAuxiliar button[type=submit]");
+        Assert.Equal("Tipo de amostra gravado.", await s.AlertaAsync());
+        await Assertions.Expect(Linha(p, c.TipoAmostra.Descricao + " E BEBIDAS")).ToContainTextAsync(c.TipoAmostra.Codigo.ToString());
+
+        // T10-15: cor na lista; o único status que permite resultado não pode ser inativado
+        var nome = Unico("EM QUARENTENA");
+        await s.IrAsync("/Auxiliares/AMOSTRAS_STATUS");
+        await p.ClickAsync("button[data-form$='/Incluir']");
+        await p.FillAsync("#campo_Descricao", nome);
+        await p.Locator("#campo_Cor").FillAsync("#ff8800");
+        await p.ClickAsync("#formAuxiliar button[type=submit]");
+        Assert.Equal("Status da amostra gravado.", await s.AlertaAsync());
+        await Assertions.Expect(Linha(p, nome)).ToContainTextAsync("#FF8800");
+        await Linha(p, "LIBERADA PARA ANÁLISE").Locator("button[title=Inativar]").ClickAsync();
+        // (a página anterior ainda mostra o "gravado": espera o alerta de erro da nova)
+        await Assertions.Expect(p.Locator(".alert-danger")).ToContainTextAsync("Deve existir ao menos um status ativo que permite resultado");
+        Assert.Empty(s.ErrosJs);
+    }
+
+    [Fact]
+    public async Task Condicao_de_pagamento_com_parcelas()
+    {
+        await using var c = await Cenario.CriarAsync();
+        await using var s = await app.EntrarAsync(c);
+        var p = s.Pagina;
+        var id = c.Proposta.IdCondicoesPagtos;
+
+        await s.IrAsync("/Auxiliares/CONDICOES_PAGTOS");
+        await Linha(p, "À VISTA").Locator("a[title=Parcelas]").ClickAsync();
+        await Assertions.Expect(p.Locator("h5")).ToContainTextAsync("Parcelas — 01 · À VISTA");
+
+        // 3 parcelas divididas igualmente; o total mostra 100%
+        for (var i = 0; i < 3; i++) await p.ClickAsync("#adicionar");
+        var dias = p.Locator("#linhas .dias");
+        await dias.Nth(0).FillAsync("0");
+        await dias.Nth(1).FillAsync("30");
+        await dias.Nth(2).FillAsync("60");
+        await p.ClickAsync("#dividir");
+        await Assertions.Expect(p.Locator("#total")).ToHaveTextAsync("100%");
+
+        // remover uma: o total avisa e o servidor recusa
+        await p.Locator("#linhas .remover").Nth(2).ClickAsync();
+        await Assertions.Expect(p.Locator("#total")).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("text-danger"));
+        await p.ClickAsync("#formParcelas button[type=submit]");
+        await Assertions.Expect(p.Locator(".alert-danger")).ToContainTextAsync("A soma das porcentagens deve ser 100%");
+
+        await p.ClickAsync("#dividir");
+        await p.ClickAsync("#formParcelas button[type=submit]");
+        await Assertions.Expect(p.Locator(".alert-success")).ToContainTextAsync("Parcelas gravadas.");
+        var gravadas = await c.Db.CondicoesPagtosParc.AsNoTracking().Where(x => x.IdCondicoesPagtos == id).OrderBy(x => x.NrParcela).ToListAsync();
+        Assert.Equal([(1, 0, 50m), (2, 30, 50m)], gravadas.Select(x => (x.NrParcela, x.DiasVencimento, x.PorcVencimento)));
+        Assert.Empty(s.ErrosJs);
+    }
 }
