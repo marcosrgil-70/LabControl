@@ -254,6 +254,139 @@ public class CrudNavegadorTelasTests(AppNavegador app)
     }
 
     [Fact]
+    public async Task Geografia_pais_estado_cidade_e_importacao_ibge()
+    {
+        await using var c = await Cenario.CriarAsync();
+        await using var s = await app.EntrarAsync(c, adminGlobal: true);
+        var p = s.Pagina;
+        var pais = Unico("NÁRNIA");
+        var codigo = "97" + Random.Shared.Next(10000, 99999);
+        var novoIbge = "35" + Random.Shared.Next(90000, 99999);
+        try
+        {
+            // país
+            await s.IrAsync("/Geografia/Paises");
+            await p.ClickAsync("button[data-editar='0']");
+            await p.FillAsync("#geo_Nome", pais);
+            await p.FillAsync("#geo_Sigla", "na");
+            await p.ClickAsync("#formGeo button[type=submit]");
+            Assert.Equal("País gravado.", await s.AlertaAsync());
+            await Assertions.Expect(Linha(p, pais)).ToContainTextAsync("NA");
+
+            // estado no país (combo), pela aba Estados
+            await p.ClickAsync(".nav-tabs >> text=Estados");
+            await p.ClickAsync("button[data-editar='0']");
+            await p.SelectOptionAsync("#geo_IdPai", new SelectOptionValue { Label = pais });
+            await p.FillAsync("#geo_Nome", "CAIR PARAVEL");
+            await p.FillAsync("#geo_Sigla", "CP");
+            await p.FillAsync("#geo_Codigo", "97");
+            await p.ClickAsync("#formGeo button[type=submit]");
+            Assert.Equal("Estado gravado.", await s.AlertaAsync());
+            await Assertions.Expect(Linha(p, "CAIR PARAVEL")).ToContainTextAsync(pais);
+
+            // cidade: código fora da UF volta com o modal aberto e o erro no campo; depois grava, altera e exclui
+            await p.ClickAsync(".nav-tabs >> text=Cidades");
+            await p.SelectOptionAsync("#IdPais", new SelectOptionValue { Label = pais });
+            await p.ClickAsync("button[data-editar='0']");
+            await p.SelectOptionAsync("#geo_IdPai", new SelectOptionValue { Label = "CP — CAIR PARAVEL" });
+            await p.FillAsync("#geo_Nome", "CASTELO");
+            await p.FillAsync("#geo_Codigo", "3550308");
+            await p.ClickAsync("#formGeo button[type=submit]");
+            await Assertions.Expect(p.Locator("#formGeo .invalid-feedback")).ToHaveTextAsync("Código IBGE: as cidades de CP começam por 97.");
+            await p.FillAsync("#geo_Codigo", codigo);
+            await p.ClickAsync("#formGeo button[type=submit]");
+            Assert.Equal("Cidade gravada.", await s.AlertaAsync());
+            await Linha(p, "CASTELO").Locator("button[title=Alterar]").ClickAsync();
+            await Assertions.Expect(p.Locator("#geo_Codigo")).ToHaveValueAsync(codigo);
+            await p.FillAsync("#geo_Nome", "CASTELO DE CAIR PARAVEL");
+            await p.ClickAsync("#formGeo button[type=submit]");
+            await Assertions.Expect(Linha(p, "CASTELO DE CAIR PARAVEL")).ToContainTextAsync("CP");
+            await Linha(p, "CASTELO DE CAIR PARAVEL").Locator("button[title=Excluir]").ClickAsync();
+            Assert.Equal("Cidade excluída.", await s.AlertaAsync());
+            Assert.Contains(s.Dialogos, d => d.Contains("some para todas as empresas"));
+
+            // importação IBGE: relatório com incluídos e erros
+            await s.IrAsync("/Geografia/Cidades");
+            await p.ClickAsync("text=Importar municípios IBGE");
+            await p.SetInputFilesAsync("#arquivoIbge", new FilePayload
+            {
+                Name = "municipios.csv", MimeType = "text/csv",
+                Buffer = System.Text.Encoding.UTF8.GetBytes($"codigo;nome;uf\n{novoIbge};Importada Pelo Navegador;SP\n3304557;RIO DE JANEIRO;SP\n"),
+            });
+            await p.ClickAsync("#formImportar button[type=submit]");
+            await Assertions.Expect(p.Locator("#relatorioImportacao")).ToContainTextAsync("1 incluído(s)");
+            await Assertions.Expect(p.Locator("#relatorioImportacao")).ToContainTextAsync("UF SP não confere com o código 3304557 (RJ).");
+            Assert.True(await c.Db.Cidades.AnyAsync(x => x.CodigoIbge == novoIbge && x.Nome == "IMPORTADA PELO NAVEGADOR"));
+            Assert.Empty(s.ErrosJs);
+        }
+        finally
+        {
+            await c.Db.Cidades.Where(x => x.CodigoIbge == novoIbge || x.CodigoIbge == codigo).ExecuteDeleteAsync();
+            await c.Db.Estados.Where(x => x.Pais.Nome == pais).ExecuteDeleteAsync();
+            await c.Db.Paises.Where(x => x.Nome == pais).ExecuteDeleteAsync();
+        }
+    }
+
+    [Fact]
+    public async Task Cadastro_rapido_mais_inclui_e_seleciona_no_combo()
+    {
+        await using var c = await Cenario.CriarAsync();
+        await using var s = await app.EntrarAsync(c);
+        var p = s.Pagina;
+        var cargo = Unico("ANALISTA");
+        var tipo = Unico("COLETA");
+
+        // T13: "+" do cargo → modal do auxiliar → gravado já vem escolhido no combo
+        await s.IrAsync("/Profissionais/Criar");
+        await p.ClickAsync("button[data-rapido-botao=CARGOS_FUNCIONARIOS]");
+        await p.FillAsync(".modal-rapido #campo_Descricao", cargo);
+        await Assertions.Expect(p.Locator(".modal-rapido #campo_Ativo")).ToHaveCountAsync(0); // sempre ativo
+        await p.ClickAsync(".modal-rapido button[type=submit]");
+        await Assertions.Expect(p.Locator(".modal-rapido")).ToBeHiddenAsync();
+        await Assertions.Expect(p.Locator("#IdCargosFuncionarios option:checked")).ToHaveTextAsync(cargo);
+
+        // duplicado: o erro aparece no campo e o modal continua aberto
+        await p.ClickAsync("button[data-rapido-botao=CARGOS_FUNCIONARIOS]");
+        await p.FillAsync(".modal-rapido #campo_Descricao", cargo);
+        await p.ClickAsync(".modal-rapido button[type=submit]");
+        await Assertions.Expect(p.Locator(".modal-rapido .invalid-feedback")).ToHaveTextAsync("Já existe um registro com esta descrição.");
+        await Assertions.Expect(p.Locator(".modal-rapido[data-pronto]")).ToHaveCountAsync(1); // abertura terminada
+        await p.Keyboard.PressAsync("Escape");
+        await Assertions.Expect(p.Locator(".modal-rapido")).ToBeHiddenAsync();
+
+        // de dentro do modal de endereço (contatos): abre por cima, o Esc fecha só o de cima, o tipo novo fica escolhido
+        await s.IrAsync($"/Clientes/Editar/{c.Cliente.IdEntidades}");
+        await p.ClickAsync("button[data-bs-target='#aba-enderecos']");
+        await p.ClickAsync("[data-contato-novo=endereco]");
+        await Assertions.Expect(p.Locator("#modal-endereco")).ToBeVisibleAsync();
+        await p.ClickAsync("#modal-endereco button[data-rapido-botao=ENDERECOS_TIPOS]");
+        await p.FillAsync("#modal-endereco .modal-rapido #campo_Descricao", tipo);
+        await Assertions.Expect(p.Locator("#modal-endereco .modal-rapido[data-pronto]")).ToHaveCountAsync(1);
+        await p.Keyboard.PressAsync("Escape");
+        await Assertions.Expect(p.Locator("#modal-endereco .modal-rapido")).ToBeHiddenAsync();
+        await Assertions.Expect(p.Locator("#modal-endereco")).ToBeVisibleAsync();
+        await p.ClickAsync("#modal-endereco button[data-rapido-botao=ENDERECOS_TIPOS]");
+        await p.FillAsync("#modal-endereco .modal-rapido #campo_Descricao", tipo);
+        await p.ClickAsync("#modal-endereco .modal-rapido button[type=submit]");
+        // Finalidade é obrigatória: o erro do servidor (422) aparece no campo, com o modal aberto
+        await Assertions.Expect(p.Locator("#modal-endereco .modal-rapido .invalid-feedback")).ToHaveTextAsync("Informe finalidade.");
+        await p.SelectOptionAsync("#modal-endereco .modal-rapido #campo_Finalidade", new SelectOptionValue { Label = "Entrega" });
+        await p.ClickAsync("#modal-endereco .modal-rapido button[type=submit]");
+        await Assertions.Expect(p.Locator("#modal-endereco .modal-rapido")).ToBeHiddenAsync();
+        await Assertions.Expect(p.Locator("#end-tipo option:checked")).ToHaveTextAsync(tipo);
+        await Assertions.Expect(p.Locator("#modal-endereco")).ToBeVisibleAsync();
+
+        // e o endereço grava com o tipo novo
+        await p.FillAsync("#end-logradouro", "RUA DO CADASTRO RÁPIDO, 10");
+        await p.SelectOptionAsync("#end-uf", new SelectOptionValue { Label = "SP" });
+        await Assertions.Expect(p.Locator("#end-cidade option", new() { HasText = "CAMPINAS" })).ToHaveCountAsync(1);
+        await p.SelectOptionAsync("#end-cidade", new SelectOptionValue { Label = "CAMPINAS" });
+        await p.ClickAsync("#modal-endereco button[type=submit]");
+        await Assertions.Expect(p.Locator("#aba-enderecos tbody")).ToContainTextAsync(tipo);
+        Assert.Empty(s.ErrosJs);
+    }
+
+    [Fact]
     public async Task Condicao_de_pagamento_com_parcelas()
     {
         await using var c = await Cenario.CriarAsync();

@@ -24,8 +24,17 @@ Botão "Importar municípios IBGE" (CSV oficial: código, nome, UF): insere os q
 ## Critérios de aceite
 - [x] CEP válido preenche o endereço e a cidade correta (pelo IBGE) — `GET /Geografia/Cep/{cep}` (ViaCEP no servidor, cache 1 dia, separa o tipo de logradouro), usado no componente de endereço ([P25](../processos/P25-cadastro-entidades-contatos.md)).
 - [x] Sem internet o endereço pode ser digitado (mensagem "Serviço de CEP indisponível…" e preenchimento manual).
-- [x] Importação IBGE idempotente — feita como **seed** `Scripts/v2/06_cidades.sql` (5.571 municípios, `INSERT IGNORE` pelo código IBGE; gerador `tools/gerador-cidades`). A tela de manutenção de países/estados/cidades continua na 2.3.
+- [x] Importação IBGE idempotente — feita como **seed** `Scripts/v2/06_cidades.sql` (5.571 municípios, `INSERT IGNORE` pelo código IBGE; gerador `tools/gerador-cidades`). E, na 2.3, o botão **Importar municípios IBGE** da tela (relatório de incluídos/atualizados/sem alteração/erros; reimportar não duplica) — `GeografiaTests.Importacao_ibge_inclui_atualiza_e_relata_erros`.
+- [x] Manutenção de cidades só pelo ADMIN_GLOBAL; demais usuários consultam — `GeografiaTests.Telas_consulta_para_todos_e_gravacao_so_admin_global`.
+- [x] CRUD pela tela, no navegador — `CrudNavegadorTelasTests.Geografia_pais_estado_cidade_e_importacao_ibge`.
 
-> **20/10/2026 (relato do usuário: "cadastro de cidades não funciona"):** a tela ainda não existe (2.3), mas o item *Cidades* aparecia no menu porque o JSON do combo se chamava `/Geografia/Cidades` e o menu o tomava pela tela. O JSON passou a `/Geografia/CidadesDaUf`; o item volta ao menu quando a tela for feita. Teste: `PermissoesMenuPainelTests.Menu_real_sem_tela_inexistente_e_com_uma_entrada_de_empresa`.
+> **20/10/2026 (relato do usuário: "cadastro de cidades não funciona"):** a tela ainda não existe (2.3), mas o item *Cidades* aparecia no menu porque o JSON do combo se chamava `/Geografia/Cidades` e o menu o tomava pela tela. O JSON passou a `/Geografia/CidadesDaUf`; o item volta ao menu quando a tela for feita. Teste: `PermissoesMenuPainelTests.Menu_real_sem_tela_inexistente_e_com_uma_entrada_de_empresa`. **21/10/2026:** tela feita, item de volta ao menu (Países, Estados e Cidades; o teste agora confere os três).
 
-**Status:** 🟨 cidades IBGE, busca de CEP e componente de endereço prontos em 20/10/2026 (P25); falta a tela de manutenção T11-01…03 (2.3).
+## Implementação (tarefa 2.3)
+- Aba Cidades de `/Geografia` (`Views/Geografia/Lista.cshtml`, `GeografiaController`, `Services/Geografia/GeografiaService.cs`): filtros país → estado + busca por nome ou código IBGE, 50 por página (paginação por janela: são 112 páginas sem filtro).
+- Gravação (só ADMIN_GLOBAL): estado obrigatório, nome em maiúsculas (até 150), código IBGE opcional de 7 dígitos que **começa pelo código da UF** (decisão: evita a busca de CEP cair na cidade errada), único → "Já existe uma cidade com este código IBGE." no campo.
+- Exclusão: recusada se algum endereço usa a cidade, **em qualquer empresa** (`IgnoreQueryFilters` só nessa checagem — a tabela é global); a lista não mostra esse uso para não contar cadastros de outras empresas.
+- Importação IBGE: CSV `código; nome; UF` (`;`, `,` ou tab; cabeçalho opcional; UTF-8 ou Latin-1 do Excel). UF pelo prefixo do código entre os estados do **Brasil** (BACEN 1058 — o código de UF não é único no banco), conferida com a coluna UF; inclui os que faltam, atualiza nome/UF pelo código, nunca exclui; até 20 erros listados por linha; uma transação + evento de auditoria `A` em `CIDADES` / `IMPORTACAO_IBGE` com o resumo.
+- Apoio ao endereço (P25) inalterado: `/Geografia/CidadesDaUf` e `/Geografia/Cep/{cep}`.
+
+**Status:** ✅ concluída na tarefa 2.3 (21/10/2026) — cidades IBGE, CEP e componente de endereço em 20/10/2026 (P25); telas de manutenção e importação em 21/10/2026.

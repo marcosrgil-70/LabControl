@@ -16,7 +16,7 @@
                 <input type="hidden" name="Id" value="0" />
                 <div class="col-md-4">
                     <label class="form-label small" for="end-tipo">Tipo de endereço *</label>
-                    <select class="form-select" id="end-tipo" name="IdEnderecosTipos" required>
+                    <select class="form-select" id="end-tipo" name="IdEnderecosTipos" required lc-rapido="ENDERECOS_TIPOS">
                         <option value="">—</option>
                         @foreach (var o in Model.TiposEndereco) { <option value="@o.Id">@o.Nome</option> }
                     </select>
@@ -32,7 +32,7 @@
                 <div class="col-md-5"></div>
                 <div class="col-md-3">
                     <label class="form-label small" for="end-tiplog">Tipo de logradouro</label>
-                    <select class="form-select" id="end-tiplog" name="IdTiposLogradouro">
+                    <select class="form-select" id="end-tiplog" name="IdTiposLogradouro" lc-rapido="TIPOS_LOGRADOURO">
                         <option value="">—</option>
                         @foreach (var o in Model.TiposLogradouro) { <option value="@o.Id">@o.Nome</option> }
                     </select>
@@ -93,7 +93,7 @@
                 <input type="hidden" name="Id" value="0" />
                 <div class="col-12">
                     <label class="form-label small" for="fone-tipo">Tipo *</label>
-                    <select class="form-select" id="fone-tipo" name="IdFonesTipos" required>
+                    <select class="form-select" id="fone-tipo" name="IdFonesTipos" required lc-rapido="FONES_TIPOS">
                         <option value="">—</option>
                         @foreach (var o in Model.TiposFone) { <option value="@o.Id">@o.Nome</option> }
                     </select>
@@ -149,7 +149,7 @@
                 </div>
                 <div class="col-6">
                     <label class="form-label small" for="email-tipo">Tipo</label>
-                    <select class="form-select" id="email-tipo" name="IdEmailsTipos">
+                    <select class="form-select" id="email-tipo" name="IdEmailsTipos" lc-rapido="EMAILS_TIPOS">
                         <option value="">—</option>
                         @foreach (var o in Model.TiposEmail) { <option value="@o.Id">@o.Nome</option> }
                     </select>

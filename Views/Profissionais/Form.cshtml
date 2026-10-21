@@ -60,7 +60,7 @@
                         </div>
                         <div class="col-md-6">
                             <label asp-for="IdCargosFuncionarios" class="form-label small"></label>
-                            <select asp-for="IdCargosFuncionarios" asp-items="@(new SelectList(Model.Cargos, "Id", "Nome"))" class="form-select"><option value="">—</option></select>
+                            <select asp-for="IdCargosFuncionarios" lc-rapido="CARGOS_FUNCIONARIOS" asp-items="@(new SelectList(Model.Cargos, "Id", "Nome"))" class="form-select"><option value="">—</option></select>
                             <div class="form-text">Impresso no boletim.</div>
                         </div>
                     </div>
@@ -71,7 +71,7 @@
                     <div class="card-body row g-3">
                         <div class="col-md-4">
                             <label asp-for="IdTiposRegProfissional" class="form-label small"></label>
-                            <select asp-for="IdTiposRegProfissional" asp-items="@(new SelectList(Model.TiposRegistro, "Id", "Nome"))" class="form-select"><option value="">—</option></select>
+                            <select asp-for="IdTiposRegProfissional" lc-rapido="TIPOS_REG_PROFISSIONAL" asp-items="@(new SelectList(Model.TiposRegistro, "Id", "Nome"))" class="form-select"><option value="">—</option></select>
                             <span asp-validation-for="IdTiposRegProfissional" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">

@@ -67,3 +67,6 @@ body {
 .sidebar-versao { color: #6c757d; font-size: 0.72rem; }
 .painel-contador:hover { box-shadow: 0 2px 10px rgba(0, 0, 0, .12); }
 .empresa-logo { max-height: 80px; max-width: 220px; }
+
+/* Cadastro rápido "+" aberto de dentro de outro modal (site.js): fica no mesmo .modal, com fundo próprio */
+.modal-rapido-sobre { background-color: rgba(0, 0, 0, .45); z-index: 1060; }

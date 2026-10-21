@@ -27,6 +27,7 @@
 - **Esforço:** M · **Depende de:** 2.1
 
 ### 2.3 Geografia + importação IBGE + componente de endereço
+> ✅ **Concluída em 21/10/2026** — ver [T11-03 › Implementação](../telas/T11-03-cidades.md#implementação-tarefa-23) (e [T11-01](../telas/T11-01-paises.md#implementação-tarefa-23)/[T11-02](../telas/T11-02-estados.md#implementação-tarefa-23)); aceite em `GeografiaTests` + navegador `CrudNavegadorTelasTests.Geografia_pais_estado_cidade_e_importacao_ibge`.
 > 🟨 **Parte feita em 20/10/2026:** 5.571 municípios IBGE no seed `06_cidades.sql`, `/Geografia/CidadesDaUf` (combo; o nome `/Geografia/Cidades` fica para a tela T11-03), `/Geografia/Cep/{cep}` (ViaCEP no servidor) e o componente de endereço/contatos (`_ContatosAbas`/`_ContatosModais`/`contatos.js`). Falta a tela de manutenção T11-01…03.
 > 🔧 **20/10/2026:** o item *Cidades* aparecia no menu sem a tela existir (era o JSON do combo) — saiu do menu; volta quando a T11-03 for feita nesta tarefa. Ver [T11-03](../telas/T11-03-cidades.md).
 - **Passos:** T11-01/02/03 (só ADMIN_GLOBAL altera); importação do CSV do IBGE; endpoint `/Geografia/Cep/{cep}` (ViaCEP no servidor, cache, timeout); componente Razor/JS "Endereço" reutilizável (usado depois em T12 e T03).
@@ -34,6 +35,7 @@
 - **Esforço:** M
 
 ### 2.4 Componente "+" (cadastro rápido) nos lookups
+> ✅ **Concluída em 21/10/2026** — ver [T10-00 › Implementação (2.4)](../telas/T10-00-crud-auxiliares.md#implementação-tarefa-24--cadastro-rápido-); aceite em `CadastroRapidoTests` + navegador `Cadastro_rapido_mais_inclui_e_seleciona_no_combo`. Sem Tom Select (o projeto usa `<select>` simples): o "+" é o atributo `lc-rapido` no combo. O aceite "idioma pelo +" foi provado com cargo e tipo de endereço — ainda não há combo de idioma (vem com a proposta, 4.2); mesmo componente.
 - **Passos:** modal genérico que abre o formulário do auxiliar e devolve `{id, texto}` ao Tom Select de origem; usado na proposta (produto, método, idioma, prazo) e nos resultados (tipo de resultado).
 - **Aceite:** incluir um idioma pelo "+" já deixa o item selecionado no combo.
 - **Esforço:** S · **Depende de:** 2.1
@@ -43,5 +45,5 @@
 
 ## Definição de pronto
 - [ ] 20 auxiliares + geografia por empresa (exceto geografia global), com cadastro rápido.
-- [ ] Códigos de tipo de amostra/análise protegidos.
+- [x] Códigos de tipo de amostra/análise protegidos (2.2).
 - [ ] CRUD de cada tela provado no navegador (P26).

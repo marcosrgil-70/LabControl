@@ -1,0 +1,276 @@
+@using LabControl.Services.Geografia
+@model GeoListaVM
+@{
+    var tela = Model.Tela;
+    var f = Model.Filtro;
+    var admin = User.HasClaim(LabClaims.AdminGlobal, "1");
+    var (titulo, icone, singular) = tela switch
+    {
+        GeografiaService.Paises => ("Países", "bi-globe-americas", "país"),
+        GeografiaService.Estados => ("Estados", "bi-map", "estado"),
+        _ => ("Cidades", "bi-pin-map", "cidade"),
+    };
+    var rotuloCodigo = tela == GeografiaService.Paises ? "Código BACEN" : "Código IBGE";
+    var rotuloFilhos = tela == GeografiaService.Paises ? "Estados" : "Cidades";
+    ViewData["Title"] = titulo;
+    var form = Model.Form;
+    string? Erro(string campo) => form?.Erros.GetValueOrDefault(campo);
+
+    // filtro atual, repetido nos formulários para voltar ao mesmo ponto da lista
+    void FiltroOculto()
+    {
+        <input type="hidden" name="Busca" value="@f.Busca" />
+        <input type="hidden" name="IdPais" value="@f.IdPais" />
+        <input type="hidden" name="IdEstado" value="@f.IdEstado" />
+        <input type="hidden" name="Pagina" value="@f.Pagina" />
+    }
+}
+
+<div class="d-flex align-items-center mb-1">
+    <h5 class="mb-0"><i class="bi @icone me-2 text-primary"></i>@titulo</h5>
+    @if (admin)
+    {
+        <button type="button" class="btn btn-primary btn-sm ms-auto" data-editar="0"><i class="bi bi-plus-lg me-1"></i>Incluir</button>
+    }
+</div>
+<p class="small text-body-secondary mb-3">
+    Cadastro <b>global</b>, igual para todas as empresas@(admin ? "." : ": só o administrador global inclui, altera ou exclui.")
+    @if (tela == GeografiaService.Cidades) { <text>Os 5.571 municípios do IBGE já vêm no banco; a busca de CEP escolhe a cidade pelo código IBGE.</text> }
+</p>
+
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link @(tela == GeografiaService.Paises ? "active" : "")" asp-action="Paises">Países</a></li>
+    <li class="nav-item"><a class="nav-link @(tela == GeografiaService.Estados ? "active" : "")" asp-action="Estados">Estados</a></li>
+    <li class="nav-item"><a class="nav-link @(tela == GeografiaService.Cidades ? "active" : "")" asp-action="Cidades">Cidades</a></li>
+</ul>
+
+@if (Model.Importacao is { } imp)
+{
+    <div class="alert @(imp.Erros.Count == 0 ? "alert-success" : "alert-warning") small" id="relatorioImportacao">
+        <div class="fw-semibold mb-1"><i class="bi bi-cloud-download me-1"></i>Importação IBGE concluída</div>
+        @imp.Lidas município(s) lido(s): <b>@imp.Incluidas</b> incluído(s), <b>@imp.Atualizadas</b> atualizado(s), @imp.Iguais sem alteração@(imp.Erros.Count > 0 ? $", {imp.Erros.Count(e => !e.StartsWith('…'))} linha(s) com erro:" : ".")
+        @if (imp.Erros.Count > 0)
+        {
+            <ul class="mb-0 mt-1">@foreach (var e in imp.Erros) { <li>@e</li> }</ul>
+        }
+    </div>
+}
+
+<form method="get" class="card mb-3">
+    <div class="card-body py-2 d-flex flex-wrap gap-3 align-items-end">
+        @if (tela != GeografiaService.Paises)
+        {
+            <div>
+                <label class="form-label small mb-0" for="IdPais">País</label>
+                <select name="IdPais" id="IdPais" class="form-select form-select-sm" onchange="this.form.IdEstado && (this.form.IdEstado.value = ''); this.form.submit()">
+                    <option value="">Todos</option>
+                    @foreach (var p in Model.Paises) { <option value="@p.Id" selected="@(p.Id == f.IdPais)">@p.Nome</option> }
+                </select>
+            </div>
+        }
+        @if (tela == GeografiaService.Cidades)
+        {
+            <div>
+                <label class="form-label small mb-0" for="IdEstado">Estado</label>
+                <select name="IdEstado" id="IdEstado" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Todos</option>
+                    @foreach (var e in Model.Estados) { <option value="@e.Id" selected="@(e.Id == f.IdEstado)">@e.Nome</option> }
+                </select>
+            </div>
+        }
+        <div class="flex-grow-1" style="max-width: 24rem">
+            <label class="form-label small mb-0" for="Busca">Pesquisar</label>
+            <input name="Busca" id="Busca" value="@f.Busca" class="form-control form-control-sm"
+                   placeholder="@(tela == GeografiaService.Cidades ? "Parte do nome ou código IBGE" : "Parte do nome ou sigla")" autofocus />
+        </div>
+        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Pesquisar</button>
+        @if (tela == GeografiaService.Cidades && admin)
+        {
+            <button type="button" class="btn btn-outline-secondary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalImportar">
+                <i class="bi bi-cloud-upload me-1"></i>Importar municípios IBGE
+            </button>
+        }
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    @if (tela == GeografiaService.Estados) { <th>País</th> }
+                    <th>Nome</th>
+                    @if (tela == GeografiaService.Cidades) { <th>UF</th> } else { <th>Sigla</th> }
+                    <th>@rotuloCodigo</th>
+                    @if (tela != GeografiaService.Cidades) { <th class="text-end">@rotuloFilhos</th> }
+                    @if (admin) { <th></th> }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Itens)
+                {
+                    <tr>
+                        @if (tela == GeografiaService.Estados) { <td>@item.Pai</td> }
+                        <td>@item.Nome</td>
+                        @if (tela == GeografiaService.Cidades) { <td>@item.Pai</td> } else { <td>@item.Sigla</td> }
+                        <td class="font-monospace small">@item.Codigo</td>
+                        @if (tela != GeografiaService.Cidades) { <td class="text-end">@item.Filhos</td> }
+                        @if (admin)
+                        {
+                            <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" title="Alterar" data-editar="@item.Id"
+                                        data-pai="@item.IdPai" data-nome="@item.Nome" data-sigla="@item.Sigla" data-codigo="@item.Codigo">
+                                    <i class="bi bi-pencil me-1"></i>Alterar
+                                </button>
+                                <form method="post" asp-action="Excluir" asp-route-tela="@tela" asp-route-id="@item.Id" class="d-inline"
+                                      data-confirmar="@($"Deseja realmente excluir \"{item.Nome}\"? O cadastro é global: some para todas as empresas.")">
+                                    @{ FiltroOculto(); }
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash me-1"></i>Excluir</button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+                @if (Model.Itens.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-center text-body-secondary small py-3">Nenhum@(singular == "cidade" ? "a" : "") @singular encontrad@(singular == "cidade" ? "a" : "o").</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center small py-2">
+        <span class="text-body-secondary">@Model.Total registro(s)</span>
+        @if (Model.Paginas > 1)
+        {
+            // páginas próximas da atual (cidades chegam a 112 páginas)
+            var de = Math.Max(1, f.Pagina - 4);
+            var ate = Math.Min(Model.Paginas, de + 9);
+            <nav class="ms-auto" aria-label="Páginas">
+                <ul class="pagination pagination-sm mb-0">
+                    @if (de > 1) { <li class="page-item"><a class="page-link" asp-action="@tela" asp-route-Busca="@f.Busca" asp-route-IdPais="@f.IdPais" asp-route-IdEstado="@f.IdEstado" asp-route-Pagina="1">«</a></li> }
+                    @for (var p = de; p <= ate; p++)
+                    {
+                        <li class="page-item @(p == f.Pagina ? "active" : "")">
+                            <a class="page-link" asp-action="@tela" asp-route-Busca="@f.Busca" asp-route-IdPais="@f.IdPais" asp-route-IdEstado="@f.IdEstado" asp-route-Pagina="@p">@p</a>
+                        </li>
+                    }
+                    @if (ate < Model.Paginas) { <li class="page-item"><a class="page-link" asp-action="@tela" asp-route-Busca="@f.Busca" asp-route-IdPais="@f.IdPais" asp-route-IdEstado="@f.IdEstado" asp-route-Pagina="@Model.Paginas">»</a></li> }
+                </ul>
+            </nav>
+        }
+    </div>
+</div>
+
+@if (admin)
+{
+    <div class="modal fade" id="modalGeo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post" asp-action="Gravar" asp-route-tela="@tela" class="modal-content" id="formGeo">
+                <div class="modal-header">
+                    <h6 class="modal-title" id="tituloGeo">@(form is { Id: not 0 } ? "Alterar" : "Incluir") @singular</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    @if (form?.Erro is not null) { <div class="alert alert-danger py-2 small">@form.Erro</div> }
+                    <input type="hidden" name="Id" id="geo_Id" value="@(form?.Id ?? 0)" />
+                    @{ FiltroOculto(); }
+                    @if (tela != GeografiaService.Paises)
+                    {
+                        var opcoes = tela == GeografiaService.Estados ? Model.Paises : Model.Estados;
+                        <div class="mb-3">
+                            <label class="form-label" for="geo_IdPai">@(tela == GeografiaService.Estados ? "País" : "Estado") <span class="text-danger">*</span></label>
+                            <select class="form-select@(Erro("IdPai") is null ? "" : " is-invalid")" name="IdPai" id="geo_IdPai" required>
+                                <option value="">Escolha…</option>
+                                @foreach (var o in opcoes) { <option value="@o.Id" selected="@(o.Id == (form?.IdPai ?? (tela == GeografiaService.Cidades ? f.IdEstado : f.IdPais)))">@o.Nome</option> }
+                            </select>
+                            @if (Erro("IdPai") is { } ePai) { <div class="invalid-feedback d-block">@ePai</div> }
+                        </div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label" for="geo_Nome">Nome <span class="text-danger">*</span></label>
+                        <input class="form-control text-uppercase@(Erro("Nome") is null ? "" : " is-invalid")" name="Nome" id="geo_Nome" value="@form?.Nome" required
+                               maxlength="@(tela switch { GeografiaService.Paises => 80, GeografiaService.Estados => 100, _ => 150 })" />
+                        @if (Erro("Nome") is { } eNome) { <div class="invalid-feedback d-block">@eNome</div> }
+                    </div>
+                    @if (tela != GeografiaService.Cidades)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label" for="geo_Sigla">Sigla @if (tela == GeografiaService.Estados) { <span class="text-danger">*</span> }</label>
+                            <input class="form-control text-uppercase@(Erro("Sigla") is null ? "" : " is-invalid")" name="Sigla" id="geo_Sigla" value="@form?.Sigla"
+                                   maxlength="@(tela == GeografiaService.Paises ? 5 : 2)" required="@(tela == GeografiaService.Estados)" />
+                            @if (Erro("Sigla") is { } eSigla) { <div class="invalid-feedback d-block">@eSigla</div> }
+                        </div>
+                    }
+                    <div class="mb-1">
+                        <label class="form-label" for="geo_Codigo">@rotuloCodigo</label>
+                        <input class="form-control font-monospace@(Erro("Codigo") is null ? "" : " is-invalid")" name="Codigo" id="geo_Codigo" value="@form?.Codigo" inputmode="numeric"
+                               maxlength="@(tela switch { GeografiaService.Paises => 10, GeografiaService.Estados => 2, _ => 7 })" />
+                        @if (Erro("Codigo") is { } eCodigo) { <div class="invalid-feedback d-block">@eCodigo</div> }
+                        else
+                        {
+                            <div class="form-text">@(tela switch { GeografiaService.Paises => "Brasil = 1058.", GeografiaService.Estados => "2 dígitos (SP = 35).", _ => "7 dígitos, começando pelo código da UF (São Paulo = 3550308)." })</div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (tela == GeografiaService.Cidades)
+    {
+        <div class="modal fade" id="modalImportar" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <form method="post" asp-action="ImportarIbge" enctype="multipart/form-data" class="modal-content" id="formImportar">
+                    <div class="modal-header">
+                        <h6 class="modal-title">Importar municípios IBGE</h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body small">
+                        <p>Arquivo CSV com uma linha por município: <b>código IBGE (7 dígitos); nome; UF</b> (ponto e vírgula, vírgula ou tab; cabeçalho opcional).</p>
+                        <p>Os códigos que faltam são incluídos e os existentes têm o nome atualizado. Nada é excluído; pode importar de novo sem duplicar.</p>
+                        <input type="file" name="arquivo" id="arquivoIbge" accept=".csv,.txt,text/csv" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-cloud-upload me-1"></i>Importar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+}
+
+@section Scripts {
+    <script>
+        (() => {
+            document.querySelectorAll('form[data-confirmar]').forEach(f =>
+                f.addEventListener('submit', e => { if (f.dataset.confirmar && !confirm(f.dataset.confirmar)) e.preventDefault(); }));
+
+            const modalEl = document.getElementById('modalGeo');
+            if (!modalEl) return;
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            const campo = id => document.getElementById('geo_' + id);
+            const singular = @Json.Serialize(singular);
+
+            // o mesmo modal para incluir (data-editar="0") e alterar (valores da linha)
+            document.querySelectorAll('[data-editar]').forEach(b => b.addEventListener('click', () => {
+                const d = b.dataset;
+                campo('Id').value = d.editar;
+                document.getElementById('tituloGeo').textContent = (d.editar === '0' ? 'Incluir ' : 'Alterar ') + singular;
+                for (const nome of ['Nome', 'Sigla', 'Codigo']) if (campo(nome)) campo(nome).value = d.editar === '0' ? '' : (d[nome.toLowerCase()] ?? '');
+                if (campo('IdPai') && d.editar !== '0') campo('IdPai').value = d.pai ?? '';
+                modalEl.querySelectorAll('.is-invalid').forEach(x => x.classList.remove('is-invalid'));
+                modalEl.querySelectorAll('.invalid-feedback, .alert-danger').forEach(x => x.remove());
+                modal.show();
+            }));
+            modalEl.addEventListener('shown.bs.modal', () => modalEl.querySelector('select, input:not([type=hidden])')?.focus());
+
+            // gravação com erro: a lista volta com o formulário já aberto
+            if (@Json.Serialize(Model.Form is not null)) modal.show();
+        })();
+    </script>
+}

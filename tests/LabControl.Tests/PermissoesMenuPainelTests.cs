@@ -97,8 +97,8 @@ public class PermissoesMenuPainelTests(AppWeb app) : IClassFixture<AppWeb>
     {
         var telas = app.Services.GetRequiredService<TelasExistentes>();
         var admin = Menu.Visivel(new EmpresaFixa { EmpresaId = 1, AdminGlobal = true }, telas.Existe).SelectMany(s => s.Itens).ToList();
-        // Cidades (T11-03) é da 2.3: o JSON do combo não pode se passar pela tela
-        Assert.DoesNotContain(admin, i => i.Texto == "Cidades");
+        // geografia (T11-01…03, tarefa 2.3): as três telas existem; o JSON do combo (CidadesDaUf) não vira item
+        Assert.Equal(["Países", "Estados", "Cidades"], admin.Where(i => i.Controller == "Geografia").Select(i => i.Texto));
         // empresa usuária: um item só, com nome explícito (T03)
         Assert.Single(admin, i => i.Controller is "Empresa" or "Empresas" && i.Action is "Index" or "Dados");
         Assert.Contains(admin, i => i.Texto == "Empresas Usuárias do Sistema");

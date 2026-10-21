@@ -54,7 +54,7 @@ Um único controller/serviço genérico atende os 20 cadastros auxiliares, porqu
 - [x] Inativos não aparecem nos combos de inclusão, mas aparecem nos registros antigos.
 - [x] Descrição/código duplicado na mesma empresa é recusado com mensagem clara.
 - [x] Cada empresa vê só os seus registros.
-- [ ] Cadastro rápido devolve o item ao combo de origem (endpoint pronto na 2.1; o "+" no combo é a 2.4).
+- [x] Cadastro rápido devolve o item ao combo de origem — 2.4: `CadastroRapidoTests` + navegador `CrudNavegadorTelasTests.Cadastro_rapido_mais_inclui_e_seleciona_no_combo`.
 
 ## Implementação (tarefa 2.1)
 - `Services/Auxiliares/AuxiliarDefinicao.cs` (`AuxiliarDefinicao<T>` + `CatalogoAuxiliares`), `Services/Auxiliares/AuxiliarService.cs`, `Controllers/AuxiliaresController.cs`, `Views/Auxiliares/{Index,Lista,_Form}.cshtml`, `ViewModels/AuxiliarVM.cs`. Incluir um auxiliar = uma entrada no catálogo (skill `/novo-auxiliar`).
@@ -62,7 +62,16 @@ Um único controller/serviço genérico atende os 20 cadastros auxiliares, porqu
 - Tamanho e obrigatoriedade vêm do modelo do EF (gerado de `Scripts/v2`); texto aparado; duplicidade pela `UNIQUE` do banco (collation sem maiúsculas/acentos: "português" = "Português"); exclusão por `DELETE` direto filtrado pela empresa — em uso o banco recusa (1451) e a lista oferece **Inativar**. Erro ao gravar reabre o modal com a mensagem no campo; fechar com alterações pede confirmação (como o legado).
 - Ganchos para a 2.2: `ValidarAntesDeGravar`, `PodeAlterarCampo` (campo bloqueado com cadeado). Mensagens com gênero (`Feminino`).
 
-**Status:** 🟨 padrão pronto e aprovado com Idiomas (2.1) + T10-01…06 (20/10/2026); faltam T10-08…T10-20 (2.2) e o "+" nos combos (2.4).
+## Implementação (tarefa 2.2)
+- Ganchos novos: `ValidarAntesDeExcluir` (T10-15) e `Acao` (botão extra na linha para uma tela própria — T10-11 parcelas). Duplicidade cai no campo citado na mensagem (sigla, código), não mais sempre no 1º. Campo `short` (código 1–99) corrigido no conversor.
+
+## Implementação (tarefa 2.4) — cadastro rápido "+"
+- No combo: `<select … lc-rapido="TABELA">` (`Infra/CadastroRapidoTagHelper.cs`): com AUXILIARES.INCLUIR emite `data-rapido`/`data-rapido-nome`; sem a permissão o combo fica como está. Tabela fora do catálogo = erro de programação (exceção ao renderizar).
+- `wwwroot/js/site.js` (todas as telas): envolve o combo num `input-group` com o botão **+** (título "Incluir &lt;singular&gt;"), abre o `_Form` do auxiliar (`GET {tabela}/Incluir`) num modal sem o campo Ativo, grava por `POST {tabela}/Rapido`, insere o item em ordem alfabética em **todos** os combos da mesma tabela na página e o seleciona (dispara `change`); 422 mostra o erro no campo, com o modal aberto.
+- Combo dentro de outro modal (contatos): o modal do "+" é criado **dentro** do `.modal` de baixo, sem backdrop próprio (fundo escurecido por CSS `.modal-rapido-sobre`) — o foco preso pelo Bootstrap no modal de baixo não briga com o de cima e o Esc fecha só o de cima.
+- Aplicado em: T13 (cargo, tipo de registro) e nos modais de contatos de T03/T12/T13 (tipo de endereço, tipo de logradouro, tipo de telefone, tipo de e-mail). Proposta (método, idioma, prazo) e resultados (tipo de resultado) usam o mesmo atributo quando as telas existirem (4.2, 5.2); produto não é auxiliar (T14) e precisaria de outro caminho.
+
+**Status:** ✅ concluída — padrão (2.1), os 20 auxiliares (2.2) e o cadastro rápido "+" (2.4, 21/10/2026).
 
 ## Ajustes de 20/10/2026 (teste do usuário)
 - Botões da lista com **ícone + texto** (Alterar, Inativar/Reativar, Excluir); **Inativar pede confirmação** ("sai da lista e dos combos de inclusão — marque Mostrar inativos para vê-lo") e a mensagem depois de inativar repete onde ele foi parar.

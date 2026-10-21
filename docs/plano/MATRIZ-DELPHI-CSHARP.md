@@ -6,9 +6,9 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 ## Cadastros → Cadastros Básicos
 | Menu Delphi | Unit Delphi | MD v2 | Rota v2 | Fase | Situação |
 |---|---|---|---|---|---|
-| País | `Standards/un_Paises` | [T11-01](../telas/T11-01-paises.md) | `/Geografia/Paises` | 2 | ⬜ |
-| Estados | `Standards/un_Estados` | [T11-02](../telas/T11-02-estados.md) | `/Geografia/Estados` | 2 | ⬜ |
-| Cidades | `Standards/un_Cidades` | [T11-03](../telas/T11-03-cidades.md) | `/Geografia/Cidades` | 2 | 🟨 |
+| País | `Standards/un_Paises` | [T11-01](../telas/T11-01-paises.md) | `/Geografia/Paises` | 2 | ✅ |
+| Estados | `Standards/un_Estados` | [T11-02](../telas/T11-02-estados.md) | `/Geografia/Estados` | 2 | ✅ |
+| Cidades | `Standards/un_Cidades` | [T11-03](../telas/T11-03-cidades.md) | `/Geografia/Cidades` | 2 | ✅ |
 | Bairros | `Standards/un_Bairros` | [T11-04](../telas/T11-04-bairros-logradouros.md) | — | — | ⛔ (endereço em texto) |
 | Tipos de Logradouros | `Standards/un_Logradouros_Tipos` | [T10-01](../telas/T10-01-tipos-logradouro.md) | `/Auxiliares/TIPOS_LOGRADOURO` | 2 | ✅ |
 | Logradouros | `Standards/un_Logradouros` | [T11-04](../telas/T11-04-bairros-logradouros.md) | — | — | ⛔ |
