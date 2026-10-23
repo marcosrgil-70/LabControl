@@ -181,7 +181,7 @@ Legenda: 🔵 Opus · 🟢 Sonnet · ⚪ Haiku · 📐 Plan mode · ✋ modo pad
 ## 6. Como começar cada sessão (copie e cole para o Claude)
 
 ```
-Leia CLAUDE.md e docs/00-PLANO-EXECUCAO.md. Continue a próxima tarefa não marcada
+Leia CLAUDE.md e docs/00-PLANO-EXECUCAO.md. Faça commit + push do que estiver pendente e continue a próxima tarefa não marcada
 da fase atual, seguindo o arquivo da fase em docs/plano/. Antes de codificar, leia o MD
 da tela (docs/telas/), os processos e regras citados e os MDs dos objetos do banco
 (docs/banco/objetos/). Ao terminar, marque os checklists (plano e fase), atualize o

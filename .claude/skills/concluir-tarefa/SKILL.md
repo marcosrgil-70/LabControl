@@ -37,7 +37,7 @@ Regras:
 - Dúvida da §7 do plano respondida? Risque-a com a resposta e a data.
 - Tarefa de revisão (`/code-review`, `/security-review`): no Diário, número de achados, quais foram corrigidos e o que ficou para depois (e onde foi registrado).
 
-## 3. Commit (só se o usuário pedir ou já tiver autorizado nesta sessão)
+## 3. Commit + push (autorizado pelo usuário: ao concluir e antes de começar a próxima tarefa — CLAUDE.md, 23/10/2026)
 - Confira `git status` e `git diff --stat`; não inclua segredos (`appsettings*.json` sem senha; senha só em user-secrets).
 - Mensagem no padrão do histórico: `<área>: <Tnn resumo curto> (tarefa X.Y)` — ex.: `parâmetros: T05 com numeração auditada e ajuste só ADMIN_GLOBAL (tarefa 1.6)`; corpo opcional com os pontos principais; termine com a linha de coautoria pedida pelo sistema.
 - Branch: o projeto trabalha direto na `master` (histórico) — mantenha, a menos que o usuário peça outra coisa.
