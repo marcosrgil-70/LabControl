@@ -544,4 +544,87 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         Assert.Equal([(1, 0, 50m), (2, 30, 50m)], gravadas.Select(x => (x.NrParcela, x.DiasVencimento, x.PorcVencimento)));
         Assert.Empty(s.ErrosJs);
     }
+
+    /// <summary>T20 (4.2): cliente → sugestões de endereço/contato, produto e análises nos modais, valores do roteiro, alterar, pesquisar, excluir.</summary>
+    [Fact]
+    public async Task Proposta_crud_com_produto_analises_e_valores()
+    {
+        await using var c = await Cenario.CriarAsync();
+        await using var s = await app.EntrarAsync(c, comProfissional: true);
+        var p = s.Pagina;
+        var aa = (await c.HojeAsync()).Year % 100;
+
+        await s.IrAsync("/Propostas");
+        await p.ClickAsync("a:has-text('Incluir')");
+        await Assertions.Expect(p.Locator("#nrProposta")).ToHaveTextAsync("INCLUSÃO");
+        // cliente: endereço do laudo, contato do resultado e cobrança (= o próprio cliente) sugeridos
+        await p.SelectOptionAsync("#IdEntidades", new SelectOptionValue { Label = "CLIENTE TESTE" });
+        await Assertions.Expect(p.Locator("#IdEntEndLaudo option:checked")).ToContainTextAsync("RUA TESTE, 1");
+        await Assertions.Expect(p.Locator("#IdEntContatoResultado option:checked")).ToHaveTextAsync("cliente@teste.com");
+        await Assertions.Expect(p.Locator("#IdEntCobranca option:checked")).ToHaveTextAsync("CLIENTE TESTE");
+        await Assertions.Expect(p.Locator("#IdEntContatoNf option:checked")).ToHaveTextAsync("cliente@teste.com");
+        await p.SelectOptionAsync("#IdCondicoesPagtos", new SelectOptionValue { Label = "01 — À VISTA" });
+        await p.FillAsync("#PorcDesconto", "10");
+
+        // sem análises: mensagem e a aba Análises aberta
+        await p.ClickAsync("#formProposta button[type=submit]:has-text('Gravar')");
+        await Assertions.Expect(p.Locator("[data-erro-itens]")).ToHaveTextAsync("Inclua ao menos um produto com uma análise.");
+        await Assertions.Expect(p.Locator("#abaAnalises")).ToBeVisibleAsync();
+        await Assertions.Expect(p.Locator("#IdEntidades option:checked")).ToHaveTextAsync("CLIENTE TESTE"); // o que foi digitado volta
+
+        // produto (qtde 2) e as 2 análises do roteiro: 100,00 e 50,00 → 300,00 − 10% = 270,00
+        await p.ClickAsync("[data-acao=incluir-produto]");
+        await p.SelectOptionAsync("#produtoId", new SelectOptionValue { Label = "QUEIJO MINAS (000001)" });
+        await p.FillAsync("#produtoQtde", "2");
+        await p.ClickAsync("#formProduto button[type=submit]");
+        await p.ClickAsync("[data-acao=incluir-analise]");
+        await p.SelectOptionAsync("#analiseParametro", new SelectOptionValue { Label = "CONTAGEM TOTAL" });
+        await p.SelectOptionAsync("#analiseMetodo", new SelectOptionValue { Label = "ISO 4833" });
+        await p.SelectOptionAsync("#analiseIdioma", new SelectOptionValue { Index = 1 });
+        await p.SelectOptionAsync("#analisePrazo", new SelectOptionValue { Label = "10 DIAS" });
+        await p.FillAsync("#analiseUnitario", "100");
+        await Assertions.Expect(p.Locator("#analiseTotal")).ToHaveTextAsync("200,00");
+        await p.ClickAsync("#formAnalise button[type=submit]");
+        // a 2ª análise já vem com método/idioma/prazo da anterior
+        await p.ClickAsync("[data-acao=incluir-analise]");
+        await Assertions.Expect(p.Locator("#analisePrazo option:checked")).ToHaveTextAsync("10 DIAS");
+        await p.SelectOptionAsync("#analiseParametro", new SelectOptionValue { Label = "SALMONELLA SP" });
+        await p.FillAsync("#analiseUnitario", "50");
+        await p.ClickAsync("#formAnalise button[type=submit]");
+        await Assertions.Expect(p.Locator("#tabelaAnalises tbody tr")).ToHaveCountAsync(2);
+        await Assertions.Expect(p.Locator("#totProposta")).ToHaveTextAsync("270,00");
+
+        // observação (texto rico) e gravar: o número vem do banco
+        await p.ClickAsync("button[data-bs-target='#abaTextos']");
+        await p.Locator("[data-texto=TxObservacao]").FillAsync("Amostra refrigerada");
+        await p.ClickAsync("#formProposta button[type=submit]:has-text('Gravar')");
+        Assert.Equal($"Nr. da Proposta: 000002/{aa:00}-R0", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#nrProposta")).ToHaveTextAsync($"000002/{aa:00}-R0");
+        await Assertions.Expect(p.Locator("#totProposta")).ToHaveTextAsync("270,00");
+        var id = await c.Db.LabPropostas.Where(x => x.NrProposta.StartsWith("000002/")).Select(x => x.IdLabPropostas).SingleAsync();
+        Assert.Contains("Amostra refrigerada", await c.Db.LabPropostasTextos.Where(t => t.IdLabPropostas == id).Select(t => t.TxObservacao).SingleAsync());
+
+        // alterar: qtde 3 → 450,00 − 10% = 405,00 (gravado pelo banco)
+        await p.ClickAsync("button[data-bs-target='#abaAnalises']");
+        await p.ClickAsync("[data-acao=alterar-produto]");
+        await p.FillAsync("#produtoQtde", "3");
+        await p.ClickAsync("#formProduto button[type=submit]");
+        await Assertions.Expect(p.Locator("#totProposta")).ToHaveTextAsync("405,00");
+        await p.ClickAsync("#formProposta button[type=submit]:has-text('Gravar')");
+        Assert.Equal($"Nr. da Proposta: 000002/{aa:00}-R0", await s.AlertaAsync());
+        Assert.Equal(405m, await c.Db.LabPropostas.AsNoTracking().Where(x => x.IdLabPropostas == id).Select(x => x.VrTotalProposta).SingleAsync());
+
+        // pesquisar pelo número e excluir (com confirmação)
+        await s.IrAsync("/Propostas");
+        await p.FillAsync("#Numero", $"2/{aa:00}");
+        await p.ClickAsync("#filtroPropostas button[type=submit]");
+        await Assertions.Expect(p.Locator("tbody tr")).ToHaveCountAsync(1);
+        await Assertions.Expect(p.Locator("tbody tr")).ToContainTextAsync("405,00");
+        await p.ClickAsync("tbody tr a:has-text('Abrir')");
+        await p.ClickAsync("button[form=formExcluir]");
+        Assert.Equal("Proposta excluída.", await s.AlertaAsync());
+        Assert.Contains(s.Dialogos, d => d.StartsWith("Excluir a proposta"));
+        Assert.False(await c.Db.LabPropostas.AnyAsync(x => x.IdLabPropostas == id));
+        Assert.Empty(s.ErrosJs);
+    }
 }

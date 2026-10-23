@@ -51,11 +51,12 @@ public sealed class AppNavegador : IAsyncLifetime
     /// <summary>
     /// Usuário com o perfil ADMINISTRADOR da empresa do cenário (todas as permissões), logado numa aba nova.
     /// Confirmações (<c>confirm()</c>) são aceitas automaticamente; erros de JavaScript ficam em <see cref="Sessao.ErrosJs"/>.
+    /// <paramref name="comProfissional"/>: vinculado ao profissional do cenário (a proposta registra quem digitou).
     /// </summary>
-    public async Task<Sessao> EntrarAsync(Cenario c, bool adminGlobal = false)
+    public async Task<Sessao> EntrarAsync(Cenario c, bool adminGlobal = false, bool comProfissional = false)
     {
         var usu = await UsuariosTeste.CriarAsync(adminGlobal: adminGlobal);
-        await UsuariosTeste.VincularAsync(usu.IdUsuarios, c.Empresa.IdEmpresas, padrao: true);
+        await UsuariosTeste.VincularAsync(usu.IdUsuarios, c.Empresa.IdEmpresas, comProfissional ? c.Ativa.ProfissionalId : null, padrao: true);
         await using (var adm = await UsuariosTeste.ContextoAdminAsync())
         {
             var perfil = await adm.Perfis.IgnoreQueryFilters()

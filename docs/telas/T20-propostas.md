@@ -117,12 +117,49 @@ Grid: nº proposta, status (cor), CPF/CNPJ, cliente, nº pedido, valor total. Na
 - A view principal fazia INNER JOIN na cobrança (propostas sumiam da lista).
 
 ## Aceite
-- [ ] Totais conferem com o roteiro do doc 12 §7 (300,00 − 10% = 270,00).
-- [ ] Seleção múltipla cria N linhas com método/idioma/prazo/tipo da linha base.
-- [ ] Revisão nova com linhas antigas marcadas; revisão antiga somente leitura.
-- [ ] Proposta com amostra recebida não pode ser alterada sem revisão.
-- [ ] PDF da proposta.
+- [x] Totais conferem com o roteiro do doc 12 §7 (300,00 − 10% = 270,00) — `PropostasTests.Inclusao_numera_pelo_banco_e_calcula_os_valores_do_roteiro` e navegador.
+- [x] Proposta nova recebe o número do banco (`00000N/AA-R0`, ano do servidor) — mesmos testes.
+- [ ] Seleção múltipla cria N linhas com método/idioma/prazo/tipo da linha base — 6.1. Na 4.2, a análise nova já vem com método/idioma/prazo/documento da anterior do produto.
+- [ ] Revisão nova com linhas antigas marcadas; revisão antiga somente leitura — 6.1. A marcação "rev. anterior" e o bloqueio da revisão antiga já existem na 4.2.
+- [x] Proposta com amostra recebida não pode ser alterada sem revisão — `PropostasTests.Com_amostra_fica_bloqueada_e_nao_exclui_sem_amostra_exclui`.
+- [ ] PDF da proposta — 6.1.
 
-> **Cadastro rápido "+" (pendência 3, pronto na 2.4/3.3):** método, idioma e prazo com `lc-rapido="TABELA"` no combo (T10-00); produto pelo `POST /Produtos/Rapido` (`{ id, texto }`, T14).
+> **Cadastro rápido "+" (pendência 3):** feito na 4.2.
+> - Método, idioma e prazo com `lc-rapido` no modal da análise.
+> - Produto pelo `POST /Produtos/Rapido`, no modal do produto.
 
-**Status:** 🟨 v1 existe com modelo errado (sem tabela de produtos) — **refazer**
+## Implementação (tarefa 4.2 — parte essencial, 23/10/2026)
+- **Arquivos:**
+  - `Controllers/PropostasController.cs` (`Index`, `Criar`, `Editar`, `Excluir`, `Entidade` JSON);
+  - `Services/PropostaService.cs`, `ViewModels/PropostaVM.cs`;
+  - `Views/Propostas/{Index,Form}.cshtml`, `wwwroot/js/propostas.js`;
+  - `Infra/HtmlSimples.cs` (limpeza do HTML dos textos).
+- **Edição como no Delphi:**
+  - cabeçalho, textos, produtos e análises gravam **juntos, numa transação**;
+  - produtos e análises vão num JSON (`ItensJson`) editado na página (modais de produto e de análise);
+  - o servidor compara com o que está gravado: exclui o que saiu, altera o que mudou e inclui o novo.
+- **Quem calcula:**
+  - número/ano pela `TG_PROPOSTAS_BI` e item pela `TG_PROPPROD_BI`;
+  - subtotal/desconto/total da linha pela `TG_PRODAN_BI/BU`;
+  - quantidade do produto → análises pela `TG_PROPPROD_AU`;
+  - totais pelo `SP_RECALCULAR_PROPOSTA`, chamado também no fim da gravação, para valer o desconto geral sem mexer nas análises;
+  - a tela recalcula só para exibir; depois de gravar, abre a proposta relida.
+- **Sugestões ao escolher o cliente** (`/Propostas/Entidade/{id}`):
+  - endereço do resultado = finalidade CORRESPONDENCIA;
+  - endereço da cobrança = COBRANCA, senão NOTA_FISCAL;
+  - contato do resultado = `ENVIAR_LAUDO`, senão o principal;
+  - contato da NF = `ENVIAR_NFE`, senão o principal;
+  - empresa de cobrança = o próprio cliente, salvo se outra já tiver sido escolhida.
+- **Parâmetro escolhido:** mostra o tipo de análise, sugere o valor unitário (se a linha estiver com 0) e o método padrão.
+- **Validações:**
+  - mensagens do legado para os obrigatórios (P05);
+  - **novas:** contato/endereço precisam ser do cliente (resultado) ou da empresa de cobrança (NF), o que o legado não conferia; endereço da cobrança obrigatório; desconto geral não maior que o total; usuário sem profissional não inclui (a proposta guarda quem digitou).
+- **Alteração direta só na revisão vigente sem pedido, sem amostra e não enviada.** Nos demais casos a tela fica somente leitura com o motivo, e "Gerar revisão" chega na 6.1. Excluir: só a revisão 0, sem revisões, pedido ou amostras.
+- **Textos (itens solicitados/adquiridos, observação):**
+  - editor simples (negrito, itálico, sublinhado, lista);
+  - o HTML passa pelo `HtmlSimples.Limpar` ao gravar e ao exibir: só tags de formatação, sem atributos, sem script.
+- **Testes:**
+  - `PropostasTests` (4): roteiro de valores, obrigatórios, alteração com qtde propagada e desconto digitado, bloqueio/exclusão;
+  - navegador `CrudNavegadorTelasTests.Proposta_crud_com_produto_analises_e_valores`.
+
+**Status:** 🟨 parte essencial pronta na 4.2 (consulta, inclusão, alteração sem revisão, exclusão). Revisão, seleção múltipla, contrato, PDF, trocar produto e pedido na 6.1/6.2.

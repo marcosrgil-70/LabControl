@@ -1,0 +1,338 @@
+@model PropostaVM
+@inject IEmpresaContexto Usuario
+@{
+    var inclusao = Model.Id == 0;
+    ViewData["Title"] = inclusao ? "Nova proposta" : $"Proposta {Model.NrProposta}";
+    var podeGravar = Usuario.TemPermissao(inclusao ? "PROPOSTAS.INCLUIR" : "PROPOSTAS.ALTERAR") && Model.Bloqueio is null;
+    var o = Model.Opcoes;
+    var br = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    var erroItens = ViewData.ModelState[nameof(PropostaVM.ItensJson)]?.Errors.FirstOrDefault()?.ErrorMessage;
+    // dados para o propostas.js (produtos com unidade, parâmetros com tipo/valor/método padrão, contatos e endereços)
+    var dados = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            produtos = o.Produtos, parametros = o.Parametros, cliente = o.Cliente, cobranca = o.Cobranca,
+            // combos montados pelo script (contatos/endereços): valores já escolhidos
+            valores = new { Model.IdEntContato, Model.IdEntEndLaudo, Model.IdEntContatoResultado, Model.IdEntEndCobranca, Model.IdEntContatoNf },
+        },
+        new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-2">
+        <li class="breadcrumb-item"><a asp-action="Index">Propostas</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@(inclusao ? "Nova" : Model.NrProposta)</li>
+    </ol>
+</nav>
+
+@if (Model.Bloqueio is not null)
+{
+    <div class="alert alert-warning py-2"><i class="bi bi-lock me-1"></i>@Model.Bloqueio</div>
+}
+
+<form method="post" asp-action="@(inclusao ? "Criar" : "Editar")" asp-route-id="@(inclusao ? null : Model.Id)" id="formProposta" novalidate
+      data-pode-gravar="@(podeGravar ? "1" : "0")">
+    <script type="application/json" id="dadosProposta">@Html.Raw(dados.Replace("</", "<\\/"))</script>
+    <input type="hidden" asp-for="ItensJson" />
+    <input type="hidden" asp-for="TxItensSolicitados" />
+    <input type="hidden" asp-for="TxItensAdquiridos" />
+    <input type="hidden" asp-for="TxObservacao" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+    @if (erroItens is not null)
+    {
+        <div class="alert alert-danger py-2" data-erro-itens>@erroItens</div>
+    }
+
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#abaProposta" role="tab">Proposta</button></li>
+        <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#abaAnalises" role="tab" id="botaoAbaAnalises">Análises <span class="badge text-bg-secondary ms-1" id="contagemAnalises">0</span></button></li>
+        <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#abaTextos" role="tab">Informações gerais</button></li>
+    </ul>
+
+    <fieldset disabled="@(!podeGravar)">
+    <div class="tab-content border border-top-0 rounded-bottom p-3 mb-3 bg-body">
+        @* ---------------------------------------------------------------- aba Proposta *@
+        <div class="tab-pane fade show active" id="abaProposta" role="tabpanel">
+            <div class="row g-3">
+                <div class="col-lg-12">
+                    <div class="card"><div class="card-header py-1 small fw-semibold">Proposta nº</div>
+                        <div class="card-body row g-2">
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small mb-0">Número</label>
+                                <div class="form-control-plaintext font-monospace fw-semibold" id="nrProposta">@(inclusao ? "INCLUSÃO" : Model.NrProposta)</div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label asp-for="DtSolicitacao" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                                <input asp-for="DtSolicitacao" type="date" class="form-control form-control-sm" />
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label asp-for="DtValidade" class="form-label small mb-0"></label>
+                                <input asp-for="DtValidade" type="date" class="form-control form-control-sm" />
+                                <span asp-validation-for="DtValidade" class="text-danger small"></span>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label asp-for="IdLabPropostasStatus" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                                <select asp-for="IdLabPropostasStatus" asp-items="@(new SelectList(o.Status, "Id", "Nome"))" class="form-select form-select-sm"><option value="">—</option></select>
+                                <span asp-validation-for="IdLabPropostasStatus" class="text-danger small"></span>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label asp-for="DtAutorizacao" class="form-label small mb-0"></label>
+                                <input asp-for="DtAutorizacao" type="date" class="form-control form-control-sm" disabled="@(Model.NrPedido is not null)" />
+                            </div>
+                            <div class="col-6 col-md-1">
+                                <label class="form-label small mb-0">Envio</label>
+                                <div class="form-control-plaintext small">@Model.DtEnvioCliente?.ToString("dd/MM/yyyy")</div>
+                            </div>
+                            <div class="col-6 col-md-1">
+                                <label class="form-label small mb-0">Pedido</label>
+                                <div class="form-control-plaintext small font-monospace">@Model.NrPedido</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-12">
+                    <div class="card"><div class="card-header py-1 small fw-semibold">Dados comerciais</div>
+                        <div class="card-body row g-2">
+                            <div class="col-md-3">
+                                <label asp-for="IdEntidadesComerc" class="form-label small mb-0"></label>
+                                <select asp-for="IdEntidadesComerc" asp-items="@(new SelectList(o.Comerciais, "Id", "Nome"))" class="form-select form-select-sm"><option value="">—</option></select>
+                            </div>
+                            <div class="col-md-5">
+                                <label asp-for="IdEntidades" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                                <select asp-for="IdEntidades" asp-items="@(new SelectList(o.Clientes, "Id", "Nome"))" class="form-select form-select-sm" data-entidade="cliente"><option value="">—</option></select>
+                                <span asp-validation-for="IdEntidades" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="IdEntContato" class="form-label small mb-0"></label>
+                                <select asp-for="IdEntContato" class="form-select form-select-sm" data-contatos="cliente"><option value="">—</option></select>
+                                <span asp-validation-for="IdEntContato" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12 small text-body-secondary" id="infoCliente"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card h-100"><div class="card-header py-1 small fw-semibold">Endereço para emissão do(s) resultado(s)</div>
+                        <div class="card-body row g-2">
+                            <div class="col-12">
+                                <label asp-for="IdEntEndLaudo" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                                <select asp-for="IdEntEndLaudo" class="form-select form-select-sm" data-enderecos="cliente" data-sugestao="sugestaoEndLaudo"><option value="">—</option></select>
+                                <div class="form-text" data-detalhe-de="IdEntEndLaudo"></div>
+                                <span asp-validation-for="IdEntEndLaudo" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="IdEntContatoResultado" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                                <select asp-for="IdEntContatoResultado" class="form-select form-select-sm" data-contatos="cliente" data-sugestao="sugestaoContatoResultado"><option value="">—</option></select>
+                                <span asp-validation-for="IdEntContatoResultado" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card h-100"><div class="card-header py-1 small fw-semibold">Endereço para emissão da Nota Fiscal</div>
+                        <div class="card-body row g-2">
+                            <div class="col-12">
+                                <label asp-for="IdEntCobranca" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                                <select asp-for="IdEntCobranca" asp-items="@(new SelectList(o.Clientes, "Id", "Nome"))" class="form-select form-select-sm" data-entidade="cobranca"><option value="">—</option></select>
+                                <span asp-validation-for="IdEntCobranca" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="IdEntEndCobranca" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                                <select asp-for="IdEntEndCobranca" class="form-select form-select-sm" data-enderecos="cobranca" data-sugestao="sugestaoEndCobranca"><option value="">—</option></select>
+                                <div class="form-text" data-detalhe-de="IdEntEndCobranca"></div>
+                                <span asp-validation-for="IdEntEndCobranca" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="IdEntContatoNf" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                                <select asp-for="IdEntContatoNf" class="form-select form-select-sm" data-contatos="cobranca" data-sugestao="sugestaoContatoNf"><option value="">—</option></select>
+                                <span asp-validation-for="IdEntContatoNf" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-12">
+                    <div class="card"><div class="card-header py-1 small fw-semibold">Informações comerciais e valores</div>
+                        <div class="card-body row g-2 align-items-end">
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small mb-0">Valor das análises</label>
+                                <div class="form-control-plaintext text-end" id="totSubtotal">@Model.VrSomaVrAnalis.ToString("N2", br)</div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small mb-0">Desconto das análises</label>
+                                <div class="form-control-plaintext text-end" id="totDescAnalises">@Model.VrSomaDescAnalis.ToString("N2", br)</div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small mb-0">Total das análises</label>
+                                <div class="form-control-plaintext text-end" id="totAnalises">@Model.VrSomaVrTotAnalis.ToString("N2", br)</div>
+                            </div>
+                            <div class="col-6 col-md-1">
+                                <label asp-for="PorcDesconto" class="form-label small mb-0">% desc.</label>
+                                <input asp-for="PorcDesconto" class="form-control form-control-sm text-end" inputmode="decimal" />
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label asp-for="VrDesconto" class="form-label small mb-0"></label>
+                                <input asp-for="VrDesconto" class="form-control form-control-sm text-end" inputmode="decimal" />
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label small mb-0">Valor total</label>
+                                <div class="form-control-plaintext text-end fs-5 fw-semibold" id="totProposta">@Model.VrTotalProposta.ToString("N2", br)</div>
+                            </div>
+                            <div class="col-12"><span asp-validation-for="PorcDesconto" class="text-danger small"></span> <span asp-validation-for="VrDesconto" class="text-danger small"></span></div>
+                            <div class="col-md-6">
+                                <label asp-for="IdCondicoesPagtos" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                                <select asp-for="IdCondicoesPagtos" asp-items="@(new SelectList(o.Condicoes, "Id", "Nome"))" class="form-select form-select-sm"><option value="">—</option></select>
+                                <span asp-validation-for="IdCondicoesPagtos" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="IdMoedas" class="form-label small mb-0"></label>
+                                <select asp-for="IdMoedas" asp-items="@(new SelectList(o.Moedas, "Id", "Nome"))" class="form-select form-select-sm"><option value="">—</option></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ---------------------------------------------------------------- aba Análises *@
+        <div class="tab-pane fade" id="abaAnalises" role="tabpanel">
+            <div class="d-flex align-items-center mb-2">
+                <h6 class="mb-0">Produtos</h6>
+                <button type="button" class="btn btn-outline-primary btn-sm ms-auto" data-acao="incluir-produto"><i class="bi bi-plus-lg me-1"></i>Incluir produto</button>
+            </div>
+            <div class="table-responsive mb-3">
+                <table class="table table-sm table-hover align-middle mb-0" id="tabelaProdutos">
+                    <thead><tr><th>Item</th><th>Produto</th><th>Unid.</th><th class="text-end">Qtde amostras</th><th class="text-end">Análises</th><th class="text-end">Total</th><th></th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="d-flex align-items-center mb-2">
+                <h6 class="mb-0">Parâmetros para as análises <span class="text-body-secondary small" id="produtoSelecionado"></span></h6>
+                <button type="button" class="btn btn-outline-primary btn-sm ms-auto" data-acao="incluir-analise"><i class="bi bi-plus-lg me-1"></i>Incluir análise</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0" id="tabelaAnalises">
+                    <thead><tr><th>Parâmetro</th><th>Tipo de análise</th><th>Método</th><th class="text-end">Qtde</th><th class="text-end">Unitário</th><th class="text-end">Subtotal</th><th class="text-end">%</th><th class="text-end">Desconto</th><th class="text-end">Total</th><th>Prazo</th><th>Idioma</th><th>Documento</th><th></th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="small text-body-secondary mt-2"><span class="badge text-bg-light border">rev. anterior</span> = linha que já estava na revisão de origem.</div>
+        </div>
+
+        @* ---------------------------------------------------------------- aba Informações gerais *@
+        <div class="tab-pane fade" id="abaTextos" role="tabpanel">
+            @foreach (var (campo, titulo) in new[] { ("TxItensSolicitados", "Itens solicitados"), ("TxItensAdquiridos", "Itens adquiridos"), ("TxObservacao", "Observação") })
+            {
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold mb-1" id="rotulo-@campo">@titulo</label>
+                    <div class="border rounded">
+                        <div class="btn-toolbar border-bottom p-1 gap-1" data-barra="@campo">
+                            <button type="button" class="btn btn-sm btn-light" data-comando="bold" title="Negrito"><i class="bi bi-type-bold"></i></button>
+                            <button type="button" class="btn btn-sm btn-light" data-comando="italic" title="Itálico"><i class="bi bi-type-italic"></i></button>
+                            <button type="button" class="btn btn-sm btn-light" data-comando="underline" title="Sublinhado"><i class="bi bi-type-underline"></i></button>
+                            <button type="button" class="btn btn-sm btn-light" data-comando="insertUnorderedList" title="Lista"><i class="bi bi-list-ul"></i></button>
+                        </div>
+                        <div class="p-2 texto-rico" style="min-height: 6rem" contenteditable="@(podeGravar ? "true" : "false")" data-texto="@campo" role="textbox" aria-multiline="true" aria-labelledby="rotulo-@campo"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    </fieldset>
+
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+        @if (!inclusao && podeGravar)
+        {
+            <button type="submit" form="formExcluir" class="btn btn-outline-danger" lc-permissao="PROPOSTAS.EXCLUIR"><i class="bi bi-trash me-1"></i>Excluir</button>
+        }
+        @if (podeGravar)
+        {
+            <button type="submit" class="btn btn-primary ms-auto"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+        }
+    </div>
+</form>
+
+@if (!inclusao)
+{
+    <form method="post" asp-action="Excluir" asp-route-id="@Model.Id" id="formExcluir"
+          data-confirmar="Excluir a proposta @Model.NrProposta? Os produtos, análises e textos dela também são apagados."></form>
+}
+
+@* ---------------------------------------------------------------- modal do produto *@
+<div class="modal fade" id="modalProduto" tabindex="-1" aria-labelledby="tituloModalProduto">
+    <div class="modal-dialog">
+        <form class="modal-content" id="formProduto" novalidate>
+            <div class="modal-header py-2"><h6 class="modal-title" id="tituloModalProduto">Produto</h6><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-danger py-2 d-none" data-erro></div>
+                <div class="mb-3">
+                    <label class="form-label small" for="produtoId">Produto <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <select class="form-select" id="produtoId" asp-items="@(new SelectList(o.Produtos, "Id", "Nome"))"><option value="">—</option></select>
+                        <button type="button" class="btn btn-outline-secondary" data-acao="novo-produto" title="Incluir produto" aria-label="Incluir produto" lc-permissao="PRODUTOS.INCLUIR"><i class="bi bi-plus-lg"></i></button>
+                    </div>
+                </div>
+                <div class="mb-3" style="max-width: 12rem">
+                    <label class="form-label small" for="produtoQtde">Qtde de amostras <span class="text-danger">*</span></label>
+                    <input type="number" min="1" step="1" class="form-control text-end" id="produtoQtde" value="1" />
+                    <div class="form-text">Vale para todas as análises do produto.</div>
+                </div>
+                <div class="border rounded p-2 d-none" id="novoProduto">
+                    <div class="small fw-semibold mb-2">Novo produto</div>
+                    <div class="mb-2"><label class="form-label small mb-0" for="novoProdutoDescricao">Descrição</label><input class="form-control form-control-sm text-uppercase" id="novoProdutoDescricao" maxlength="150" /></div>
+                    <div class="mb-2"><label class="form-label small mb-0" for="novoProdutoUnidade">Unidade de estoque</label>
+                        <select class="form-select form-select-sm" id="novoProdutoUnidade" asp-items="@(new SelectList(o.Unidades, "Id", "Nome"))"><option value="">—</option></select></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-acao="gravar-novo-produto"><i class="bi bi-check-lg me-1"></i>Incluir produto</button>
+                </div>
+            </div>
+            <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">OK</button></div>
+        </form>
+    </div>
+</div>
+
+@* ---------------------------------------------------------------- modal da análise *@
+<div class="modal fade" id="modalAnalise" tabindex="-1" aria-labelledby="tituloModalAnalise">
+    <div class="modal-dialog modal-lg">
+        <form class="modal-content" id="formAnalise" novalidate>
+            <div class="modal-header py-2"><h6 class="modal-title" id="tituloModalAnalise">Análise</h6><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+            <div class="modal-body row g-3">
+                <div class="col-12"><div class="alert alert-danger py-2 mb-0 d-none" data-erro></div></div>
+                <div class="col-md-8">
+                    <label class="form-label small" for="analiseParametro">Parâmetro <span class="text-danger">*</span></label>
+                    <select class="form-select" id="analiseParametro" asp-items="@(new SelectList(o.Parametros, "Id", "Nome"))"><option value="">—</option></select>
+                    <div class="form-text" id="analiseTipo"></div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small" for="analiseMetodo">Método <span class="text-danger">*</span></label>
+                    <select class="form-select" id="analiseMetodo" lc-rapido="ANALISES_METODOS" asp-items="@(new SelectList(o.Metodos, "Id", "Nome"))"><option value="">—</option></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small" for="analiseIdioma">Idioma <span class="text-danger">*</span></label>
+                    <select class="form-select" id="analiseIdioma" lc-rapido="IDIOMAS" asp-items="@(new SelectList(o.Idiomas, "Id", "Nome"))"><option value="">—</option></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small" for="analisePrazo">Prazo <span class="text-danger">*</span></label>
+                    <select class="form-select" id="analisePrazo" lc-rapido="PRAZOS" asp-items="@(new SelectList(o.Prazos, "Id", "Nome"))"><option value="">—</option></select>
+                </div>
+                <div class="col-md-4">
+                    <span class="form-label small d-block">Tipo de documento <span class="text-danger">*</span></span>
+                    <div class="form-check form-check-inline mt-1"><input class="form-check-input" type="radio" name="analiseDocumento" id="analiseBoletim" value="BOLETIM" checked /><label class="form-check-label" for="analiseBoletim">Boletim</label></div>
+                    <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="analiseDocumento" id="analiseRelatorio" value="RELATORIO" /><label class="form-check-label" for="analiseRelatorio">Relatório</label></div>
+                </div>
+                <div class="col-6 col-md-2"><label class="form-label small" for="analiseQtde">Qtde</label><input class="form-control text-end" id="analiseQtde" readonly /></div>
+                <div class="col-6 col-md-2"><label class="form-label small" for="analiseUnitario">Unitário (R$)</label><input class="form-control text-end" id="analiseUnitario" inputmode="decimal" /></div>
+                <div class="col-6 col-md-2"><label class="form-label small" for="analisePorc">% desc.</label><input class="form-control text-end" id="analisePorc" inputmode="decimal" /></div>
+                <div class="col-6 col-md-2"><label class="form-label small" for="analiseDesconto">Desconto (R$)</label><input class="form-control text-end" id="analiseDesconto" inputmode="decimal" /></div>
+                <div class="col-6 col-md-2"><label class="form-label small">Subtotal</label><div class="form-control-plaintext text-end" id="analiseSubtotal"></div></div>
+                <div class="col-6 col-md-2"><label class="form-label small">Total</label><div class="form-control-plaintext text-end fw-semibold" id="analiseTotal"></div></div>
+            </div>
+            <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">OK</button></div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/propostas.js" asp-append-version="true"></script>
+}

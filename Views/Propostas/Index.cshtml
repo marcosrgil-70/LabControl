@@ -1,0 +1,105 @@
+@model PropostaListaVM
+@{
+    ViewData["Title"] = "Propostas";
+    var f = Model.Filtro;
+    var br = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    // filtros atuais + página (sem os vazios) para os links da paginação
+    Dictionary<string, string> Rota(int pagina) => new Dictionary<string, string?>
+    {
+        ["Cliente"] = f.Cliente, ["Numero"] = f.Numero, ["NrPedido"] = f.NrPedido?.ToString(), ["IdStatus"] = f.IdStatus?.ToString(),
+        ["De"] = f.De?.ToString("yyyy-MM-dd"), ["Ate"] = f.Ate?.ToString("yyyy-MM-dd"), ["SoUltima"] = f.SoUltima ? "true" : "false", ["Pagina"] = pagina.ToString(),
+    }.Where(kv => kv.Value is not null).ToDictionary(kv => kv.Key, kv => kv.Value!);
+}
+
+<div class="d-flex align-items-center mb-1">
+    <h5 class="mb-0"><i class="bi bi-file-text me-2 text-primary"></i>Propostas</h5>
+    <a asp-action="Criar" class="btn btn-primary btn-sm ms-auto" lc-permissao="PROPOSTAS.INCLUIR"><i class="bi bi-plus-lg me-1"></i>Incluir</a>
+</div>
+<p class="small text-body-secondary mb-3">Proposta comercial ao cliente: produtos × análises com valores. O número (000123/26-R0) é dado pelo sistema ao gravar.</p>
+
+<form method="get" class="card mb-3" id="filtroPropostas">
+    <div class="card-body py-2 row g-2 align-items-end">
+        <div class="col-sm-4 col-lg-3">
+            <label class="form-label small mb-0" for="Cliente">Cliente (nome ou CPF/CNPJ)</label>
+            <input name="Cliente" id="Cliente" value="@f.Cliente" class="form-control form-control-sm" autofocus />
+        </div>
+        <div class="col-6 col-sm-2">
+            <label class="form-label small mb-0" for="Numero">Nº da proposta</label>
+            <input name="Numero" id="Numero" value="@f.Numero" class="form-control form-control-sm font-monospace" placeholder="123/26" />
+        </div>
+        <div class="col-6 col-sm-2 col-lg-1">
+            <label class="form-label small mb-0" for="NrPedido">Nº pedido</label>
+            <input name="NrPedido" id="NrPedido" value="@f.NrPedido" type="number" min="1" class="form-control form-control-sm" />
+        </div>
+        <div class="col-sm-4 col-lg-2">
+            <label class="form-label small mb-0" for="IdStatus">Status</label>
+            <select name="IdStatus" id="IdStatus" class="form-select form-select-sm" asp-items="@(new SelectList(Model.Status, "Id", "Nome", f.IdStatus))"><option value="">Todos</option></select>
+        </div>
+        <div class="col-6 col-sm-3 col-lg-1">
+            <label class="form-label small mb-0" for="De">De</label>
+            <input name="De" id="De" type="date" value="@f.De?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+        </div>
+        <div class="col-6 col-sm-3 col-lg-1">
+            <label class="form-label small mb-0" for="Ate">Até</label>
+            <input name="Ate" id="Ate" type="date" value="@f.Ate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+        </div>
+        <div class="col-auto">
+            <div class="form-check mb-1">
+                <input type="checkbox" class="form-check-input" name="SoUltima" id="SoUltima" value="true" checked="@f.SoUltima" />
+                <label class="form-check-label small" for="SoUltima">Só a última revisão</label>
+            </div>
+            <input type="hidden" name="SoUltima" value="false" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Pesquisar</button>
+        </div>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead>
+                <tr><th>Nº proposta</th><th>Solicitação</th><th>Status</th><th>CPF/CNPJ</th><th>Cliente</th><th>Pedido</th><th class="text-end">Valor total</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.Itens)
+                {
+                    <tr class="@(p.UltimaRevisao ? "" : "text-body-secondary")">
+                        <td class="font-monospace small text-nowrap">
+                            <a asp-action="Editar" asp-route-id="@p.Id" class="text-decoration-none fw-semibold">@p.NrProposta</a>
+                            @if (!p.UltimaRevisao) { <span class="badge text-bg-light border ms-1" title="Revisão antiga: somente leitura">antiga</span> }
+                        </td>
+                        <td class="small">@p.DtSolicitacao.ToString("dd/MM/yyyy")</td>
+                        <td><span class="badge border text-body" style="@(p.CorStatus is null ? "" : $"border-color: {p.CorStatus} !important; box-shadow: inset 4px 0 0 {p.CorStatus}")">@p.Status</span></td>
+                        <td class="small font-monospace text-nowrap">@p.CpfCnpj</td>
+                        <td class="small">@p.Cliente</td>
+                        <td class="small font-monospace">@p.NrPedido</td>
+                        <td class="small text-end text-nowrap">@p.VrTotal.ToString("N2", br)</td>
+                        <td class="text-end"><a asp-action="Editar" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil me-1"></i>Abrir</a></td>
+                    </tr>
+                }
+                @if (Model.Itens.Count == 0)
+                {
+                    <tr><td colspan="8" class="text-center text-body-secondary small py-3">Nenhuma proposta encontrada.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center small py-2">
+        <span class="text-body-secondary">@Model.Total registro(s)</span>
+        @if (Model.Paginas > 1)
+        {
+            <nav class="ms-auto" aria-label="Páginas">
+                <ul class="pagination pagination-sm mb-0">
+                    @foreach (var n in Enumerable.Range(1, Model.Paginas).Where(n => n <= 3 || n > Model.Paginas - 3 || Math.Abs(n - f.Pagina) <= 2))
+                    {
+                        <li class="page-item @(n == f.Pagina ? "active" : "")">
+                            <a class="page-link" asp-action="Index" asp-all-route-data="@Rota(n)">@n</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</div>

@@ -14,6 +14,7 @@
 - **Esforço:** G
 
 ### 4.2 T20 — Proposta essencial 🟢
+> ✅ **Concluída em 23/10/2026** — ver [T20 › Implementação](../telas/T20-propostas.md#implementação-tarefa-42--parte-essencial-23102026); aceite em `PropostasTests` (300,00 − 10% = 270,00, número `00000N/AA-R0` do banco, mensagens do legado, bloqueio com amostra) + navegador `CrudNavegadorTelasTests.Proposta_crud_com_produto_analises_e_valores`. Pendência 3 cumprida aqui ("+" de método/idioma/prazo e produto).
 > Pendência 3 (2.4): combos de **método, idioma e prazo** com o "+" — `lc-rapido="ANALISES_METODOS"`, `"IDIOMAS"`, `"PRAZOS"` ([T10-00](../telas/T10-00-crud-auxiliares.md#implementação-tarefa-24--cadastro-rápido-)); **produto** pelo `POST /Produtos/Rapido` (T14, 3.3).
 - **Passos:** consulta (filtros, só última revisão), inclusão/alteração **sem** revisão/PDF: cabeçalho, comercial, cliente/contato, painéis de endereço do laudo e da cobrança (com sugestões por finalidade/flags), produtos (item automático, qtde), análises (parâmetro → método filtrado, idioma, prazo, tipo de documento, valores com recálculo na tela e no banco), textos, totais; mensagens obrigatórias do legado.
 - **Aceite:** roteiro de valores do [P06](../processos/P06-valores-proposta.md) (300,00 − 10% = 270,00); proposta nova recebe `000001/26-R0` do banco.
