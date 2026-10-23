@@ -33,7 +33,7 @@
 - **Esforço:** S
 
 ### 3.5 Migração parte 1 (M-01 a M-10) 🔵📐✋
-> ✅ **Concluída em 21/10/2026** (plano aprovado no plan mode) — ver [T07 › Implementação](../telas/T07-migracao.md#implementação--parte-1-tarefa-35-21102026); aceite em `MigracaoParte1Tests` (conferências verdes e login com troca de senha contra o `DBMAIS.FDB` real), `MigracaoConversoesTests`, `MigracaoTelaTests`. **Pendente:** passar o teste de navegador da T07 e a suíte completa com a máquina livre (pendência 17).
+> ✅ **Concluída em 21/10/2026** (plano aprovado no plan mode) — ver [T07 › Implementação](../telas/T07-migracao.md#implementação--parte-1-tarefa-35-21102026); aceite em `MigracaoParte1Tests` (conferências verdes e login com troca de senha contra o `DBMAIS.FDB` real), `MigracaoConversoesTests`, `MigracaoTelaTests`. Teste de navegador da T07 e suíte completa (175/175, em duas partes) passaram em 22/10/2026 (pendência 17).
 - **Passos:**
   1. `Services/Migracao/MigracaoService.cs` (estrutura de etapas, dicionários `idAntigo → idNovo`, log, transação por etapa, `@LC_MIGRACAO = 1`).
   2. Tela T07 com seleção de etapas, log e conferências.
@@ -44,8 +44,9 @@
 
 ### 3.6 Revisão
 `/code-review`; atualizar diário e a [matriz](MATRIZ-DELPHI-CSHARP.md).
-- **Antes:** pendência 17 — rodar o teste de navegador da T07 e a suíte completa com a máquina livre (em 21/10/2026 a CPU em 100% fez todos os logins no navegador estourarem 30 s).
-- **Incluir:** pendência 18 — `SP_INICIALIZAR_EMPRESA` com 8,6 s de média no banco de testes ([P23](../processos/P23-nova-empresa.md)).
+- ~~**Antes:** pendência 17~~ — feita em 22/10/2026 (175/175 rodando a migração separada).
+- **Incluir:** pendência 18 — `SP_INICIALIZAR_EMPRESA` estoura 30 s quando a suíte roda inteira junto com `MigracaoParte1Tests` (sozinha leva 0,04 s: é espera de lock, não lentidão; esperas vistas no `SP_PROXIMO_NUMERO`/`SEQUENCIAS_DOCUMENTOS` e em `commit` lento) → isolar o teste da migração (coleção xUnit sem paralelismo) e medir de novo ([P23](../processos/P23-nova-empresa.md)).
+- **Incluir:** pendência 19 — `recriar.ps1` falhou ao ler o próprio `saida.txt` ("usado por outro processo", linha 100) ao ser chamado pelo `MigracaoParte1Tests`.
 
 ## Definição de pronto
 - [ ] Cadastros principais com regras do legado e correções.

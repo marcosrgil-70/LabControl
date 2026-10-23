@@ -63,6 +63,6 @@
 - [ ] Nº das amostras idêntico ao legado (amostragem de 20) — 4.1.
 - [ ] Boletins migrados congelados (emitidos) e somente leitura — 5.1.
 - [x] Relatório de anomalias gerado (tela + CSV).
-- [ ] Teste no navegador da tela (`CrudNavegadorTelasTests.Migracao_tela_valida_o_pedido_sem_executar`) — escrito; **não passou ainda por máquina saturada** (CPU 100%, login > 30 s em todos os testes de navegador); rodar de novo (pendência 17).
+- [x] Teste no navegador da tela (`CrudNavegadorTelasTests.Migracao_tela_valida_o_pedido_sem_executar`) — passou em 22/10/2026 (pendência 17).
 
 **Status:** 🟨 parte 1 (M-01…M-10) pronta na 3.5; partes 2 (4.1) e 3 (5.1) pendentes.
