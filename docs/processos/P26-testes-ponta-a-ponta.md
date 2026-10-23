@@ -29,6 +29,12 @@ Os testes de serviço e os testes HTTP (`WebApplicationFactory`) provam regras, 
 dotnet test tests/LabControl.Tests --filter "FullyQualifiedName~Navegador"   # só os de navegador (~6 min)
 dotnet test tests/LabControl.Tests                                            # suíte inteira
 ```
+> **Até a pendência 18 ser resolvida (22/10/2026):** rodar a suíte em **duas partes**. Inteira de uma vez, o `MigracaoParte1Tests` (migração real, ~5 min de carga) roda em paralelo com os outros e 16 testes estouram 30 s esperando lock ao criar a empresa de teste. Em duas partes passa 175/175:
+> ```powershell
+> dotnet test tests/LabControl.Tests --filter "FullyQualifiedName!~MigracaoParte1"   # 173 testes, ~12 min
+> dotnet test tests/LabControl.Tests --filter "FullyQualifiedName~MigracaoParte1"    # 2 testes, ~5 min
+> ```
+> Com 8 GB de RAM, feche o Chrome antes: com pouca memória livre o Claude Code chegou a interromper a suíte.
 Requisitos: Microsoft Edge instalado; MySQL local com o user-secret da connection string (o banco `labcontrol_teste` é recriado sozinho quando `Scripts/v2` muda). O app de desenvolvimento (`dotnet run`) **não** pode estar rodando durante o build dos testes (trava o `LabControl.exe`).
 
 ## 5. Regra para as próximas telas (a executar)
