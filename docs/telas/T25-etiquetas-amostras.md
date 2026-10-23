@@ -30,16 +30,22 @@ Cliente (nome/CPF-CNPJ) **ou** nº da amostra; "amostras a partir de" (padrão h
 ### Grid
 Seleção · nº da amostra · produto · data de entrega · pedido · fabricação · validade · **quantidade de etiquetas** (padrão = `QTDE_EMBALAGENS_ENTREGUE`, editável).
 
-### Saída (duas opções — decidir com o usuário, dúvida 3 do plano)
-1. **PDF no tamanho da etiqueta** (QuestPDF, largura × altura × colunas configuráveis na empresa), impresso pelo navegador — recomendado, funciona com qualquer impressora.
-2. **Arquivo EPL2/ZPL** (download ou envio a um serviço local de impressão) — reproduz exatamente o legado para impressoras térmicas Zebra/Argox.
-- Código de barras: manter **Code 39** (compatível com leitores atuais) ou Code 128 (mais compacto) — **confirmar**; o conteúdo é o nº da amostra sem espaços (`04-01382-01/26` ou `04-01382-01/26R01`).
+### Saída — decidida pelo usuário (dúvida 3, 23/10/2026)
+- **Etiqueta de 80 mm de largura × 50 mm de altura** (era ≈ 56 × 30 mm no legado). A 203 dpi: 640 × 400 pontos (`q640`, `Q400,<gap>`).
+- **Impressora térmica Argox.** Linguagem **PPLB** (compatível com o EPL2 do legado). Confirmar o modelo e o modo (PPLA/PPLB) na impressão de teste da 4.5.
+- **Código de barras Code 128** (no lugar do Code 39 do legado). Conteúdo: o nº da amostra sem espaços (`04-01382-01/26` ou `04-01382-01/26R01`).
+- **Impressão direta, sem PDF**, mas **pedindo para escolher a impressora de destino** a cada impressão:
+  - a tela lista as impressoras instaladas no **servidor do LabControl** e já deixa marcada a última usada pelo usuário;
+  - o servidor envia os comandos PPLB em **RAW** ao spooler do Windows (sem driver gráfico);
+  - a Argox precisa estar instalada (ou compartilhada) na máquina do servidor (um servidor por cópia do sistema, pendência 16).
+- O layout novo usa a área maior: nº grande, Code 128 com altura confortável para o leitor, produto em 2 linhas, PV e datas. As medidas finais saem da impressão de teste.
 
 ### Integração
 Depois de gravar um recebimento (T22) o sistema oferece "Imprimir etiquetas" já com a amostra selecionada e a quantidade de embalagens.
 
 ## Critérios de aceite
-- [ ] Etiqueta com nº, código de barras legível pelo leitor do laboratório, produto (ou em branco), PV, datas.
+- [ ] Etiqueta 80 × 50 mm na Argox com nº, **Code 128** legível pelo leitor do laboratório, produto (ou em branco), PV, datas.
+- [ ] Impressão direta (RAW/PPLB) na impressora escolhida em lista; a última escolhida vem marcada.
 - [ ] Quantidade por amostra respeitada.
 - [ ] Chamada direta a partir do recebimento.
 

@@ -9,13 +9,17 @@
 1. Origem: menu Etiquetas ou "Imprimir etiquetas" logo após gravar o recebimento (amostra já selecionada, quantidade = embalagens entregues).
 2. Filtro: cliente **ou** nº da amostra + data de entrega ≥ (padrão hoje − 7); só última revisão e status com `PERMITE_RESULTADO`; empresa ativa.
 3. Seleciona as amostras e ajusta a quantidade de cada uma; opção "não imprimir o nome do produto".
-4. Gera a saída:
-   - **PDF** do tamanho da etiqueta (configuração da empresa: largura, altura, margens, colunas por linha), ou
-   - **EPL2/ZPL** compatível com o legado (`q450`, `Q240,25`; Code 39; `P<n>` cópias).
-5. Conteúdo: código de barras do nº da amostra; nº em texto grande; produto em 2 linhas de até 32 caracteres (ou vazio); `PV: <pedido>`; `Recebimento: dd/mm/aaaa`; `Fabricação: <parcial>`; `Validade: <parcial ou --->`.
+4. Escolhe a **impressora de destino** numa lista com as impressoras instaladas no servidor. A última usada pelo usuário já vem marcada.
+5. O servidor gera os comandos **PPLB** (Argox, compatível com o EPL2 do legado) e envia em **RAW** à impressora escolhida. Não há PDF. Etiqueta **80 × 50 mm** (640 × 400 pontos a 203 dpi), **Code 128**, `P<n>` cópias.
+6. Conteúdo: código de barras do nº da amostra; nº em texto grande; produto em 2 linhas de até 32 caracteres (ou vazio); `PV: <pedido>`; `Recebimento: dd/mm/aaaa`; `Fabricação: <parcial>`; `Validade: <parcial ou --->`.
 
-## Pendências com o usuário (dúvida 3)
-Tamanho da etiqueta, modelo da impressora, Code 39 × Code 128, PDF × impressão direta.
+## Decisões do usuário (dúvida 3, 23/10/2026)
+- Etiqueta de 5 cm de altura × 8 cm de largura.
+- Impressora Argox.
+- Code 128.
+- Impressão direta, pedindo para escolher a impressora de destino.
+
+Falta confirmar na 4.5, com uma impressão de teste: o modelo da Argox e o modo da linguagem (PPLB × PPLA) e o gap entre etiquetas.
 
 ## Cenários de teste
 - Etiqueta lida pelo leitor do laboratório devolve exatamente o nº da amostra.

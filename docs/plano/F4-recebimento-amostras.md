@@ -29,7 +29,7 @@
 - **Esforço:** S · **Depende de:** 4.3
 
 ### 4.5 T25 — Etiquetas 🟢
-- **Passos:** confirmar com o usuário tamanho/impressora/código de barras (dúvida 3); filtros, grid com quantidade, opção sem produto; saída PDF (e EPL2/ZPL se pedido); chamada direta após gravar a amostra.
+- **Passos:** filtros, grid com quantidade, opção sem produto; escolha da impressora de destino (lista das impressoras instaladas no servidor, a última usada já marcada); saída **PPLB em RAW** para a **Argox**, etiqueta **80 × 50 mm**, **Code 128** (dúvida 3 respondida em 23/10/2026; sem PDF); impressão de teste para confirmar o modelo, o modo PPLB/PPLA e o gap; chamada direta após gravar a amostra.
 - **Aceite:** [aceite da T25](../telas/T25-etiquetas-amostras.md#critérios-de-aceite) com leitura real pelo leitor do laboratório.
 - **Esforço:** M · **Depende de:** 4.3
 
