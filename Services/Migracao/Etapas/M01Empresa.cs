@@ -26,7 +26,7 @@ public sealed class M01Empresa : IEtapaMigracao
              WHERE E.ID_ENTIDADES = {idEntidade}
             """, ct)).Single();
 
-        var cnpj = Conversoes.Documento(ent.Texto("CNPJ"));
+        var cnpj = c.Cortar<Empresa>(nameof(Empresa.Cnpj), Conversoes.Documento(ent.Texto("CNPJ")), "empresa");
         var empresa = new Empresa
         {
             CodEmpresa = legado.Texto("COD_EMPRESAS") ?? "001",

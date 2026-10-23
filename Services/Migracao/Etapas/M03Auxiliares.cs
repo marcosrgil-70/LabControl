@@ -18,12 +18,8 @@ public sealed class M03Auxiliares : IEtapaMigracao
         string Desc<T>(LinhaFb l, string onde, string coluna = "DESCRICAO") => c.Cortar<T>("Descricao", l.Texto(coluna) ?? "SEM DESCRIÇÃO", onde)!;
         var n = 0;
         // tipos de amostra/análise nunca se fundem (cada código é um TT/AA de número impresso): descrição repetida ganha o ID
-        string Unica(HashSet<string> vistas, string desc, string tipo, int id)
-        {
-            if (vistas.Add(Conversoes.NomeComparavel(desc))) return desc;
-            c.Anomalia($"{tipo} {id}: descrição \"{desc}\" repetida no legado — gravada como \"{desc} ({id})\".");
-            return $"{desc} ({id})";
-        }
+        string Unica<T>(HashSet<string> vistas, string desc, string tipo, int id) => c.Unico<T>("Descricao", desc, vistas,
+            Conversoes.NomeComparavel, n => n == 1 ? $" ({id})" : $" ({id}.{n})", $"{tipo} {id}");
         HashSet<string> descAmostra = [], descAnalise = [];
 
         n += await Migrar.AuxiliarAsync(c, "LOGRADOUROS_TIPOS", "ID_LOGRADOUROS_TIPOS", "DESCRICAO, ABREVIATURA",
@@ -66,13 +62,13 @@ public sealed class M03Auxiliares : IEtapaMigracao
             (l, id) => new Moeda { Descricao = Desc<Moeda>(l, $"moeda {id}"), Sigla = c.Cortar<Moeda>(nameof(Moeda.Sigla), l.Texto("SIGLA") ?? $"M{id}", $"moeda {id}")! },
             e => e.Sigla, e => e.IdMoedas, ct);
         n += await Migrar.AuxiliarAsync(c, "AMOSTRAS_TIPO", "ID_AMOSTRAS_TIPO", "DESCRICAO",
-            (l, id) => new AmostraTipo { Codigo = CodigoDoNumero(c, "tipo de amostra", id), Descricao = Unica(descAmostra, Desc<AmostraTipo>(l, $"tipo de amostra {id}"), "Tipo de amostra", id) },
+            (l, id) => new AmostraTipo { Codigo = CodigoDoNumero(c, "tipo de amostra", id), Descricao = Unica<AmostraTipo>(descAmostra,Desc<AmostraTipo>(l, $"tipo de amostra {id}"), "Tipo de amostra", id) },
             chave: null, e => e.IdAmostrasTipo, ct);
         n += await Migrar.AuxiliarAsync(c, "AMOSTRAS_STATUS", "ID_AMOSTRAS_STATUS", "DESCRICAO, COR",
             (l, id) => new AmostraStatus { Descricao = Desc<AmostraStatus>(l, $"status da amostra {id}"), Cor = Conversoes.Cor(l.Texto("COR")), PermiteResultado = id == permiteResultado },
             e => e.Descricao, e => e.IdAmostrasStatus, ct);
         n += await Migrar.AuxiliarAsync(c, "ANALISES_TIPO", "ID_ANALISES_TIPO", "DESCRICAO",
-            (l, id) => new AnaliseTipo { Codigo = CodigoDoNumero(c, "tipo de análise", id), Descricao = Unica(descAnalise, Desc<AnaliseTipo>(l, $"tipo de análise {id}"), "Tipo de análise", id) },
+            (l, id) => new AnaliseTipo { Codigo = CodigoDoNumero(c, "tipo de análise", id), Descricao = Unica<AnaliseTipo>(descAnalise,Desc<AnaliseTipo>(l, $"tipo de análise {id}"), "Tipo de análise", id) },
             chave: null, e => e.IdAnalisesTipo, ct);
         n += await Migrar.AuxiliarAsync(c, "ANALISES_STATUS", "ID_ANALISES_STATUS", "DESCRICAO, COR",
             (l, id) => new AnaliseStatus { Descricao = Desc<AnaliseStatus>(l, $"status da análise {id}"), Cor = Conversoes.Cor(l.Texto("COR")) },
@@ -88,8 +84,10 @@ public sealed class M03Auxiliares : IEtapaMigracao
         n += metodos = await Migrar.AuxiliarAsync(c, "ANALISES_METODOS", "ID_ANALISES_METODOS", "DESCRICAO",
             (l, id) => new AnaliseMetodo { Descricao = Desc<AnaliseMetodo>(l, $"método {id}") }, chave: null, e => e.IdAnalisesMetodos, ct);
 
-        c.Conferir("códigos dos tipos de amostra = IDs do legado", true, c.Mapa("AMOSTRAS_TIPO").All(m => c.Db.AmostrasTipo.Single(t => t.IdAmostrasTipo == m.Value).Codigo == m.Key));
-        c.Conferir("códigos dos tipos de análise = IDs do legado", true, c.Mapa("ANALISES_TIPO").All(m => c.Db.AnalisesTipo.Single(t => t.IdAnalisesTipo == m.Value).Codigo == m.Key));
+        var codAmostra = c.Db.AmostrasTipo.ToDictionary(t => t.IdAmostrasTipo, t => (int)t.Codigo);
+        var codAnalise = c.Db.AnalisesTipo.ToDictionary(t => t.IdAnalisesTipo, t => (int)t.Codigo);
+        c.Conferir("códigos dos tipos de amostra = IDs do legado", true, c.Mapa("AMOSTRAS_TIPO").All(m => codAmostra[m.Value] == m.Key));
+        c.Conferir("códigos dos tipos de análise = IDs do legado", true, c.Mapa("ANALISES_TIPO").All(m => codAnalise[m.Value] == m.Key));
         c.Conferir("status da amostra que permite resultado", 1, c.Db.AmostrasStatus.Count(s => s.PermiteResultado));
         c.Log($"{n} registros em 20 cadastros auxiliares ({metodos} métodos).");
         return n;

@@ -91,7 +91,7 @@ public sealed class ProdutoService(LabDbContext db)
         decimal? qtde = null;
         if (Textos.Limpo(vm.QtdeEmbalagem) is { } textoQtde)
         {
-            if (!decimal.TryParse(textoQtde.Replace(',', '.'), NumberStyles.Number & ~NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var q)
+            if (!Textos.Decimal(textoQtde, out var q)
                 || q <= 0 || q >= 100_000_000_000m || decimal.Round(q, 4) != q)
                 return Resultado.Erro("Qtde. por embalagem: número maior que zero, com até 4 casas decimais.", nameof(vm.QtdeEmbalagem));
             qtde = q;

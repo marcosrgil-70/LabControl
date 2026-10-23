@@ -48,7 +48,7 @@ public sealed class M05Entidades : IEtapaMigracao
             if (!pf && l.Int("TEM_PJ") is null) c.Anomalia($"{onde} \"{l.Texto("NOME")}\": pessoa jurídica sem os dados de PJ no legado (sem CNPJ).");
             if (pf && l.Int("TEM_PJ") is not null) c.Anomalia($"{onde} \"{l.Texto("NOME")}\": tem PF e PJ no legado — migrada como pessoa física.");
 
-            var documento = Conversoes.Documento(pf ? l.Texto("CPF") : l.Texto("CNPJ"));
+            var documento = c.Cortar<Entidade>(nameof(Entidade.CpfCnpj), Conversoes.Documento(pf ? l.Texto("CPF") : l.Texto("CNPJ")), onde);
             if (documento is not null && documento.Length is not (14 or 18)) c.Anomalia($"{onde}: documento \"{documento}\" sem 11/14 dígitos, gravado como está.");
             if (documento is not null && !documentos.Add(documento))
             {

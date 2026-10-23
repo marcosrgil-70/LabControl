@@ -81,6 +81,24 @@ public sealed class ContextoMigracao(LeitorFirebird fb, LabDbContext db, Empresa
     }
 
     /// <summary>
+    /// Valor único entre os já <paramref name="usados"/> (comparados pela <paramref name="chave"/>): repetido ganha
+    /// <c>sufixo(1)</c>, <c>sufixo(2)</c>… até não repetir, com a base cortada para caber na coluna; vira anomalia.
+    /// </summary>
+    public string Unico<T>(string propriedade, string valor, HashSet<string> usados, Func<string, string> chave, Func<int, string> sufixo, string onde)
+    {
+        if (usados.Add(chave(valor))) return valor;
+        var max = Db.Model.FindEntityType(typeof(T))!.FindProperty(propriedade)!.GetMaxLength() ?? int.MaxValue;
+        for (var n = 1; ; n++)
+        {
+            var s = sufixo(n);
+            var novo = (valor.Length + s.Length <= max ? valor : valor[..Math.Max(0, max - s.Length)]) + s;
+            if (!usados.Add(chave(novo))) continue;
+            Anomalia($"{onde}: {propriedade} \"{valor}\" repetido no legado — gravado como \"{novo}\".");
+            return novo;
+        }
+    }
+
+    /// <summary>
     /// Liga <c>@LC_MIGRACAO = 1</c> na conexão aberta do contexto (o interceptor zera ao abrir; numeração e
     /// validações das triggers ficam desligadas e os números do legado são preservados).
     /// </summary>

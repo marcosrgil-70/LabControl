@@ -130,14 +130,11 @@ public sealed class ParametroAnaliseService(LabDbContext db)
 
     private static string Moeda(decimal v) => v.ToString("#,##0.00", PtBr);
 
-    // "1.234,56" (tela) ou "1234.56"; vazio = 0
+    // "1.234,56" (tela), "1.000" (milhar) ou "1234.56"; vazio = 0
     private static bool LerMoeda(string? texto, out decimal valor)
     {
         valor = 0;
         if (Textos.Limpo(texto) is not { } t) return true;
-        var ok = t.Contains(',')
-            ? decimal.TryParse(t, NumberStyles.Number, PtBr, out valor)
-            : decimal.TryParse(t, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out valor);
-        return ok && valor >= 0 && valor < 10_000_000_000_000m && decimal.Round(valor, 2) == valor;
+        return Textos.Decimal(t, out valor) && valor >= 0 && valor < 10_000_000_000_000m && decimal.Round(valor, 2) == valor;
     }
 }

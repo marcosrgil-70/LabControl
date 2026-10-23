@@ -1,3 +1,4 @@
+using LabControl.Infra;
 using LabControl.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,7 +37,8 @@ public sealed class M04ParametrosEmpresa : IEtapaMigracao
 
         // o que o v2 cria por padrão e o legado não tinha fica listado (pode ser inativado na T10)
         var antes = await ContarAuxiliaresAsync(c, ct);
-        await c.Db.Database.ExecuteSqlRawAsync("CALL SP_INICIALIZAR_EMPRESA({0})", [c.IdEmpresa], ct);
+        var inicializar = await new Procedures(c.Db, c.Empresa).InicializarEmpresaAsync(c.IdEmpresa);
+        if (!inicializar.Sucesso) throw new InvalidOperationException($"SP_INICIALIZAR_EMPRESA: {inicializar.Mensagem}");
         await c.LigarModoMigracaoAsync(ct); // por garantia: a SP não mexe na variável, mas a etapa seguinte depende dela
         var depois = await ContarAuxiliaresAsync(c, ct);
         foreach (var (tabela, n) in depois.Where(d => d.Value > antes[d.Key]))

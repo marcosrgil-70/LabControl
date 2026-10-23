@@ -87,6 +87,20 @@ $tmp = Join-Path ([IO.Path]::GetTempPath()) ('labcontrol_recriar_' + [guid]::New
 New-Item -ItemType Directory -Path $tmp | Out-Null
 $utf8 = New-Object Text.UTF8Encoding($false)
 
+# Lê um arquivo de saída do mysql. O Start-Process -Wait pode voltar antes de o handle do redirecionamento
+# ser liberado ("usado por outro processo", pendência 19): abre compartilhado e tenta de novo por até 10 s.
+function LerSaida([string]$caminho) {
+  for ($i = 1; ; $i++) {
+    try {
+      $fs = New-Object IO.FileStream($caminho, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
+      try { return (New-Object IO.StreamReader($fs, $utf8)).ReadToEnd() } finally { $fs.Dispose() }
+    } catch [IO.IOException] {
+      if ($i -ge 50) { throw }
+      Start-Sleep -Milliseconds 200
+    }
+  }
+}
+
 # Executa SQL (texto ou arquivo) no mysql; devolve a saída ou para no erro.
 function Sql([string]$texto, [string]$arquivo, [string[]]$extra = @()) {
   if (-not $arquivo) {
@@ -97,8 +111,8 @@ function Sql([string]$texto, [string]$arquivo, [string[]]$extra = @()) {
   $erro = Join-Path $tmp 'erro.txt'
   $p = Start-Process -FilePath $MySql -ArgumentList ($base + $extra) -RedirectStandardInput $arquivo `
          -RedirectStandardOutput $saida -RedirectStandardError $erro -NoNewWindow -Wait -PassThru
-  $out = [IO.File]::ReadAllText($saida, $utf8)
-  $err = ([IO.File]::ReadAllText($erro, $utf8) -split "`r?`n" | Where-Object { $_ -and $_ -notmatch 'Using a password' }) -join "`n"
+  $out = LerSaida $saida
+  $err = ((LerSaida $erro) -split "`r?`n" | Where-Object { $_ -and $_ -notmatch 'Using a password' }) -join "`n"
   if ($p.ExitCode -ne 0) { throw "mysql (código $($p.ExitCode)): $err`n$out" }
   return $out
 }

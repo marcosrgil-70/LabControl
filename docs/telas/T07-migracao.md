@@ -55,6 +55,12 @@
   - 4 e-mails corrigidos, 1 CEP inválido;
   - 2 profissionais sem dados;
   - 1 parâmetro sem tipo → "NÃO INFORMADO" (99, inativo).
+- **Revisão (3.6, 23/10/2026)** — robustez para dados que o legado real não tem, achados do `/code-review`:
+  - repetidos sempre únicos e dentro do tamanho da coluna (`ContextoMigracao.Unico`): código de produto (`-{ID antigo}`), descrição de parâmetro (" (2)", " (3)"…), descrição de tipo de amostra/análise (" ({ID})");
+  - tipo "NÃO INFORMADO" reaproveita o existente ou usa o maior código livre (não mais 99 fixo);
+  - CPF/CNPJ fora de 11/14 dígitos cortado no tamanho da coluna (M-01, M-05);
+  - entidade do legado que é só a empresa e tem linha de funcionário não vira profissional (a empresa usuária não pode ser funcionário);
+  - M-04 chama o `SP_INICIALIZAR_EMPRESA` pelo `Procedures`; CSV com a situação/erro da etapa num campo só.
 
 ## Critérios de aceite
 - [x] Parte 1: todas as conferências verdes num banco limpo — `MigracaoParte1Tests`.

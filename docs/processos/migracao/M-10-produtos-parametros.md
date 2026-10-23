@@ -14,9 +14,10 @@
 [`PRODUTOS`](../../banco/objetos/tabelas/PRODUTOS.md), [`LAB_PARAMETROS_ANALISES`](../../banco/objetos/tabelas/LAB_PARAMETROS_ANALISES.md)
 
 ## Regras de transformação
-- Produtos: código mantido; unidade e embalagem pelos dicionários.
+- Produtos: código mantido; unidade e embalagem pelos dicionários. Código repetido → `-{ID antigo}` (base cortada para caber nos 10 caracteres) e relatório.
 - Parâmetros: `DESC_REDUZIDA` vazia → `DESCRICAO`; `AUDITADO` 'S'/'N' → 1/0; tipo e método pelos dicionários.
-- Descrição de parâmetro duplicada → sufixo " (2)" e relatório.
+- Descrição de parâmetro duplicada → sufixo " (2)", " (3)"… (cortada para caber, sempre única) e relatório.
+- Parâmetro sem tipo → tipo "NÃO INFORMADO" (o já existente com esse nome, ou um novo inativo no maior código 1–99 livre — 99 no legado real).
 - `SEQUENCIAS_DOCUMENTOS (1, 'PRODUTO', 0) = SYS_TABELAS_ID.ID` (último = 3801) — pode ficar para a M-18.
 
 ## Regras gerais (todas as etapas)

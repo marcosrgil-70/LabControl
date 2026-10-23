@@ -23,8 +23,8 @@ public sealed class M10ProdutosParametros : IEtapaMigracao
             var antigo = l.IntObrigatorio("ID_PRODUTOS");
             var onde = $"produto {antigo}";
             if (c.Novo("UNIDADES", l.Int("ID_UNIDADES"), onde) is not { } unidade) { c.Anomalia($"{onde}: sem unidade — não migrado."); continue; }
-            var codigo = c.Cortar<Produto>(nameof(Produto.Codigo), l.Texto("CODIGO") ?? antigo.ToString("000000"), onde)!;
-            if (!codigos.Add(codigo)) { c.Anomalia($"{onde}: código {codigo} repetido — gravado como {codigo}-{antigo}."); codigo = $"{codigo}-{antigo}"; }
+            var codigo = c.Unico<Produto>(nameof(Produto.Codigo), c.Cortar<Produto>(nameof(Produto.Codigo), l.Texto("CODIGO") ?? antigo.ToString("000000"), onde)!,
+                codigos, x => x, n => n == 1 ? $"-{antigo}" : $"-{antigo}.{n}", onde);
             var qtde = l.Decimal("QTDE_EMBALAGEM") is { } q && q > 0 ? decimal.Round(q, 4) : (decimal?)null;
             var p = new Produto
             {
@@ -56,25 +56,17 @@ public sealed class M10ProdutosParametros : IEtapaMigracao
         {
             var antigo = l.IntObrigatorio("ID_LAB_PARAMETROS_ANALISES");
             var onde = $"parâmetro {antigo}";
-            var descricao = c.Cortar<LabParametroAnalise>(nameof(LabParametroAnalise.Descricao), l.Texto("DESCRICAO") ?? $"PARÂMETRO {antigo}", onde)!;
-            if (!descricoes.Add(Conversoes.NomeComparavel(descricao)))
-            {
-                c.Anomalia($"{onde}: descrição \"{descricao}\" repetida — gravada com \" (2)\".");
-                descricao = c.Cortar<LabParametroAnalise>(nameof(LabParametroAnalise.Descricao), $"{descricao} (2)", onde)!;
-            }
+            var descricao = c.Unico<LabParametroAnalise>(nameof(LabParametroAnalise.Descricao),
+                c.Cortar<LabParametroAnalise>(nameof(LabParametroAnalise.Descricao), l.Texto("DESCRICAO") ?? $"PARÂMETRO {antigo}", onde)!,
+                descricoes, Conversoes.NomeComparavel, n => $" ({n + 1})", onde);
             var reduzida = l.Texto("DESC_REDUZIDA");
             if (reduzida is null) c.Anomalia($"{onde}: sem descrição reduzida — usa a descrição (impressa no boletim).");
             var tipo = c.Novo("ANALISES_TIPO", l.Int("ID_ANALISES_TIPO"), onde);
             if (tipo is null)
             {
-                if (naoInformado is null)
-                {
-                    naoInformado = new AnaliseTipo { Codigo = 99, Descricao = "NÃO INFORMADO", Ativo = false };
-                    c.Db.Add(naoInformado);
-                    await c.Db.SaveChangesAsync(ct);
-                }
+                naoInformado ??= await TipoNaoInformadoAsync(c, ct);
                 tipo = naoInformado.IdAnalisesTipo;
-                c.Anomalia($"{onde} \"{descricao}\": sem tipo de análise no legado — tipo \"NÃO INFORMADO\" (código 99, inativo).");
+                c.Anomalia($"{onde} \"{descricao}\": sem tipo de análise no legado — tipo \"NÃO INFORMADO\" (código {naoInformado.Codigo}).");
             }
             var p = new LabParametroAnalise
             {
@@ -96,5 +88,20 @@ public sealed class M10ProdutosParametros : IEtapaMigracao
         c.Conferir("parâmetros acreditados", await c.Fb.ContarAsync("SELECT COUNT(*) FROM LAB_PARAMETROS_ANALISES WHERE AUDITADO = 1", ct),
             await c.Db.LabParametrosAnalises.CountAsync(p => p.Auditado, ct));
         return novosProdutos.Count + novosParametros.Count;
+    }
+
+    // o já existente com esse nome, ou um novo inativo no maior código livre (código e descrição são UNIQUE e o M-03
+    // ocupa os códigos com os IDs do legado)
+    private static async Task<AnaliseTipo> TipoNaoInformadoAsync(ContextoMigracao c, CancellationToken ct)
+    {
+        const string nome = "NÃO INFORMADO";
+        if (await c.Db.AnalisesTipo.FirstOrDefaultAsync(t => t.Descricao == nome, ct) is { } existente) return existente;
+        var usados = (await c.Db.AnalisesTipo.Select(t => t.Codigo).ToListAsync(ct)).ToHashSet();
+        var codigo = Enumerable.Range(1, 99).Reverse().Select(n => (short)n).FirstOrDefault(n => !usados.Contains(n));
+        if (codigo == 0) throw new InvalidOperationException("Parâmetro sem tipo de análise e nenhum código de 1 a 99 livre para o tipo \"NÃO INFORMADO\".");
+        var tipo = new AnaliseTipo { Codigo = codigo, Descricao = nome, Ativo = false };
+        c.Db.Add(tipo);
+        await c.Db.SaveChangesAsync(ct);
+        return tipo;
     }
 }

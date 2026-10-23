@@ -40,7 +40,7 @@ public sealed class MigracaoController(MigracaoService migracao, MigracaoExecuto
         var (log, anomalias, conferencias) = r.Copia();
         var csv = new StringBuilder("Tipo;Etapa;Item;Esperado;Encontrado;Situação\r\n");
         static string C(string? s) => "\"" + (s ?? "").Replace("\"", "\"\"") + "\"";
-        foreach (var e in r.Etapas) csv.Append($"Etapa;{e.Codigo};{C(e.Nome)};;{e.Gravados};{e.Situacao} {C(e.Erro)}\r\n");
+        foreach (var e in r.Etapas) csv.Append($"Etapa;{e.Codigo};{C(e.Nome)};;{e.Gravados};{C($"{e.Situacao} {e.Erro}".TrimEnd())}\r\n");
         foreach (var c in conferencias) csv.Append($"Conferência;{c.Etapa};{C(c.Item)};{C(c.Esperado)};{C(c.Encontrado)};{(c.Ok ? "OK" : "FALHA")}\r\n");
         foreach (var a in anomalias) csv.Append($"Anomalia;{a.Etapa};{C(a.Texto)};;;\r\n");
         foreach (var l in log) csv.Append($"Log;;{C(l)};;;\r\n");

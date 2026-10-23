@@ -36,7 +36,7 @@ Código, descrição, tipo de análise, método, valor, acreditado — filtros p
 ## Implementação (tarefa 3.4)
 - `Controllers/ParametrosAnaliseController.cs`, `Services/ParametroAnaliseService.cs`, `ViewModels/ParametroAnaliseVM.cs`, `Views/ParametrosAnalise/{Index,Form}.cshtml` — mesmo visual e fluxo da T14: lista com busca (parâmetro ou descrição reduzida), filtros por tipo e acreditado, "mostrar inativos", 20 por página; depois de gravar **volta para a lista** ("Parâmetro X gravado."), como o usuário pediu na T14.
 - Parâmetro, descrição reduzida e descrição do método em maiúsculas (150). Tipo de análise obrigatório (combo "01 — DESCRIÇÃO", ordem do código = AA do número da amostra); método padrão opcional; os dois com ativos + o já escolhido e com o "+" (`lc-rapido`).
-- Valor unitário em reais: "1.234,56" ou "1234.56", ≥ 0, 2 casas; vazio = 0,00 (sugerido na proposta só quando a linha estiver com 0).
+- Valor unitário em reais: "1.234,56", "1.000" (ponto com grupos de 3 = milhar, 3.6) ou "1234.56", ≥ 0, 2 casas (`Textos.Decimal`); vazio = 0,00 (sugerido na proposta só quando a linha estiver com 0).
 - Excluir só sem uso (1451 → inativar); inativar/reativar com confirmação.
 
 **Status:** ✅ concluída na tarefa 3.4 (21/10/2026).

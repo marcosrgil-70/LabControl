@@ -43,10 +43,26 @@
 - **Esforço:** G · **Depende de:** 3.1–3.4
 
 ### 3.6 Revisão
+> ✅ **Concluída em 23/10/2026** — `/code-review medium` (`d76118a..HEAD`): 10 achados, 9 corrigidos, 1 registrado (tabela abaixo); pendências 18 e 19 resolvidas; suíte inteira de uma vez 186/186 (17 min). **Fase 3 completa.**
+
 `/code-review`; atualizar diário e a [matriz](MATRIZ-DELPHI-CSHARP.md).
 - ~~**Antes:** pendência 17~~ — feita em 22/10/2026 (175/175 rodando a migração separada).
 - **Incluir:** pendência 18 — `SP_INICIALIZAR_EMPRESA` estoura 30 s quando a suíte roda inteira junto com `MigracaoParte1Tests` (sozinha leva 0,04 s: é espera de lock, não lentidão; esperas vistas no `SP_PROXIMO_NUMERO`/`SEQUENCIAS_DOCUMENTOS` e em `commit` lento) → isolar o teste da migração (coleção xUnit sem paralelismo) e medir de novo ([P23](../processos/P23-nova-empresa.md)).
 - **Incluir:** pendência 19 — `recriar.ps1` falhou ao ler o próprio `saida.txt` ("usado por outro processo", linha 100) ao ser chamado pelo `MigracaoParte1Tests`.
+- **Feito:** 18 → `ColecaoMigracao` (`DisableParallelization = true`) no `MigracaoParte1Tests`: roda sozinho, depois das outras; suíte inteira 186/186. 19 → `LerSaida` no `recriar.ps1` (abre com `FileShare.ReadWrite` e tenta de novo por até 10 s); roteiro SQL 65/65.
+
+| # | Achado do `/code-review` | Situação |
+|---|---|---|
+| 1 | T14/T15: "1.000" lido como 1 (valor unitário, qtde. por embalagem) | ✅ `Textos.Decimal` (grupos de 3 = milhar) + `TextosTests` |
+| 2 | M-10: descrição de parâmetro repetida " (2)" podia repetir de novo / ser cortada de volta | ✅ `ContextoMigracao.Unico` |
+| 3 | M-10: código de produto repetido `{código}-{ID}` passava de 10 caracteres | ✅ `ContextoMigracao.Unico` |
+| 4 | M-03: descrição de tipo de amostra/análise " ({ID})" passava de 60 caracteres | ✅ `ContextoMigracao.Unico` |
+| 5 | M-10: tipo "NÃO INFORMADO" com código 99 fixo podia colidir com o M-03 | ✅ reaproveita o existente ou maior código livre |
+| 6 | M-01/M-05: CPF/CNPJ fora de 11/14 dígitos sem corte (VARCHAR 18) | ✅ `Cortar` |
+| 7 | M-08: entidade que é só a empresa, com linha de funcionário, virava funcionário → 45000 | ✅ fica de fora, com anomalia |
+| 8 | M-04: `SP_INICIALIZAR_EMPRESA` por `ExecuteSqlRaw`, fora do `Procedures` | ✅ `Procedures.InicializarEmpresaAsync` |
+| 9 | T07: CSV com situação + erro da etapa em campo inválido | ✅ um campo só, entre aspas |
+| 10 | M-03 conferência N+1; M-09 `SaveChanges` por usuário | ✅ conferência numa consulta; M-09 mantido (15 usuários) |
 
 ## Definição de pronto
 - [ ] Cadastros principais com regras do legado e correções.

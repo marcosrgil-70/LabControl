@@ -10,7 +10,9 @@ namespace LabControl.Tests;
 /// <summary>
 /// Aceite da 3.5: migração parte 1 (M-01…M-10) do Firebird real (<c>C:\Project\Laboratorio\DBMAIS.FDB</c>) para um
 /// banco vazio recriado a cada execução (<c>labcontrol_migracao_teste</c>). Sem o legado nesta máquina o teste só avisa.
+/// Roda na coleção <see cref="ColecaoMigracao"/>: sozinho, depois das outras (pendência 18).
 /// </summary>
+[Collection(ColecaoMigracao.Nome)]
 public class MigracaoParte1Tests(ITestOutputHelper saida)
 {
     private const string Banco = "labcontrol_migracao_teste";
@@ -86,4 +88,15 @@ public class MigracaoParte1Tests(ITestOutputHelper saida)
         // banco com dados (o de testes) é recusado
         Assert.Contains("não está vazio", (await s.ValidarAsync(Pedido(banco: BancoTeste.NomeBanco))).Mensagem);
     }
+}
+
+/// <summary>
+/// A migração recria um banco e grava milhares de linhas: em paralelo com o resto da suíte, as outras classes esperavam
+/// lock no <c>SP_INICIALIZAR_EMPRESA</c>/<c>SEQUENCIAS_DOCUMENTOS</c> e estouravam 30 s (pendência 18). Sem paralelismo,
+/// o xUnit roda esta coleção sozinha, depois das coleções paralelas.
+/// </summary>
+[CollectionDefinition(Nome, DisableParallelization = true)]
+public sealed class ColecaoMigracao
+{
+    public const string Nome = "Migração (sozinha)";
 }
