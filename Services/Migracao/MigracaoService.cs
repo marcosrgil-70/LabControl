@@ -81,7 +81,10 @@ public sealed partial class MigracaoService(IConfiguration config)
             await using var fb = await LeitorFirebird.AbrirAsync(p.CaminhoFirebird, p.UsuarioFirebird, p.SenhaFirebird, ct);
             await using var db = new LabDbContext(opcoes, empresa);
             await db.Database.OpenConnectionAsync(ct); // a conexão fica aberta: @LC_MIGRACAO vale até o fim
-            var c = new ContextoMigracao(fb, db, empresa, relatorio, p.SenhaProvisoria);
+            var c = new ContextoMigracao(fb, db, empresa, relatorio, p.SenhaProvisoria)
+            {
+                AdministradorDesenvolvimento = config.GetValue<bool>(ContaService.ChaveAdministradorDesenvolvimento),
+            };
             await c.LigarModoMigracaoAsync(ct);
             relatorio.Log($"Origem: {p.CaminhoFirebird} → destino: {p.BancoDestino}.");
 

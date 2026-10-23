@@ -135,7 +135,7 @@ public static class BancoTeste
         catch (MySqlException) { return null; } // banco ou tabela ainda não existe
     }
 
-    private static string RaizDoRepositorio()
+    public static string RaizDoRepositorio()
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d is not null; d = d.Parent)
             if (File.Exists(Path.Combine(d.FullName, "Scripts", "v2", "recriar.ps1"))) return d.FullName;

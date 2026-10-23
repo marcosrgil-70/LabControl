@@ -9,7 +9,7 @@
      trocando "labcontrol_v2" pelo nome do banco, e PARA no primeiro erro;
   3. confere as contagens de objetos (59 tabelas, 10 views, 8 funções,
      26 procedures, 48 triggers, 109 permissões, 5.571 cidades);
-  4. com -Dev: roda dev/*.sql (empresa 001 + usuário ADMIN / senha provisória
+  4. com -Dev: roda dev/*.sql (empresa 001 + usuário ADMINISTRADOR / senha
      Admin123, só para desenvolvimento);
   5. com -Teste: cria um banco temporário labcontrol_teste_<id>, roda
      teste/roteiro_12_7.sql e apaga o banco no final (a não ser que -Manter).
@@ -166,7 +166,7 @@ SELECT
       try { [void](Sql '' $arq.FullName @("-D$Banco")) } catch { throw "dev/$($arq.Name): $($_.Exception.Message)" }
       Write-Host ("  dev/{0,-22} ok" -f $arq.Name) -ForegroundColor Green
     }
-    Write-Host '  login de desenvolvimento: ADMIN / Admin123 (troca obrigatória no 1º acesso)' -ForegroundColor Cyan
+    Write-Host '  login de desenvolvimento: ADMINISTRADOR / Admin123 (acesso a tudo, sem troca de senha)' -ForegroundColor Cyan
   }
 
   if ($Teste) {

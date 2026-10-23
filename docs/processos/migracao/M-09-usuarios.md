@@ -17,7 +17,7 @@
 - `SENHA_HASH` = PBKDF2 de uma senha provisória **aleatória por usuário** (exibida uma vez no relatório) e `TROCAR_SENHA = 1` (dúvida 7 do plano).
 - `USUARIOS_EMPRESAS` (empresa 1) com `ID_ENTIDADES_FUNC` = funcionário mapeado.
 - `USUADM = 1` → perfil ADMINISTRADOR; demais → perfil "OPERADOR" (criar com permissões a ajustar).
-- `USUCOD = 1` (ADMINISTRADOR) → `ADMIN_GLOBAL = 1`.
+- `USUCOD = 1` (ADMINISTRADOR) → `ADMIN_GLOBAL = 1`. **Desenvolvimento/testes** (`Desenvolvimento:AdministradorComSenhaPadrao = true`, `appsettings.Development.json`): o ADMINISTRADOR fica com a senha `Admin123` e sem troca obrigatória (pedido do usuário, 23/10/2026 — CLAUDE.md); em produção recebe a senha provisória como os demais.
 - `SYS_*_ACESSOS` não migram (substituídos por perfis); o relatório lista, por usuário, as telas que ele acessava para ajudar a montar os perfis.
 
 ## Regras gerais (todas as etapas)

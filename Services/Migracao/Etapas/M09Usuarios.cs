@@ -39,12 +39,15 @@ public sealed class M09Usuarios : IEtapaMigracao
                 else if (!vinculados.Add(f)) c.Anomalia($"Usuário {login}: o profissional {antigoFunc} já está vinculado a outro usuário — usuário sem profissional.");
                 else func = f;
             }
+            // desenvolvimento/testes: o ADMINISTRADOR (USUCOD 1) entra com Admin123, sem troca (ContaService.SenhaDesenvolvimento)
+            var adminDev = usucod == 1 && c.AdministradorDesenvolvimento;
             var usuario = new Usuario
             {
                 Login = login, Nome = c.Cortar<Usuario>(nameof(Usuario.Nome), func is { } id && nomes.TryGetValue(id, out var n) ? n : login, $"usuário {login}")!,
-                SenhaHash = hash, TrocarSenha = true, Ativo = true, AdminGlobal = usucod == 1, UsucodLegado = usucod,
-                IdEmpresasUltima = c.IdEmpresa,
+                SenhaHash = adminDev ? ContaService.GerarHash(ContaService.SenhaDesenvolvimento) : hash, TrocarSenha = !adminDev,
+                Ativo = true, AdminGlobal = usucod == 1, UsucodLegado = usucod, IdEmpresasUltima = c.IdEmpresa,
             };
+            if (adminDev) c.Log($"Desenvolvimento: {login} com a senha {ContaService.SenhaDesenvolvimento}, sem troca obrigatória.");
             c.Db.Add(usuario);
             await c.Db.SaveChangesAsync(ct);
             c.Db.Add(new UsuarioEmpresa { IdUsuarios = usuario.IdUsuarios, IdEmpresas = c.IdEmpresa, IdEntidadesFunc = func, Padrao = true, Ativo = true });

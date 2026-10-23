@@ -23,6 +23,15 @@ public sealed class ContaService(LabDbContext db, IAuditoria auditoria, TimeProv
     public const int MaxTentativas = 5;
     public static readonly TimeSpan TempoBloqueio = TimeSpan.FromMinutes(15);
 
+    /// <summary>
+    /// Desenvolvimento/testes (pedido do usuário, 23/10/2026): o usuário <c>ADMINISTRADOR</c> (ADMIN_GLOBAL, acesso a
+    /// tudo) sempre entra com a senha <c>Admin123</c>, sem troca obrigatória — no <c>recriar.ps1 -Dev</c> e na migração
+    /// com <see cref="ChaveAdministradorDesenvolvimento"/> ligada (<c>appsettings.Development.json</c>). Nunca em produção.
+    /// </summary>
+    public const string LoginAdministrador = "ADMINISTRADOR";
+    public const string SenhaDesenvolvimento = "Admin123";
+    public const string ChaveAdministradorDesenvolvimento = "Desenvolvimento:AdministradorComSenhaPadrao";
+
     private static readonly PasswordHasher<Usuario> Hasher = new();
     // usuário inexistente também passa por uma verificação PBKDF2: o tempo de resposta não revela se o login existe
     private static readonly string HashFicticio = Hasher.HashPassword(new Usuario(), Guid.NewGuid().ToString());
