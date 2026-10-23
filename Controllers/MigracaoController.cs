@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LabControl.Controllers;
 
 /// <summary>
-/// T07 — Migração Firebird → MySQL v2 (<c>/Migracao</c>, só ADMIN_GLOBAL). Parte 1 (3.5): M-01…M-10. Executa em
+/// T07 — Migração Firebird → MySQL v2 (<c>/Migracao</c>, só ADMIN_GLOBAL). M-01…M-15 (3.5 e 4.1), numa execução só. Executa em
 /// segundo plano num banco destino vazio; a página se atualiza sozinha enquanto roda e mostra etapas, conferências e
 /// anomalias (CSV).
 /// </summary>

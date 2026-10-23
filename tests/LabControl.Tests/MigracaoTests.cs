@@ -8,12 +8,12 @@ using Xunit.Abstractions;
 namespace LabControl.Tests;
 
 /// <summary>
-/// Aceite da 3.5: migração parte 1 (M-01…M-10) do Firebird real (<c>C:\Project\Laboratorio\DBMAIS.FDB</c>) para um
+/// Aceite da 3.5 e da 4.1: migração M-01…M-15 do Firebird real (<c>C:\Project\Laboratorio\DBMAIS.FDB</c>) para um
 /// banco vazio recriado a cada execução (<c>labcontrol_migracao_teste</c>). Sem o legado nesta máquina o teste só avisa.
 /// Roda na coleção <see cref="ColecaoMigracao"/>: sozinho, depois das outras (pendência 18).
 /// </summary>
 [Collection(ColecaoMigracao.Nome)]
-public class MigracaoParte1Tests(ITestOutputHelper saida)
+public class MigracaoTests(ITestOutputHelper saida)
 {
     private const string Banco = "labcontrol_migracao_teste";
     private const string Fdb = @"C:\Project\Laboratorio\DBMAIS.FDB";
@@ -25,7 +25,7 @@ public class MigracaoParte1Tests(ITestOutputHelper saida)
     private static PedidoMigracao Pedido(string banco = Banco, string senha = SenhaProvisoria) => new(Fdb, "SYSDBA", "masterkey", banco, senha, "127.0.0.1");
 
     [Fact]
-    public async Task Parte1_migra_os_cadastros_do_legado_com_conferencias_verdes_e_login_com_troca_de_senha()
+    public async Task Migra_cadastros_e_movimento_do_legado_com_conferencias_verdes_e_login_com_troca_de_senha()
     {
         if (!File.Exists(Fdb)) { saida.WriteLine($"Legado {Fdb} ausente: migração não testada."); return; }
         await BancoTeste.RecriarAsync(Banco);
@@ -55,6 +55,28 @@ public class MigracaoParte1Tests(ITestOutputHelper saida)
         Assert.Equal(1, await db.Entidades.CountAsync(e => e.TipoEmpresaUsuaria));
         Assert.Equal(52, await db.LabParametrosAnalises.CountAsync(p => p.Auditado));
         Assert.True(await db.EntidadesFuncionarios.CountAsync() >= 16);
+
+        // parte 2 (4.1): contagens do aceite (doc 13 §3). Produtos: 5.761 − 33 de 21 propostas excluídas no legado + 41
+        // criados para amostras de propostas sem produtos; análises: 19.252 − 84 das propostas excluídas
+        Assert.Equal((2358, 5769, 19168, 5770, 20551),
+            (await db.LabPropostas.CountAsync(), await db.LabPropostasProdutos.CountAsync(), await db.LabPropostasProdanalises.CountAsync(),
+             await db.LabHistAmostras.CountAsync(), await db.LabHistAmostrasTestes.CountAsync()));
+        Assert.Equal(1433, await db.PedidosVenda.CountAsync()); // 1.434 números distintos; uma proposta tinha dois
+        Assert.Equal([62, 611, 511, 663, 2482, 1440],
+            await db.LabHistAmostras.Where(a => a.AnoAmostra >= 2013 && a.AnoAmostra <= 2018).GroupBy(a => a.AnoAmostra)
+                .OrderBy(g => g.Key).Select(g => g.Count() - (g.Key == 2014 ? 1 : 0)).ToListAsync()); // +1: a do ano 0 entrou em 2014
+        // número da amostra recalculado pelo banco = o impresso pelo legado (conferência da M-14 compara todos)
+        var amostra = await db.LabHistAmostras.Where(a => a.Revisao > 0).OrderBy(a => a.IdLegado).FirstAsync();
+        Assert.Matches(@"^\d{2}-\d{5}-\d{2}/\d{2} R\d{2}$", amostra.NrAmostra);
+        Assert.NotNull(amostra.IdAmostraRaiz);
+        // a próxima amostra/proposta continua depois do legado (sequências da numeração)
+        Assert.True(await db.SequenciasDocumentos.CountAsync(sq => sq.TipoDocumento == "AMOSTRA") >= 6);
+        Assert.Equal(await db.PedidosVenda.MaxAsync(p => p.NrPedido),
+            await db.SequenciasDocumentos.Where(sq => sq.TipoDocumento == "PEDIDO_VENDA").Select(sq => sq.UltimoNumero).SingleAsync());
+        // log do legado entra marcado, sem usuário
+        var logLegado = await db.LabHistAmostrasLog.FirstAsync();
+        Assert.Contains("\"ORIGEM\":\"LEGADO\"", logLegado.Dados.Replace(" ", ""));
+        Assert.Null(logLegado.IdUsuarios);
 
         // encoding: acentos chegam como acentos (nada de "Ã£")
         var nomes = await db.Entidades.Select(e => e.Nome).ToListAsync();

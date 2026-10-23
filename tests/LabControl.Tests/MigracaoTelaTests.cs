@@ -2,7 +2,7 @@ using System.Net;
 
 namespace LabControl.Tests;
 
-/// <summary>T07 pela web: só ADMIN_GLOBAL; pedido inválido volta com a mensagem (a execução real está em <see cref="MigracaoParte1Tests"/>).</summary>
+/// <summary>T07 pela web: só ADMIN_GLOBAL; pedido inválido volta com a mensagem (a execução real está em <see cref="MigracaoTests"/>).</summary>
 public class MigracaoTelaTests(AppWeb app) : IClassFixture<AppWeb>
 {
     [Fact]
@@ -23,7 +23,7 @@ public class MigracaoTelaTests(AppWeb app) : IClassFixture<AppWeb>
             await web.EntrarAsync(global.Login);
             await web.PostarAsync("/Conta/Empresa", "/Conta/Empresa", ("IdEmpresa", c.Empresa.IdEmpresas.ToString()));
             var html = await (await web.GetAsync("/Migracao")).HtmlAsync();
-            Assert.Contains("Executar parte 1", html);
+            Assert.Contains("Executar migração", html);
             Assert.Contains(@"recriar.ps1 -Banco labcontrol_migracao -Forcar", html);
 
             // o banco de testes tem dados: recusado com o comando para criar um vazio; senhas não voltam para a tela

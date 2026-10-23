@@ -41,7 +41,7 @@
   - etapas (situação, gravados, tempo, erro), conferências esperado (lido no Firebird na hora) × encontrado, anomalias, log e **relatório CSV**.
 - **Diferença do desenho original:** executa a parte inteira em sequência (M-01 → M-10), parando na 1ª falha. Cada etapa tem a sua transação, então a falha desfaz só ela. Não há escolha de etapas soltas: os dicionários `idAntigo → idNovo` vivem em memória e o destino é recriado a cada execução. A parte 2 (4.1) reconstrói os mapas por `ID_LEGADO` e chaves únicas.
 - **Conexão destino:** própria, aberta à mão com `SET @LC_MIGRACAO = 1`; contexto sem usuário (o logado é do banco do app), empresa = a criada na M-01.
-- **Resultado contra o `DBMAIS.FDB` real** (`MigracaoParte1Tests`, banco `labcontrol_migracao_teste`):
+- **Resultado contra o `DBMAIS.FDB` real** (`MigracaoTests`, banco `labcontrol_migracao_teste`):
   - todas as conferências verdes;
   - 527 entidades / 664 e-mails / 695 fones / 538 endereços / 1.915 produtos / 462 parâmetros (52 acreditados) / 176 métodos / 15 usuários;
   - login de usuário migrado exige troca de senha;
@@ -62,13 +62,41 @@
   - entidade do legado que é só a empresa e tem linha de funcionário não vira profissional (a empresa usuária não pode ser funcionário);
   - M-04 chama o `SP_INICIALIZAR_EMPRESA` pelo `Procedures`; CSV com a situação/erro da etapa num campo só.
 
+## Implementação — parte 2 (tarefa 4.1, 23/10/2026)
+- **Decisões do usuário:**
+  - **uma execução só**, M-01→M-15 em sequência, num banco recém-criado (`MigracaoService.Etapas`); a tela não tem mais "parte 1";
+  - **log das amostras do legado migrado marcado** (sem data/usuário no legado).
+- **Etapas:** `Etapas/M11Propostas`, `M12ProdutosAnalisesProposta`, `M13PedidosVenda`, `M14Amostras`, `M15TestesEstoqueArquivo`.
+- **Apoio:**
+  - `ContextoMigracao.InserirEmLoteAsync`: INSERT multi-linha parametrizado; devolve os IDs na ordem e recusa o lote se não vierem em sequência;
+  - `ContextoMigracao.Compartilhado<T>`: dados que uma etapa monta para as seguintes;
+  - `Conversoes.RtfParaHtml` e `Conversoes.DataParcial`;
+  - `LinhaFb.DataHora/Hora/Colunas`.
+- **Por que INSERT direto:** o EF nunca envia o que o banco preenche fora da migração: ano/código/nº de proposta, amostra e pedido; subtotal/total das análises e totais da proposta; `DATA_MOV`; `DT_LOG`. Na migração esses valores vêm do legado, e as triggers com `@LC_MIGRACAO = 1` os preservam (o `NR_PROPOSTA`/`NR_AMOSTRA` continua calculado pelo banco).
+- **Resultado contra o `DBMAIS.FDB` real** (`MigracaoTests`):
+  - todas as conferências verdes;
+  - M-01→M-15 em **~3 min** (M-15 é a maior: 71 s);
+  - 2.358 propostas, 5.769 itens (5.728 + 41 criados), 19.168 análises;
+  - 1.433 pedidos, 5.770 amostras (5.767 números idênticos ao impresso), 20.551 testes;
+  - 5.699 movimentos, 2.494 localizações, saldos iguais, 10.390 linhas de log.
+- **Anomalias da parte 2:** ver M-11…M-15 › Implementação. Principais:
+  - 33 propostas provisórias;
+  - itens de 21 propostas excluídas;
+  - itens criados para 47 amostras;
+  - 1 proposta com 2 pedidos;
+  - amostra do ano 0;
+  - 7 datas parciais;
+  - 71 movimentos de revisão;
+  - 178 localizações duplicadas;
+  - 119 linhas de log órfãs.
+
 ## Critérios de aceite
-- [x] Parte 1: todas as conferências verdes num banco limpo — `MigracaoParte1Tests`.
+- [x] Parte 1: todas as conferências verdes num banco limpo — `MigracaoTests`.
 - [x] Login de usuário migrado com troca obrigatória — mesmo teste.
-- [ ] Todas as conferências do doc 13 §3 (partes 2 e 3: propostas, amostras, resultados, boletins) — 4.1, 5.1.
-- [ ] Nº das amostras idêntico ao legado (amostragem de 20) — 4.1.
+- [ ] Todas as conferências do doc 13 §3 — parte 2 (propostas, pedidos, amostras, testes, saldo) ✅ na 4.1; resultados e boletins na 5.1.
+- [x] Nº das amostras idêntico ao legado — **todas** conferidas na 4.1 (não só 20).
 - [ ] Boletins migrados congelados (emitidos) e somente leitura — 5.1.
 - [x] Relatório de anomalias gerado (tela + CSV).
 - [x] Teste no navegador da tela (`CrudNavegadorTelasTests.Migracao_tela_valida_o_pedido_sem_executar`) — passou em 22/10/2026 (pendência 17).
 
-**Status:** 🟨 parte 1 (M-01…M-10) pronta na 3.5; partes 2 (4.1) e 3 (5.1) pendentes.
+**Status:** 🟨 M-01…M-15 prontas (3.5 e 4.1); parte 3 (M-16…M-18: resultados, boletins, sequências) na 5.1.

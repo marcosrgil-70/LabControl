@@ -40,6 +40,19 @@ public sealed class LinhaFb(Dictionary<string, object?> valores)
         _ => null,
     };
 
+    public DateTime? DataHora(string coluna) => Bruto(coluna) as DateTime?;
+
+    /// <summary>Hora de um TIMESTAMP do legado (o Delphi gravava a hora num TIMESTAMP com data 30/12/1899).</summary>
+    public TimeOnly? Hora(string coluna) => Bruto(coluna) switch
+    {
+        DateTime d => TimeOnly.FromDateTime(d),
+        TimeSpan t => TimeOnly.FromTimeSpan(t),
+        _ => null,
+    };
+
+    /// <summary>Todas as colunas, para guardar a linha inteira (log do legado em JSON).</summary>
+    public IReadOnlyDictionary<string, object?> Colunas => valores;
+
     /// <summary>'S'/'N' (ou 1/0) → bool; nulo → false.</summary>
     public bool Flag(string coluna) => Conversoes.Flag(Texto(coluna));
 }

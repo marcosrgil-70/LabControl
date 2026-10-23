@@ -49,4 +49,4 @@
 - [x] Quantidades iguais às do legado por tabela.
 - [x] Códigos de tipo de amostra/análise = IDs antigos.
 
-**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M03*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoParte1Tests`).
+**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M03*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`).

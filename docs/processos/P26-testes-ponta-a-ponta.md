@@ -29,7 +29,7 @@ Os testes de serviço e os testes HTTP (`WebApplicationFactory`) provam regras, 
 dotnet test tests/LabControl.Tests --filter "FullyQualifiedName~Navegador"   # só os de navegador (~6 min)
 dotnet test tests/LabControl.Tests                                            # suíte inteira (~17 min)
 ```
-> **Pendência 18 resolvida na 3.6 (23/10/2026):** o `MigracaoParte1Tests` (migração real, ~5 min de carga) rodava em paralelo com os outros e 16 testes estouravam 30 s esperando lock ao criar a empresa de teste. Agora ele está na coleção `ColecaoMigracao` (`DisableParallelization = true`): o xUnit o roda sozinho, depois das demais. Suíte inteira de uma vez: 186/186 em 17 min.
+> **Pendência 18 resolvida na 3.6 (23/10/2026):** o `MigracaoTests` (migração real, ~5 min de carga) rodava em paralelo com os outros e 16 testes estouravam 30 s esperando lock ao criar a empresa de teste. Agora ele está na coleção `ColecaoMigracao` (`DisableParallelization = true`): o xUnit o roda sozinho, depois das demais. Suíte inteira de uma vez: 186/186 em 17 min.
 > Com 8 GB de RAM, feche o Chrome antes: com pouca memória livre o Claude Code chegou a interromper a suíte.
 Requisitos: Microsoft Edge instalado; MySQL local com o user-secret da connection string (o banco `labcontrol_teste` é recriado sozinho quando `Scripts/v2` muda). O app de desenvolvimento (`dotnet run`) **não** pode estar rodando durante o build dos testes (trava o `LabControl.exe`).
 

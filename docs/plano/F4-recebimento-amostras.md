@@ -8,6 +8,7 @@
 ---
 
 ### 4.1 Migração parte 2 (M-11 a M-15) 🔵
+> ✅ **Concluída em 23/10/2026** (plano aprovado no plan mode) — ver [T07 › Implementação parte 2](../telas/T07-migracao.md#implementação--parte-2-tarefa-41-23102026); aceite em `MigracaoTests` (todas as conferências verdes contra o `DBMAIS.FDB` real; os 5.767 números de amostra da visão do legado idênticos), `MigracaoConversoesTests`. Decisões do usuário: uma execução só (M-01→M-15) e log do legado migrado marcado "sem data". Números reais: 5.728/19.168 itens/análises (33/84 de propostas excluídas no legado) + 41 itens criados para amostras; 1.433 pedidos.
 - **Passos:** propostas (+ textos RTF→HTML), produtos/análises (valores copiados), pedidos de venda (1 por proposta), amostras (`NR_AMOSTRA` conferido com o legado **em todas**), testes (`ID_TESTE_ORIGEM`), estoque (descartar movimentos de revisões, recalcular saldo), localização, log.
 - **Aceite:** conferências do [doc 13 §3](../banco/13-MIGRACAO-DADOS.md) para estas etapas: 2.358 / 5.761 / 19.252; ≈1.435 pedidos; 5.770 amostras com números idênticos; 20.551 testes; amostras por ano 62/611/511/663/2.482/1.440 (+1).
 - **Esforço:** G

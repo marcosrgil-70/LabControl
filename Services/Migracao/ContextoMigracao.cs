@@ -1,6 +1,9 @@
+using System.Text;
 using LabControl.Data;
 using LabControl.Infra;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using MySqlConnector;
 
 namespace LabControl.Services.Migracao;
 
@@ -27,6 +30,7 @@ public sealed class ContextoMigracao(LeitorFirebird fb, LabDbContext db, Empresa
     public const string EntidadeDaEmpresa = "ENTIDADE_DA_EMPRESA";
 
     private readonly Dictionary<string, Dictionary<int, int>> _mapas = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, object> _compartilhados = [];
 
     public LeitorFirebird Fb { get; } = fb;
     public LabDbContext Db { get; } = db;
@@ -55,6 +59,13 @@ public sealed class ContextoMigracao(LeitorFirebird fb, LabDbContext db, Empresa
     {
         if (!_mapas.TryGetValue(tabelaLegado, out var m)) _mapas[tabelaLegado] = m = [];
         return m;
+    }
+
+    /// <summary>Dado que uma etapa monta e as seguintes usam (ex.: itens da proposta por (proposta, item) do legado).</summary>
+    public T Compartilhado<T>(string chave) where T : new()
+    {
+        if (!_compartilhados.TryGetValue(chave, out var v)) _compartilhados[chave] = v = new T();
+        return (T)v;
     }
 
     /// <summary>ID novo do registro do legado, ou null (com anomalia) se não foi migrado.</summary>
@@ -96,6 +107,50 @@ public sealed class ContextoMigracao(LeitorFirebird fb, LabDbContext db, Empresa
             Anomalia($"{onde}: {propriedade} \"{valor}\" repetido no legado — gravado como \"{novo}\".");
             return novo;
         }
+    }
+
+    /// <summary>
+    /// INSERT direto em lote (parte 2): o EF não envia as colunas que o banco preenche fora da migração (ano/código/nº
+    /// de proposta, amostra e pedido; valores das análises; datas de movimento e de log), e na migração elas vêm do
+    /// legado. Devolve os IDs gerados na ordem das linhas: dentro de um INSERT de várias linhas o InnoDB numera em
+    /// sequência; o destino é exclusivo da migração, e o lote só é aceito se o maior ID da tabela fechar a conta.
+    /// </summary>
+    public async Task<List<int>> InserirEmLoteAsync(string tabela, string chave, IReadOnlyList<string> colunas,
+        IReadOnlyList<object?[]> linhas, CancellationToken ct)
+    {
+        var ids = new List<int>(linhas.Count);
+        var con = (MySqlConnection)Db.Database.GetDbConnection();
+        var tx = (MySqlTransaction?)Db.Database.CurrentTransaction?.GetDbTransaction();
+        var porLote = Math.Max(1, 30_000 / colunas.Count);
+        for (var inicio = 0; inicio < linhas.Count; inicio += porLote)
+        {
+            var lote = linhas.Skip(inicio).Take(porLote).ToList();
+            await using var cmd = con.CreateCommand();
+            cmd.Transaction = tx;
+            var sql = new StringBuilder($"INSERT INTO {tabela} ({string.Join(", ", colunas)}) VALUES ");
+            for (var r = 0; r < lote.Count; r++)
+            {
+                if (lote[r].Length != colunas.Count) throw new InvalidOperationException($"{tabela}: linha com {lote[r].Length} valores para {colunas.Count} colunas.");
+                sql.Append(r == 0 ? "(" : ",(");
+                for (var k = 0; k < colunas.Count; k++)
+                {
+                    var nome = $"@p{r}_{k}";
+                    sql.Append(k == 0 ? nome : "," + nome);
+                    cmd.Parameters.AddWithValue(nome, lote[r][k] ?? DBNull.Value);
+                }
+                sql.Append(')');
+            }
+            cmd.CommandText = sql.ToString();
+            await cmd.ExecuteNonQueryAsync(ct);
+            var primeiro = (int)cmd.LastInsertedId;
+            cmd.Parameters.Clear();
+            cmd.CommandText = $"SELECT MAX({chave}) FROM {tabela}";
+            var maior = Convert.ToInt32(await cmd.ExecuteScalarAsync(ct));
+            if (maior != primeiro + lote.Count - 1)
+                throw new InvalidOperationException($"{tabela}: IDs gerados fora de sequência ({primeiro}…{maior} para {lote.Count} linhas).");
+            ids.AddRange(Enumerable.Range(primeiro, lote.Count));
+        }
+        return ids;
     }
 
     /// <summary>

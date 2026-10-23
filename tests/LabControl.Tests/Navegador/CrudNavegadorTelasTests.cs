@@ -492,7 +492,7 @@ public class CrudNavegadorTelasTests(AppNavegador app)
     [Fact]
     public async Task Migracao_tela_valida_o_pedido_sem_executar()
     {
-        // a execução completa (minutos, Firebird real) é provada em MigracaoParte1Tests; aqui o fluxo da tela
+        // a execução completa (minutos, Firebird real) é provada em MigracaoTests; aqui o fluxo da tela
         await using var c = await Cenario.CriarAsync();
         await using var s = await app.EntrarAsync(c, adminGlobal: true);
         var p = s.Pagina;

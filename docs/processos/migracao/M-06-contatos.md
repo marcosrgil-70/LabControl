@@ -25,4 +25,4 @@
 ## Conferência ao final da etapa
 - [x] 695 / 664.
 
-**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M06*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoParte1Tests`).
+**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M06*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`).

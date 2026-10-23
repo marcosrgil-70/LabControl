@@ -28,7 +28,23 @@
 - Anomalias vão para o relatório da migração (não interrompem a etapa, salvo violação de integridade).
 
 ## Conferência ao final da etapa
-- [ ] 20.551 testes.
-- [ ] Saldo das raízes = `LAB_HIST_AMOSTRAS_SALDO` do legado (diferenças só onde havia duplicidade).
+- [x] 20.551 testes.
+- [x] Saldo das raízes = `LAB_HIST_AMOSTRAS_SALDO` do legado: **nenhuma diferença**.
 
-**Status:** ⬜
+## Implementação (tarefa 4.1, 23/10/2026)
+- `Services/Migracao/Etapas/M15TestesEstoqueArquivo.cs`, com INSERT direto em lote.
+- **Testes:**
+  - gravados por revisão da amostra;
+  - `DT_PREVISTA` pela `TG_TESTES_BI` (entrega + dias do prazo);
+  - `ID_LAB_PROPOSTAS_PRODANALISES` quando há exatamente uma análise (proposta, item, parâmetro, método); **245** sem vínculo;
+  - `ID_TESTE_ORIGEM` pela revisão anterior.
+- **Movimentos:** 5.699 da amostra física; **71** de revisões descartados.
+- **Localização:** 2.494 raízes; **178** com duas linhas → fica a mais recente.
+- **Saldo:** pela `TG_MOV_AI`, mais zero para as raízes sem movimento.
+- **Log:** **10.390** linhas (119 de amostras excluídas no legado ficam de fora):
+  - a tabela do legado não tem data, usuário nem chave (decisão do usuário: migrar marcado);
+  - `DADOS = {"ORIGEM":"LEGADO","SEM_DATA":true,"CAMPOS":{…45 colunas…}}`;
+  - `ID_USUARIOS` NULL;
+  - `DT_LOG` = data/hora da entrega + n ms, só para manter a ordem física (`RDB$DB_KEY`). A aba Histórico da T22 deve mostrar essas linhas como "registro do legado, sem data".
+
+**Status:** ✅ implementada na tarefa 4.1 (23/10/2026); conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`).

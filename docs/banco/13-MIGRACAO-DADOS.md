@@ -58,6 +58,20 @@
 
 > **Parte 1 implementada (3.5, 21/10/2026):** destino num banco **separado e vazio**; senha provisória **única** para os usuários (dúvida 7) e perfil **ADMINISTRADOR** para todos; a entidade 4 (empresa + cliente) vira entidade da empresa + cliente com o mesmo CNPJ (D-22). Ver [P24](../processos/P24-migracao.md#decisões-do-usuário-e-implementação-parte-1-tarefa-35--21102026) e [T07](../telas/T07-migracao.md).
 
+> **Parte 2 implementada (4.1, 23/10/2026):** uma execução só, M-01→M-15 (decisão do usuário).
+>
+> **Números reais do legado:**
+> - produtos/análises das propostas: **5.728 / 19.168**. O legado tem 5.761 / 19.252, mas 33 / 84 são de 21 propostas excluídas. Há ainda **+41 itens criados** para amostras de propostas sem o item;
+> - **1.433 pedidos** (1.434 números; uma proposta tinha dois);
+> - amostras: **todos** os números conferidos, não só 20;
+> - **33** propostas com código = ID (não 12).
+>
+> **Sequências:** `PROPOSTA`, `PEDIDO_VENDA` e `AMOSTRA` já são ajustadas nas M-11/M-13/M-14 (como a `PRODUTO` na M-10), para a 4.2/4.3 rodarem sobre o banco migrado. A M-18 só confere.
+>
+> **Log do legado:** migrado marcado como "sem data" (decisão do usuário).
+>
+> Detalhes em M-11…M-15 › Implementação e na [T07](../telas/T07-migracao.md).
+
 ## 4. Após a migração
 
 1. `SET @LC_MIGRACAO = 0`.

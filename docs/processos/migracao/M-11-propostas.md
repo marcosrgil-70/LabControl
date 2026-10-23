@@ -32,7 +32,20 @@
 - Anomalias vão para o relatório da migração (não interrompem a etapa, salvo violação de integridade).
 
 ## Conferência ao final da etapa
-- [ ] 2.358 propostas; soma de `VR_TOTAL_PROPOSTA` por ano igual (centavos).
-- [ ] 1 `ULTIMA_REVISAO = 1` por proposta.
+- [x] 2.358 propostas; soma de `VR_TOTAL_PROPOSTA` por ano igual (centavos).
+- [x] 1 `ULTIMA_REVISAO = 1` por proposta.
 
-**Status:** ⬜
+## Implementação (tarefa 4.1, 23/10/2026)
+- `Services/Migracao/Etapas/M11Propostas.cs`.
+- **INSERT direto em lote** (`ContextoMigracao.InserirEmLoteAsync`): o EF não envia ano/código nem os totais.
+- Inclusão por revisão (0, 1, 2…) para a origem já ter ID; `NR_PROPOSTA` calculado pela trigger.
+- Textos RTF → HTML (`Conversoes.RtfParaHtml`); 2.223 propostas com algum texto.
+- Sequência `PROPOSTA` por ano = maior código, sem os provisórios.
+- **Legado real:**
+  - **33** propostas com código = ID (o doc 10 citava 12) — todas listadas;
+  - 15 contatos do resultado inexistentes → 1º e-mail do cliente;
+  - 13 contatos e 9 contatos da NF inexistentes → NULL;
+  - 2 endereços de cobrança de outra entidade → NULL; o laudo dessas 2 também é de outra entidade e foi mantido (listado);
+  - 1 validade anterior à solicitação → igual à solicitação (a trigger recusa mesmo na migração).
+
+**Status:** ✅ implementada na tarefa 4.1 (23/10/2026); conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`).

@@ -25,6 +25,15 @@
 - Anomalias vão para o relatório da migração (não interrompem a etapa, salvo violação de integridade).
 
 ## Conferência ao final da etapa
-- [ ] Nº de pedidos = nº distinto de (proposta, pedido).
+- [x] Nº de pedidos = nº de propostas (cód./ano) com pedido: **1.433**. Os 1.434 números distintos do legado estão todos mapeados.
 
-**Status:** ⬜
+## Implementação (tarefa 4.1, 23/10/2026)
+- `Services/Migracao/Etapas/M13PedidosVenda.cs`.
+- INSERT direto em lote preservando `NR_PEDIDO`; 3.318 itens (produtos da revisão do pedido, valor = Σ das análises).
+- Sequência `PEDIDO_VENDA` = 1.471 (maior número).
+- **`SITUACAO`:** sem amostras → `ABERTO`, senão `EM_EXECUCAO`. O `CONCLUIDO` (todas as amostras com boletim) fica para a M-17 (5.1).
+- **Legado real:**
+  - a proposta 1189 tinha os pedidos 553 e 554 em revisões diferentes → fica o 554 (maior revisão); as amostras do 553 apontam para ele;
+  - 20 pedidos sem data de autorização → data da solicitação.
+
+**Status:** ✅ implementada na tarefa 4.1 (23/10/2026); `SITUACAO = CONCLUIDO` na 5.1.

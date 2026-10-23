@@ -12,17 +12,19 @@ namespace LabControl.Services.Migracao;
 public sealed record PedidoMigracao(string CaminhoFirebird, string UsuarioFirebird, string SenhaFirebird, string BancoDestino, string SenhaProvisoria, string? Ip);
 
 /// <summary>
-/// Migração Firebird → MySQL v2, parte 1 (M-01…M-10; docs/processos/P24-migracao.md). O destino é um banco
+/// Migração Firebird → MySQL v2 (M-01…M-15; docs/processos/P24-migracao.md). O destino é um banco
 /// <b>vazio</b> recém-criado pelos scripts (decisão do usuário: banco separado, ex. <c>labcontrol_migracao</c>);
 /// conexão própria com <c>@LC_MIGRACAO = 1</c>; uma transação por etapa (falha desfaz só a etapa e para a execução);
 /// repetir = recriar o destino.
 /// </summary>
 public sealed partial class MigracaoService(IConfiguration config)
 {
-    public static readonly IReadOnlyList<IEtapaMigracao> Parte1 =
+    /// <summary>Etapas em ordem (decisão do usuário, 4.1: uma execução só, M-01…M-15, num banco recém-criado).</summary>
+    public static readonly IReadOnlyList<IEtapaMigracao> Etapas =
     [
         new M01Empresa(), new M02Geografia(), new M03Auxiliares(), new M04ParametrosEmpresa(), new M05Entidades(),
         new M06Contatos(), new M07Enderecos(), new M08Profissionais(), new M09Usuarios(), new M10ProdutosParametros(),
+        new M11Propostas(), new M12ProdutosAnalisesProposta(), new M13PedidosVenda(), new M14Amostras(), new M15TestesEstoqueArquivo(),
     ];
 
     private static readonly string[] BancosProibidos = ["labcontrol", "mysql", "sys", "information_schema", "performance_schema"];
@@ -65,9 +67,9 @@ public sealed partial class MigracaoService(IConfiguration config)
     }
 
     public static RelatorioMigracao NovoRelatorio(string banco) =>
-        new(banco, Parte1.Select(e => new EstadoEtapa(e.Codigo, e.Nome)));
+        new(banco, Etapas.Select(e => new EstadoEtapa(e.Codigo, e.Nome)));
 
-    /// <summary>Executa M-01…M-10 em ordem, preenchendo o relatório; para na 1ª etapa com erro.</summary>
+    /// <summary>Executa M-01…M-15 em ordem, preenchendo o relatório; para na 1ª etapa com erro.</summary>
     public async Task ExecutarAsync(PedidoMigracao p, RelatorioMigracao relatorio, CancellationToken ct = default)
     {
         var empresa = new EmpresaDaMigracao { Ip = p.Ip };
@@ -83,7 +85,7 @@ public sealed partial class MigracaoService(IConfiguration config)
             await c.LigarModoMigracaoAsync(ct);
             relatorio.Log($"Origem: {p.CaminhoFirebird} → destino: {p.BancoDestino}.");
 
-            foreach (var (etapa, estado) in Parte1.Zip(relatorio.Etapas))
+            foreach (var (etapa, estado) in Etapas.Zip(relatorio.Etapas))
             {
                 c.Etapa = etapa.Codigo;
                 estado.Situacao = SituacaoEtapa.Executando;

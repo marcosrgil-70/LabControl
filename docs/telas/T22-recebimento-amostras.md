@@ -97,6 +97,8 @@ Pesquisa avançada (legado `un_Lab_Hist_Amostras_Pesq`): por cliente/produto mos
 - Lista de propostas mostrava revisões antigas.
 - `VW_LAB_HIST_AMOSTRA` duplicava amostras e escondia clientes sem endereço do tipo 2.
 
+> **Aba Histórico (log) e dados migrados (4.1, 23/10/2026).** As 10.390 linhas do log do legado estão em `LAB_HIST_AMOSTRAS_LOG` com `DADOS = {"ORIGEM":"LEGADO","SEM_DATA":true,"CAMPOS":{…}}`, sem usuário. O legado não guardava quando nem quem fez a alteração. `DT_LOG` serve só para ordenar. A aba deve mostrá-las como **"registro do legado, sem data"**, e não com a data/hora. Ver [M-15](../processos/migracao/M-15-testes-estoque-arquivo.md#implementação-tarefa-41-23102026). Amostras migradas sem pedido no legado herdaram o pedido da proposta (M-14).
+
 ## Aceite
 - [ ] Duas inclusões simultâneas recebem números diferentes.
 - [ ] Data de entrega futura recusada; 1 ano atrás recusada sem permissão; com permissão + confirmação grava **com o ano atual**.

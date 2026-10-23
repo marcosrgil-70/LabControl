@@ -27,4 +27,4 @@
 ## Conferência ao final da etapa
 - [x] Toda cidade usada por endereço do legado tem correspondente.
 
-**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M02*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoParte1Tests`).
+**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M02*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`).

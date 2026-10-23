@@ -26,4 +26,4 @@
 ## Conferência ao final da etapa
 - [x] 538 endereços; nenhum sem cidade (listar exceções).
 
-**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M07*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoParte1Tests`).
+**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M07*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`).

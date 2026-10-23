@@ -28,4 +28,4 @@
 ## Conferência ao final da etapa
 - [x] 15 usuários; login de teste obriga troca de senha.
 
-**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M09*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoParte1Tests`).
+**Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M09*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`).

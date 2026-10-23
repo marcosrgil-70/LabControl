@@ -47,4 +47,17 @@
   - os contatos dela vão para os dois;
   - as propostas (parte 2) apontam para o cliente.
 - **Geografia:** cidades casadas por nome + UF com o seed IBGE; as que não casam são incluídas sem código e listadas.
-- **Código:** `Services/Migracao/` (um arquivo por etapa em `Etapas/`); integração real em `MigracaoParte1Tests`.
+- **Código:** `Services/Migracao/` (um arquivo por etapa em `Etapas/`); integração real em `MigracaoTests`.
+
+## Decisões do usuário e implementação (parte 2, tarefa 4.1 — 23/10/2026)
+- **Uma execução só:** a T07 roda M-01→M-15 em sequência num banco recém-criado. Os dicionários `idAntigo → idNovo` ficam em memória do começo ao fim, e não existe "parte 2" sobre um banco que já tem a parte 1.
+- **Log das amostras do legado:** migrado e marcado como `"ORIGEM":"LEGADO"` / sem data. O legado não guardava data, usuário nem chave.
+- **INSERT direto em lote** nas tabelas cujas colunas o banco preenche fora da migração (o EF não as envia):
+  - os IDs voltam na ordem;
+  - o lote é recusado se os IDs não vierem em sequência.
+- **Correções de dados do legado** (todas listadas no relatório), detalhadas em [M-11](migracao/M-11-propostas.md)…[M-15](migracao/M-15-testes-estoque-arquivo.md):
+  - validações das triggers que valem mesmo com `@LC_MIGRACAO = 1` (validade < solicitação, datas parciais);
+  - referências inexistentes;
+  - itens ausentes;
+  - pedidos duplicados;
+  - movimentos de revisões.
