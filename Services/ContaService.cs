@@ -31,6 +31,8 @@ public sealed class ContaService(LabDbContext db, IAuditoria auditoria, TimeProv
     public const string LoginAdministrador = "ADMINISTRADOR";
     public const string SenhaDesenvolvimento = "Admin123";
     public const string ChaveAdministradorDesenvolvimento = "Desenvolvimento:AdministradorComSenhaPadrao";
+    /// <summary>Profissional vinculado ao ADMINISTRADOR em desenvolvimento/testes (quem digitou a proposta, a amostra…).</summary>
+    public const string ProfissionalEspecial = "USUÁRIO ESPECIAL DO SISTEMA";
 
     private static readonly PasswordHasher<Usuario> Hasher = new();
     // usuário inexistente também passa por uma verificação PBKDF2: o tempo de resposta não revela se o login existe

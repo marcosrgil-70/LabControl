@@ -23,10 +23,11 @@ Reescrita do sistema de laboratório **Delphi 7 + Firebird** (`C:\Project\Labora
 - **Todo commit é seguido de `git push`** para o remoto (`origin`, branch `master`) — pedido do usuário (21/10/2026). Se o push falhar, avisar o usuário com a mensagem do erro.
 - **Usuário `ADMINISTRADOR` / senha `Admin123` em desenvolvimento e testes** — pedido do usuário (23/10/2026):
   - sempre entra e tem acesso a tudo (ADMIN_GLOBAL), **sem troca obrigatória de senha**;
+  - vinculado ao profissional **"USUÁRIO ESPECIAL DO SISTEMA"** (criado se não existir, em cada empresa) para poder gravar o que registra o profissional do usuário (proposta, amostra…);
   - vale em todo banco de desenvolvimento/teste: o `recriar.ps1 -Dev` cria assim (`Scripts/v2/dev/admin_dev.sql`), e a migração (M-09) deixa o ADMINISTRADOR migrado assim quando `Desenvolvimento:AdministradorComSenhaPadrao = true` (`appsettings.Development.json`);
   - constantes em `ContaService.LoginAdministrador`/`SenhaDesenvolvimento`;
   - **nunca em produção**: lá o ADMINISTRADOR migrado recebe a senha provisória da T07 e troca no 1º acesso;
-  - num banco de desenvolvimento já existente, acertar o usuário com o mesmo hash do `admin_dev.sql`.
+  - num banco de desenvolvimento já existente: senha com o mesmo hash do `admin_dev.sql` e o profissional pelo bloco final do mesmo arquivo (idempotente).
 - **Antes de começar uma nova tarefa, commit + push** do que estiver pendente (`git status`; nada pendente = seguir) — pedido do usuário (23/10/2026). Assim cada tarefa começa sobre um ponto salvo no remoto.
 
 ## Comandos

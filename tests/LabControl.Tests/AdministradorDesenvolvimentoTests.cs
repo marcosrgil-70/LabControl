@@ -21,6 +21,9 @@ public class AdministradorDesenvolvimentoTests
         Assert.Equal((ContaService.LoginAdministrador, "1", "0"), (m.Groups["login"].Value, m.Groups["global"].Value, m.Groups["trocar"].Value));
         Assert.NotEqual(PasswordVerificationResult.Failed,
             new PasswordHasher<Usuario>().VerifyHashedPassword(new Usuario(), m.Groups["hash"].Value, ContaService.SenhaDesenvolvimento));
+        // vinculado ao profissional especial (a proposta/amostra registram quem digitou)
+        Assert.Contains($"'{ContaService.ProfissionalEspecial}'", sql);
+        Assert.Contains("INSERT INTO USUARIOS_EMPRESAS", sql);
     }
 
     [Fact]

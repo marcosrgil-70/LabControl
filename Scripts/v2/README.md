@@ -15,7 +15,7 @@ Documentação: [doc 11 — modelo](../../docs/banco/11-MODELO-MYSQL.md) · [doc
 | 6 | `06_cidades.sql` | 5.571 municípios do IBGE (gerado por `tools/gerador-cidades`) |
 | — | `teste/roteiro_12_7.sql` | roteiro de teste do doc 12 §7 (65 verificações) — **só em banco temporário** |
 | — | `recriar.ps1` | recria um banco do zero e confere as contagens; `-Teste` roda o roteiro; `-Dev` roda `dev/*.sql` |
-| — | `dev/admin_dev.sql` | **só desenvolvimento**: empresa `001` + usuário `ADMINISTRADOR` / senha `Admin123` (ADMIN_GLOBAL, acesso a tudo, sem troca de senha — regra do CLAUDE.md) |
+| — | `dev/admin_dev.sql` | **só desenvolvimento**: empresa `001` + usuário `ADMINISTRADOR` / senha `Admin123` (ADMIN_GLOBAL, acesso a tudo, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA" — regra do CLAUDE.md) |
 
 Empresas, usuários e cadastros **não** estão no seed: vêm da migração ([doc 13](../../docs/banco/13-MIGRACAO-DADOS.md)) ou do cadastro de nova empresa (`SP_INICIALIZAR_EMPRESA`).
 

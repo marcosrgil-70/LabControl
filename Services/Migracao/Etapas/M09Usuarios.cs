@@ -55,11 +55,35 @@ public sealed class M09Usuarios : IEtapaMigracao
             c.Mapa("USUARIO")[usucod] = usuario.IdUsuarios;
         }
         await c.Db.SaveChangesAsync(ct);
+        var semTroca = c.AdministradorDesenvolvimento && c.Mapa("USUARIO").ContainsKey(1) ? 1 : 0;
+        if (semTroca == 1) await VincularProfissionalEspecialAsync(c, c.Mapa("USUARIO")[1], ct);
 
         c.Conferir("usuários do legado", linhas.Count, c.Mapa("USUARIO").Count);
-        c.Conferir("usuários com troca de senha obrigatória", c.Mapa("USUARIO").Count, await c.Db.Usuarios.CountAsync(u => u.TrocarSenha, ct));
+        c.Conferir("usuários com troca de senha obrigatória", c.Mapa("USUARIO").Count - semTroca, await c.Db.Usuarios.CountAsync(u => u.TrocarSenha, ct));
         c.Conferir("usuários com o perfil ADMINISTRADOR", c.Mapa("USUARIO").Count, await c.Db.UsuariosPerfis.CountAsync(p => p.IdPerfis == administrador.IdPerfis, ct));
         c.Log($"{c.Mapa("USUARIO").Count} usuários com a senha provisória informada na tela (troca obrigatória no 1º acesso).");
         return c.Mapa("USUARIO").Count;
+    }
+
+    /// <summary>
+    /// Desenvolvimento/testes (pedido do usuário, 23/10/2026): o ADMINISTRADOR fica vinculado ao profissional
+    /// "USUÁRIO ESPECIAL DO SISTEMA" (criado se não existir), para gravar documentos que registram o profissional do
+    /// usuário (proposta, amostra…). Mesma regra do <c>Scripts/v2/dev/admin_dev.sql</c>.
+    /// </summary>
+    private static async Task VincularProfissionalEspecialAsync(ContextoMigracao c, int idUsuario, CancellationToken ct)
+    {
+        var especial = await c.Db.Entidades.FirstOrDefaultAsync(e => e.Nome == ContaService.ProfissionalEspecial, ct);
+        if (especial is null)
+        {
+            especial = new Entidade { Categoria = Categoria.Fisica, Nome = ContaService.ProfissionalEspecial, TipoFuncionario = true };
+            c.Db.Add(especial);
+            await c.Db.SaveChangesAsync(ct);
+        }
+        if (!await c.Db.EntidadesFuncionarios.AnyAsync(f => f.IdEntidades == especial.IdEntidades, ct))
+            c.Db.Add(new EntidadeFuncionario { IdEntidades = especial.IdEntidades, ExecutaAnalise = false });
+        var vinculo = await c.Db.UsuariosEmpresas.SingleAsync(v => v.IdUsuarios == idUsuario && v.IdEmpresas == c.IdEmpresa, ct);
+        vinculo.IdEntidadesFunc = especial.IdEntidades;
+        await c.Db.SaveChangesAsync(ct);
+        c.Log($"Desenvolvimento: {ContaService.LoginAdministrador} vinculado ao profissional {ContaService.ProfissionalEspecial}.");
     }
 }
