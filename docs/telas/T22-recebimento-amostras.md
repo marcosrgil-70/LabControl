@@ -100,13 +100,55 @@ Pesquisa avançada (legado `un_Lab_Hist_Amostras_Pesq`): por cliente/produto mos
 > **Aba Histórico (log) e dados migrados (4.1, 23/10/2026).** As 10.390 linhas do log do legado estão em `LAB_HIST_AMOSTRAS_LOG` com `DADOS = {"ORIGEM":"LEGADO","SEM_DATA":true,"CAMPOS":{…}}`, sem usuário. O legado não guardava quando nem quem fez a alteração. `DT_LOG` serve só para ordenar. A aba deve mostrá-las como **"registro do legado, sem data"**, e não com a data/hora. Ver [M-15](../processos/migracao/M-15-testes-estoque-arquivo.md#implementação-tarefa-41-23102026). Amostras migradas sem pedido no legado herdaram o pedido da proposta (M-14).
 
 ## Aceite
-- [ ] Duas inclusões simultâneas recebem números diferentes.
-- [ ] Data de entrega futura recusada; 1 ano atrás recusada sem permissão; com permissão + confirmação grava **com o ano atual**.
-- [ ] Virada de ano: primeira amostra do ano = 00001; números do ano anterior intactos.
-- [ ] Validade só "mês/ano" grava e imprime `05/2027`; 31/02 recusado.
-- [ ] Testes iguais às análises do item da proposta, com data prevista.
-- [ ] Tipo de análise limitado aos tipos do item.
-- [ ] Entrada automática de estoque criada (saldo = qtde).
-- [ ] Revisão gera `R01` com todos os campos (inclusive coletor) e mantém o estoque na raiz.
+- [x] Duas inclusões simultâneas recebem números diferentes — `AmostrasTests.Duas_inclusoes_simultaneas_recebem_numeros_diferentes` (6 ao mesmo tempo).
+- [x] Data de entrega futura recusada; 1 ano atrás recusada sem permissão; com permissão + confirmação grava **com o ano atual** — `AmostrasTests.Validacoes_…` e navegador.
+- [ ] Virada de ano: primeira amostra do ano = 00001; números do ano anterior intactos. Depende do relógio do servidor: coberto no banco pelo roteiro SQL (passo 12) e pelos `RoteiroTests`; não reproduzível pela tela.
+- [x] Validade só "mês/ano" grava e imprime `05/2027`; 31/02 recusado — `AmostrasTests`.
+- [x] Testes iguais às análises do item da proposta, com data prevista — `AmostrasTests.Inclusao_…` e navegador.
+- [x] Tipo de análise limitado aos tipos do item — `AmostrasTests.Validacoes_…`; na tela o combo só oferece os do item.
+- [x] Entrada automática de estoque criada (saldo = qtde) — `AmostrasTests.Inclusao_…`.
+- [x] Revisão gera `R01` com todos os campos (inclusive coletor) e mantém o estoque na raiz — `AmostrasTests.Com_resultado_…`.
 
-**Status:** 🟨 v1 existe com regras erradas (número = MAX+1 sem ano) — **refazer**
+## Implementação (tarefa 4.3, 23/10/2026)
+- **Arquivos:**
+  - `Controllers/AmostrasController.cs`;
+  - `Services/AmostraService.cs`, `ViewModels/AmostraVM.cs`;
+  - `Views/Amostras/{Index,Form,Comprovante}.cshtml`, `wwwroot/js/amostras.js`.
+- **Número:** sempre do banco (ano do servidor + `SP_PROXIMO_NUMERO`). A tela mostra a prévia `TT-?????-AA/YY (INCLUSÃO)` e, depois de gravar, "Código da Amostra: …".
+- **Cascata** (`/Amostras/Cliente/{id}`, `/Amostras/Proposta/{id}`):
+  - cliente → propostas na última revisão com status que permite amostra (mais a já gravada);
+  - proposta → itens e pedido;
+  - item → só os tipos de análise das análises dele (com um só, já vem escolhido);
+  - tipo de documento = o das análises do item.
+- **Data de entrega (P04):**
+  - a data e o "hoje" são os do **servidor do banco**;
+  - futura → recusada;
+  - mais antiga que `DIAS_RETROATIVOS_ENTREGA` (só na inclusão ou quando a data muda) → a tela pergunta "Confirme que o ANO está correto.";
+  - confirmada, grava só com `AMOSTRAS.ENTREGA_RETROATIVA` (`@LC_PERMITE_RETROATIVO` na transação);
+  - ano diferente do atual → aviso amarelo.
+- **Gravação numa transação:**
+  - amostra pelo EF;
+  - `SP_AMOSTRA_GERAR_TESTES` (nunca com resultado);
+  - pedido ABERTO → EM_EXECUCAO;
+  - aviso (sem bloquear) quando as amostras do item passam do contratado no pedido.
+- **Com resultado:**
+  - cliente/proposta/produto/tipos travados na tela e no serviço;
+  - testes não regerados (mensagem do legado);
+  - "Gerar revisão" (motivo obrigatório) chama o `SP_GERAR_REVISAO_AMOSTRA` fora da transação do EF e abre a `… R01`.
+- **Bloqueio:** revisão antiga e boletim emitido deixam a tela só para consulta.
+- **Exclusão:** pelo banco (revisão 0, sem resultado, sem movimento manual).
+- **Abas:**
+  - Observação: texto rico (`HtmlSimples`);
+  - Testes: só leitura;
+  - Histórico: log; o migrado do legado aparece "sem data" com o selo "legado".
+- **Comprovante de recebimento:** página de impressão (decisão do usuário, 4.3), sem o layout do sistema, com botão Imprimir. Traz o endereço de correspondência ou "Cliente sem endereço de correspondência.".
+- **Valores e campos:**
+  - temperatura aceita negativa (congelados);
+  - local de recebimento sugerido = o último do profissional;
+  - responsável = o profissional do usuário.
+- **Etiquetas:** o atalho entra na 4.5 (T25).
+- **Testes:**
+  - `AmostrasTests` (4);
+  - navegador `CrudNavegadorTelasTests.Amostra_recebimento_testes_comprovante_e_exclusao`.
+
+**Status:** ✅ concluída na tarefa 4.3 (23/10/2026). Atalho para etiquetas na 4.5; pesquisa como componente na 4.4.

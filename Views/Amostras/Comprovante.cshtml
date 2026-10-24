@@ -1,0 +1,86 @@
+@model AmostraComprovanteVM
+@{
+    // página de impressão (decisão do usuário, 4.3): sem o layout do sistema; o navegador imprime ou salva em PDF
+    Layout = null;
+    var br = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comprovante — @Model.NrAmostra</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body { font-size: .85rem; }
+        .comprovante { max-width: 19cm; margin: 0 auto; }
+        .rotulo { color: #555; font-size: .75rem; text-transform: uppercase; letter-spacing: .02em; }
+        .observacao p { margin-bottom: .25rem; }
+        @@page { size: A4; margin: 1.2cm; }
+        @@media print { .nao-imprimir { display: none !important; } body { font-size: 10pt; } }
+    </style>
+</head>
+<body class="bg-white text-dark">
+<div class="comprovante p-3">
+    <div class="nao-imprimir d-flex gap-2 mb-3">
+        <button type="button" class="btn btn-primary btn-sm" onclick="window.print()">Imprimir</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.close()">Fechar</button>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-start border-bottom pb-2 mb-3">
+        <div>
+            <div class="fw-semibold">@Model.Empresa</div>
+            <div class="fs-5">Comprovante de recebimento de amostra</div>
+        </div>
+        <div class="text-end">
+            <div class="rotulo">Nº da amostra</div>
+            <div class="fs-4 font-monospace fw-bold" id="nrComprovante">@Model.NrAmostra</div>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-3">
+        <div class="col-8"><div class="rotulo">Cliente</div><div class="fw-semibold">@Model.Cliente</div>@if (Model.CpfCnpj is not null) { <div>@Model.CpfCnpj</div> }</div>
+        <div class="col-4"><div class="rotulo">Proposta / pedido</div><div>@Model.NrProposta</div><div>@Model.NrPedido</div></div>
+        <div class="col-12"><div class="rotulo">Endereço</div><div id="enderecoComprovante">@(Model.Endereco ?? "Cliente sem endereço de correspondência.")</div></div>
+    </div>
+
+    <div class="row g-2 mb-3">
+        <div class="col-6"><div class="rotulo">Produto</div><div class="fw-semibold">@Model.Produto</div></div>
+        <div class="col-3"><div class="rotulo">Lote</div><div>@Model.Lote</div></div>
+        <div class="col-3"><div class="rotulo">Embalagem</div><div>@Model.Qtde.ToString("0.####", br) × @Model.Embalagem</div></div>
+        <div class="col-3"><div class="rotulo">Fabricação</div><div>@Model.Fabricacao</div></div>
+        <div class="col-3"><div class="rotulo">Validade</div><div>@Model.Validade</div></div>
+        <div class="col-3"><div class="rotulo">Entrega</div><div>@Model.DtEntrega.ToString("dd/MM/yyyy") @Model.HrEntrega.ToString("HH:mm")</div></div>
+        <div class="col-3"><div class="rotulo">Local</div><div>@Model.LocalRecebimento</div></div>
+        <div class="col-3"><div class="rotulo">Coleta</div><div>@Model.DtHrColeta?.ToString("dd/MM/yyyy HH:mm")</div></div>
+        <div class="col-3"><div class="rotulo">Coletor</div><div>@Model.Coletor</div></div>
+        <div class="col-3"><div class="rotulo">Responsável</div><div>@Model.Responsavel</div></div>
+        <div class="col-3"><div class="rotulo">Status</div><div>@Model.Status</div></div>
+    </div>
+
+    <div class="rotulo mb-1">Testes solicitados</div>
+    <table class="table table-sm table-bordered mb-3">
+        <thead class="table-light"><tr><th>Parâmetro</th><th>Tipo de análise</th><th>Método</th><th>Prazo</th><th>Data prevista</th></tr></thead>
+        <tbody>
+            @foreach (var t in Model.Testes)
+            {
+                <tr><td>@t.Parametro</td><td>@t.TipoAnalise</td><td>@t.Metodo</td><td>@t.Prazo</td><td>@t.DtPrevista?.ToString("dd/MM/yyyy")</td></tr>
+            }
+            @if (Model.Testes.Count == 0) { <tr><td colspan="5" class="text-center text-secondary">Sem testes.</td></tr> }
+        </tbody>
+    </table>
+
+    @if (Model.Observacao is not null)
+    {
+        <div class="rotulo mb-1">Observação</div>
+        @* HTML já limpo (HtmlSimples: só tags de formatação, sem atributos) *@
+        <div class="observacao border rounded p-2 mb-3">@Html.Raw(Model.Observacao)</div>
+    }
+
+    <div class="row mt-5 pt-4">
+        <div class="col-6 text-center"><div class="border-top pt-1 mx-4">Entregue por</div></div>
+        <div class="col-6 text-center"><div class="border-top pt-1 mx-4">Recebido por</div></div>
+    </div>
+</div>
+</body>
+</html>

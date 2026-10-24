@@ -627,4 +627,69 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         Assert.False(await c.Db.LabPropostas.AnyAsync(x => x.IdLabPropostas == id));
         Assert.Empty(s.ErrosJs);
     }
+
+    /// <summary>T22 (4.3): cascata cliente → proposta → item → tipo, número do banco, testes, histórico, comprovante, data retroativa confirmada, pesquisa e exclusão.</summary>
+    [Fact]
+    public async Task Amostra_recebimento_testes_comprovante_e_exclusao()
+    {
+        await using var c = await Cenario.CriarAsync();
+        await using var s = await app.EntrarAsync(c, comProfissional: true);
+        var p = s.Pagina;
+        var aa = (await c.HojeAsync()).Year % 100;
+
+        await s.IrAsync("/Amostras");
+        await p.ClickAsync("a:has-text('Incluir')");
+        await Assertions.Expect(p.Locator("#nrAmostra")).ToHaveTextAsync("INCLUSÃO");
+        // cascata: cliente → propostas; proposta → itens e pedido; item → tipos de análise (um só: já escolhido)
+        await p.SelectOptionAsync("#IdEntidades", new SelectOptionValue { Label = "CLIENTE TESTE" });
+        await Assertions.Expect(p.Locator("#IdLabPropostas option")).ToHaveCountAsync(2);
+        await p.SelectOptionAsync("#IdLabPropostas", new SelectOptionValue { Index = 1 });
+        await Assertions.Expect(p.Locator("#IdLabPropostasProdutos option")).ToHaveCountAsync(2);
+        await p.SelectOptionAsync("#IdLabPropostasProdutos", new SelectOptionValue { Index = 1 });
+        await Assertions.Expect(p.Locator("#IdAnalisesTipo option:checked")).ToHaveTextAsync("01 — MICROBIOLÓGICA");
+        await p.SelectOptionAsync("#IdAmostrasTipo", new SelectOptionValue { Label = "04 — ALIMENTOS" });
+        await Assertions.Expect(p.Locator("#nrAmostra")).ToHaveTextAsync($"04-?????-01/{aa:00} (INCLUSÃO)");
+        await p.FillAsync("#LocalRecebimento", "RECEPÇÃO");
+        await p.SelectOptionAsync("#IdEmbalagensTipos", new SelectOptionValue { Label = "SACO PLÁSTICO" });
+        await p.FillAsync("#QtdeEmbalagens", "3");
+        await p.SelectOptionAsync("#ValidadeMes", "5");
+        await p.SelectOptionAsync("#ValidadeAno", "2027");
+        await p.ClickAsync("#botaoGravar");
+        Assert.Equal($"Código da Amostra: 04-00001-01/{aa:00}", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#nrAmostra")).ToHaveTextAsync($"04-00001-01/{aa:00}");
+        var id = await c.Db.LabHistAmostras.Where(a => a.NrAmostra == $"04-00001-01/{aa:00}").Select(a => a.IdLabHistAmostras).SingleAsync();
+
+        // testes da proposta e histórico
+        await p.ClickAsync("button[data-bs-target='#abaTestes']");
+        await Assertions.Expect(p.Locator("#tabelaTestes tbody tr")).ToHaveCountAsync(2);
+        await p.ClickAsync("button[data-bs-target='#abaHistorico']");
+        await Assertions.Expect(p.Locator("#tabelaHistorico tbody tr").First).ToContainTextAsync("Inclusão");
+
+        // data de entrega de mais de um ano atrás: a tela pede confirmação; o número não muda
+        await p.ClickAsync("button[data-bs-target='#abaGeral']");
+        await p.FillAsync("#DtEntrega", (await c.HojeAsync()).AddDays(-400).ToString("yyyy-MM-dd"));
+        await p.FillAsync("#DtHrColeta", "");
+        await Assertions.Expect(p.Locator("#avisoData")).ToContainTextAsync("será pedida confirmação");
+        await p.ClickAsync("#botaoGravar");
+        Assert.Equal($"Código da Amostra: 04-00001-01/{aa:00}", await s.AlertaAsync());
+        Assert.Contains(s.Dialogos, d => d.Contains("Confirme que o ANO está correto."));
+
+        // comprovante (página de impressão)
+        await s.IrAsync($"/Amostras/Comprovante/{id}");
+        await Assertions.Expect(p.Locator("#nrComprovante")).ToHaveTextAsync($"04-00001-01/{aa:00}");
+        await Assertions.Expect(p.Locator("table tbody tr")).ToHaveCountAsync(2);
+
+        // pesquisa pelo número (sem o "a partir de", a entrega agora é antiga) e exclusão com confirmação
+        await s.IrAsync("/Amostras");
+        await p.FillAsync("#APartirDe", "");
+        await p.FillAsync("#Numero", "00001");
+        await p.ClickAsync("#filtroAmostras button[type=submit]");
+        await Assertions.Expect(p.Locator("tbody tr")).ToHaveCountAsync(1);
+        await p.ClickAsync("tbody tr a:has-text('Abrir')");
+        await p.ClickAsync("button[form=formExcluir]");
+        Assert.Equal("Amostra excluída.", await s.AlertaAsync());
+        Assert.Contains(s.Dialogos, d => d.StartsWith("Excluir a amostra"));
+        Assert.False(await c.Db.LabHistAmostras.AnyAsync(a => a.IdLabHistAmostras == id));
+        Assert.Empty(s.ErrosJs);
+    }
 }

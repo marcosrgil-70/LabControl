@@ -21,6 +21,7 @@
 - **Esforço:** G · **Depende de:** 4.1
 
 ### 4.3 T22 — Recebimento de amostras completo 🔵
+> ✅ **Concluída em 23/10/2026** (plano aprovado no plan mode) — ver [T22 › Implementação](../telas/T22-recebimento-amostras.md#implementação-tarefa-43-23102026); aceite em `AmostrasTests` (número do banco no ano do servidor, testes da proposta, estoque, pedido, data futura/retroativa, revisão, 6 inclusões simultâneas) + navegador `Amostra_recebimento_testes_comprovante_e_exclusao`. Decisão do usuário: comprovante como página de impressão (PDF fica para o boletim, 5.3). Virada de ano só no roteiro SQL (depende do relógio do servidor).
 - **Passos:** seguir o fluxo do [P09](../processos/P09-recebimento-amostra.md) passo a passo: cadeia cliente → proposta → item → tipos; prévia do número; datas (futura, retroativa com confirmação + permissão + `@LC_PERMITE_RETROATIVO`, aviso de ano diferente); datas parciais ([P10](../processos/P10-datas-parciais.md)); gravação em transação com `SP_AMOSTRA_GERAR_TESTES`; aba testes (só leitura); observação rich text; consulta com filtros e "só última revisão"; alteração com travas; exclusão; **comprovante PDF**; **gerar revisão** (`SP_GERAR_REVISAO_AMOSTRA`, motivo); aba histórico (log).
 - **Aceite:** todos os itens do [aceite da T22](../telas/T22-recebimento-amostras.md#aceite) + tabela de cenários do [P04](../processos/P04-numero-amostra-ano.md#cenários-de-teste-aceite), incluindo teste automatizado de duas inclusões simultâneas.
 - **Esforço:** G · **Depende de:** 4.2

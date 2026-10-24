@@ -35,8 +35,9 @@
 ## Exclusão
 Só revisão 0, sem resultados e sem movimentação manual (confirmação "Deseja excluir este registro?"); cascade apaga testes, movimentos automáticos, saldo e localização; log E.
 
-## Comprovante de recebimento (PDF — `Layout_ImpHistAmostra.fr3`)
+## Comprovante de recebimento (página de impressão — decisão do usuário na 4.3; layout do `Layout_ImpHistAmostra.fr3`)
 Empresa (logo) · nº da amostra · cliente com **endereço do laudo/correspondência** (sem endereço → *"Cliente sem endereço de correspondência."*) · proposta e pedido · produto, lote, fabricação, validade, embalagem e quantidade · datas de entrega e coleta · responsável · testes solicitados (parâmetro, método, prazo, data prevista) · observação.
+> Na 4.3 o comprovante é uma página HTML de impressão (`/Amostras/Comprovante/{id}`, botão Imprimir; o navegador imprime ou salva em PDF). A biblioteca de PDF fica para o boletim (5.3).
 
 ## Cenários de teste
 Ver aceite da [T22](../telas/T22-recebimento-amostras.md#aceite) + [P04](P04-numero-amostra-ano.md#cenários-de-teste-aceite). Extras: proposta de outro cliente → "A proposta selecionada não é do cliente da amostra."; item de outra proposta → "O produto selecionado não pertence à proposta."; revisão antiga da proposta → "Selecione a última revisão da proposta.".

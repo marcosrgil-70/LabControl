@@ -47,7 +47,7 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 |---|---|---|---|---|---|
 | Propostas | `un_Propostas` + `undm_Propostas` | [T20](../telas/T20-propostas.md) | `/Propostas` | 4 (essencial) / 6 | 🟨 essencial (4.2); completa na 6.1 |
 | (botão Ped.Venda da proposta) | `un_Propostas.Btn_PedVendaClick` | [T21](../telas/T21-pedidos-venda.md) | `/PedidosVenda` | 6 | ⬜ (tela nova) |
-| Histórico de Amostras | `un_MovHistAmostras` + `undm_HistAmostras` | [T22](../telas/T22-recebimento-amostras.md) | `/Amostras` | 4 | 🟨 |
+| Histórico de Amostras | `un_MovHistAmostras` + `undm_HistAmostras` | [T22](../telas/T22-recebimento-amostras.md) | `/Amostras` | 4 | ✅ (4.3) |
 | (pesquisa de amostras) | `un_Lab_Hist_Amostras_Pesq` | [T29](../telas/T29-pesquisa-amostras.md) | componente | 4 | ⬜ |
 | Movimentação de Amostras | `un_MovimentacaoAmostras` | [T23](../telas/T23-movimentacao-amostras.md) | `/Movimentacao` | 7 | 🟨 |
 | Localização das Amostras | `un_LocalAmostra` + `unDM_LocalAmostra` | [T24](../telas/T24-localizacao-amostras.md) | `/Localizacao` | 7 | 🟨 |

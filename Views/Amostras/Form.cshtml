@@ -1,0 +1,319 @@
+@model AmostraVM
+@inject IEmpresaContexto Usuario
+@{
+    var inclusao = Model.Id == 0;
+    ViewData["Title"] = inclusao ? "Nova amostra" : $"Amostra {Model.NrAmostra}";
+    var podeGravar = Usuario.TemPermissao(inclusao ? "AMOSTRAS.INCLUIR" : "AMOSTRAS.ALTERAR") && Model.Bloqueio is null;
+    var o = Model.Opcoes;
+    var travado = Model.TemResultado; // com resultado: cliente/proposta/produto/tipos não mudam (gere revisão)
+    var pedirConfirmacao = ViewData.ModelState[nameof(AmostraVM.ConfirmouRetroativa)]?.Errors.FirstOrDefault()?.ErrorMessage;
+    var meses = new[] { "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro" };
+    var anoHoje = int.Parse(o.Hoje[..4]);
+    var dados = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            o.Cliente, o.Proposta, o.TiposAmostra, o.TiposAnalise, o.DiasRetroativos, o.Hoje, o.PodeRetroativa, travado,
+            valores = new { Model.IdLabPropostas, Model.IdLabPropostasProdutos, Model.IdAnalisesTipo },
+        }, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-2">
+        <li class="breadcrumb-item"><a asp-action="Index">Recebimento de Amostras</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@(inclusao ? "Nova" : Model.NrAmostra)</li>
+    </ol>
+</nav>
+
+@if (Model.Bloqueio is not null)
+{
+    <div class="alert alert-warning py-2"><i class="bi bi-lock me-1"></i>@Model.Bloqueio</div>
+}
+else if (Model.TemResultado)
+{
+    <div class="alert alert-info py-2 small"><i class="bi bi-info-circle me-1"></i>@LabControl.Services.AmostraService.MensagemComResultados Cliente, proposta, produto e tipos só mudam gerando uma revisão.</div>
+}
+
+<form method="post" asp-action="@(inclusao ? "Criar" : "Editar")" asp-route-id="@(inclusao ? null : Model.Id)" id="formAmostra" novalidate>
+    <script type="application/json" id="dadosAmostra">@Html.Raw(dados.Replace("</", "<\\/"))</script>
+    <input type="hidden" asp-for="TxObservacao" />
+    <input type="hidden" asp-for="ConfirmouRetroativa" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+    @if (pedirConfirmacao is not null)
+    {
+        <div class="alert alert-warning py-2" data-pedir-confirmacao>
+            <i class="bi bi-exclamation-triangle me-1"></i>@pedirConfirmacao
+            <button type="submit" class="btn btn-warning btn-sm ms-2" data-confirmar-retroativa><i class="bi bi-check-lg me-1"></i>Confirmo: gravar com esta data</button>
+        </div>
+    }
+
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#abaGeral" role="tab">Informações gerais</button></li>
+        <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#abaObservacao" role="tab">Observação</button></li>
+        @if (!inclusao)
+        {
+            <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#abaTestes" role="tab">Testes <span class="badge text-bg-secondary ms-1">@Model.Testes.Count</span></button></li>
+            <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#abaHistorico" role="tab">Histórico</button></li>
+        }
+    </ul>
+
+    <fieldset disabled="@(!podeGravar)">
+    <div class="tab-content border border-top-0 rounded-bottom p-3 mb-3 bg-body">
+        @* ---------------------------------------------------------------- Informações gerais *@
+        <div class="tab-pane fade show active" id="abaGeral" role="tabpanel">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <label class="form-label small mb-0">Nº da amostra</label>
+                    <div class="form-control-plaintext font-monospace fw-semibold" id="nrAmostra" data-gravado="@(inclusao ? "" : Model.NrAmostra)">@(inclusao ? "INCLUSÃO" : Model.NrAmostra)</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-0">Pedido de venda</label>
+                    <div class="form-control-plaintext small font-monospace" id="nrPedido">@Model.NrPedido</div>
+                </div>
+                @if (Model.Revisao > 0)
+                {
+                    <div class="col-md-6"><label class="form-label small mb-0">Revisão @Model.Revisao — motivo</label><div class="form-control-plaintext small">@Model.MotivoRevisao</div></div>
+                }
+
+                @if (travado)
+                {
+                    @* com resultado: os valores vão escondidos (o select travado não é enviado) *@
+                    <input type="hidden" name="IdEntidades" value="@Model.IdEntidades" />
+                    <input type="hidden" name="IdLabPropostas" value="@Model.IdLabPropostas" />
+                    <input type="hidden" name="IdLabPropostasProdutos" value="@Model.IdLabPropostasProdutos" />
+                    <input type="hidden" name="IdAmostrasTipo" value="@Model.IdAmostrasTipo" />
+                    <input type="hidden" name="IdAnalisesTipo" value="@Model.IdAnalisesTipo" />
+                }
+                <div class="col-md-6">
+                    <label asp-for="IdEntidades" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                    <select asp-for="IdEntidades" asp-items="@(new SelectList(o.Clientes, "Id", "Nome"))" class="form-select form-select-sm" disabled="@travado"><option value="">—</option></select>
+                    <div class="form-text" id="infoCliente"></div>
+                    <span asp-validation-for="IdEntidades" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="IdLabPropostas" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                    <select asp-for="IdLabPropostas" class="form-select form-select-sm" disabled="@travado"><option value="">—</option></select>
+                    <span asp-validation-for="IdLabPropostas" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="IdLabPropostasProdutos" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                    <select asp-for="IdLabPropostasProdutos" class="form-select form-select-sm" disabled="@travado"><option value="">—</option></select>
+                    <span asp-validation-for="IdLabPropostasProdutos" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="IdAmostrasTipo" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                    <select asp-for="IdAmostrasTipo" class="form-select form-select-sm" disabled="@travado"
+                            asp-items="@(new SelectList(o.TiposAmostra.Select(t => new { t.Id, Nome = $"{t.Codigo:00} — {t.Nome}" }), "Id", "Nome"))"><option value="">—</option></select>
+                    <span asp-validation-for="IdAmostrasTipo" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="IdAnalisesTipo" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                    <select asp-for="IdAnalisesTipo" class="form-select form-select-sm" disabled="@travado"><option value="">—</option></select>
+                    <span asp-validation-for="IdAnalisesTipo" class="text-danger small"></span>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label asp-for="DtEntrega" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                    <input asp-for="DtEntrega" type="date" class="form-control form-control-sm" max="@o.Hoje" />
+                </div>
+                <div class="col-6 col-md-1">
+                    <label asp-for="HrEntrega" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                    <input asp-for="HrEntrega" type="time" class="form-control form-control-sm" />
+                </div>
+                <div class="col-12 col-md-3"><div class="small mt-md-4" id="avisoData"></div></div>
+                <div class="col-12"><span asp-validation-for="DtEntrega" class="text-danger small"></span> <span asp-validation-for="HrEntrega" class="text-danger small"></span></div>
+
+                <div class="col-md-4">
+                    <label asp-for="LocalRecebimento" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                    <input asp-for="LocalRecebimento" class="form-control form-control-sm" maxlength="50" />
+                    <span asp-validation-for="LocalRecebimento" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="IdEmbalagensTipos" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                    <select asp-for="IdEmbalagensTipos" asp-items="@(new SelectList(o.Embalagens, "Id", "Nome"))" class="form-select form-select-sm"><option value="">—</option></select>
+                    <span asp-validation-for="IdEmbalagensTipos" class="text-danger small"></span>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label asp-for="QtdeEmbalagens" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                    <input asp-for="QtdeEmbalagens" class="form-control form-control-sm text-end" inputmode="decimal" />
+                    <span asp-validation-for="QtdeEmbalagens" class="text-danger small"></span>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label asp-for="NrLote" class="form-label small mb-0"></label>
+                    <input asp-for="NrLote" class="form-control form-control-sm" maxlength="30" />
+                </div>
+
+                @foreach (var (prefixo, titulo) in new[] { ("Fabricacao", "Fabricação"), ("Validade", "Validade") })
+                {
+                    var dia = prefixo == "Fabricacao" ? Model.FabricacaoDia : Model.ValidadeDia;
+                    var mes = prefixo == "Fabricacao" ? Model.FabricacaoMes : Model.ValidadeMes;
+                    var ano = prefixo == "Fabricacao" ? Model.FabricacaoAno : Model.ValidadeAno;
+                    <div class="col-md-6">
+                        <span class="form-label small mb-0 d-block">@titulo <span class="text-body-secondary">(só o ano, mês/ano ou a data completa)</span></span>
+                        <div class="input-group input-group-sm">
+                            <select name="@(prefixo)Dia" id="@(prefixo)Dia" class="form-select" aria-label="@titulo — dia">
+                                <option value="">dia</option>
+                                @for (var d = 1; d <= 31; d++) { <option value="@d" selected="@(dia == d)">@d.ToString("00")</option> }
+                            </select>
+                            <select name="@(prefixo)Mes" id="@(prefixo)Mes" class="form-select" aria-label="@titulo — mês">
+                                <option value="">mês</option>
+                                @for (var m = 1; m <= 12; m++) { <option value="@m" selected="@(mes == m)">@meses[m - 1]</option> }
+                            </select>
+                            <select name="@(prefixo)Ano" id="@(prefixo)Ano" class="form-select" aria-label="@titulo — ano">
+                                <option value="">ano</option>
+                                @for (var a = anoHoje + 10; a >= 1990; a--) { <option value="@a" selected="@(ano == a)">@a</option> }
+                                @if (ano is { } fora && (fora > anoHoje + 10 || fora < 1990)) { <option value="@fora" selected>@fora</option> }
+                            </select>
+                        </div>
+                    </div>
+                }
+
+                <div class="col-md-6">
+                    <label asp-for="NotaRotulo" class="form-label small mb-0"></label>
+                    <input asp-for="NotaRotulo" class="form-control form-control-sm" maxlength="255" />
+                </div>
+                <div class="col-6 col-md-2">
+                    <label asp-for="AspectoAmostra" class="form-label small mb-0"></label>
+                    <input asp-for="AspectoAmostra" class="form-control form-control-sm" maxlength="50" />
+                </div>
+                <div class="col-6 col-md-2">
+                    <label asp-for="Cor" class="form-label small mb-0"></label>
+                    <input asp-for="Cor" class="form-control form-control-sm" maxlength="20" />
+                </div>
+                <div class="col-6 col-md-2">
+                    <label asp-for="Temperatura" class="form-label small mb-0"></label>
+                    <input asp-for="Temperatura" class="form-control form-control-sm text-end" inputmode="decimal" />
+                    <span asp-validation-for="Temperatura" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="OutrasCaracteristicas" class="form-label small mb-0"></label>
+                    <input asp-for="OutrasCaracteristicas" class="form-control form-control-sm" maxlength="100" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ObservacaoVerificacao" class="form-label small mb-0"></label>
+                    <input asp-for="ObservacaoVerificacao" class="form-control form-control-sm" maxlength="255" />
+                    <div class="form-text">Impressa no boletim.</div>
+                </div>
+                <div class="col-12 d-flex flex-wrap gap-3">
+                    <div class="form-check"><input asp-for="AcompanhaFichaTecnica" class="form-check-input" /><label asp-for="AcompanhaFichaTecnica" class="form-check-label small"></label></div>
+                    <div class="form-check"><input asp-for="AcompanhaPadraoAnalitico" class="form-check-input" /><label asp-for="AcompanhaPadraoAnalitico" class="form-check-label small"></label></div>
+                    <div class="form-check"><input asp-for="AcompanhaCaCliente" class="form-check-input" /><label asp-for="AcompanhaCaCliente" class="form-check-label small"></label></div>
+                    <div class="form-check"><input asp-for="EnviarOutroLaboratorio" class="form-check-input" /><label asp-for="EnviarOutroLaboratorio" class="form-check-label small"></label></div>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="IdEntidadesFuncResp" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                    <select asp-for="IdEntidadesFuncResp" asp-items="@(new SelectList(o.Responsaveis, "Id", "Nome"))" class="form-select form-select-sm"><option value="">—</option></select>
+                    <span asp-validation-for="IdEntidadesFuncResp" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="IdAmostrasStatus" class="form-label small mb-0"></label> <span class="text-danger">*</span>
+                    <select asp-for="IdAmostrasStatus" asp-items="@(new SelectList(o.Status, "Id", "Nome"))" class="form-select form-select-sm"><option value="">—</option></select>
+                    <span asp-validation-for="IdAmostrasStatus" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="NomeColetor" class="form-label small mb-0"></label>
+                    <input asp-for="NomeColetor" class="form-control form-control-sm" maxlength="60" />
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="DtHrColeta" class="form-label small mb-0">Coleta</label>
+                    <input asp-for="DtHrColeta" type="datetime-local" class="form-control form-control-sm" />
+                    <span asp-validation-for="DtHrColeta" class="text-danger small"></span>
+                </div>
+            </div>
+        </div>
+
+        @* ---------------------------------------------------------------- Observação *@
+        <div class="tab-pane fade" id="abaObservacao" role="tabpanel">
+            <div class="border rounded">
+                <div class="btn-toolbar border-bottom p-1 gap-1">
+                    <button type="button" class="btn btn-sm btn-light" data-comando="bold" title="Negrito"><i class="bi bi-type-bold"></i></button>
+                    <button type="button" class="btn btn-sm btn-light" data-comando="italic" title="Itálico"><i class="bi bi-type-italic"></i></button>
+                    <button type="button" class="btn btn-sm btn-light" data-comando="underline" title="Sublinhado"><i class="bi bi-type-underline"></i></button>
+                    <button type="button" class="btn btn-sm btn-light" data-comando="insertUnorderedList" title="Lista"><i class="bi bi-list-ul"></i></button>
+                </div>
+                <div class="p-2" style="min-height: 10rem" contenteditable="@(podeGravar ? "true" : "false")" data-texto="TxObservacao" role="textbox" aria-multiline="true" aria-label="Observação"></div>
+            </div>
+        </div>
+
+        @if (!inclusao)
+        {
+            @* ---------------------------------------------------------------- Testes *@
+            <div class="tab-pane fade" id="abaTestes" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0" id="tabelaTestes">
+                        <thead><tr><th>Tipo de análise</th><th>Parâmetro</th><th>Método</th><th>Idioma</th><th>Prazo</th><th>Data prevista</th></tr></thead>
+                        <tbody>
+                            @foreach (var t in Model.Testes)
+                            {
+                                <tr><td class="small">@t.TipoAnalise</td><td>@t.Parametro</td><td class="small">@t.Metodo</td><td class="small">@t.Idioma</td><td class="small">@t.Prazo</td><td class="small">@t.DtPrevista?.ToString("dd/MM/yyyy")</td></tr>
+                            }
+                            @if (Model.Testes.Count == 0) { <tr><td colspan="6" class="text-center text-body-secondary small py-2">Sem testes.</td></tr> }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            @* ---------------------------------------------------------------- Histórico *@
+            <div class="tab-pane fade" id="abaHistorico" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0" id="tabelaHistorico">
+                        <thead><tr><th>Quando</th><th>Ação</th><th>Detalhe</th></tr></thead>
+                        <tbody>
+                            @foreach (var h in Model.Historico)
+                            {
+                                <tr>
+                                    <td class="small text-nowrap">@(h.Legado ? "sem data" : h.Quando?.ToString("dd/MM/yyyy HH:mm"))</td>
+                                    <td class="small">@h.Acao @if (h.Legado) { <span class="badge text-bg-light border ms-1">legado</span> }</td>
+                                    <td class="small">@h.Resumo</td>
+                                </tr>
+                            }
+                            @if (Model.Historico.Count == 0) { <tr><td colspan="3" class="text-center text-body-secondary small py-2">Sem registros.</td></tr> }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+    </fieldset>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+        @if (!inclusao)
+        {
+            <a asp-action="Comprovante" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-secondary" lc-permissao="AMOSTRAS.IMPRIMIR"><i class="bi bi-printer me-1"></i>Comprovante</a>
+            @if (Model.UltimaRevisao && Model.TemResultado)
+            {
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalRevisao" lc-permissao="AMOSTRAS.REVISAR"><i class="bi bi-files me-1"></i>Gerar revisão</button>
+            }
+            @if (podeGravar && Model.Revisao == 0 && !Model.TemResultado)
+            {
+                <button type="submit" form="formExcluir" class="btn btn-outline-danger" lc-permissao="AMOSTRAS.EXCLUIR"><i class="bi bi-trash me-1"></i>Excluir</button>
+            }
+        }
+        @if (podeGravar)
+        {
+            <button type="submit" class="btn btn-primary ms-auto" id="botaoGravar"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+        }
+    </div>
+</form>
+
+@if (!inclusao)
+{
+    <form method="post" asp-action="Excluir" asp-route-id="@Model.Id" id="formExcluir"
+          data-confirmar="Excluir a amostra @Model.NrAmostra? Os testes, a entrada automática no estoque e o saldo dela também são apagados."></form>
+
+    <div class="modal fade" id="modalRevisao" tabindex="-1" aria-labelledby="tituloRevisao">
+        <div class="modal-dialog">
+            <form method="post" asp-action="Revisao" asp-route-id="@Model.Id" class="modal-content">
+                <div class="modal-header py-2"><h6 class="modal-title" id="tituloRevisao">Gerar revisão da amostra @Model.NrAmostra</h6><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+                <div class="modal-body">
+                    <p class="small text-body-secondary">A revisão atual fica somente leitura. O resultado e o boletim também são revisados (o boletim novo não é emitido).</p>
+                    <label class="form-label small" for="motivoRevisao">Motivo <span class="text-danger">*</span></label>
+                    <textarea name="motivo" id="motivoRevisao" class="form-control" rows="3" maxlength="500" required></textarea>
+                </div>
+                <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Gerar revisão</button></div>
+            </form>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/amostras.js" asp-append-version="true"></script>
+}
