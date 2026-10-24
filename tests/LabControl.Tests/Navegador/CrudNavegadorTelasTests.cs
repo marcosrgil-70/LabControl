@@ -692,4 +692,33 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         Assert.False(await c.Db.LabHistAmostras.AnyAsync(a => a.IdLabHistAmostras == id));
         Assert.Empty(s.ErrosJs);
     }
+
+    /// <summary>T29 (4.4): pesquisa avançada aberta pela T22, filtro por número parcial, seleção abre a amostra.</summary>
+    [Fact]
+    public async Task Pesquisa_de_amostras_seleciona_e_abre()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var hoje = await c.HojeAsync();
+        var amostra = c.NovaAmostra(hoje);
+        amostra.NrLote = "LOTE-PESQ";
+        c.Db.Add(amostra);
+        await c.Db.SaveChangesAsync();
+        await using var s = await app.EntrarAsync(c);
+        var p = s.Pagina;
+
+        await s.IrAsync("/Amostras");
+        await p.ClickAsync("button[data-pesquisa-amostras]");
+        await Assertions.Expect(p.Locator("#modalPesquisaAmostras [data-pesquisa-grid] tbody tr")).ToHaveCountAsync(1);
+        await p.FillAsync("#pesqLote", "nada");
+        await p.ClickAsync("#modalPesquisaAmostras button[type=submit]");
+        await Assertions.Expect(p.Locator("#modalPesquisaAmostras tbody")).ToContainTextAsync("Nenhuma amostra encontrada");
+        await p.FillAsync("#pesqLote", "");
+        await p.FillAsync("#pesqNumero", "00001");
+        await p.ClickAsync("#modalPesquisaAmostras button[type=submit]");
+        await Assertions.Expect(p.Locator("#modalPesquisaAmostras tbody tr")).ToContainTextAsync("LOTE-PESQ");
+        await p.ClickAsync("#modalPesquisaAmostras [data-selecionar]");
+        await p.WaitForURLAsync(u => u.EndsWith($"/Amostras/Editar/{amostra.IdLabHistAmostras}"));
+        await Assertions.Expect(p.Locator("#nrAmostra")).ToHaveTextAsync(amostra.NrAmostra);
+        Assert.Empty(s.ErrosJs);
+    }
 }

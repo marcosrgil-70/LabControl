@@ -27,6 +27,7 @@
 - **Esforço:** G · **Depende de:** 4.2
 
 ### 4.4 T29 — Pesquisa de amostras (componente) 🟢
+> ✅ **Concluída em 23/10/2026** — ver [T29 › Implementação](../telas/T29-pesquisa-amostras.md#implementação-tarefa-44-23102026); aceite em `AmostrasTests.Pesquisa_filtra_e_nunca_mostra_outra_empresa` + navegador `Pesquisa_de_amostras_seleciona_e_abre`. Usado pela T22 ("Pesquisa avançada"); T24/T26/T27 o adotam quando forem feitas.
 - **Passos:** modal reutilizável com filtros e devolução `{id, nrAmostra}`.
 - **Aceite:** usado pela T22 (e depois T24/T26/T27); nunca mostra outra empresa.
 - **Esforço:** S · **Depende de:** 4.3

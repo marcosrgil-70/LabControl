@@ -89,6 +89,19 @@ public sealed class AmostrasController(AmostraService amostras) : Controller
     public async Task<IActionResult> Comprovante(int id) =>
         await amostras.ComprovanteAsync(id) is { } c ? View(c) : NotFound();
 
+    /// <summary>
+    /// T29 — pesquisa de amostras (componente modal, <c>pesquisa-amostras.js</c>): devolve só a partial com filtros e grid;
+    /// a seleção devolve <c>{ id, nrAmostra }</c> à tela que abriu. Sempre na empresa ativa (filtro global). Permissão de
+    /// consulta da tela que usa o componente (4.4: T22; T24/T26/T27 acrescentam as suas quando o adotarem).
+    /// </summary>
+    [HttpGet, Permissao("AMOSTRAS.CONSULTAR")]
+    public async Task<IActionResult> Pesquisa(AmostraFiltroVM filtro, bool inicial = false)
+    {
+        if (inicial) filtro.APartirDe = await amostras.APartirDePadraoAsync();
+        filtro.OrdenarPorNumero = true;
+        return PartialView("_Pesquisa", await amostras.ListarAsync(filtro));
+    }
+
     /// <summary>Documento, endereço, fone e propostas que podem receber amostra (JSON).</summary>
     [HttpGet, Permissao("AMOSTRAS.CONSULTAR")]
     public async Task<IActionResult> Cliente(int id) => await amostras.ClienteAsync(id) is { } c ? Json(c) : NotFound();

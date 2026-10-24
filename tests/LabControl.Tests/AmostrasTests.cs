@@ -157,5 +157,28 @@ public class AmostrasTests
         Assert.Equal(6, numeros.Distinct().Count());
     }
 
+    /// <summary>T29 (4.4): filtros da pesquisa e nunca outra empresa — as duas empresas têm a amostra 04-00001-01/AA.</summary>
+    [Fact]
+    public async Task Pesquisa_filtra_e_nunca_mostra_outra_empresa()
+    {
+        await using var c = await Cenario.CriarAsync();
+        await using var outra = await Cenario.CriarAsync();
+        var hoje = await c.HojeAsync();
+        var minha = (await Servico(c).GravarAsync(Nova(c, hoje))).Valor.Id;
+        var semLote = Nova(c, hoje);
+        semLote.NrLote = "OUTRO";
+        await Servico(c).GravarAsync(semLote);
+        Assert.True((await Servico(outra).GravarAsync(Nova(outra, hoje))).Sucesso);
+
+        var s = Servico(c);
+        var porNumero = await s.ListarAsync(new AmostraFiltroVM { Numero = "00001", OrdenarPorNumero = true });
+        Assert.Equal([minha], porNumero.Itens.Select(i => i.Id)); // a 00001 da outra empresa não aparece
+        Assert.Equal(("ALIMENTOS", "MICROBIOLÓGICA"), (porNumero.Itens[0].TipoAmostra, porNumero.Itens[0].TipoAnalise));
+        Assert.Equal([minha], (await s.ListarAsync(new AmostraFiltroVM { Lote = "L-0" })).Itens.Select(i => i.Id));
+        Assert.Equal(2, (await s.ListarAsync(new AmostraFiltroVM { Produto = "QUEIJO", Ate = hoje })).Total);
+        Assert.Equal(0, (await s.ListarAsync(new AmostraFiltroVM { ApenasComResultado = true })).Total);
+        Assert.Equal(2, (await s.ListarAsync(new AmostraFiltroVM { ApenasSemLocalizacao = true })).Total);
+    }
+
     private static (string?, string?) Erro(IResultado r) => (r.Mensagem, r.Campo);
 }

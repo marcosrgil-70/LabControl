@@ -44,14 +44,22 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
         if (Textos.Limpo(f.Proposta) is { } pr) q = q.Where(a => a.NrProposta.Contains(pr));
         if (Textos.Limpo(f.Produto) is { } pd) q = q.Where(a => a.ProdutoCodigo.Contains(pd) || a.ProdutoDescricao.Contains(pd));
         if (f.IdStatus is { } st) q = q.Where(a => a.IdAmostrasStatus == st);
+        if (Textos.Limpo(f.Lote) is { } lote) q = q.Where(a => a.NrLote != null && a.NrLote.Contains(lote));
+        if (f.Ate is { } ate) q = q.Where(a => a.DtEntrega <= ate);
+        if (f.ApenasPermiteResultado) q = q.Where(a => a.PermiteResultado);
+        if (f.ApenasComResultado) q = q.Where(a => a.TemResultado != 0);
+        if (f.ApenasSemLocalizacao) q = q.Where(a => a.SituacaoArquivo == null);
 
         var total = await q.CountAsync();
         f.Pagina = Paginacao.Ajustar(f.Pagina, total, AmostraFiltroVM.TamanhoPagina);
-        var itens = await q.OrderByDescending(a => a.DtEntrega).ThenByDescending(a => a.HrEntrega).ThenByDescending(a => a.IdLabHistAmostras)
+        var ordenada = f.OrdenarPorNumero
+            ? q.OrderByDescending(a => a.AnoAmostra).ThenByDescending(a => a.CodAmostra).ThenByDescending(a => a.Revisao)
+            : q.OrderByDescending(a => a.DtEntrega).ThenByDescending(a => a.HrEntrega).ThenByDescending(a => a.IdLabHistAmostras);
+        var itens = await ordenada
             .Skip((f.Pagina - 1) * AmostraFiltroVM.TamanhoPagina).Take(AmostraFiltroVM.TamanhoPagina)
             .Select(a => new AmostraListaItemVM(a.IdLabHistAmostras, a.NrAmostra, a.UltimaRevisao, a.DtEntrega, a.HrEntrega,
                 a.QtdeEmbalagensEntregue, a.Embalagem, a.NrLote, a.Fabricacao, a.Validade, a.TemperaturaVerificacao, a.AspectoAmostra, a.Cor,
-                a.StatusAmostra, a.CorStatus, a.ClienteNome, a.ProdutoDescricao))
+                a.StatusAmostra, a.CorStatus, a.ClienteNome, a.ProdutoDescricao, a.TipoAmostra, a.TipoAnalise, a.NrProposta, a.NrPedidoFmt))
             .ToListAsync();
         var status = await db.AmostrasStatus.AsNoTracking().OrderBy(s => s.Descricao).Select(s => new OpcaoVM(s.IdAmostrasStatus, s.Descricao)).ToListAsync();
         return new AmostraListaVM { Filtro = f, Itens = itens, Status = status, Total = total };

@@ -1,0 +1,72 @@
+@model AmostraListaVM
+@{
+    // T29 — corpo do modal de pesquisa de amostras (carregado e trocado pelo pesquisa-amostras.js)
+    var f = Model.Filtro;
+}
+<form class="row g-2 align-items-end mb-2" data-pesquisa-filtros>
+    @* filtros fixos da tela que abriu (ex.: só com resultado) vão escondidos e continuam a cada pesquisa *@
+    <input type="hidden" name="ApenasPermiteResultado" value="@(f.ApenasPermiteResultado ? "true" : "false")" />
+    <input type="hidden" name="ApenasComResultado" value="@(f.ApenasComResultado ? "true" : "false")" />
+    <input type="hidden" name="ApenasSemLocalizacao" value="@(f.ApenasSemLocalizacao ? "true" : "false")" />
+    <div class="col-md-4"><label class="form-label small mb-0" for="pesqCliente">Cliente (nome ou CPF/CNPJ)</label><input name="Cliente" id="pesqCliente" value="@f.Cliente" class="form-control form-control-sm" /></div>
+    <div class="col-md-3"><label class="form-label small mb-0" for="pesqProduto">Produto</label><input name="Produto" id="pesqProduto" value="@f.Produto" class="form-control form-control-sm" /></div>
+    <div class="col-6 col-md-2"><label class="form-label small mb-0" for="pesqNumero">Nº da amostra</label><input name="Numero" id="pesqNumero" value="@f.Numero" class="form-control form-control-sm font-monospace" placeholder="1382" /></div>
+    <div class="col-6 col-md-3"><label class="form-label small mb-0" for="pesqProposta">Proposta</label><input name="Proposta" id="pesqProposta" value="@f.Proposta" class="form-control form-control-sm font-monospace" /></div>
+    <div class="col-6 col-md-2"><label class="form-label small mb-0" for="pesqLote">Lote</label><input name="Lote" id="pesqLote" value="@f.Lote" class="form-control form-control-sm" /></div>
+    <div class="col-6 col-md-2"><label class="form-label small mb-0" for="pesqDe">Entrega de</label><input name="APartirDe" id="pesqDe" type="date" value="@f.APartirDe?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" /></div>
+    <div class="col-6 col-md-2"><label class="form-label small mb-0" for="pesqAte">até</label><input name="Ate" id="pesqAte" type="date" value="@f.Ate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" /></div>
+    <div class="col-6 col-md-3"><label class="form-label small mb-0" for="pesqStatus">Status</label>
+        <select name="IdStatus" id="pesqStatus" class="form-select form-select-sm" asp-items="@(new SelectList(Model.Status, "Id", "Nome", f.IdStatus))"><option value="">Todos</option></select></div>
+    <div class="col-auto">
+        <div class="form-check mb-1"><input type="checkbox" class="form-check-input" name="SoUltima" id="pesqSoUltima" value="true" checked="@f.SoUltima" /><label class="form-check-label small" for="pesqSoUltima">Só a última revisão</label></div>
+        <input type="hidden" name="SoUltima" value="false" />
+    </div>
+    <div class="col-auto"><button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Pesquisar</button></div>
+</form>
+
+<div class="table-responsive border rounded" style="max-height: 55vh">
+    <table class="table table-sm table-hover align-middle mb-0" data-pesquisa-grid>
+        <thead class="sticky-top bg-body">
+            <tr><th>Amostra</th><th>Entrega</th><th>Cliente</th><th>Produto</th><th>Status</th><th>Tipo amostra</th><th>Tipo análise</th><th>Proposta</th><th>Pedido</th><th>Lote</th><th>Fabricação</th><th>Validade</th><th>Embalagem</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var a in Model.Itens)
+            {
+                <tr data-amostra-id="@a.Id" data-amostra-nr="@a.NrAmostra" style="cursor: pointer" class="@(a.UltimaRevisao ? "" : "text-body-secondary")">
+                    <td class="font-monospace small text-nowrap fw-semibold">@a.NrAmostra</td>
+                    <td class="small text-nowrap">@a.DtEntrega.ToString("dd/MM/yyyy")</td>
+                    <td class="small">@a.Cliente</td>
+                    <td class="small">@a.Produto</td>
+                    <td><span class="badge border text-body" style="@(a.CorStatus is null ? "" : $"border-color: {a.CorStatus} !important; box-shadow: inset 4px 0 0 {a.CorStatus}")">@a.Status</span></td>
+                    <td class="small">@a.TipoAmostra</td>
+                    <td class="small">@a.TipoAnalise</td>
+                    <td class="small font-monospace text-nowrap">@a.NrProposta</td>
+                    <td class="small font-monospace">@a.NrPedido</td>
+                    <td class="small">@a.Lote</td>
+                    <td class="small">@a.Fabricacao</td>
+                    <td class="small">@a.Validade</td>
+                    <td class="small">@a.Embalagem</td>
+                    <td><button type="button" class="btn btn-outline-primary btn-sm" data-selecionar><i class="bi bi-check-lg me-1"></i>Selecionar</button></td>
+                </tr>
+            }
+            @if (Model.Itens.Count == 0)
+            {
+                <tr><td colspan="14" class="text-center text-body-secondary small py-3">Nenhuma amostra encontrada@(f.APartirDe is null ? "" : $" com entrega a partir de {f.APartirDe:dd/MM/yyyy}").</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div class="d-flex align-items-center small pt-2">
+    <span class="text-body-secondary">@Model.Total registro(s) — duplo clique ou “Selecionar” escolhe a amostra</span>
+    @if (Model.Paginas > 1)
+    {
+        <nav class="ms-auto" aria-label="Páginas">
+            <ul class="pagination pagination-sm mb-0">
+                @foreach (var n in Enumerable.Range(1, Model.Paginas).Where(n => n <= 2 || n > Model.Paginas - 2 || Math.Abs(n - f.Pagina) <= 2))
+                {
+                    <li class="page-item @(n == f.Pagina ? "active" : "")"><button type="button" class="page-link" data-pagina="@n">@n</button></li>
+                }
+            </ul>
+        </nav>
+    }
+</div>

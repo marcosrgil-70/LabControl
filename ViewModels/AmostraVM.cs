@@ -21,11 +21,24 @@ public sealed class AmostraFiltroVM
     public int? IdStatus { get; set; }
     public bool SoUltima { get; set; } = true;
     public int Pagina { get; set; } = 1;
+
+    // pesquisa de amostras (T29): filtros a mais e os da tela que abre o componente
+    public string? Lote { get; set; }
+    /// <summary>Data de entrega até.</summary>
+    public DateOnly? Ate { get; set; }
+    /// <summary>Só status que permite lançar resultado (T26).</summary>
+    public bool ApenasPermiteResultado { get; set; }
+    /// <summary>Só com resultado lançado (T27).</summary>
+    public bool ApenasComResultado { get; set; }
+    /// <summary>Só ainda não arquivadas/descartadas (T24).</summary>
+    public bool ApenasSemLocalizacao { get; set; }
+    /// <summary>T29 ordena pelo número; a T22 pela entrega mais recente.</summary>
+    public bool OrdenarPorNumero { get; set; }
 }
 
 public sealed record AmostraListaItemVM(int Id, string NrAmostra, bool UltimaRevisao, DateOnly DtEntrega, TimeOnly HrEntrega,
     decimal Qtde, string Embalagem, string? Lote, string? Fabricacao, string? Validade, decimal? Temperatura, string? Aspecto, string? Cor,
-    string Status, string? CorStatus, string Cliente, string Produto);
+    string Status, string? CorStatus, string Cliente, string Produto, string TipoAmostra, string TipoAnalise, string NrProposta, string? NrPedido);
 
 public sealed class AmostraListaVM
 {
