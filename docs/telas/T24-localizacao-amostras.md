@@ -44,4 +44,4 @@ Filtros: cliente, produto, nº da amostra, status (Arquivada/Descartada/sem loca
 - [ ] Desfazer descarte volta para ARQUIVADA.
 - [ ] Arquivar em lote.
 
-**Status:** ⬜ (v1 tem Localização parcial — refazer sobre v2)
+**Status:** ⬜ — tarefa 7.2 (a v1 parcial foi descartada; as 2.494 localizações do legado já estão migradas, M-15). Usar a pesquisa de amostras (T29) com `ApenasSemLocalizacao`.

@@ -71,4 +71,4 @@ Filtros: cliente (filtra as amostras), amostra, "exibir a partir de" (−365 dia
 - [ ] Revisão nasce não emitida, com o resultado vigente e os mesmos parâmetros.
 - [ ] Impressão de boletim emitido reproduz exatamente o PDF gravado.
 
-**Status:** ⬜ (não existe na v1)
+**Status:** ⬜ — tarefas 5.3 e 5.4 (PDF do boletim com hash: a biblioteca de PDF é escolhida aqui — decisão adiada na 4.3).

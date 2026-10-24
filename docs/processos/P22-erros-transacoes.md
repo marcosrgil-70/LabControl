@@ -66,3 +66,6 @@ public async Task<Resultado<int>> IncluirAmostra(AmostraVM vm) {
 - Recriar banco de teste pelos scripts e rodar o roteiro do doc 12 §7 via serviço.
 - Chamar `SP_GERAR_REVISAO_AMOSTRA` dentro de `BeginTransaction` em teste → documentar o efeito (commit implícito) e garantir que o serviço não faz isso.
 - Mensagem 45000 chega à tela com o texto exato.
+
+## Recusa de procedure dentro da transação (code-review 4.6, 24/10/2026)
+Quando uma procedure sem transação própria (`SP_AMOSTRA_GERAR_TESTES`, `SP_RECALCULAR_PROPOSTA`) recusa dentro da gravação, o `Procedures` já devolve `Resultado.Erro`. O serviço lança `ErroDeNegocioException(mensagem)` para desfazer a transação, e o `ErrosMySql.CapturarAsync` a reconhece como erro de negócio: a mensagem chega à tela, sem erro 500. Teste: `AceiteFase4Tests.Recusa_de_negocio_lancada_dentro_da_transacao_vira_mensagem`.

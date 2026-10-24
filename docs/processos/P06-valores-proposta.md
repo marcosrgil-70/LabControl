@@ -36,3 +36,8 @@ Linhas criadas de uma vez copiam método, idioma, prazo e tipo de documento da l
 ## Cenário de teste (roteiro doc 12 §7 item 2)
 2 análises: 100,00 × 2 e 50,00 × 2, desconto geral 10% → análises 300,00 · desconto 30,00 · **total 270,00**.
 Outros: desconto da linha maior que o subtotal → "Desconto maior que o subtotal da análise."; mudar a quantidade do produto de 2 para 3 → todas as análises do item com qtde 3 e totais recalculados.
+
+## Implementação (tarefa 4.2, 23/10/2026)
+- **Quem calcula:** o banco (`TG_PRODAN_BI/BU`, `TG_PROPPROD_AU`, `SP_RECALCULAR_PROPOSTA` chamado também no fim da gravação, para o desconto geral). A tela (`propostas.js`) recalcula só para exibir.
+- **Na tela:** o parâmetro sugere o valor unitário quando a linha está com 0; a análise nova copia método/idioma/prazo/documento da anterior do produto.
+- **Cenário 300,00 − 10% = 270,00 e qtde 2 → 3 (405,00):** `PropostasTests` e navegador. Valores digitados aceitam "1.234,56", "1.000" (milhar) ou "12.5" (`Textos.Decimal`).

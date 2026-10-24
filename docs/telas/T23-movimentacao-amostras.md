@@ -52,4 +52,4 @@ Data, tipo (badge E/S), quantidade, justificativa, profissional, parâmetros, au
 - [ ] Entrada automática não pode ser excluída.
 - [ ] Parâmetros atendidos gravados e exibidos no histórico.
 
-**Status:** ⬜ (v1 tem Movimentação parcial — refazer sobre v2)
+**Status:** ⬜ — tarefa 7.1 (a v1 parcial foi descartada; o estoque já funciona no banco: entrada automática do recebimento e saldo, 4.3).

@@ -57,3 +57,18 @@ O sequencial CCCCC é único no ano **independentemente** de TT e AA (que só "d
 | 7 | duas inclusões simultâneas | — | números diferentes |
 | 8 | app envia `ANO = 1999, COD = 999` | inclusão | ignorados (roteiro doc 12 §7 item 5) |
 | 9 | tipo de amostra com código já usado | alterar código | recusado |
+
+## Implementação (tarefa 4.3, 23/10/2026)
+- **T22** (`AmostraService`):
+  - número sempre do banco; prévia `TT-?????-AA/YY` na tela;
+  - "hoje" é o do **servidor do MySQL** (`Infra/RelogioBanco`).
+- **Data de entrega:**
+  - futura → recusada;
+  - mais antiga que `DIAS_RETROATIVOS_ENTREGA` → a tela pergunta "Confirme que o ANO está correto." e grava só com `AMOSTRAS.ENTREGA_RETROATIVA` (`@LC_PERMITE_RETROATIVO` na transação);
+  - a confirmação vale só para a data confirmada (code-review 4.6);
+  - ano diferente do atual → aviso amarelo.
+- **Cenários:**
+  - 1, 2, 3, 4 e 7 → `AmostrasTests`/navegador;
+  - 5 (aviso) → só na tela;
+  - 6 e 8 → roteiro SQL / `RoteiroTests` (dependem do relógio do servidor);
+  - 9 → `AuxiliaresEspecificosTests`.

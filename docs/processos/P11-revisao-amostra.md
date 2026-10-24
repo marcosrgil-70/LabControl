@@ -35,3 +35,12 @@ Documento com resultado lançado não é alterado: gera-se uma revisão, a anter
 - Revisar sem resultado → recusado; revisar revisão antiga → "Só é possível revisar a última revisão da amostra."
 - Movimento lançado na R01 vai para a raiz; saldo único.
 - Amostra com o mesmo parâmetro duas vezes (18 casos no legado) revisa sem erro.
+
+## Implementação (tarefa 4.3, 23/10/2026)
+- **T22:** "Gerar revisão" só com resultados e só na última revisão, motivo obrigatório.
+- **Execução:** `SP_GERAR_REVISAO_AMOSTRA` pelo `Procedures`, **fora** da transação do EF; a tela abre a `… R01`.
+- **Bloqueios:** revisão antiga e amostra com boletim emitido ficam somente leitura.
+- **Testes:**
+  - `AmostrasTests.Com_resultado_…`: R01 com coletor/lote, raiz = revisão 0, estoque só na raiz, recusas;
+  - `AceiteFase4Tests`: datas parciais copiadas.
+- **A fazer (5.2/5.3):** revisão do resultado e do boletim pelas telas próprias (T26/T27).

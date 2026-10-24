@@ -23,6 +23,17 @@ Os testes de serviço e os testes HTTP (`WebApplicationFactory`) provam regras, 
 | T02 Usuários | `Usuario_crud_com_senha_provisoria` | incluir com perfil → senha provisória; pesquisar; alterar; resetar senha; excluir |
 | T04 Perfis | `Perfil_crud_matriz_e_copia` | matriz (CONSULTAR automático), alterar, copiar, excluir |
 | T03 Empresas (ADMIN_GLOBAL) | `Empresas_admin_global_cria_e_altera` | escolha de empresa no login, nova empresa (nasce com a entidade), alterar |
+| T10-14/15/16 auxiliares especiais | `Auxiliares_codigo_travado_cor_e_status_que_permite_resultado` | código travado após uso, cor do status, sempre um status que permite resultado |
+| T10-11 Condições de pagamento | `Condicao_de_pagamento_com_parcelas` | parcelas com Σ = 100% |
+| T11 Geografia | `Geografia_pais_estado_cidade_e_importacao_ibge` | países, estados, cidades e importação do CSV do IBGE |
+| Cadastro rápido "+" | `Cadastro_rapido_mais_inclui_e_seleciona_no_combo` | "+" no combo (também dentro de outro modal) inclui e já seleciona |
+| T14 Produtos | `Produto_crud_com_codigo_automatico_e_unidade_pelo_mais` | código automático, unidade pelo "+", alterar, pesquisar, inativar/reativar, excluir |
+| T15 Parâmetros de análise | `Parametro_de_analise_crud_com_metodo_pelo_mais` | método pelo "+", filtros, excluir |
+| T07 Migração | `Migracao_tela_valida_o_pedido_sem_executar` | validação do pedido (a execução real está em `MigracaoTests`) |
+| T20 Propostas (4.2) | `Proposta_crud_com_produto_analises_e_valores` | cliente → sugestões de endereço/contato; produto e análises nos modais; 300,00 − 10% = 270,00; alterar qtde (405,00); pesquisar; excluir |
+| T22 Recebimento (4.3) | `Amostra_recebimento_testes_comprovante_e_exclusao` | cascata cliente → proposta → item → tipo; número do banco; testes; histórico; data retroativa confirmada; comprovante; pesquisar; excluir |
+| T29 Pesquisa de amostras (4.4) | `Pesquisa_de_amostras_seleciona_e_abre` | modal da T22, filtros, seleção abre a amostra |
+| T25 Etiquetas (4.5) | `Etiquetas_a_partir_do_recebimento_imprimem_na_escolhida` | do recebimento com a amostra marcada; impressora escolhida (impressora falsa `ImpressoraDoTeste` guarda os comandos); quantidade; sigilo; última impressora lembrada |
 
 ## 4. Como rodar
 ```powershell

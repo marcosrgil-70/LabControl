@@ -34,3 +34,12 @@ Movimentos de revisões > 0 são **descartados** (eram entradas duplicadas); dep
 - Saída de 5 com saldo 3 → recusada; saída de 2 → saldo 1.
 - Movimento na R01 aparece na raiz.
 - Excluir a entrada automática → "A entrada automática do recebimento não pode ser excluída."
+
+## Implementação (até a 4.6, 24/10/2026)
+- **Já funciona pelo banco:** entrada automática no recebimento (T22, `TG_AMOSTRAS_AI`) e saldo da raiz (`TG_MOV_AI` → `PR_ATUALIZA_SALDO`). Teste: saldo 3 após receber 3 (`AmostrasTests`).
+- **Migração (M-15):**
+  - 5.699 movimentos da amostra física;
+  - as entradas automáticas duplicadas das revisões são descartadas;
+  - movimento manual de revisão vai para a raiz (code-review 4.6);
+  - saldos iguais aos do legado.
+- **A fazer (7.1, T23):** tela de movimentação (saídas, saldo insuficiente, entrada automática não excluível).

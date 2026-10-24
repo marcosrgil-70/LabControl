@@ -23,4 +23,4 @@
 
 Novos sugeridos (validar com o usuário): testes em atraso (prazo × resultado), boletins emitidos por responsável, pedidos com saldo a receber.
 
-**Status:** ⬜ (v1 tem 2 relatórios parciais)
+**Status:** ⬜ — tarefa 8.1 (os 2 relatórios parciais da v1 foram descartados).

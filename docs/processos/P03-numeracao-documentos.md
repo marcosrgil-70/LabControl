@@ -42,3 +42,8 @@ A1 ano da data digitada · A2 reinício pela data da última amostra · A3 conta
 - Virada de ano simulada (inserir sequência do ano anterior) → primeira amostra do ano = 00001; números antigos intactos.
 - Erro de validação depois do número reservado → rollback, número reaproveitado.
 - Roteiro do [doc 12 §7](../banco/12-PROCEDURES-REVISOES.md#7-roteiro-de-teste-executado-em-16102026--reexecutar-após-qualquer-mudança) itens 2–5 e 12.
+
+## Implementação (até a 4.6, 24/10/2026)
+- **Numeração pelo banco** (`SP_PROXIMO_NUMERO`, triggers) em uso na T20 (proposta), T22 (amostra) e T14 (produto). A aplicação nunca envia ano/código: o EF omite as colunas e relê o valor gerado.
+- **Concorrência:** 6 inclusões simultâneas de amostra recebem números diferentes (`AmostrasTests.Duas_inclusoes_simultaneas_…`, 4.3), além do `ConcorrenciaTests` da 0.6.
+- **Migração:** as sequências PRODUTO (M-10), PROPOSTA por ano (M-11, sem os 33 provisórios), PEDIDO_VENDA (M-13) e AMOSTRA por ano (M-14) continuam do legado. A M-18 (5.1) só confere.

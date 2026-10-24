@@ -74,4 +74,4 @@ Atalho novo: **Fila de análises** (`VW_LAB_TESTES_PENDENTES`) — testes sem re
 
 > **Cadastro rápido "+" (pendência 3, pronto na 2.4):** tipo de resultado com `lc-rapido="LAB_TIPOS_RESULTADOS"` no combo (T10-00), no lugar da tecla Insert do legado.
 
-**Status:** 🟨 v1 existe incompleta — **refazer**
+**Status:** ⬜ (a v1 incompleta foi descartada — refazer sobre o v2 na 5.2)

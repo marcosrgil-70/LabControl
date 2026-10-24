@@ -8,8 +8,8 @@
 | Dados | EF Core 9 + Pomelo MySQL; **sem migrations EF**: o schema é dos scripts `Scripts/v2/*.sql` (fonte da verdade) |
 | Banco | MySQL 8.0, banco `labcontrol_v2` |
 | Autenticação | Cookie Authentication (não mais sessão "manual"); senha PBKDF2 (`PasswordHasher<Usuario>`) |
-| Relatórios/PDF | QuestPDF (boletim, proposta, pedido, etiquetas) — substitui FastReport `.fr3` |
-| Testes | xUnit + banco MySQL de teste recriado pelos scripts |
+| Impressão | **Comprovante de recebimento:** página de impressão (decisão do usuário, 4.3). **Etiquetas:** comandos PPLB em RAW para a térmica Argox pelo spooler do servidor (`Infra/ImpressoraRaw.cs`, 4.5). **Boletim, proposta, pedido:** PDF gerado no servidor — biblioteca escolhida na 5.3 (o boletim precisa de hash do PDF); QuestPDF é candidata (licença Community só abaixo de US$ 1 mi/ano) |
+| Testes | xUnit + banco MySQL de teste recriado pelos scripts (`labcontrol_teste`) + Playwright (Edge sem janela) para as telas ([P26](processos/P26-testes-ponta-a-ponta.md)) |
 
 ## 2. Estrutura de pastas (alvo)
 
@@ -21,7 +21,9 @@ LabControl/
 ├── ViewModels/      por tela (convenções em ViewModels/README.md)
 ├── Services/        regras de negócio (AmostraService, PropostaService, BoletimService, NumeracaoService…) — Services/README.md
 │   └── Migracao/    MigracaoService (Firebird → MySQL)
-├── Infra/           EmpresaContexto (empresa/usuário/profissional do request), Permissoes, Pdf/
+├── Infra/           EmpresaContexto (empresa/usuário/profissional do request), Permissao, Procedures, ErrosMySql,
+│                    Resultado, Textos (normalização e números pt-BR), HtmlSimples (limpeza do texto rico),
+│                    RelogioBanco (data/hora do MySQL), ImpressoraRaw (spooler do Windows), Menu
 ├── Controllers/     finos: validam, chamam Service, devolvem View/JSON
 ├── Views/           por controller + Shared/_Layout, Shared/Components (CRUD genérico)
 ├── Scripts/v2/      DDL + rotinas + triggers + views + seed  ← FONTE DA VERDADE DO SCHEMA
@@ -56,13 +58,16 @@ O `AmostraService`, quando o usuário confirmou a data retroativa **e** tem `AMO
 |---|---|
 | Aba **Consultar** com filtros + grid | `Index` com filtros (cliente, período padrão = `DIAS_PESQUISA_PADRAO`, número) e tabela paginada (server-side) |
 | Aba **Dados** em modo Incluir/Alterar | `Criar` / `Editar` (form), botões Gravar/Cancelar; abas Bootstrap quando a tela do Delphi tem abas |
-| Lookups `cxDBLookupComboBox` com várias colunas | `select` com busca (Tom Select) carregado via AJAX e mostrando as mesmas colunas |
+| Lookups `cxDBLookupComboBox` com várias colunas | `select` com o texto composto ("NOME — CPF/CNPJ", "01 — DESCRIÇÃO"); cascatas por AJAX (cliente → proposta → item na T22; cliente → contatos/endereços na T20). Componente de busca avançada: pesquisa de amostras (T29, `pesquisa-amostras.js`) |
 | Botão "+" ao lado do lookup (cadastro rápido de método/idioma/prazo/tipo de resultado) | modal de cadastro rápido que devolve o novo item ao combo |
 | Mensagem `Atencao(...)` | validação no servidor (ModelState) + `TempData` + mensagens das triggers (SQLSTATE 45000) exibidas ao usuário |
 | Cores de status | badge com `COR` do status |
-| Impressão FastReport | PDF (QuestPDF) aberto em nova aba |
+| Impressão FastReport | página de impressão (comprovante) ou PDF gerado no servidor (boletim, 5.3), aberto em nova aba; etiquetas direto na térmica |
+| Texto rico (TRichEdit/RTF) | editor simples (negrito, itálico, sublinhado, lista) gravando HTML limpo por `HtmlSimples`; o RTF do legado é convertido na migração |
 
-Erros SQLSTATE `45000` das triggers/procedures são **mensagens de negócio**: capturar `MySqlException` com `SqlState == "45000"` e mostrar `Message` ao usuário.
+Erros SQLSTATE `45000` das triggers/procedures são **mensagens de negócio**: o `ErrosMySql.CapturarAsync` converte em `Resultado` (também a `ErroDeNegocioException`, usada para desfazer a transação quando uma procedure já recusou) e a tela mostra a mensagem.
+
+**Datas e horas** sugeridas e validadas pelo relógio do **MySQL** (`RelogioBanco`), o mesmo que as triggers usam para o ano do número — nunca o do servidor da aplicação.
 
 ## 7. Convenções de código
 

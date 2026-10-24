@@ -1,7 +1,7 @@
 # Matriz de Rastreabilidade — Delphi 7 → C#
 
 Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com o destino no sistema novo.
-**Situação:** ⬜ não iniciado · 🟨 existe na v1 (refazer) · ✅ pronto · ⛔ descontinuado.
+**Situação:** ⬜ não iniciado no v2 (a v1 foi descartada — só referência em `Legacy/`) · 🟨 parcial no v2 (o que falta está na própria linha) · ✅ pronto · ⛔ descontinuado. Atualizado em 24/10/2026 (fim da Fase 4).
 
 ## Cadastros → Cadastros Básicos
 | Menu Delphi | Unit Delphi | MD v2 | Rota v2 | Fase | Situação |
@@ -49,17 +49,17 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 | (botão Ped.Venda da proposta) | `un_Propostas.Btn_PedVendaClick` | [T21](../telas/T21-pedidos-venda.md) | `/PedidosVenda` | 6 | ⬜ (tela nova) |
 | Histórico de Amostras | `un_MovHistAmostras` + `undm_HistAmostras` | [T22](../telas/T22-recebimento-amostras.md) | `/Amostras` | 4 | ✅ (4.3) |
 | (pesquisa de amostras) | `un_Lab_Hist_Amostras_Pesq` | [T29](../telas/T29-pesquisa-amostras.md) | componente `/Amostras/Pesquisa` | 4 | ✅ (4.4) |
-| Movimentação de Amostras | `un_MovimentacaoAmostras` | [T23](../telas/T23-movimentacao-amostras.md) | `/Movimentacao` | 7 | 🟨 |
-| Localização das Amostras | `un_LocalAmostra` + `unDM_LocalAmostra` | [T24](../telas/T24-localizacao-amostras.md) | `/Localizacao` | 7 | 🟨 |
-| Resultados | `un_Resultados` + `unDM_Resultados` | [T26](../telas/T26-resultados.md) | `/Resultados` | 5 | 🟨 |
+| Movimentação de Amostras | `un_MovimentacaoAmostras` | [T23](../telas/T23-movimentacao-amostras.md) | `/Movimentacao` | 7 | ⬜ |
+| Localização das Amostras | `un_LocalAmostra` + `unDM_LocalAmostra` | [T24](../telas/T24-localizacao-amostras.md) | `/Localizacao` | 7 | ⬜ |
+| Resultados | `un_Resultados` + `unDM_Resultados` | [T26](../telas/T26-resultados.md) | `/Resultados` | 5 | ⬜ |
 | Boletim | `un_CadBoletim` + `undm_Boletim` (`un_Boletim` antigo) | [T27](../telas/T27-boletim.md) | `/Boletins` | 5 | ⬜ |
 | Relatório de Ensaio | `un_Relatorio_Ensaio` | [T28](../telas/T28-relatorio-ensaio.md) | `/RelatorioEnsaio` | 8 (confirmar) | ⬜ |
 
 ## Relatórios
 | Menu Delphi | Unit Delphi | MD v2 | Rota v2 | Fase | Situação |
 |---|---|---|---|---|---|
-| Faturamento | `un_RelFaturamento` | [T30-01](../telas/T30-01-rel-faturamento.md) | `/Relatorios/Faturamento` | 8 | 🟨 |
-| Nr. de Amostras por período | `un_RelAmostrasPeriodo` | [T30-02](../telas/T30-02-rel-amostras-periodo.md) | `/Relatorios/AmostrasPeriodo` | 8 | 🟨 |
+| Faturamento | `un_RelFaturamento` | [T30-01](../telas/T30-01-rel-faturamento.md) | `/Relatorios/Faturamento` | 8 | ⬜ |
+| Nr. de Amostras por período | `un_RelAmostrasPeriodo` | [T30-02](../telas/T30-02-rel-amostras-periodo.md) | `/Relatorios/AmostrasPeriodo` | 8 | ⬜ |
 | Nr. Amostras por cliente | `un_RelAmostrasCliente` | [T30-03](../telas/T30-03-rel-amostras-cliente.md) | `/Relatorios/AmostrasCliente` | 8 | ⬜ |
 | Nr. Parâmetros analisados | `un_RelParamAnalisados` | [T30-04](../telas/T30-04-rel-parametros-analisados.md) | `/Relatorios/ParametrosAnalisados` | 8 | ⬜ |
 | Tempo de duração das Análises | `un_RelTempoAnalises` | [T30-05](../telas/T30-05-rel-tempo-analises.md) | `/Relatorios/TempoAnalises` | 8 | ⬜ |

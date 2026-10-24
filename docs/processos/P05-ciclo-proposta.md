@@ -43,3 +43,13 @@ Produto antigo → novo na proposta e nas amostras **dessa** proposta (`SP_TROCA
 - Proposta com amostra: "Alterar" leva a "Gerar revisão".
 - Mudar status para "Enviado ao cliente" grava a data de envio.
 - Proposta em status com `PERMITE_AMOSTRA = 0` não aparece no recebimento.
+
+## Implementação (tarefa 4.2 — parte essencial, 23/10/2026)
+- **Já existe:**
+  - consulta (só a última revisão por padrão);
+  - inclusão e alteração sem revisão (cabeçalho, textos, produtos e análises numa transação), com as mensagens do legado nos obrigatórios;
+  - sugestões do cliente (endereço por finalidade, contato por `ENVIAR_LAUDO`/`ENVIAR_NFE`, cobrança = o próprio cliente);
+  - exclusão (revisão 0, sem revisões/pedido/amostras).
+- **Novas validações:** contato/endereço do cliente ou da cobrança; endereço da cobrança obrigatório; desconto geral ≤ total; usuário sem profissional não inclui.
+- **Bloqueio:** revisão antiga, com pedido, com amostra ou enviada → somente leitura com o motivo.
+- **A fazer (6.1):** pergunta "gerar revisão?" e "Gerar revisão" (P07), seleção múltipla, contrato, PDF, trocar produto. Ver [T20 › Implementação](../telas/T20-propostas.md#implementação-tarefa-42--parte-essencial-23102026).
