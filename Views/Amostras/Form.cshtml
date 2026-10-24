@@ -35,7 +35,8 @@ else if (Model.TemResultado)
 <form method="post" asp-action="@(inclusao ? "Criar" : "Editar")" asp-route-id="@(inclusao ? null : Model.Id)" id="formAmostra" novalidate>
     <script type="application/json" id="dadosAmostra">@Html.Raw(dados.Replace("</", "<\\/"))</script>
     <input type="hidden" asp-for="TxObservacao" />
-    <input type="hidden" asp-for="ConfirmouRetroativa" />
+    @* sempre "false" ao abrir: a confirmação vale só para a data que o usuário acabou de confirmar (nunca volta do ModelState) *@
+    <input type="hidden" name="ConfirmouRetroativa" id="ConfirmouRetroativa" value="false" />
     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
     @if (pedirConfirmacao is not null)
     {

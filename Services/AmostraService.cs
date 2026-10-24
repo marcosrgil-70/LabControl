@@ -28,7 +28,7 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
 
     /// <summary>Data do servidor do banco: é dela o ano do número e o limite da data de entrega.</summary>
-    private Task<DateOnly> HojeAsync() => db.Database.SqlQueryRaw<DateOnly>("SELECT CURDATE() AS Value").SingleAsync();
+    private Task<DateOnly> HojeAsync() => db.HojeAsync();
 
     // ------------------------------------------------------------------ consulta
 
@@ -79,12 +79,13 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
     {
         var par = await db.EmpresasParametros.AsNoTracking().SingleOrDefaultAsync();
         var prof = ctx.ProfissionalId;
+        var agora = await db.AgoraAsync(); // data e hora do servidor do banco (o mesmo relógio do número)
         var local = await db.LabHistAmostras.AsNoTracking().Where(a => prof != null && a.IdEntidadesFuncDig == prof)
                         .OrderByDescending(a => a.IdLabHistAmostras).Select(a => a.LocalRecebimento).FirstOrDefaultAsync()
                     ?? await db.LabHistAmostras.AsNoTracking().OrderByDescending(a => a.IdLabHistAmostras).Select(a => a.LocalRecebimento).FirstOrDefaultAsync();
         var vm = new AmostraVM
         {
-            DtEntrega = await HojeAsync(), HrEntrega = TimeOnly.FromDateTime(DateTime.Now).Truncar(),
+            DtEntrega = DateOnly.FromDateTime(agora), HrEntrega = TimeOnly.FromDateTime(agora).Truncar(),
             IdAmostrasStatus = par?.IdAmostrasStatusInicial, LocalRecebimento = local, IdEntidadesFuncResp = prof, QtdeEmbalagens = "1",
         };
         await PrepararAsync(vm);
@@ -174,7 +175,7 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
         return new AmostraPropostaVM(p.IdLabPropostas, p.NrProposta, p.NrPedidoFmt, itens.Select(i =>
         {
             var doItem = analises.Where(a => a.IdLabPropostasProdutos == i.IdLabPropostasProdutos).ToList();
-            var doc = doItem.Any(a => a.TipoDocumento == TipoDocumento.Relatorio) && doItem.All(a => a.TipoDocumento == TipoDocumento.Relatorio) ? "RELATORIO" : "BOLETIM";
+            var doc = EnumBanco<TipoDocumento>.ParaBanco(DocumentoDoItem(doItem.Select(a => a.TipoDocumento)));
             return new AmostraItemVM(i.IdLabPropostasProdutos, i.Item, $"{i.Descricao} ({i.Codigo})", doc,
                 doItem.Select(a => a.IdAnalisesTipo).Distinct().ToList());
         }).ToList());
@@ -203,7 +204,8 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
             var partes = new List<string>();
             if (legado) partes.Add("Registro do legado, sem data");
             else if (l.IdUsuarios is { } u) partes.Add($"Usuário {usuarios.GetValueOrDefault(u, u.ToString())}");
-            if (Valor("ID_AMOSTRAS_STATUS") is { } st && int.TryParse(st, out var ids) && status.TryGetValue(ids, out var nomeStatus)) partes.Add($"status {nomeStatus}");
+            // no log do legado o status é o ID do Firebird (remapeado na M-03): não dá para procurar nos status do v2
+            if (!legado && Valor("ID_AMOSTRAS_STATUS") is { } st && int.TryParse(st, out var ids) && status.TryGetValue(ids, out var nomeStatus)) partes.Add($"status {nomeStatus}");
             if (Valor("QTDE_EMBALAGENS_ENTREGUE") is { } q) partes.Add($"qtde {q}");
             if (Valor("NR_LOTE") is { } lote) partes.Add($"lote {lote}");
             if (Valor("MOTIVO_REVISAO") is { } motivo) partes.Add($"motivo: {motivo}");
@@ -257,17 +259,16 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
             return Resultado.Erro("A data/hora da coleta não pode ser depois da entrega.", nameof(vm.DtHrColeta));
 
         // tipo de análise: só os das análises do item (T22)
-        var tiposDoItem = await db.LabPropostasProdanalises.Where(x => x.IdLabPropostasProdutos == item)
-            .Select(x => x.LabParametroAnalise.IdAnalisesTipo).Distinct().ToListAsync();
-        if (!tiposDoItem.Contains(tipoAnalise))
+        var analisesDoItem = await db.LabPropostasProdanalises.Where(x => x.IdLabPropostasProdutos == item)
+            .Select(x => new { x.LabParametroAnalise.IdAnalisesTipo, x.TipoDocumento }).ToListAsync();
+        if (!analisesDoItem.Any(a => a.IdAnalisesTipo == tipoAnalise))
             return Resultado.Erro("O tipo de análise precisa ser um dos tipos das análises do produto na proposta.", nameof(vm.IdAnalisesTipo));
         if (temResultado && (atual!.IdLabPropostas != proposta || atual.IdLabPropostasProdutos != item || atual.IdAmostrasTipo != tipoAmostra || atual.IdAnalisesTipo != tipoAnalise))
             return Resultado.Erro("Existem resultados: tipo, proposta e produto da amostra não podem ser alterados (gere revisão).");
         var digitador = atual?.IdEntidadesFuncDig ?? ctx.ProfissionalId;
         if (digitador is null)
             return Resultado.Erro("Seu usuário não está vinculado a um profissional (Usuários › profissional): o recebimento registra quem digitou.");
-        var documento = await db.LabPropostasProdanalises.Where(x => x.IdLabPropostasProdutos == item).AllAsync(x => x.TipoDocumento == TipoDocumento.Relatorio)
-                        && await db.LabPropostasProdanalises.AnyAsync(x => x.IdLabPropostasProdutos == item) ? TipoDocumento.Relatorio : TipoDocumento.Boletim;
+        var documento = DocumentoDoItem(analisesDoItem.Select(a => a.TipoDocumento));
 
         var r = await ErrosMySql.CapturarAsync(async () =>
         {
@@ -294,7 +295,7 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
             if (!temResultado)
             {
                 var t = await procedures.AmostraGerarTestesAsync(a.IdLabHistAmostras);
-                if (!t.Sucesso) throw new InvalidOperationException(t.Mensagem);
+                if (!t.Sucesso) throw new ErroDeNegocioException(t.Mensagem!);
             }
             await db.Entry(a).ReloadAsync();
             if (a.IdPedidosVenda is { } pedido)
@@ -362,6 +363,13 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
     private static string? Corte(string? s, int max) => Textos.Limpo(s) is { } t ? (t.Length > max ? t[..max] : t) : null;
 
     private static byte? Parte(int? v) => v is > 0 and <= 255 ? (byte)v : null;
+
+    /// <summary>Documento da amostra pelo item da proposta: RELATÓRIO só se todas as análises do item forem relatório.</summary>
+    private static TipoDocumento DocumentoDoItem(IEnumerable<TipoDocumento> analises)
+    {
+        var lista = analises.ToList();
+        return lista.Count > 0 && lista.All(d => d == TipoDocumento.Relatorio) ? TipoDocumento.Relatorio : TipoDocumento.Boletim;
+    }
 
     // temperatura pode ser negativa (congelados)
     private static bool LerTemperatura(string? texto, out decimal? valor)

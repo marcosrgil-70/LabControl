@@ -105,7 +105,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="card-footer small py-2 text-body-secondary">@Model.Itens.Count amostra(s)@(Model.Itens.Count == 500 ? " (as 500 mais recentes — refine o filtro)" : "")</div>
+        <div class="card-footer small py-2 text-body-secondary">@Model.Itens.Count amostra(s)@(Model.Itens.Count == LabControl.Services.EtiquetaService.MaxLinhas ? $" (as {LabControl.Services.EtiquetaService.MaxLinhas} mais recentes — refine o filtro)" : "")</div>
     </div>
 </form>
 

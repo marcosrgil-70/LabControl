@@ -63,7 +63,7 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
     public async Task<PropostaVM> NovaAsync()
     {
         var par = await db.EmpresasParametros.AsNoTracking().SingleOrDefaultAsync();
-        var hoje = DateOnly.FromDateTime(DateTime.Today);
+        var hoje = await db.HojeAsync();
         var vm = new PropostaVM
         {
             DtSolicitacao = hoje, DtValidade = hoje.AddDays(par?.DiasValidadeProposta ?? 30),
@@ -228,7 +228,7 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
         if (vm.IdEntEndLaudo is not { } endLaudo) return Resultado.Erro("Selecionar o endereço para Laudo.", nameof(vm.IdEntEndLaudo));
         if (vm.IdEntContatoResultado is not { } contatoRes) return Resultado.Erro("Selecionar o Contato para Laudo.", nameof(vm.IdEntContatoResultado));
         if (vm.IdCondicoesPagtos is not { } condicao) return Resultado.Erro("Selecionar a Condição de Pagamento.", nameof(vm.IdCondicoesPagtos));
-        var hoje = DateOnly.FromDateTime(DateTime.Today);
+        var hoje = await db.HojeAsync();
         var solicitacao = vm.DtSolicitacao ?? hoje;
         if (vm.DtValidade < solicitacao) return Resultado.Erro("A validade não pode ser anterior à data da solicitação.", nameof(vm.DtValidade));
         if (!LerPercentual(vm.PorcDesconto, out var porc)) return Resultado.Erro("% de desconto geral: de 0 a 100, até 4 casas decimais.", nameof(vm.PorcDesconto));
@@ -295,7 +295,7 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
             await GravarItensAsync(p.IdLabPropostas, itens);
             // desconto geral sem mexer nas análises também recalcula o cabeçalho (P06)
             var rec = await procedures.RecalcularPropostaAsync(p.IdLabPropostas);
-            if (!rec.Sucesso) throw new InvalidOperationException(rec.Mensagem);
+            if (!rec.Sucesso) throw new ErroDeNegocioException(rec.Mensagem!);
             await tx.CommitAsync();
             return p.IdLabPropostas;
         });

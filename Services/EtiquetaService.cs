@@ -15,6 +15,7 @@ public sealed class EtiquetaService(LabDbContext db, IImpressoraRaw impressoras)
 {
     public const int Largura = 640, Altura = 400, Gap = 24; // 80 × 50 mm a 203 dpi; 3 mm entre etiquetas
     public const int MaxCopias = 99;
+    public const int MaxLinhas = 200;
     private static readonly Encoding Cp1252 = CodePagesEncodingProvider.Instance.GetEncoding(1252)!;
 
     public async Task<EtiquetaPaginaVM> ListarAsync(EtiquetaFiltroVM f)
@@ -32,7 +33,8 @@ public sealed class EtiquetaService(LabDbContext db, IImpressoraRaw impressoras)
             if (Textos.Limpo(f.Numero) is { } n) q = q.Where(a => a.NrAmostra.Contains(n));
             if (f.APartirDe is { } de) q = q.Where(a => a.DtEntrega >= de);
         }
-        var itens = await q.OrderByDescending(a => a.DtEntrega).ThenByDescending(a => a.IdLabHistAmostras).Take(500)
+        // até 200 linhas: cada uma manda 4 campos no POST e o limite padrão do formulário é 1.024 valores (code-review 4.6)
+        var itens = await q.OrderByDescending(a => a.DtEntrega).ThenByDescending(a => a.IdLabHistAmostras).Take(MaxLinhas)
             .Select(a => new EtiquetaLinhaVM(a.IdLabHistAmostras, a.NrAmostra, a.ClienteNome, a.ProdutoDescricao, a.DtEntrega, a.NrPedidoFmt,
                 a.Fabricacao, a.Validade, (int)Math.Ceiling(a.QtdeEmbalagensEntregue)))
             .ToListAsync();
@@ -41,7 +43,7 @@ public sealed class EtiquetaService(LabDbContext db, IImpressoraRaw impressoras)
 
     /// <summary>Hoje − 7 dias (padrão do legado).</summary>
     public async Task<DateOnly> APartirDePadraoAsync() =>
-        (await db.Database.SqlQueryRaw<DateOnly>("SELECT CURDATE() AS Value").SingleAsync()).AddDays(-7);
+        (await db.HojeAsync()).AddDays(-7);
 
     /// <summary>Imprime as amostras marcadas, cada uma com a sua quantidade; devolve o total de etiquetas.</summary>
     public async Task<Resultado<int>> ImprimirAsync(EtiquetaImprimirVM vm)

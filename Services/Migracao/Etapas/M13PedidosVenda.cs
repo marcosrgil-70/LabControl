@@ -28,8 +28,10 @@ public sealed class M13PedidosVenda : IEtapaMigracao
         var propostas = c.Compartilhado<Dictionary<int, LinhaFb>>(M11Propostas.Legado);
         var itens = c.Compartilhado<Dictionary<(int Proposta, int Item), ItemProposta>>(M12ProdutosAnalisesProposta.Itens);
         var totalItem = c.Compartilhado<Dictionary<(int Proposta, int Item), decimal>>(M12ProdutosAnalisesProposta.TotalItem);
+        var itensPorProposta = itens.ToLookup(i => i.Key.Proposta); // uma passada (code-review 4.6: antes era pedidos × itens)
         // propostas (cód./ano, qualquer revisão) que já receberam amostras
         var comAmostras = (await c.Fb.LerAsync("SELECT DISTINCT ID_LAB_PROPOSTAS FROM LAB_HIST_AMOSTRAS", ct))
+            .Where(l => propostas.ContainsKey(l.IntObrigatorio("ID_LAB_PROPOSTAS"))) // amostra de proposta excluída: a M-14 trata
             .Select(l => propostas[l.IntObrigatorio("ID_LAB_PROPOSTAS")])
             .Select(p => (M11Propostas.Ano(p.IntObrigatorio("ANO_PROPOSTA")), p.IntObrigatorio("COD_PROPOSTA"))).ToHashSet();
         var novas = await c.Db.LabPropostas.Select(p => new { p.IdLabPropostas, p.IdEntidades, p.IdEntCobranca, p.IdCondicoesPagtos, p.IdMoedas, p.VrTotalProposta })
@@ -77,7 +79,7 @@ public sealed class M13PedidosVenda : IEtapaMigracao
             mapa[numero] = id;
             foreach (var n in outros) mapa[n] = id;
             daProposta[chave] = id;
-            foreach (var (k, item) in itens.Where(i => i.Key.Proposta == proposta).OrderBy(i => i.Key.Item))
+            foreach (var (k, item) in itensPorProposta[proposta].OrderBy(i => i.Key.Item))
                 valoresItens.Add([c.IdEmpresa, id, item.Id, item.IdProduto, item.Qtde, totalItem.GetValueOrDefault(k)]);
         }
         await c.InserirEmLoteAsync("PEDIDOS_VENDA_ITENS", "ID_PEDIDOS_VENDA_ITENS", ColunasItem, valoresItens, ct);

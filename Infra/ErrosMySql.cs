@@ -8,6 +8,12 @@ namespace LabControl.Infra;
 /// SQLSTATE 45000 (SIGNAL das triggers/procedures) já vem em português, pronto para o usuário.
 /// Erros não listados são técnicos: devem subir (log + página de erro).
 /// </summary>
+/// <summary>
+/// Recusa de negócio que já veio tratada (ex.: <see cref="Resultado"/> de uma procedure chamada dentro de
+/// <see cref="ErrosMySql.CapturarAsync{T}"/>): lançada para desfazer a transação e mostrada ao usuário como os 45000.
+/// </summary>
+public sealed class ErroDeNegocioException(string mensagem) : Exception(mensagem);
+
 public static partial class ErrosMySql
 {
     public const string SqlStateNegocio = "45000";
@@ -18,6 +24,8 @@ public static partial class ErrosMySql
     /// <summary>Mensagem para o usuário, ou null se o erro for técnico.</summary>
     public static string? MensagemDeNegocio(Exception ex)
     {
+        for (var e = ex; e is not null; e = e.InnerException)
+            if (e is ErroDeNegocioException negocio) return negocio.Message;
         var my = Encontrar(ex);
         if (my is null) return null;
         if (my.SqlState == SqlStateNegocio) return my.Message;

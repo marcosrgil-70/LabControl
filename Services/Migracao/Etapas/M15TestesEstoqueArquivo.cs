@@ -108,25 +108,29 @@ public sealed class M15TestesEstoqueArquivo : IEtapaMigracao
               FROM LAB_MOV_AMOSTRAS ORDER BY ID_LAB_MOV_AMOSTRAS
             """, ct);
         var anterior = c.Compartilhado<Dictionary<int, int>>(M14Amostras.Anterior);
+        var raiz = c.Compartilhado<Dictionary<int, int>>(M14Amostras.Raiz);
         var valores = new List<object?[]>();
-        var descartados = 0;
+        int descartados = 0, orfaos = 0;
         foreach (var l in linhas)
         {
             var amostra = l.IntObrigatorio("ID_LAB_HIST_AMOSTRAS");
             var onde = $"movimento {l.IntObrigatorio("ID_LAB_MOV_AMOSTRAS")}";
-            if (anterior.ContainsKey(amostra)) { descartados++; continue; } // revisão: entrada duplicada no legado
-            if (!c.Mapa("LAB_HIST_AMOSTRAS").TryGetValue(amostra, out var id)) { c.Anomalia($"{onde}: amostra {amostra} não existe — não migrado."); continue; }
+            var automatica = l.Texto("AMOSTRA_COMPLEMENTAR") == "A";
+            // revisão: a entrada automática é duplicada (o legado repetia a entrada a cada revisão); um movimento manual
+            // lançado na revisão é real e vai para a amostra física (raiz), como o v2 faz (TG_MOV_BI)
+            if (anterior.ContainsKey(amostra) && automatica) { descartados++; continue; }
+            if (!raiz.TryGetValue(amostra, out var id)) { orfaos++; c.Anomalia($"{onde}: amostra {amostra} não existe — não migrado."); continue; }
             valores.Add(
             [
                 c.IdEmpresa, id, l.DataHora("DATA_MOV") ?? amostras[amostra].DataHora("DT_ENTREGA"), decimal.Round(l.Decimal("QTDE") ?? 0, 4),
                 l.Texto("E_S") == "S" ? "S" : "E", c.Cortar<LabMovAmostra>(nameof(LabMovAmostra.Justificativa), l.Texto("JUSTIFICATIVA"), onde),
-                l.Texto("AMOSTRA_COMPLEMENTAR") == "A",
+                automatica,
                 c.Novo("ENTIDADES_FUNCIONARIOS", l.Int("ID_ENTIDADES_FUNC"), onde) ?? throw new InvalidOperationException($"{onde}: profissional não migrado."),
             ]);
         }
-        if (descartados > 0) c.Anomalia($"{descartados} movimento(s) de revisões de amostra descartados (entradas duplicadas no legado; o estoque é da amostra física).");
+        if (descartados > 0) c.Anomalia($"{descartados} entrada(s) automática(s) de revisões de amostra descartadas (duplicadas no legado; o estoque é da amostra física).");
         await c.InserirEmLoteAsync("LAB_MOV_AMOSTRAS", "ID_LAB_MOV_AMOSTRAS", ColunasMov, valores, ct);
-        c.Conferir("movimentos (legado − revisões)", linhas.Count - descartados, await c.Db.LabMovAmostras.CountAsync(ct));
+        c.Conferir("movimentos (legado − entradas duplicadas das revisões − órfãos)", linhas.Count - descartados - orfaos, await c.Db.LabMovAmostras.CountAsync(ct));
         return valores.Count;
     }
 
@@ -139,6 +143,10 @@ public sealed class M15TestesEstoqueArquivo : IEtapaMigracao
             """, ct);
         var raiz = c.Compartilhado<Dictionary<int, int>>(M14Amostras.Raiz);
         var valores = new List<object?[]>();
+        // localização de amostra excluída no legado: não tem onde entrar (anomalia, não erro da etapa)
+        foreach (var orfa in linhas.Where(l => !raiz.ContainsKey(l.IntObrigatorio("ID_LAB_HIST_AMOSTRAS"))))
+            c.Anomalia($"localização {orfa.IntObrigatorio("ID_LAB_LOCAL_AMOSTRAS")}: amostra {orfa.IntObrigatorio("ID_LAB_HIST_AMOSTRAS")} não existe — não migrada.");
+        linhas = linhas.Where(l => raiz.ContainsKey(l.IntObrigatorio("ID_LAB_HIST_AMOSTRAS"))).ToList();
         foreach (var g in linhas.GroupBy(l => raiz[l.IntObrigatorio("ID_LAB_HIST_AMOSTRAS")]))
         {
             var ordem = g.OrderByDescending(l => l.DataHora("DT_HR_ARQUIVO")).ThenByDescending(l => l.IntObrigatorio("ID_LAB_LOCAL_AMOSTRAS")).ToList();

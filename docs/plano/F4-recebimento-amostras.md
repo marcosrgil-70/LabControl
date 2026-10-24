@@ -39,10 +39,26 @@
 - **Esforço:** M · **Depende de:** 4.3
 
 ### 4.6 Testes de aceite + revisão
+> ✅ **Concluída em 23/10/2026**, exceto o teste manual guiado com o laboratório (pendência 22).
+> - **Aceite pelo serviço:** `AceiteFase4Tests` cobre o que faltava dos cenários de P04/P09/P10/P11 (P09 extras, 29/02 bissexto, revisão copiando as datas parciais); o resto já estava em `AmostrasTests`, `PropostasTests`, `EtiquetasTests`, navegador e roteiro SQL.
+> - **`/code-review high`** (`d57e9a4^..HEAD`): 10 achados, todos corrigidos (tabela abaixo).
 - Testes automatizados (xUnit) dos cenários do P04/P09/P10/P11 (via serviço); teste manual guiado com um usuário do laboratório recebendo 5 amostras reais.
 - `/code-review high` sobre a fase.
 
+| # | Achado do `/code-review high` | Situação |
+|---|---|---|
+| 1 | Recusa (45000) do `SP_AMOSTRA_GERAR_TESTES`/`SP_RECALCULAR_PROPOSTA` dentro da transação virava erro 500 (`InvalidOperationException`) | ✅ `ErroDeNegocioException`, reconhecida pelo `ErrosMySql` → mensagem na tela |
+| 2 | Etiquetas: até 500 linhas × 4 campos passava do limite de 1.024 valores do formulário → 500 ao imprimir | ✅ grade limitada a 200 linhas (`EtiquetaService.MaxLinhas`), com aviso para refinar o filtro |
+| 3 | Histórico: o status das linhas do log do legado (ID do Firebird) era procurado nos status do v2 | ✅ status só nas linhas do v2 |
+| 4 | M-15 descartava todo movimento de revisão, inclusive saída manual real | ✅ descarta só a entrada automática da revisão; manual vai para a raiz (no legado real todos eram automáticos) |
+| 5 | Confirmação de data retroativa ficava "true" depois de um erro e valia para outra data | ✅ campo sempre `false` ao abrir a tela |
+| 6 | M-15 (localização) e M-13 (propostas com amostra) quebravam com registro órfão | ✅ órfão vira anomalia |
+| 7 | Data do banco misturada com a hora do servidor da aplicação (amostra) e `DateTime.Today` na proposta | ✅ `Infra/RelogioBanco` (`NOW()`/data do MySQL) em amostra, proposta e etiquetas |
+| 8 | M-13 percorria todos os itens para cada pedido (pedidos × itens) | ✅ `ToLookup` |
+| 9 | Três consultas às análises do item ao gravar a amostra; regra RELATÓRIO/BOLETIM em dois lugares | ✅ uma consulta + `DocumentoDoItem` único |
+| 10 | CLAUDE.md › Comandos ainda citava `ADMIN` com troca obrigatória | ✅ `ADMINISTRADOR` / `Admin123` |
+
 ## Definição de pronto
-- [ ] Recebimento idêntico ao Delphi nas regras mantidas e com todas as correções (número/ano, revisão, estoque).
-- [ ] Números das amostras migradas idênticos ao legado.
-- [ ] Etiquetas lidas pelo leitor.
+- [x] Recebimento idêntico ao Delphi nas regras mantidas e com todas as correções (número/ano, revisão, estoque).
+- [x] Números das amostras migradas idênticos ao legado — 5.767 conferidos (4.1).
+- [ ] Etiquetas lidas pelo leitor — pendência 21 (impressão de teste na Argox real).

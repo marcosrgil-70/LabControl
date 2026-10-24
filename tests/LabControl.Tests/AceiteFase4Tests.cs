@@ -1,3 +1,4 @@
+using LabControl.Infra;
 using LabControl.Models;
 using LabControl.Services;
 using LabControl.ViewModels;
@@ -64,6 +65,17 @@ public class AceiteFase4Tests
         Assert.Equal("Selecione a última revisão da proposta.", (await s.GravarAsync(Nova(c, hoje))).Mensagem);
         // e a tela não oferece mais a R0 para o cliente
         Assert.DoesNotContain((await s.ClienteAsync(c.Cliente.IdEntidades))!.Propostas, p => p.Id == c.Proposta.IdLabPropostas);
+    }
+
+    /// <summary>Code-review 4.6: recusa de procedure dentro da transação (já convertida em Resultado) chega à tela, não vira 500.</summary>
+    [Fact]
+    public async Task Recusa_de_negocio_lancada_dentro_da_transacao_vira_mensagem()
+    {
+        var embrulhada = new InvalidOperationException("camada", new ErroDeNegocioException("Existem resultados para esta amostra."));
+        Assert.Equal("Existem resultados para esta amostra.", Infra.ErrosMySql.MensagemDeNegocio(embrulhada));
+        var r = await Infra.ErrosMySql.CapturarAsync<int>(() => throw new ErroDeNegocioException("Recusado pela procedure."));
+        Assert.Equal((false, "Recusado pela procedure."), (r.Sucesso, r.Mensagem));
+        Assert.Null(Infra.ErrosMySql.MensagemDeNegocio(new InvalidOperationException("técnico"))); // erro técnico continua técnico
     }
 
     [Fact]
