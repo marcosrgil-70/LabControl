@@ -721,4 +721,38 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         await Assertions.Expect(p.Locator("#nrAmostra")).ToHaveTextAsync(amostra.NrAmostra);
         Assert.Empty(s.ErrosJs);
     }
+
+    /// <summary>T25 (4.5): do recebimento para as etiquetas com a amostra marcada; impressora escolhida; quantidade; sigilo do produto.</summary>
+    [Fact]
+    public async Task Etiquetas_a_partir_do_recebimento_imprimem_na_escolhida()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var amostra = c.NovaAmostra(await c.HojeAsync());
+        c.Db.Add(amostra);
+        await c.Db.SaveChangesAsync();
+        await using var s = await app.EntrarAsync(c);
+        var p = s.Pagina;
+        var antes = app.Impressora.Enviados.Count;
+
+        await s.IrAsync($"/Amostras/Editar/{amostra.IdLabHistAmostras}");
+        await p.ClickAsync("#botaoEtiquetas");
+        await Assertions.Expect(p.Locator("#tabelaEtiquetas tbody tr")).ToHaveCountAsync(1);
+        await Assertions.Expect(p.Locator("#tabelaEtiquetas tbody input[type=checkbox]")).ToBeCheckedAsync();
+        await Assertions.Expect(p.Locator("#tabelaEtiquetas tbody input[type=number]")).ToHaveValueAsync("3");
+        await p.FillAsync("#tabelaEtiquetas tbody input[type=number]", "2");
+        await p.SelectOptionAsync("#Impressora", ImpressoraDoTeste.Argox);
+        await p.CheckAsync("#SemProduto");
+        await p.ClickAsync("#botaoImprimir");
+        Assert.Equal($"2 etiqueta(s) enviada(s) para “{ImpressoraDoTeste.Argox}”.", await s.AlertaAsync());
+
+        var (nome, _, dados) = app.Impressora.Enviados.Skip(antes).Single(e => System.Text.Encoding.Latin1.GetString(e.Dados).Contains(amostra.NrAmostra.Replace(" ", "")));
+        var texto = System.Text.Encoding.Latin1.GetString(dados);
+        Assert.Equal(ImpressoraDoTeste.Argox, nome);
+        Assert.Contains("P2\r\n", texto);
+        Assert.DoesNotContain("QUEIJO", texto); // sigilo do produto
+        // a última impressora usada volta marcada
+        await s.IrAsync("/Etiquetas");
+        await Assertions.Expect(p.Locator("#Impressora")).ToHaveValueAsync(ImpressoraDoTeste.Argox);
+        Assert.Empty(s.ErrosJs);
+    }
 }

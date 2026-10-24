@@ -50,6 +50,8 @@ builder.Services.AddScoped<LabControl.Services.Geografia.GeografiaService>();
 builder.Services.AddScoped<ProdutoService>();
 builder.Services.AddScoped<PropostaService>();
 builder.Services.AddScoped<AmostraService>();
+builder.Services.AddScoped<EtiquetaService>();
+builder.Services.AddSingleton<LabControl.Infra.IImpressoraRaw, LabControl.Infra.ImpressoraRawWindows>();
 builder.Services.AddScoped<ParametroAnaliseService>();
 builder.Services.AddScoped<LabControl.Services.Migracao.MigracaoService>();
 builder.Services.AddSingleton<LabControl.Services.Migracao.MigracaoExecutor>();

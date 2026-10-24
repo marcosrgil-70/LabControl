@@ -33,6 +33,7 @@
 - **Esforço:** S · **Depende de:** 4.3
 
 ### 4.5 T25 — Etiquetas 🟢
+> ✅ **Concluída em 23/10/2026** (exceto a impressão de teste na Argox real, que não está no computador de desenvolvimento — pendência 21) — ver [T25 › Implementação](../telas/T25-etiquetas-amostras.md#implementação-tarefa-45-23102026); aceite em `EtiquetasTests` (comandos PPLB 80 × 50 mm, Code 128, cópias, sigilo, impressão na escolhida, spooler real do Windows) + navegador `Etiquetas_a_partir_do_recebimento_imprimem_na_escolhida`.
 - **Passos:** filtros, grid com quantidade, opção sem produto; escolha da impressora de destino (lista das impressoras instaladas no servidor, a última usada já marcada); saída **PPLB em RAW** para a **Argox**, etiqueta **80 × 50 mm**, **Code 128** (dúvida 3 respondida em 23/10/2026; sem PDF); impressão de teste para confirmar o modelo, o modo PPLB/PPLA e o gap; chamada direta após gravar a amostra.
 - **Aceite:** [aceite da T25](../telas/T25-etiquetas-amostras.md#critérios-de-aceite) com leitura real pelo leitor do laboratório.
 - **Esforço:** M · **Depende de:** 4.3

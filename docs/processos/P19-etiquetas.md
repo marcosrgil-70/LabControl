@@ -19,7 +19,7 @@
 - Code 128.
 - Impressão direta, pedindo para escolher a impressora de destino.
 
-Falta confirmar na 4.5, com uma impressão de teste: o modelo da Argox e o modo da linguagem (PPLB × PPLA) e o gap entre etiquetas.
+Implementado na 4.5 (23/10/2026): `EtiquetaService.Pplb` + `IImpressoraRaw` (RAW no spooler do servidor). **Ainda falta** a impressão de teste na Argox real para confirmar o modelo, o modo PPLB e o gap, e a leitura do Code 128 pelo leitor — roteiro em [T25 › Impressão de teste](../telas/T25-etiquetas-amostras.md#impressão-de-teste-a-fazer-com-a-argox).
 
 ## Cenários de teste
 - Etiqueta lida pelo leitor do laboratório devolve exatamente o nº da amostra.

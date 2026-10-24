@@ -22,6 +22,7 @@ public sealed class AppNavegador : IAsyncLifetime
     private IPlaywright _playwright = null!;
     public IBrowser Browser { get; private set; } = null!;
     public string Url { get; private set; } = "";
+    public ImpressoraDoTeste Impressora { get; } = new();
 
     public async Task InitializeAsync()
     {
@@ -29,7 +30,11 @@ public sealed class AppNavegador : IAsyncLifetime
         {
             b.UseSetting("ConnectionStrings:LabControl", BancoTeste.ConnectionString);
             // CEP sem internet: a fonte fixa responde como o ViaCEP para 01310-100 (o resto da cadeia é a real)
-            b.ConfigureServices(s => s.AddSingleton<IFonteCep>(new CepDoTeste()));
+            b.ConfigureServices(s =>
+            {
+                s.AddSingleton<IFonteCep>(new CepDoTeste());
+                s.AddSingleton<LabControl.Infra.IImpressoraRaw>(Impressora); // etiquetas (T25) sem Argox: guarda os comandos
+            });
         });
         _app.UseKestrel(0);
         _app.StartServer();

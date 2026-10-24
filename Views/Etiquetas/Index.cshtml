@@ -1,0 +1,114 @@
+@model EtiquetaPaginaVM
+@{
+    ViewData["Title"] = "Etiquetas de Amostras";
+    var f = Model.Filtro;
+    var veioDoRecebimento = f.Amostra is not null;
+}
+
+<div class="d-flex align-items-center mb-1">
+    <h5 class="mb-0"><i class="bi bi-upc me-2 text-primary"></i>Etiquetas de Amostras</h5>
+</div>
+<p class="small text-body-secondary mb-3">Etiqueta 80 × 50 mm com Code 128 do nº da amostra, impressa direto na térmica (Argox) escolhida. Só amostras com status que permite resultado.</p>
+
+<form method="get" class="card mb-3" id="filtroEtiquetas">
+    <div class="card-body py-2 row g-2 align-items-end">
+        <div class="col-sm-4 col-lg-3">
+            <label class="form-label small mb-0" for="Cliente">Cliente (nome ou CPF/CNPJ)</label>
+            <input name="Cliente" id="Cliente" value="@f.Cliente" class="form-control form-control-sm" autofocus />
+        </div>
+        <div class="col-6 col-sm-3 col-lg-2">
+            <label class="form-label small mb-0" for="Numero">Nº da amostra</label>
+            <input name="Numero" id="Numero" value="@f.Numero" class="form-control form-control-sm font-monospace" />
+        </div>
+        <div class="col-6 col-sm-3 col-lg-2">
+            <label class="form-label small mb-0" for="APartirDe">Entrega a partir de</label>
+            <input name="APartirDe" id="APartirDe" type="date" value="@f.APartirDe?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+        </div>
+        <div class="col-auto">
+            <div class="form-check mb-1">
+                <input type="checkbox" class="form-check-input" name="SoUltima" id="SoUltima" value="true" checked="@f.SoUltima" />
+                <label class="form-check-label small" for="SoUltima">Só a última revisão</label>
+            </div>
+            <input type="hidden" name="SoUltima" value="false" />
+        </div>
+        <div class="col-auto"><button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Pesquisar</button></div>
+    </div>
+</form>
+
+@if (veioDoRecebimento)
+{
+    <div class="alert alert-info py-2 small"><i class="bi bi-info-circle me-1"></i>Amostra vinda do recebimento: já marcada com a quantidade de embalagens. <a asp-action="Index">Ver todas</a></div>
+}
+
+<form method="post" asp-action="Imprimir" id="formEtiquetas">
+    <input type="hidden" name="Cliente" value="@f.Cliente" />
+    <input type="hidden" name="Numero" value="@f.Numero" />
+    <input type="hidden" name="APartirDe" value="@f.APartirDe?.ToString("yyyy-MM-dd")" />
+    <input type="hidden" name="SoUltima" value="@(f.SoUltima ? "true" : "false")" />
+    <input type="hidden" name="Amostra" value="@f.Amostra" />
+
+    <div class="card mb-3">
+        <div class="card-body py-2 row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small mb-0" for="Impressora">Impressora de destino <span class="text-danger">*</span></label>
+                <select name="Impressora" id="Impressora" class="form-select form-select-sm" required>
+                    <option value="">—</option>
+                    @foreach (var nome in Model.Impressoras) { <option value="@nome">@nome</option> }
+                </select>
+                @if (Model.Impressoras.Count == 0) { <div class="form-text text-danger">Nenhuma impressora instalada no servidor do LabControl.</div> }
+            </div>
+            <div class="col-auto">
+                <div class="form-check mb-1">
+                    <input type="checkbox" class="form-check-input" name="SemProduto" id="SemProduto" value="true" />
+                    <label class="form-check-label small" for="SemProduto">Não imprimir o nome do produto</label>
+                </div>
+            </div>
+            <div class="col-auto ms-auto">
+                <button type="submit" class="btn btn-primary btn-sm" id="botaoImprimir"><i class="bi bi-printer me-1"></i>Imprimir etiquetas</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle mb-0" id="tabelaEtiquetas">
+                <thead>
+                    <tr>
+                        <th style="width: 2rem"><input type="checkbox" class="form-check-input" id="marcarTodas" title="Marcar/desmarcar todas" aria-label="Marcar ou desmarcar todas" /></th>
+                        <th>Amostra</th><th>Cliente</th><th>Produto</th><th>Entrega</th><th>Pedido</th><th>Fabricação</th><th>Validade</th><th style="width: 7rem">Qtde etiquetas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Itens.Count; i++)
+                    {
+                        var a = Model.Itens[i];
+                        <tr>
+                            <td>
+                                <input type="hidden" name="Itens[@i].Id" value="@a.Id" />
+                                <input type="checkbox" class="form-check-input" name="Itens[@i].Marcada" value="true" checked="@veioDoRecebimento" aria-label="Marcar @a.NrAmostra" />
+                                <input type="hidden" name="Itens[@i].Marcada" value="false" />
+                            </td>
+                            <td class="font-monospace small text-nowrap fw-semibold">@a.NrAmostra</td>
+                            <td class="small">@a.Cliente</td>
+                            <td class="small">@a.Produto</td>
+                            <td class="small text-nowrap">@a.DtEntrega.ToString("dd/MM/yyyy")</td>
+                            <td class="small font-monospace">@a.NrPedido</td>
+                            <td class="small">@a.Fabricacao</td>
+                            <td class="small">@a.Validade</td>
+                            <td><input type="number" name="Itens[@i].Quantidade" value="@Math.Clamp(a.Quantidade, 1, LabControl.Services.EtiquetaService.MaxCopias)" min="1" max="@LabControl.Services.EtiquetaService.MaxCopias" class="form-control form-control-sm text-end" aria-label="Quantidade de etiquetas de @a.NrAmostra" /></td>
+                        </tr>
+                    }
+                    @if (Model.Itens.Count == 0)
+                    {
+                        <tr><td colspan="9" class="text-center text-body-secondary small py-3">Nenhuma amostra liberada encontrada@(f.APartirDe is null ? "" : $" com entrega a partir de {f.APartirDe:dd/MM/yyyy}").</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer small py-2 text-body-secondary">@Model.Itens.Count amostra(s)@(Model.Itens.Count == 500 ? " (as 500 mais recentes — refine o filtro)" : "")</div>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/js/etiquetas.js" asp-append-version="true"></script>
+}

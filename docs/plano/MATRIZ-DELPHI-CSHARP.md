@@ -64,7 +64,7 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 | Nr. Parâmetros analisados | `un_RelParamAnalisados` | [T30-04](../telas/T30-04-rel-parametros-analisados.md) | `/Relatorios/ParametrosAnalisados` | 8 | ⬜ |
 | Tempo de duração das Análises | `un_RelTempoAnalises` | [T30-05](../telas/T30-05-rel-tempo-analises.md) | `/Relatorios/TempoAnalises` | 8 | ⬜ |
 | Produção por período | `un_RelProducao` | [T30-06](../telas/T30-06-rel-producao.md) | `/Relatorios/Producao` | 8 | ⬜ |
-| Etiqueta de Amostras | `un_EtqAmostra` + `un_EtqAmostraQtde` | [T25](../telas/T25-etiquetas-amostras.md) | `/Etiquetas` | 4 | ⬜ |
+| Etiqueta de Amostras | `un_EtqAmostra` + `un_EtqAmostraQtde` | [T25](../telas/T25-etiquetas-amostras.md) | `/Etiquetas` | 4 | 🟨 pronta (4.5); falta a impressão de teste na Argox |
 
 ## Utilitários e sistema
 | Menu Delphi | Unit Delphi | MD v2 | Rota v2 | Fase | Situação |

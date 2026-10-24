@@ -278,6 +278,7 @@ else if (Model.TemResultado)
         @if (!inclusao)
         {
             <a asp-action="Comprovante" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-secondary" lc-permissao="AMOSTRAS.IMPRIMIR"><i class="bi bi-printer me-1"></i>Comprovante</a>
+            <a asp-controller="Etiquetas" asp-action="Index" asp-route-Amostra="@Model.Id" class="btn btn-outline-secondary" lc-permissao="ETIQUETAS.IMPRIMIR" id="botaoEtiquetas"><i class="bi bi-upc me-1"></i>Etiquetas</a>
             @if (Model.UltimaRevisao && Model.TemResultado)
             {
                 <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalRevisao" lc-permissao="AMOSTRAS.REVISAR"><i class="bi bi-files me-1"></i>Gerar revisão</button>
