@@ -14,7 +14,7 @@
 - **Esforço:** G
 
 ### 3.2 T13 — Profissionais
-> ✅ **Antecipada e concluída em 20/10/2026** — ver [T13 › Implementação](../telas/T13-profissionais.md#implementação-antecipada-em-20102026--pedido-do-usuário); falta só a assinatura no PDF do boletim (5.3/5.4).
+> ✅ **Antecipada e concluída em 20/10/2026** — ver [T13 › Implementação](../telas/T13-profissionais.md#implementação-antecipada-em-20102026--pedido-do-usuário); a assinatura no PDF do boletim emitido foi feita na 5.3 (27/10/2026).
 - **Passos:** entidade PF com `TIPO_FUNCIONARIO` + `ENTIDADES_FUNCIONARIOS` (cargo, registro/UF, assina boletim, executa análise, assinatura PNG ≤ 300 KB com SHA-256); campo "Usuário do sistema" (serviço único da 1.3); abas de e-mail/telefone reaproveitadas da T12.
 - **Aceite:** [aceite da T13](../telas/T13-profissionais.md#aceite).
 - **Esforço:** M · **Depende de:** 3.1

@@ -28,14 +28,25 @@
 - **Esforço:** G · **Depende de:** 5.2
 
 ### 5.4 Layout do PDF do boletim (QuestPDF) 🔵
-> Pendente da T03 (1.5): o **logo da empresa** (`EMPRESAS.LOGO`, servido por `EmpresaService.LogoAsync`) e o nº de acreditação no cabeçalho — último item do aceite da T03.
-- **Passos:** reproduzir o layout do `frxRboletin` com os dados do [P16](../processos/P16-montagem-boletim.md#layout-do-pdf-dados-do-qry_impbolet-do-legado); expoente sobrescrito; coluna de especificação condicional; acreditação; assinaturas só no emitido; 2ª via de boletim migrado. Validar **lado a lado** com 3 boletins reais do legado (pedir PDFs/papel — dúvida 5).
-- **Aceite:** usuário aprova o layout.
-- **Esforço:** M · **Depende de:** 5.3
+> **Situação (27/10/2026):** a 5.3 já entrega o PDF com **todas as seções e os dados certos** — logo e nº de acreditação no cabeçalho (pendências 8 da T03 e 9 da T13 feitas), expoente sobrescrito, coluna de especificação só se houver, "(*)" nos acreditados, assinaturas só no emitido, 2ª via do migrado, prévia com marca d'água. Falta **o visual igual ao do laboratório**, que depende dos modelos reais (dúvida 5, pendência 25).
+- **Antes de começar:** os **3 boletins reais** (PDF ou foto do papel) numa pasta **fora do repositório** (ex.: `C:\Project\Modelos\`; têm dados de clientes): um com resultado numérico com expoente, um descritivo, um com revisão ou dois responsáveis.
+- **Como fazer:**
+  1. Ler o layout do legado: o relatório `frxRboletin` está **dentro do `un_CadBoletim.dfm`** (`C:\Project\Laboratorio\LabControl`, objetos `TfrxMemoView` — posições, fontes, textos fixos e a ordem das bandas). Anotar no P16 os textos fixos que o laudo do legado imprime (títulos, frases legais) — **não inventar texto legal**: o que for da empresa vai em `EMPRESAS.CABECALHO_LAUDO`/`RODAPE_LAUDO` (T03).
+  2. Para cada modelo, achar o boletim migrado correspondente (mesmo código) e gerar a 2ª via (`/Boletins/Imprimir/{id}`) no `labcontrol_migracao` recriado (pendência 26); comparar lado a lado.
+  3. Ajustar só `Services/Boletins/BoletimPdf.cs` (o `BoletimDocumento` já tem os dados; se faltar algum, acrescentar no `BoletimService.DocumentoAsync`): margens, fontes/tamanhos, ordem dos blocos, larguras das colunas, rótulos, posição do logo e das assinaturas, quebra de página da tabela (cabeçalho repetido), rodapé.
+  4. Gerar os PDFs de exemplo para o usuário aprovar: copiar a prévia e o emitido do `BoletinsTests` para o scratchpad (como feito na 5.3) ou pela tela; abrir e conferir.
+  5. Se o usuário pedir uma mudança que altere o que já foi emitido: boletim emitido **nunca** é regerado (o arquivo gravado é o oficial); vale só para as próximas emissões e para a 2ª via dos migrados.
+- **Aceite:** usuário aprova o layout com os 3 modelos.
+- **Esforço:** M · **Depende de:** 5.3 e dos modelos do laboratório
 
 ### 5.5 Testes de aceite + revisão
-Cenários P14–P18 automatizados; cascata completa amostra → resultado → boletim (roteiro 12 §7 itens 6–9); `/code-review high`.
-
+- **Como fazer:**
+  1. **Pendência 23** primeiro (pedidos concluídos na migração): é a última peça da migração parte 3; rodar `MigracaoTests` depois.
+  2. **`AceiteFase5Tests`** (como o `AceiteFase4Tests`): os cenários do P14–P18 que ainda não têm teste e a **cascata completa** do roteiro 12 §7 itens 6–9 pela aplicação — amostra → resultado → boletim emitido → revisão da **amostra** (gera resultado e boletim novos não emitidos, apontando para os novos) → editar → emitir de novo → desfazer onde permitido. Incluir: boletim migrado com 2 boletins para o mesmo resultado (120 casos) revisando sem erro (P18) e "Alterar a amostra com boletim emitido" recusado (P17).
+  3. Teste manual guiado com o laboratório, como a pendência 22 da Fase 4: lançar resultados e emitir 3 boletins reais.
+  4. **`/code-review high`** de `9159f42^..HEAD` (5.1–5.5); corrigir os achados ou registrar como pendência com dono.
+  5. `/concluir-tarefa 5.5` — checklists, Definição de pronto abaixo, Diário, commit + push. Lembrar `/simplify` (fase grande).
+- **Esforço:** M
 ## Definição de pronto
-- [ ] Boletim emitido imutável (banco) e reimpressão idêntica (hash).
-- [ ] Revisões em cascata corretas; histórico migrado congelado.
+- [x] Boletim emitido imutável (banco) e reimpressão idêntica (hash). — 5.3 (`BoletinsTests`)
+- [ ] Revisões em cascata corretas (resultado e boletim ✅ na 5.2/5.3; cascata a partir da amostra na 5.5); histórico migrado congelado ✅ (5.1).

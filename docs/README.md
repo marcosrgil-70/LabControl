@@ -7,16 +7,22 @@ Migração do sistema **Delphi 7 + Firebird 2.5** (`C:\Project\Laboratorio`) par
 2. [plano/](plano/) — uma página detalhada por fase ([F0](plano/F0-fundacao.md) · [F1](plano/F1-login-permissoes.md) · [F2](plano/F2-cadastros-basicos.md) · [F3](plano/F3-cadastros.md) · [F4](plano/F4-recebimento-amostras.md) · [F5](plano/F5-resultados-boletim.md) · [F6](plano/F6-propostas-pedidos.md) · [F7](plano/F7-estoque-arquivo.md) · [F8](plano/F8-relatorios-complementos.md) · [F9](plano/F9-homologacao-virada.md)) e a [matriz Delphi → C#](plano/MATRIZ-DELPHI-CSHARP.md).
 3. [01-ARQUITETURA-V2.md](01-ARQUITETURA-V2.md) — stack, multiempresa, segurança, padrões de UI e de código.
 
-## Situação atual (24/10/2026)
-- **Feito:** Fases 0 a 4. Fundação, login/permissões/multiempresa, cadastros básicos e principais, migração M-01…M-15 (todas as conferências verdes contra o legado real), proposta essencial, **recebimento de amostras**, pesquisa de amostras e etiquetas. Suíte de testes: 220/220.
+## Situação atual (27/10/2026)
+- **Feito:**
+  - Fases 0 a 4: fundação, login/permissões/multiempresa, cadastros básicos e principais, proposta essencial, **recebimento de amostras**, pesquisa de amostras e etiquetas;
+  - Fase 5, tarefas 5.1 a 5.3:
+    - **migração completa M-01…M-18** (resultados e boletins do legado; boletins entram emitidos e congelados);
+    - **T26 Resultados** (fila de análises, lançamento por teste, prévia como no boletim, revisão/desfazer);
+    - **T27 Boletim** (montagem, prévia, **emissão em PDF com SHA-256** numa pasta do servidor, reimpressão conferida, 2ª via do migrado, revisão/desfazer).
+  - Suíte de testes: 238/238.
+- **Decisões recentes do usuário (27/10/2026):** QuestPDF; PDFs numa pasta do servidor (`Boletins:Pasta`); layout do boletim a partir do Delphi, validado com 3 boletins reais na 5.4; dados inconsistentes do legado corrigidos na migração (datas invertidas → início = resultado; boletim na amostra vizinha → amostra do resultado).
 - **A fazer:**
-  - Fase 5: migração parte 3 (resultados, boletins, sequências), resultados, boletim com PDF + hash;
-  - Fase 6: proposta completa e pedido de venda;
+  - Fase 5: 5.4 layout do PDF com os boletins reais (aguarda os modelos do laboratório), 5.5 aceite + `/code-review high` (com a pendência 23, pedidos concluídos na migração) — passo a passo em [F5](plano/F5-resultados-boletim.md);
+  - Fase 6: proposta completa e pedido de venda (com a pendência 24, conclusão automática do pedido na emissão);
   - Fase 7: movimentação e localização;
   - Fase 8: relatórios, auditoria, e-mail;
-  - Fase 9: homologação e virada.
-- **Pendências abertas e dúvidas:** [00-PLANO-EXECUCAO.md › Pendências registradas](00-PLANO-EXECUCAO.md#pendências-registradas-a-executar) e [§7 Dúvidas](00-PLANO-EXECUCAO.md#7-dúvidas-em-aberto-perguntar-ao-usuário-quando-chegar-a-hora). As que dependem do laboratório: impressão de teste na Argox (21) e teste manual guiado da Fase 4 (22).
-
+  - Fase 9: homologação e virada (pendência 27: pasta dos boletins no backup).
+- **Pendências abertas e dúvidas:** [00-PLANO-EXECUCAO.md › Pendências registradas](00-PLANO-EXECUCAO.md#pendências-registradas-a-executar) e [§7 Dúvidas](00-PLANO-EXECUCAO.md#7-dúvidas-em-aberto-perguntar-ao-usuário-quando-chegar-a-hora). As que dependem do laboratório: impressão de teste na Argox (21), teste manual guiado da Fase 4 (22) e os 3 boletins reais (25).
 ## Organização
 | Pasta | Conteúdo | Quantidade |
 |---|---|---|
@@ -49,7 +55,7 @@ Legenda: ⚠️ particularidades · ⚠️⚠️ crítica.
 | 1 | [T04 Perfis e permissões](telas/T04-perfis-permissoes.md) | `SYS_*_ACESSOS` / `unClassAcessos` | ✅ |
 | 1 | [T05 Parâmetros da empresa](telas/T05-parametros-empresa.md) | `un_Parametros` | ✅ |
 | 8 | [T06 Auditoria](telas/T06-auditoria.md) | — (nova) | ⬜ 8.4 |
-| 3–9 | [T07 Migração de dados](telas/T07-migracao.md) | — (nova) | 🟨 M-01…M-15; parte 3 na 5.1 |
+| 3–9 | [T07 Migração de dados](telas/T07-migracao.md) | — (nova) | ✅ M-01…M-18 (3.5, 4.1, 5.1) |
 | 2 | [T10-00 Padrão dos auxiliares](telas/T10-00-crud-auxiliares.md) + [T10-01 … T10-20](telas/T10-00-crud-auxiliares.md#lista-dos-auxiliares) | `un_CadastroBasico` + 20 forms | ✅ |
 | 2 | [T11-01 Países](telas/T11-01-paises.md) · [T11-02 Estados](telas/T11-02-estados.md) · [T11-03 Cidades](telas/T11-03-cidades.md) · [T11-04 Bairros/Logradouros (descontinuados)](telas/T11-04-bairros-logradouros.md) | `un_Paises`, `un_Estados`, `un_Cidades`, `un_Bairros`, `un_Logradouros` | ✅ (T11-04 ⛔) |
 | 3 | [T12 Clientes/fornecedores](telas/T12-clientes.md) | `un_Entidades` | ✅ |
@@ -62,10 +68,10 @@ Legenda: ⚠️ particularidades · ⚠️⚠️ crítica.
 | 7 | [T23 Movimentação de amostras](telas/T23-movimentacao-amostras.md) | `un_MovimentacaoAmostras` | ⬜ 7.1 |
 | 7 | [T24 Localização das amostras](telas/T24-localizacao-amostras.md) | `un_LocalAmostra` | ⬜ 7.2 |
 | 4 | [T25 Etiquetas de amostras](telas/T25-etiquetas-amostras.md) | `un_EtqAmostra` | 🟨 4.5; falta a impressão de teste na Argox |
-| 5 | [T26 **Resultados** ⚠️](telas/T26-resultados.md) | `un_Resultados` | ⬜ 5.2 |
-| 5 | [T27 **Boletim** ⚠️⚠️](telas/T27-boletim.md) | `un_CadBoletim` | ⬜ 5.3/5.4 |
+| 5 | [T26 **Resultados** ⚠️](telas/T26-resultados.md) | `un_Resultados` | ✅ 5.2 |
+| 5 | [T27 **Boletim** ⚠️⚠️](telas/T27-boletim.md) | `un_CadBoletim` | 🟨 5.3 pronta; layout com boletins reais na 5.4 |
 | 8 | [T28 Relatório de ensaio](telas/T28-relatorio-ensaio.md) | `un_Relatorio_Ensaio` | ⬜ 8.2 (se confirmada) |
-| 4 | [T29 Pesquisa de amostras](telas/T29-pesquisa-amostras.md) | `un_Lab_Hist_Amostras_Pesq` | ✅ 4.4 |
+| 4 | [T29 Pesquisa de amostras](telas/T29-pesquisa-amostras.md) | `un_Lab_Hist_Amostras_Pesq` | ✅ 4.4 (usada também pela T26/T27) |
 | 8 | [T30-00 Padrão dos relatórios](telas/T30-00-relatorios-padrao.md) + [T30-01 Faturamento](telas/T30-01-rel-faturamento.md) · [T30-02 Amostras por período](telas/T30-02-rel-amostras-periodo.md) · [T30-03 Amostras por cliente](telas/T30-03-rel-amostras-cliente.md) · [T30-04 Parâmetros analisados](telas/T30-04-rel-parametros-analisados.md) · [T30-05 Tempo das análises](telas/T30-05-rel-tempo-analises.md) · [T30-06 Produção](telas/T30-06-rel-producao.md) | `un_RelatorioBasico` + 6 relatórios | ⬜ 8.1 |
 
 ## Processos e regras

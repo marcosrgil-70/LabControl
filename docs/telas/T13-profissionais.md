@@ -32,7 +32,7 @@
 ## Aceite
 - [x] Profissional com "Assina boletim" exige registro.
 - [x] Vincular usuário pela tela do profissional e pela tela de usuários dá o mesmo resultado (mesmo `VinculoUsuarioProfissionalService`).
-- [ ] Assinatura aparece só no PDF emitido — **na 5.3/5.4** (a imagem PNG ≤ 300 KB e o SHA-256 já são gravados e exibidos na tela).
+- [x] Assinatura aparece só no PDF emitido — feito na 5.3 (27/10/2026): `BoletimPdf` imprime a assinatura dos responsáveis só no boletim emitido, nunca na prévia; imagem inválida sai sem ela, com log.
 - [x] Vários endereços, telefones e e-mails tipados (mesmo componente da T12/T03).
 
 ## Implementação (antecipada em 20/10/2026 — pedido do usuário)
@@ -41,6 +41,6 @@
 - **Usuário do sistema**: combo com os usuários da empresa sem profissional (+ o já vinculado); trocar o usuário desfaz o vínculo anterior; **profissional inativo fica sem usuário**. Excluir: só sem movimento e sem usuário vinculado; se também for cliente/fornecedor, só inativar.
 - Testes: `CadastrosEntidadesTests.Profissional_registro_assinatura_e_vinculo_com_usuario`, `CadastrosTelasTests`. Processo: [P25](../processos/P25-cadastro-entidades-contatos.md).
 
-**Status:** ✅ concluída em 20/10/2026 (antecipada da tarefa 3.2) — falta a assinatura no PDF do boletim (5.3/5.4).
+**Status:** ✅ concluída em 20/10/2026 (antecipada da tarefa 3.2); assinatura no PDF do boletim emitido feita na 5.3 (27/10/2026).
 
 > **Teste no navegador (20/10/2026, [P26](../processos/P26-testes-ponta-a-ponta.md)):** `Profissional_crud_com_registro_e_contatos` — recusa sem registro, registro CRQ/UF, e-mail, alterar, pesquisar, excluir. Lista com botões com texto e aviso de inativos ocultos.

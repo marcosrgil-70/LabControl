@@ -42,3 +42,6 @@ A tela mostra a **prévia** com o texto relido do banco após gravar.
 - Descritivo ⇒ texto do tipo; campos numéricos limpos.
 - Teste de outra amostra → "O parâmetro não pertence à amostra do resultado."; resultado duplicado para o mesmo teste → violação de `UQ_RESPAR_TESTE` (mensagem amigável).
 - Valor "3,5,1" ou "abc" recusado na tela.
+
+## Implementação (tarefa 5.2, 27/10/2026)
+Tela [T26](../telas/T26-resultados.md#implementação-tarefa-52-27102026): `ResultadosController` + `ResultadoService`. Todos os cenários acima cobertos por `ResultadosTests` (e o navegador `Resultado_lanca_todos_com_previa_e_exclui_parametro`). O texto do banco (`1,0e2`) é exibido como no boletim (`1,0 × 10²`) por `Infra/ResultadoTexto.cs`, o mesmo usado no PDF. **Status:** ✅

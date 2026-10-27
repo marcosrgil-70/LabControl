@@ -29,3 +29,6 @@ Também criada por [P11](P11-revisao-amostra.md) (revisão da amostra) e [P15](P
 - Desfazer revisão emitida → "Este boletim foi emitido. Não é permitido alterar ou excluir."
 - Resultado revisado depois do boletim → revisão do boletim aponta para o resultado novo.
 - Boletim migrado com 2 boletins para o mesmo resultado (120 casos) revisa sem erro.
+
+## Implementação (tarefa 5.3, 27/10/2026)
+`BoletimService.GerarRevisaoAsync`/`DesfazerRevisaoAsync` pelas procedures; a tela abre a revisão nova (não emitida) ou a anterior ao desfazer. Cobertos em `BoletinsTests.Revisao_nasce_nao_emitida…`: revisão de emitido, resultado revisado depois (aponta para o vigente), mesmos parâmetros, desfazer não emitida e recusa da emitida. O caso "migrado com 2 boletins para o mesmo resultado" fica para o `AceiteFase5Tests` (5.5). **Status:** ✅

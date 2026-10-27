@@ -8,7 +8,7 @@
 | Dados | EF Core 9 + Pomelo MySQL; **sem migrations EF**: o schema é dos scripts `Scripts/v2/*.sql` (fonte da verdade) |
 | Banco | MySQL 8.0, banco `labcontrol_v2` |
 | Autenticação | Cookie Authentication (não mais sessão "manual"); senha PBKDF2 (`PasswordHasher<Usuario>`) |
-| Impressão | **Comprovante de recebimento:** página de impressão (decisão do usuário, 4.3). **Etiquetas:** comandos PPLB em RAW para a térmica Argox pelo spooler do servidor (`Infra/ImpressoraRaw.cs`, 4.5). **Boletim, proposta, pedido:** PDF gerado no servidor — biblioteca escolhida na 5.3 (o boletim precisa de hash do PDF); QuestPDF é candidata (licença Community só abaixo de US$ 1 mi/ano) |
+| Impressão | **Comprovante de recebimento:** página de impressão (decisão do usuário, 4.3). **Etiquetas:** comandos PPLB em RAW para a térmica Argox pelo spooler do servidor (`Infra/ImpressoraRaw.cs`, 4.5). **Boletim, proposta, pedido:** PDF gerado no servidor com **QuestPDF** (decisão do usuário, 27/10/2026; licença Community só abaixo de US$ 1 mi/ano, definida em `Services/Boletins/BoletimPdf.cs`). O boletim **emitido** é gravado numa pasta do servidor (`Boletins:Pasta`, `Infra/ArmazemBoletins.cs`) com o SHA-256 no banco; a reimpressão confere o hash (5.3) |
 | Testes | xUnit + banco MySQL de teste recriado pelos scripts (`labcontrol_teste`) + Playwright (Edge sem janela) para as telas ([P26](processos/P26-testes-ponta-a-ponta.md)) |
 
 ## 2. Estrutura de pastas (alvo)
@@ -62,7 +62,7 @@ O `AmostraService`, quando o usuário confirmou a data retroativa **e** tem `AMO
 | Botão "+" ao lado do lookup (cadastro rápido de método/idioma/prazo/tipo de resultado) | modal de cadastro rápido que devolve o novo item ao combo |
 | Mensagem `Atencao(...)` | validação no servidor (ModelState) + `TempData` + mensagens das triggers (SQLSTATE 45000) exibidas ao usuário |
 | Cores de status | badge com `COR` do status |
-| Impressão FastReport | página de impressão (comprovante) ou PDF gerado no servidor (boletim, 5.3), aberto em nova aba; etiquetas direto na térmica |
+| Impressão FastReport | página de impressão (comprovante) ou PDF gerado no servidor com QuestPDF (boletim, 5.3; proposta e pedido na Fase 6), aberto em nova aba; etiquetas direto na térmica |
 | Texto rico (TRichEdit/RTF) | editor simples (negrito, itálico, sublinhado, lista) gravando HTML limpo por `HtmlSimples`; o RTF do legado é convertido na migração |
 
 Erros SQLSTATE `45000` das triggers/procedures são **mensagens de negócio**: o `ErrosMySql.CapturarAsync` converte em `Resultado` (também a `ErroDeNegocioException`, usada para desfazer a transação quando uma procedure já recusou) e a tela mostra a mensagem.

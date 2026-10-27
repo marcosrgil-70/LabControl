@@ -33,3 +33,6 @@ Cabeçalho da empresa (logo, endereço, nº de acreditação se `FN_ACREDITADO` 
 - Ordem escolhida respeitada no PDF.
 - Parâmetro de outro resultado → "O parâmetro não pertence ao resultado do boletim."
 - Validar o PDF lado a lado com um boletim real do legado (fase 5.4).
+
+## Implementação (tarefa 5.3, 27/10/2026)
+Tela [T27](../telas/T27-boletim.md#implementação-tarefa-53-27102026): `BoletinsController` + `BoletimService`. Na inclusão, cabeçalho + parâmetros marcados numa transação; depois "Concluir seleção", ▲/▼ (ordem 1..n), "Retirar" e "Atualizar textos". Texto congelado pela **mesma regra do `PR_REVISAO_BOLETIM`** (numérico → `RESULTADO_CONCAT`, descritivo → `TIPO_RESULTADO_DESC`, unidade, especificação, acreditado). PDF em `Services/Boletins/BoletimPdf.cs` com todas as seções do layout acima; no PDF a unidade sai do texto do resultado e vai para a coluna própria. Cenários em `BoletinsTests`. **Status:** ✅ montagem; 🟨 layout lado a lado com boletins reais na 5.4.

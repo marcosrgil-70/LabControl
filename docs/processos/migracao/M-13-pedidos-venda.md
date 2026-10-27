@@ -31,9 +31,9 @@
 - `Services/Migracao/Etapas/M13PedidosVenda.cs`.
 - INSERT direto em lote preservando `NR_PEDIDO`; 3.318 itens (produtos da revisão do pedido, valor = Σ das análises).
 - Sequência `PEDIDO_VENDA` = 1.471 (maior número).
-- **`SITUACAO`:** sem amostras → `ABERTO`, senão `EM_EXECUCAO`. O `CONCLUIDO` (todas as amostras com boletim) fica para a M-17 (5.1).
+- **`SITUACAO`:** sem amostras → `ABERTO`, senão `EM_EXECUCAO`. O `CONCLUIDO` (todas as amostras com boletim) ficou para a M-17, mas **a 5.1 não fez**: está na **pendência 23** (fazer na 5.5 — como fazer no plano).
 - **Legado real:**
   - a proposta 1189 tinha os pedidos 553 e 554 em revisões diferentes → fica o 554 (maior revisão); as amostras do 553 apontam para ele;
   - 20 pedidos sem data de autorização → data da solicitação.
 
-**Status:** ✅ implementada na tarefa 4.1 (23/10/2026); `SITUACAO = CONCLUIDO` na 5.1.
+**Status:** ✅ implementada na tarefa 4.1 (23/10/2026); `SITUACAO = CONCLUIDO` pendente (pendência 23, 5.5).
