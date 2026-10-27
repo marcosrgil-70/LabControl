@@ -109,6 +109,20 @@ public sealed class Cenario : IAsyncDisposable
     /// <summary>Amostra de hoje + testes + resultado (2 parâmetros) + boletim com 1 parâmetro, como no roteiro 12 §7.</summary>
     public async Task<(LabHistAmostra Amostra, LabResultadoAnalise Resultado, LabBoletimAnalise Boletim)> AmostraComBoletimAsync(DateOnly hoje)
     {
+        var (amo, res, rp1, _) = await AmostraComResultadoAsync(hoje);
+        var bol = new LabBoletimAnalise { IdLabHistAmostras = amo.IdLabHistAmostras, IdLabResultadosAnalises = res.IdLabResultadosAnalises,
+            IdEntidadesFuncGer = Ativa.ProfissionalId!.Value, IdEntidadesFuncResp = Ativa.ProfissionalId!.Value };
+        Db.Add(bol);
+        await Db.SaveChangesAsync();
+        Db.Add(new LabBoletimParametro { IdLabBoletimAnalises = bol.IdLabBoletimAnalises, IdLabResultadosParam = rp1.IdLabResultadosParam,
+            Ordem = 1, DescParametro = "CONT. TOTAL", ResultadoConcat = rp1.ResultadoFormatado, Acreditado = true });
+        await Db.SaveChangesAsync();
+        return (amo, res, bol);
+    }
+
+    /// <summary>Amostra de hoje + testes + resultado: numérico acreditado (&lt; 1,0e2 UFC/g) e descritivo (Ausência em 25 g).</summary>
+    public async Task<(LabHistAmostra Amostra, LabResultadoAnalise Resultado, LabResultadoParam Numerico, LabResultadoParam Descritivo)> AmostraComResultadoAsync(DateOnly hoje)
+    {
         var amo = NovaAmostra(hoje);
         Db.Add(amo);
         await Db.SaveChangesAsync();
@@ -126,14 +140,6 @@ public sealed class Cenario : IAsyncDisposable
             DtInicial = hoje, DtResultado = hoje, TipoResultado = false, IdLabTiposResultados = Ausencia.IdLabTiposResultados };
         Db.AddRange(rp1, rp2);
         await Db.SaveChangesAsync();
-
-        var bol = new LabBoletimAnalise { IdLabHistAmostras = amo.IdLabHistAmostras, IdLabResultadosAnalises = res.IdLabResultadosAnalises,
-            IdEntidadesFuncGer = Ativa.ProfissionalId!.Value, IdEntidadesFuncResp = Ativa.ProfissionalId!.Value };
-        Db.Add(bol);
-        await Db.SaveChangesAsync();
-        Db.Add(new LabBoletimParametro { IdLabBoletimAnalises = bol.IdLabBoletimAnalises, IdLabResultadosParam = rp1.IdLabResultadosParam,
-            Ordem = 1, DescParametro = "CONT. TOTAL", ResultadoConcat = rp1.ResultadoFormatado, Acreditado = true });
-        await Db.SaveChangesAsync();
-        return (amo, res, bol);
+        return (amo, res, rp1, rp2);
     }
 }

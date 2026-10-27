@@ -47,7 +47,7 @@ Dois grids lado a lado (Delphi `grd_ParamResult` → `grd_ParamBoletim`):
 
 ## 5. Emissão (novo — no legado nunca funcionou)
 1. "Visualizar" gera o PDF de prévia com marca d'água **"PRÉVIA — NÃO VÁLIDO"**, sem assinaturas.
-2. **"Emitir"** (`BOLETINS.EMITIR`): gera o PDF definitivo (com logo, rodapé e assinaturas), salva em `storage/boletins/{empresa}/{ano}/{COD_BOLETIM} R{rev}.pdf`, calcula SHA-256 e chama `SP_EMITIR_BOLETIM(id, profissional, arquivo, hash)`.
+2. **"Emitir"** (`BOLETINS.EMITIR`): gera o PDF definitivo (com logo, rodapé e assinaturas), salva em `{Boletins:Pasta}/{empresa}/{ano}/{COD_BOLETIM com "/"→"-"} R{rev}.pdf` (padrão `storage/boletins`), calcula SHA-256 e chama `SP_EMITIR_BOLETIM(id, profissional, arquivo, hash)`.
 3. Boletim emitido: **somente leitura** (o banco bloqueia alterar/excluir boletim, parâmetros e o resultado vinculado). Reimpressões usam **o PDF gravado**.
 4. Para corrigir: **Criar revisão** (motivo) → `SP_GERAR_REVISAO_BOLETIM` → revisão nova não emitida, com os mesmos parâmetros escolhidos, apontando para o resultado vigente.
 5. "Desfazer revisão" só para revisão não emitida (`SP_EXCLUIR_REVISAO_BOLETIM`).
@@ -65,10 +65,24 @@ Filtros: cliente (filtra as amostras), amostra, "exibir a partir de" (−365 dia
 - Boletim nunca era marcado como emitido ⇒ nada ficava protegido.
 
 ## Aceite
-- [ ] Só parâmetros marcados vão para o boletim, na ordem escolhida.
-- [ ] Metodologias acreditadas/não acreditadas preenchidas automaticamente.
-- [ ] Emitir exige Responsável 1 e gera PDF com hash; depois disso nada é alterável.
-- [ ] Revisão nasce não emitida, com o resultado vigente e os mesmos parâmetros.
-- [ ] Impressão de boletim emitido reproduz exatamente o PDF gravado.
+- [x] Só parâmetros marcados vão para o boletim, na ordem escolhida. — `BoletinsTests.Monta_so_os_marcados…` + navegador `Boletim_monta_reordena_visualiza_e_emite`
+- [x] Metodologias acreditadas/não acreditadas preenchidas automaticamente. — mesmo teste (`CONT. TOTAL: ISO 4833` / `SALMONELLA: ISO 6579`)
+- [x] Emitir exige Responsável 1 e gera PDF com hash; depois disso nada é alterável. — `BoletinsTests.Emite_com_pdf_e_hash…` (parâmetros, exclusão, resultado vinculado e UPDATE direto recusados; só o status muda)
+- [x] Revisão nasce não emitida, com o resultado vigente e os mesmos parâmetros. — `BoletinsTests.Revisao_nasce_nao_emitida…`
+- [x] Impressão de boletim emitido reproduz exatamente o PDF gravado. — `BoletinsTests.Emite_com_pdf_e_hash…` (byte a byte; adulterado ou ausente → alerta de integridade)
 
-**Status:** ⬜ — tarefas 5.3 e 5.4 (PDF do boletim com hash: a biblioteca de PDF é escolhida aqui — decisão adiada na 4.3).
+## Implementação (tarefa 5.3, 27/10/2026)
+- **Decisões do usuário (27/10/2026):** QuestPDF (dúvida 10); PDFs numa pasta do servidor por empresa/ano (dúvida 6); layout a partir do `frxRboletin`, validado com boletins reais na 5.4 (dúvida 5).
+- **Arquivos:** `Controllers/BoletinsController.cs`, `Services/BoletimService.cs`, `Services/Boletins/BoletimPdf.cs` (`BoletimDocumento` + layout QuestPDF; licença Community definida aqui), `Infra/ArmazemBoletins.cs`, `ViewModels/BoletimVM.cs`, `Views/Boletins/Index.cshtml`, `Form.cshtml`, `_Disponiveis.cshtml`, `wwwroot/js/boletins.js`. Pacote `QuestPDF 2026.9.1`.
+- **Consulta** (`VW_LAB_BOLETINS`: cliente, amostra/boletim, a partir de, emitido sim/não, só última revisão). **Novo boletim** pelo componente T29 (`data-url="/Boletins/Pesquisa"`, permissão `BOLETINS.CONSULTAR`, só última revisão com resultado, 400 dias); `/Boletins/Amostra/{id}` abre o boletim vigente da amostra física, se existe.
+- **Montagem:** na inclusão, cabeçalho + parâmetros marcados numa transação (gerador = profissional do usuário; código pela trigger). Depois: "Concluir seleção" (grid da esquerda = `VW_LAB_RESULTADOS` do resultado vinculado, fora do boletim), ▲/▼ (ordem renumerada 1..n; novos no fim, acreditados primeiro), "Retirar", "Atualizar textos". Texto congelado com a mesma regra do `PR_REVISAO_BOLETIM`. Textos sugeridos: observação da verificação, `FN_OBS_METODOS(amostra, 1/0)`, `TEXTO_PADRAO_LEGENDA`.
+- **Responsáveis:** profissionais com `ASSINA_BOLETIM`; diferentes entre si; 2º exigido para emitir se `EXIGE_RESP2_BOLETIM`.
+- **PDF:** cabeçalho da empresa (logo, CNPJ, endereço, `CABECALHO_LAUDO`, nº de acreditação se `FN_ACREDITADO ≥ 1`), boletim nº + revisão, cliente, endereço do laudo, contato, proposta, pedido, amostra (lote, fabricação/validade parciais, recebimento, coletor/coleta, observação), período de análise, tabela na ordem (expoente sobrescrito; a unidade sai da coluna do resultado para a própria; especificação só se houver; acreditados com "(*)"), metodologias, observações, legenda, cidade e data, responsáveis com assinatura (**só no emitido**), rodapé (`RODAPE_LAUDO`, código e página). Imagem inválida (logo/assinatura) não derruba a emissão: sai sem ela e vai para o log.
+- **Prévia** ("Visualizar"): marca d'água "PRÉVIA — NÃO VÁLIDO", sem assinaturas, nada gravado.
+- **Emissão:** valida (responsáveis, parâmetros, profissional) → PDF definitivo → arquivo em `Boletins:Pasta` (`storage/boletins`, fora do git) como `{empresa}/{ano}/{código} R{rev}.pdf` → SHA-256 → `SP_EMITIR_BOLETIM`; se a procedure falhar, o arquivo é apagado.
+- **Depois de emitido:** só o status muda ("Gravar status"); "Imprimir" devolve o arquivo gravado conferido pelo hash (divergente ou ausente → **alerta de integridade** + log); boletim migrado (sem arquivo) imprime "2ª via" gerada dos dados, sem gravar.
+- **Revisão / desfazer** pelas procedures (motivo obrigatório; desfazer só não emitida).
+- **Testes:** `BoletinsTests` (7) e navegador `Boletim_monta_reordena_visualiza_e_emite`.
+- **Para a 5.4:** comparar com 3 boletins reais (dúvida 5) e ajustar o visual; o rodapé não tem frase fixa — o texto legal é o `RODAPE_LAUDO` da empresa.
+
+**Status:** ✅ concluída na tarefa 5.3 (27/10/2026); layout validado com boletins reais na 5.4.

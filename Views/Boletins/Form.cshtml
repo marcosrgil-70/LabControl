@@ -1,0 +1,243 @@
+@model BoletimVM
+@inject IEmpresaContexto Usuario
+@using Microsoft.AspNetCore.Html
+@{
+    var inclusao = Model.Id == 0;
+    var emitido = Model.DhEmissao is not null;
+    ViewData["Title"] = inclusao ? $"Novo boletim — {Model.NrAmostra}" : $"Boletim {Model.CodBoletim}";
+    var podeGravar = Usuario.TemPermissao(inclusao ? "BOLETINS.INCLUIR" : "BOLETINS.ALTERAR") && Model.UltimaRevisao;
+    var editavel = podeGravar && !emitido;          // tudo
+    var soStatus = podeGravar && emitido;           // emitido: o banco só deixa mudar o status
+    var o = Model.Opcoes;
+}
+@functions {
+    static IHtmlContent Previa(string? formatado)
+    {
+        var p = LabControl.Infra.ResultadoTexto.Partes(formatado);
+        if (p is null) return HtmlString.Empty;
+        var e = System.Text.Encodings.Web.HtmlEncoder.Default;
+        return new HtmlString(p.Expoente is null ? e.Encode(p.Antes) : $"{e.Encode(p.Antes)} × 10<sup>{e.Encode(p.Expoente)}</sup>{e.Encode(p.Depois)}");
+    }
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-2">
+        <li class="breadcrumb-item"><a asp-action="Index">Boletins</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@(inclusao ? $"Novo — {Model.NrAmostra}" : $"{Model.CodBoletim} R{Model.Revisao:00}")</li>
+    </ol>
+</nav>
+
+@if (Model.Bloqueio is not null)
+{
+    <div class="alert @(emitido ? "alert-success" : "alert-warning") py-2" id="avisoBloqueio">
+        <i class="bi bi-lock me-1"></i>@Model.Bloqueio
+        @if (emitido) { <span class="small ms-1">Emitido em @Model.DhEmissao!.Value.ToString("dd/MM/yyyy HH:mm")@(Model.Emissor is null ? "" : $" por {Model.Emissor}"). Para corrigir, crie uma revisão.</span> }
+    </div>
+}
+
+<div class="card mb-3">
+    <div class="card-body py-2 row g-2 small">
+        <div class="col-sm-6 col-lg-2"><div class="text-body-secondary">Boletim nº</div><div class="font-monospace fw-semibold" id="codBoletim">@(Model.CodBoletim ?? "gerado ao gravar")</div></div>
+        <div class="col-sm-6 col-lg-1"><div class="text-body-secondary">Revisão</div><div>@Model.Revisao</div></div>
+        <div class="col-sm-6 col-lg-2"><div class="text-body-secondary">Amostra</div><div class="font-monospace">@Model.NrAmostra</div></div>
+        <div class="col-sm-6 col-lg-3"><div class="text-body-secondary">Amostra (produto)</div><div>@Model.Produto</div></div>
+        <div class="col-sm-6 col-lg-1"><div class="text-body-secondary">Lote</div><div>@Model.Lote</div></div>
+        <div class="col-sm-6 col-lg-3"><div class="text-body-secondary">Cliente</div><div>@Model.Cliente</div></div>
+        <div class="col-sm-6 col-lg-2"><div class="text-body-secondary">Resultado vinculado</div><div>revisão @Model.RevisaoResultado</div></div>
+        @if (Model.Revisao > 0)
+        {
+            <div class="col-lg-10"><div class="text-body-secondary">Motivo da revisão</div><div>@Model.MotivoRevisao</div></div>
+        }
+    </div>
+</div>
+
+<form method="post" asp-action="@(inclusao ? "Criar" : "Editar")" asp-route-id="@(inclusao ? null : Model.Id)" id="formBoletim" novalidate>
+    <input type="hidden" asp-for="IdAmostra" />
+    <div asp-validation-summary="All" class="alert alert-danger py-2"></div>
+
+    <div class="card mb-3">
+        <div class="card-header py-2 fw-semibold">Boletim e responsáveis</div>
+        <div class="card-body row g-2">
+            <div class="col-6 col-md-2">
+                <label class="form-label small mb-0" asp-for="DtBoletim">Data do boletim <span class="text-danger">*</span></label>
+                <input asp-for="DtBoletim" type="date" class="form-control form-control-sm" disabled="@(!editavel)" />
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small mb-0" asp-for="IdStatus">Status</label>
+                <select asp-for="IdStatus" asp-items="@(new SelectList(o.Status, "Id", "Nome"))" class="form-select form-select-sm" disabled="@(!editavel && !soStatus)"><option value="">—</option></select>
+            </div>
+            <div class="col-md-7"></div>
+            <div class="col-md-6">
+                <label class="form-label small mb-0" asp-for="IdResponsavel1">Responsável 1 <span class="text-body-secondary">(obrigatório para emitir)</span></label>
+                <select asp-for="IdResponsavel1" asp-items="@(new SelectList(o.Responsaveis, "Id", "Nome"))" class="form-select form-select-sm" disabled="@(!editavel)"><option value="">—</option></select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small mb-0" asp-for="IdResponsavel2">Responsável 2 @if (Model.ExigeResponsavel2) { <span class="text-body-secondary">(exigido pela empresa para emitir)</span> }</label>
+                <select asp-for="IdResponsavel2" asp-items="@(new SelectList(o.Responsaveis, "Id", "Nome"))" class="form-select form-select-sm" disabled="@(!editavel)"><option value="">—</option></select>
+            </div>
+        </div>
+    </div>
+
+    @if (inclusao)
+    {
+        <div class="card mb-3">
+            <div class="card-header py-2 d-flex align-items-center">
+                <span class="fw-semibold">Parâmetros do resultado — marque os que vão para o boletim</span>
+                <button type="button" class="btn btn-outline-secondary btn-sm ms-auto" data-marcar-todos="#gridDisponiveis"><i class="bi bi-check2-all me-1"></i>Marcar todos</button>
+            </div>
+            <partial name="_Disponiveis" model="Model.Disponiveis" view-data='new ViewDataDictionary(ViewData) { ["Campo"] = "Selecionados", ["Marcados"] = Model.Selecionados }' />
+        </div>
+    }
+
+    <div class="card mb-3">
+        <div class="card-header py-2 fw-semibold">Textos do boletim</div>
+        <div class="card-body row g-2">
+            <div class="col-md-6">
+                <label class="form-label small mb-0" asp-for="MetodologiaAcreditada">Metodologias utilizadas — acreditadas</label>
+                <textarea asp-for="MetodologiaAcreditada" rows="3" class="form-control form-control-sm" disabled="@(!editavel)"></textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small mb-0" asp-for="MetodologiaNaoAcreditada">Metodologias utilizadas — não acreditadas</label>
+                <textarea asp-for="MetodologiaNaoAcreditada" rows="3" class="form-control form-control-sm" disabled="@(!editavel)"></textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small mb-0" asp-for="Observacao">Observações</label>
+                <textarea asp-for="Observacao" rows="3" class="form-control form-control-sm" disabled="@(!editavel)"></textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small mb-0" asp-for="Legenda">Legenda</label>
+                <textarea asp-for="Legenda" rows="3" class="form-control form-control-sm" disabled="@(!editavel)"></textarea>
+            </div>
+        </div>
+    </div>
+</form>
+
+@if (!inclusao)
+{
+    @* ações de parâmetros: um formulário só (com o token), cada botão com o seu formaction *@
+    <form method="post" asp-action="AtualizarTextos" asp-route-id="@Model.Id" id="formAcoes"></form>
+
+    <div class="row g-3 mb-3">
+        @if (editavel)
+        {
+            <div class="col-xl-5">
+                <form method="post" asp-action="IncluirParametros" asp-route-id="@Model.Id" class="card h-100" id="formSelecao">
+                    <div class="card-header py-2 d-flex align-items-center">
+                        <span class="fw-semibold">Resultados da amostra</span>
+                        <button type="button" class="btn btn-outline-secondary btn-sm ms-auto me-1" data-marcar-todos="#gridDisponiveis"><i class="bi bi-check2-all me-1"></i>Marcar todos</button>
+                        <button type="submit" class="btn btn-outline-primary btn-sm" id="botaoConcluirSelecao"><i class="bi bi-arrow-right me-1"></i>Concluir seleção</button>
+                    </div>
+                    <partial name="_Disponiveis" model="Model.Disponiveis" view-data='new ViewDataDictionary(ViewData) { ["Campo"] = "selecionados" }' />
+                </form>
+            </div>
+        }
+        <div class="@(editavel ? "col-xl-7" : "col-12")">
+            <div class="card h-100">
+                <div class="card-header py-2 d-flex align-items-center">
+                    <span class="fw-semibold">Parâmetros do boletim</span> <span class="badge text-bg-secondary ms-1">@Model.Parametros.Count</span>
+                    @if (editavel && Model.Parametros.Count > 0)
+                    {
+                        <button type="submit" form="formAcoes" class="btn btn-outline-secondary btn-sm ms-auto" id="botaoAtualizarTextos"
+                                title="Regrava o resultado de cada parâmetro a partir do que está lançado agora"><i class="bi bi-arrow-repeat me-1"></i>Atualizar textos</button>
+                    }
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0" id="gridBoletim">
+                        <thead><tr><th class="text-center">Ordem</th><th>Parâmetro</th><th>Resultado</th><th>Unidade</th><th>Especificação</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var (p, i) in Model.Parametros.Select((p, i) => (p, i)))
+                            {
+                                <tr data-parametro="@p.Parametro">
+                                    <td class="text-center text-nowrap small">
+                                        @if (editavel)
+                                        {
+                                            <button type="submit" form="formAcoes" formaction="@Url.Action("Mover", new { id = Model.Id, idParametro = p.Id, direcao = -1 })" class="btn btn-link btn-sm p-0" disabled="@(i == 0)" title="Subir" aria-label="Subir"><i class="bi bi-arrow-up"></i></button>
+                                            <button type="submit" form="formAcoes" formaction="@Url.Action("Mover", new { id = Model.Id, idParametro = p.Id, direcao = 1 })" class="btn btn-link btn-sm p-0" disabled="@(i == Model.Parametros.Count - 1)" title="Descer" aria-label="Descer"><i class="bi bi-arrow-down"></i></button>
+                                        }
+                                        else { @(i + 1) }
+                                    </td>
+                                    <td class="small">@p.Parametro @if (p.Acreditado) { <span class="badge text-bg-success" title="Parâmetro acreditado">acreditado</span> }</td>
+                                    <td class="small">@Previa(p.Resultado ?? p.Descritivo)</td>
+                                    <td class="small">@p.Unidade</td>
+                                    <td class="small">@Previa(p.Especificacao)</td>
+                                    <td class="text-end">
+                                        @if (editavel)
+                                        {
+                                            <button type="submit" form="formAcoes" formaction="@Url.Action("ExcluirParametro", new { id = Model.Id, idParametro = p.Id })" class="btn btn-outline-danger btn-sm"><i class="bi bi-x-lg me-1"></i>Retirar</button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                            @if (Model.Parametros.Count == 0)
+                            {
+                                <tr><td colspan="6" class="text-center text-body-secondary small py-3">Nenhum parâmetro no boletim: marque à esquerda e "Concluir seleção".</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="d-flex flex-wrap gap-2">
+    <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+    @if (!inclusao)
+    {
+        @if (!emitido)
+        {
+            <a asp-action="Visualizar" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-secondary" id="botaoVisualizar"><i class="bi bi-eye me-1"></i>Visualizar</a>
+        }
+        else
+        {
+            <a asp-action="Imprimir" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-secondary" lc-permissao="BOLETINS.IMPRIMIR" id="botaoImprimir"><i class="bi bi-printer me-1"></i>@(Model.TemArquivo ? "Imprimir" : "Imprimir 2ª via")</a>
+        }
+        @if (Model.UltimaRevisao)
+        {
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalRevisao" lc-permissao="BOLETINS.REVISAR" id="botaoRevisao"><i class="bi bi-files me-1"></i>Criar revisão</button>
+            @if (!emitido && Model.Revisao > 0)
+            {
+                <button type="submit" form="formDesfazer" class="btn btn-outline-secondary" lc-permissao="BOLETINS.DESFAZER_REVISAO" id="botaoDesfazer"><i class="bi bi-arrow-counterclockwise me-1"></i>Desfazer última revisão</button>
+            }
+            @if (!emitido && Model.Revisao == 0)
+            {
+                <button type="submit" form="formExcluir" class="btn btn-outline-danger" lc-permissao="BOLETINS.EXCLUIR" id="botaoExcluir"><i class="bi bi-trash me-1"></i>Excluir</button>
+            }
+            @if (!emitido)
+            {
+                <button type="submit" form="formEmitir" class="btn btn-success" lc-permissao="BOLETINS.EMITIR" id="botaoEmitir"><i class="bi bi-patch-check me-1"></i>Emitir</button>
+            }
+        }
+    }
+    @if (editavel || soStatus)
+    {
+        <button type="submit" form="formBoletim" class="btn btn-primary ms-auto" id="botaoGravar"><i class="bi bi-check-lg me-1"></i>@(soStatus ? "Gravar status" : "Gravar")</button>
+    }
+</div>
+
+@if (!inclusao)
+{
+    <form method="post" asp-action="Emitir" asp-route-id="@Model.Id" id="formEmitir"
+          data-confirmar="Emitir o boletim @Model.CodBoletim R@(Model.Revisao.ToString("00"))? O PDF definitivo será gravado e o boletim, os parâmetros e o resultado não poderão mais ser alterados (só por revisão). Grave as alterações antes de emitir."></form>
+    <form method="post" asp-action="Excluir" asp-route-id="@Model.Id" id="formExcluir" data-confirmar="Excluir o boletim @Model.CodBoletim?"></form>
+    <form method="post" asp-action="DesfazerRevisao" asp-route-id="@Model.Id" id="formDesfazer"
+          data-confirmar="Desfazer a revisão @Model.Revisao do boletim? Ela é apagada e a anterior volta a ser a vigente."></form>
+
+    <div class="modal fade" id="modalRevisao" tabindex="-1" aria-labelledby="tituloRevisao">
+        <div class="modal-dialog">
+            <form method="post" asp-action="Revisao" asp-route-id="@Model.Id" class="modal-content">
+                <div class="modal-header py-2"><h6 class="modal-title" id="tituloRevisao">Criar revisão do boletim @Model.CodBoletim</h6><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+                <div class="modal-body">
+                    <p class="small text-body-secondary">A revisão nova nasce <b>não emitida</b>, com o resultado vigente da amostra e os mesmos parâmetros (textos atualizados), para corrigir e emitir de novo.</p>
+                    <label class="form-label small" for="motivoRevisao">Motivo <span class="text-danger">*</span></label>
+                    <textarea name="motivo" id="motivoRevisao" class="form-control" rows="3" maxlength="500" required></textarea>
+                </div>
+                <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Criar revisão</button></div>
+            </form>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/boletins.js" asp-append-version="true"></script>
+}

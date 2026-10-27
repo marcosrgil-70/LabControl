@@ -21,3 +21,6 @@ logs/
 ## Sistema operacional
 Thumbs.db
 .DS_Store
+
+# PDFs emitidos dos boletins (Boletins:Pasta) — dados do laboratório, nunca no git
+storage/

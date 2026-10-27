@@ -12,7 +12,7 @@
 1. Usuário com `BOLETINS.EMITIR` clica **Emitir** na última revisão, não emitida.
 2. Serviço valida antes (mesmas regras da procedure, para mensagem rápida): Responsável 1 (e 2 se exigido), ≥ 1 parâmetro, profissional do usuário.
 3. Gera o **PDF definitivo** (QuestPDF): logo, rodapé, assinaturas dos responsáveis (imagem de `ENTIDADES_FUNCIONARIOS.ASSINATURA`), sem marca d'água.
-4. Salva em `storage/boletins/{empresa}/{ano}/{COD_BOLETIM} R{rev}.pdf` (pasta configurável; dúvida 6 do plano) e calcula **SHA-256**.
+4. Salva em `{Boletins:Pasta}/{empresa}/{ano}/{COD_BOLETIM com "/"→"-"} R{rev}.pdf` (padrão `storage/boletins`) (pasta no servidor, decisão do usuário de 27/10/2026 — dúvida 6) e calcula **SHA-256**.
 5. `CALL SP_EMITIR_BOLETIM(id, profissional, arquivo, hash)` fora de transação EF → grava `DH_EMISSAO = NOW()`, emissor, status "emitido" (`ID_BOLETINS_STATUS_EMITIDO`), caminho e hash.
 6. Se a procedure falhar: apagar o PDF gerado (não deixar arquivo órfão).
 7. `AUDITORIA` ação M; pedido de venda: verificar conclusão automática ([P08](P08-pedido-venda.md)).

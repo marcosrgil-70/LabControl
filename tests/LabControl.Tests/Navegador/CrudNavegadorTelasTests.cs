@@ -779,6 +779,58 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         Assert.Empty(s.ErrosJs);
     }
 
+    /// <summary>
+    /// T27 (5.3): novo boletim pela pesquisa, 1 de 2 parâmetros marcados, "Concluir seleção" do outro, reordenação,
+    /// prévia em PDF, emissão (PDF gravado) e a tela travada depois, com "Imprimir".
+    /// </summary>
+    [Fact]
+    public async Task Boletim_monta_reordena_visualiza_e_emite()
+    {
+        await using var c = await Cenario.CriarAsync();
+        await c.Db.EntidadesFuncionarios.Where(f => f.IdEntidades == c.Ativa.ProfissionalId).ExecuteUpdateAsync(u => u.SetProperty(f => f.AssinaBoletim, true));
+        var (amostra, _, _, _) = await c.AmostraComResultadoAsync(await c.HojeAsync());
+        await using var s = await app.EntrarAsync(c, comProfissional: true);
+        var p = s.Pagina;
+
+        await s.IrAsync("/Boletins");
+        await p.ClickAsync("#botaoNovoBoletim");
+        await Assertions.Expect(p.Locator("#modalPesquisaAmostras [data-pesquisa-grid] tbody tr")).ToHaveCountAsync(1);
+        await p.ClickAsync("#modalPesquisaAmostras [data-selecionar]");
+        await p.WaitForURLAsync(u => u.EndsWith($"/Boletins/Amostra/{amostra.IdLabHistAmostras}"));
+        await Assertions.Expect(p.Locator("#MetodologiaAcreditada")).ToHaveValueAsync("CONT. TOTAL: ISO 4833");
+
+        // grava com o descritivo só; depois inclui o acreditado pela "Concluir seleção" e sobe ele
+        await p.Locator("#gridDisponiveis tr[data-parametro='SALMONELLA'] input").CheckAsync();
+        await p.SelectOptionAsync("#IdResponsavel1", new SelectOptionValue { Index = 1 });
+        await p.ClickAsync("#botaoGravar");
+        Assert.Equal("Boletim gravado.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#codBoletim")).ToHaveTextAsync(amostra.NrAmostra);
+        await Assertions.Expect(p.Locator("#gridBoletim tbody tr")).ToHaveCountAsync(1);
+        await p.Locator("#formSelecao tr[data-parametro='CONT. TOTAL'] input").CheckAsync();
+        await p.ClickAsync("#botaoConcluirSelecao");
+        Assert.Equal("Parâmetros incluídos no boletim.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#gridBoletim tbody tr").Nth(1)).ToContainTextAsync("< 1,0 × 102");
+        await p.Locator("#gridBoletim tr[data-parametro='CONT. TOTAL'] button[title=Subir]").ClickAsync();
+        await Assertions.Expect(p.Locator("#gridBoletim tbody tr").First).ToHaveAttributeAsync("data-parametro", "CONT. TOTAL");
+
+        // prévia: o botão abre o PDF numa aba nova (target=_blank); busca com os cookies da sessão
+        Assert.Equal("_blank", await p.GetAttributeAsync("#botaoVisualizar", "target"));
+        var resposta = await p.APIRequest.GetAsync(app.Url + await p.GetAttributeAsync("#botaoVisualizar", "href"));
+        Assert.Equal("application/pdf", resposta.Headers["content-type"]);
+        Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString((await resposta.BodyAsync())[..4]));
+
+        await p.ClickAsync("#botaoEmitir");
+        Assert.StartsWith("Boletim emitido", await s.AlertaAsync());
+        Assert.Contains(s.Dialogos, d => d.StartsWith("Emitir o boletim"));
+        await Assertions.Expect(p.Locator("#avisoBloqueio")).ToContainTextAsync("foi emitido");
+        await Assertions.Expect(p.Locator("#botaoEmitir")).ToHaveCountAsync(0);
+        await Assertions.Expect(p.Locator("#botaoConcluirSelecao")).ToHaveCountAsync(0);
+        await Assertions.Expect(p.Locator("#DtBoletim")).ToBeDisabledAsync();
+        await Assertions.Expect(p.Locator("#botaoImprimir")).ToBeVisibleAsync();
+        Assert.Single(Directory.GetFiles(app.PastaBoletins, "*.pdf", SearchOption.AllDirectories));
+        Assert.Empty(s.ErrosJs);
+    }
+
     /// <summary>T25 (4.5): do recebimento para as etiquetas com a amostra marcada; impressora escolhida; quantidade; sigilo do produto.</summary>
     [Fact]
     public async Task Etiquetas_a_partir_do_recebimento_imprimem_na_escolhida()

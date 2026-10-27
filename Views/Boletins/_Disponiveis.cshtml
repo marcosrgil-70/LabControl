@@ -1,0 +1,30 @@
+@model IReadOnlyList<ResultadoDisponivelVM>
+@{
+    // grid da esquerda da T27: parâmetros do resultado vinculado que ainda não estão no boletim
+    var campo = (string)ViewData["Campo"]!;
+    var marcados = ViewData["Marcados"] as IEnumerable<int> ?? [];
+    string Impresso(string? texto) => LabControl.Infra.ResultadoTexto.Impresso(texto) ?? "";
+}
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle mb-0" id="gridDisponiveis">
+        <thead><tr><th></th><th>Parâmetro</th><th>Data</th><th>Resultado 01</th><th>Resultado 02</th><th>Unidade</th><th>Qtde.</th></tr></thead>
+        <tbody>
+            @foreach (var r in Model)
+            {
+                <tr data-parametro="@r.Parametro">
+                    <td><input type="checkbox" class="form-check-input" name="@campo" value="@r.IdParam" id="sel_@r.IdParam" checked="@marcados.Contains(r.IdParam)" aria-label="Incluir @r.Parametro" /></td>
+                    <td class="small"><label for="sel_@r.IdParam" class="mb-0">@r.Parametro</label> @if (r.Acreditado) { <span class="badge text-bg-success">acreditado</span> }</td>
+                    <td class="small text-nowrap">@r.DtResultado.ToString("dd/MM/yyyy")</td>
+                    <td class="small">@Impresso(r.Resultado)</td>
+                    <td class="small">@r.Descritivo</td>
+                    <td class="small">@r.Unidade</td>
+                    <td class="small">@r.QtAmostra</td>
+                </tr>
+            }
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="7" class="text-center text-body-secondary small py-3">Todos os parâmetros do resultado já estão no boletim.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

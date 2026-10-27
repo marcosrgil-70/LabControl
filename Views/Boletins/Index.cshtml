@@ -1,0 +1,99 @@
+@model BoletimListaVM
+@{
+    ViewData["Title"] = "Boletins";
+    var f = Model.Filtro;
+    Dictionary<string, string> Rota(int pagina) => new Dictionary<string, string?>
+    {
+        ["Cliente"] = f.Cliente, ["Numero"] = f.Numero, ["APartirDe"] = f.APartirDe?.ToString("yyyy-MM-dd"),
+        ["Emitido"] = f.Emitido?.ToString().ToLowerInvariant(), ["SoUltima"] = f.SoUltima ? "true" : "false", ["Pagina"] = pagina.ToString(),
+    }.Where(kv => kv.Value is not null).ToDictionary(kv => kv.Key, kv => kv.Value!);
+}
+
+<div class="d-flex align-items-center mb-1">
+    <h5 class="mb-0"><i class="bi bi-file-earmark-check me-2 text-primary"></i>Boletins</h5>
+    <button type="button" class="btn btn-primary btn-sm ms-auto" lc-permissao="BOLETINS.INCLUIR" id="botaoNovoBoletim"
+            data-pesquisa-amostras data-url="/Boletins/Pesquisa" data-filtros="ApenasComResultado=true" data-abrir="/Boletins/Amostra/{id}">
+        <i class="bi bi-plus-lg me-1"></i>Novo boletim
+    </button>
+</div>
+<p class="small text-body-secondary mb-3">Laudo de análise da amostra. Depois de <b>emitido</b>, o PDF fica gravado e o boletim não pode mais ser alterado: corrige-se por revisão.</p>
+
+<form method="get" class="card mb-3" id="filtroBoletins">
+    <div class="card-body py-2 row g-2 align-items-end">
+        <div class="col-sm-4 col-lg-3">
+            <label class="form-label small mb-0" for="Cliente">Cliente</label>
+            <input name="Cliente" id="Cliente" value="@f.Cliente" class="form-control form-control-sm" />
+        </div>
+        <div class="col-6 col-sm-3 col-lg-2">
+            <label class="form-label small mb-0" for="Numero">Amostra ou boletim</label>
+            <input name="Numero" id="Numero" value="@f.Numero" class="form-control form-control-sm font-monospace" />
+        </div>
+        <div class="col-6 col-sm-3 col-lg-2">
+            <label class="form-label small mb-0" for="APartirDe">Boletim a partir de</label>
+            <input name="APartirDe" id="APartirDe" type="date" value="@f.APartirDe?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+        </div>
+        <div class="col-6 col-sm-3 col-lg-2">
+            <label class="form-label small mb-0" for="Emitido">Emitido</label>
+            <select name="Emitido" id="Emitido" class="form-select form-select-sm">
+                <option value="" selected="@(f.Emitido is null)">Todos</option>
+                <option value="true" selected="@(f.Emitido == true)">Emitidos</option>
+                <option value="false" selected="@(f.Emitido == false)">Não emitidos</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <div class="form-check mb-1">
+                <input type="checkbox" class="form-check-input" name="SoUltima" id="SoUltima" value="true" checked="@f.SoUltima" />
+                <label class="form-check-label small" for="SoUltima">Só a última revisão</label>
+            </div>
+            <input type="hidden" name="SoUltima" value="false" />
+        </div>
+        <div class="col-auto"><button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Pesquisar</button></div>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead><tr><th>Amostra</th><th>Boletim</th><th class="text-center">Revisão</th><th>Data</th><th>Gerado</th><th>Emitido</th><th>Produto</th><th>Cliente</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var b in Model.Itens)
+                {
+                    <tr class="@(b.UltimaRevisao ? "" : "text-body-secondary")">
+                        <td class="font-monospace small text-nowrap">@b.NrAmostra</td>
+                        <td class="font-monospace small text-nowrap"><a asp-action="Editar" asp-route-id="@b.Id" class="text-decoration-none fw-semibold">@b.CodBoletim</a></td>
+                        <td class="small text-center">@b.Revisao @if (!b.UltimaRevisao) { <span class="badge text-bg-light border ms-1" title="Revisão antiga: somente leitura">antiga</span> }</td>
+                        <td class="small text-nowrap">@b.DtBoletim.ToString("dd/MM/yyyy")</td>
+                        <td class="small text-nowrap">@b.DhGeracao.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="small text-nowrap">@if (b.DhEmissao is { } e) { <span class="badge text-bg-success"><i class="bi bi-lock me-1"></i>@e.ToString("dd/MM/yyyy")</span> } else { <span class="badge text-bg-warning">não emitido</span> }</td>
+                        <td class="small">@b.Produto</td>
+                        <td class="small">@b.Cliente</td>
+                        <td class="small">@b.Status</td>
+                        <td class="text-end"><a asp-action="Editar" asp-route-id="@b.Id" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil me-1"></i>Abrir</a></td>
+                    </tr>
+                }
+                @if (Model.Itens.Count == 0)
+                {
+                    <tr><td colspan="10" class="text-center text-body-secondary small py-3">Nenhum boletim encontrado@(f.APartirDe is null ? "" : $" a partir de {f.APartirDe:dd/MM/yyyy}").</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center small py-2">
+        <span class="text-body-secondary">@Model.Total registro(s)</span>
+        @if (Model.Paginas > 1)
+        {
+            <nav class="ms-auto" aria-label="Páginas">
+                <ul class="pagination pagination-sm mb-0">
+                    @foreach (var n in Enumerable.Range(1, Model.Paginas).Where(n => n <= 3 || n > Model.Paginas - 3 || Math.Abs(n - f.Pagina) <= 2))
+                    {
+                        <li class="page-item @(n == f.Pagina ? "active" : "")"><a class="page-link" asp-action="Index" asp-all-route-data="@Rota(n)">@n</a></li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pesquisa-amostras.js" asp-append-version="true"></script>
+}

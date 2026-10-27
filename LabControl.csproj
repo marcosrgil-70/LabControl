@@ -21,6 +21,7 @@
     <!-- EF Core 9.x alinhado com Pomelo 9.x. Sem migrations: o schema é Scripts/v2/*.sql -->
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="10.3.4" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    <PackageReference Include="QuestPDF" Version="2026.9.1" />
   </ItemGroup>
 
 </Project>

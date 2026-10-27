@@ -23,12 +23,14 @@ public sealed class AppNavegador : IAsyncLifetime
     public IBrowser Browser { get; private set; } = null!;
     public string Url { get; private set; } = "";
     public ImpressoraDoTeste Impressora { get; } = new();
+    public string PastaBoletins { get; } = Path.Combine(Path.GetTempPath(), "lc-boletins-navegador-" + Guid.NewGuid().ToString("N")[..8]);
 
     public async Task InitializeAsync()
     {
         _app = new WebApplicationFactory<Program>().WithWebHostBuilder(b =>
         {
             b.UseSetting("ConnectionStrings:LabControl", BancoTeste.ConnectionString);
+            b.UseSetting("Boletins:Pasta", PastaBoletins); // PDFs emitidos (T27) numa pasta temporária, nunca na do projeto
             // CEP sem internet: a fonte fixa responde como o ViaCEP para 01310-100 (o resto da cadeia é a real)
             b.ConfigureServices(s =>
             {
@@ -51,6 +53,7 @@ public sealed class AppNavegador : IAsyncLifetime
         await Browser.DisposeAsync();
         _playwright.Dispose();
         await _app.DisposeAsync();
+        if (Directory.Exists(PastaBoletins)) Directory.Delete(PastaBoletins, true);
     }
 
     /// <summary>

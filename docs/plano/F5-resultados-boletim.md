@@ -21,6 +21,7 @@
 - **Esforço:** G
 
 ### 5.3 T27 — Boletim 🔵
+> ✅ **Concluída em 27/10/2026** — ver [T27 › Implementação](../telas/T27-boletim.md#implementação-tarefa-53-27102026); aceite em `BoletinsTests` e no teste de navegador `Boletim_monta_reordena_visualiza_e_emite`.
 > **Decidido em 27/10/2026:** biblioteca **QuestPDF** (dúvida 10); PDFs numa **pasta do servidor** por empresa/ano, com caminho + SHA-256 no banco (dúvida 6); layout a partir do `frxRboletin` do Delphi, validado com 3 boletins reais na 5.4 (dúvida 5).
 - **Passos:** amostra com resultado; cabeçalho; responsáveis (assina boletim); seleção de parâmetros em dois grids com ordem arrastável; metodologias automáticas (`FN_OBS_METODOS`), observação, legenda; "atualizar textos"; **visualizar** (prévia com marca d'água); **emitir** (PDF definitivo + SHA-256 + `SP_EMITIR_BOLETIM`, apagar PDF se falhar); reimpressão do PDF gravado; **criar revisão** e **desfazer**; consulta.
 - **Aceite:** [aceite da T27](../telas/T27-boletim.md#aceite) + tabela "depois de emitido" do [P17](../processos/P17-emissao-boletim.md).
