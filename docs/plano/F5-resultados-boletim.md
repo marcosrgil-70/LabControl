@@ -8,6 +8,7 @@
 ---
 
 ### 5.1 Migração parte 3 (M-16 a M-18) 🔵
+> ✅ **Concluída em 27/10/2026** — ver [T07 › Implementação — parte 3](../telas/T07-migracao.md#implementação--parte-3-tarefa-51-27102026) e [M-16](../processos/migracao/M-16-resultados.md)…[M-18](../processos/migracao/M-18-sequencias.md); aceite em `MigracaoTests`. Números finais: 5.345 / 19.497 e 5.312 / 19.469 (fusões e linhas antigas do legado listadas nas anomalias).
 - **Passos:** resultados (revisão renumerada por amostra raiz, textos formatados recalculados em lote), boletins (código base, revisão por código, **congelados**, `RESULTADO_CONCAT` como impresso), sequências (máximos por ano; `@LC_MIGRACAO = 0`; teste de próxima numeração numa cópia).
 - **Aceite:** 5.345/19.528 e 5.312/19.615; uma última revisão por documento; todos os boletins migrados emitidos e bloqueados.
 - **Esforço:** G

@@ -8,7 +8,7 @@ using Xunit.Abstractions;
 namespace LabControl.Tests;
 
 /// <summary>
-/// Aceite da 3.5 e da 4.1: migração M-01…M-15 do Firebird real (<c>C:\Project\Laboratorio\DBMAIS.FDB</c>) para um
+/// Aceite da 3.5, da 4.1 e da 5.1: migração M-01…M-18 do Firebird real (<c>C:\Project\Laboratorio\DBMAIS.FDB</c>) para um
 /// banco vazio recriado a cada execução (<c>labcontrol_migracao_teste</c>). Sem o legado nesta máquina o teste só avisa.
 /// Roda na coleção <see cref="ColecaoMigracao"/>: sozinho, depois das outras (pendência 18).
 /// </summary>
@@ -77,6 +77,24 @@ public class MigracaoTests(ITestOutputHelper saida)
         var logLegado = await db.LabHistAmostrasLog.FirstAsync();
         Assert.Contains("\"ORIGEM\":\"LEGADO\"", logLegado.Dados.Replace(" ", ""));
         Assert.Null(logLegado.IdUsuarios);
+
+        // parte 3 (5.1): resultados e boletins; todos os boletins congelados como emitidos (D-11)
+        // parâmetros: 19.528 − 31 repetidos no mesmo resultado; linhas: 19.615 − 146 antigas/apagadas/repetidas (anomalias da M-17)
+        Assert.Equal((5345, 19497, 5312, 19469),
+            (await db.LabResultadosAnalises.CountAsync(), await db.LabResultadosParam.CountAsync(),
+             await db.LabBoletimAnalises.CountAsync(), await db.LabBoletimParametros.CountAsync()));
+        Assert.Equal(0, await db.LabBoletimAnalises.CountAsync(b => b.DhEmissao == null));
+        var emitido = await db.EmpresasParametros.Select(p => p.IdBoletinsStatusEmitido).SingleAsync();
+        Assert.Equal("ENVIADO AO CLIENTE", await db.BoletinsStatus.Where(st => st.IdBoletinsStatus == emitido).Select(st => st.Descricao).SingleAsync());
+        Assert.Equal(0, await db.LabBoletimAnalises.CountAsync(b => b.IdBoletinsStatus != emitido));
+        // o texto do resultado fica como foi impresso (boletim 04-00072-01/14 do legado)
+        Assert.Contains("<  1", await db.LabBoletimParametros.Where(bp => bp.LabBoletimAnalise.IdLegado == 209).Select(bp => bp.ResultadoConcat).ToListAsync());
+        Assert.Equal("04-00072-01/14", await db.LabBoletimAnalises.Where(b => b.IdLegado == 209).Select(b => b.CodBoletim).SingleAsync());
+        // com a migração desligada (conexão nova do app), boletim migrado não se altera
+        var boletim = await db.LabBoletimAnalises.Select(b => b.IdLabBoletimAnalises).FirstAsync();
+        var recusa = await Assert.ThrowsAnyAsync<Exception>(() =>
+            db.Database.ExecuteSqlRawAsync("UPDATE LAB_BOLETIM_ANALISES SET TXT_OBSERVACAO = 'x' WHERE ID_LAB_BOLETIM_ANALISES = {0}", boletim));
+        Assert.Contains("foi emitido", ErrosMySql.MensagemDeNegocio(recusa));
 
         // encoding: acentos chegam como acentos (nada de "Ã£")
         var nomes = await db.Entidades.Select(e => e.Nome).ToListAsync();

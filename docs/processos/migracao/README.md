@@ -2,7 +2,7 @@
 
 > Visão geral e princípios: [P24 Migração](../P24-migracao.md) · Documento base: [banco/13-MIGRACAO-DADOS.md](../../banco/13-MIGRACAO-DADOS.md) · Tela: [T07](../../telas/T07-migracao.md)
 
-> **Situação (24/10/2026):** M-01…M-15 implementadas e conferidas contra o `DBMAIS.FDB` real (3.5 e 4.1), numa **execução só** pela T07 (~3 min; decisão do usuário). M-16…M-18 (resultados, boletins, sequências) na **5.1**. Cada MD traz a seção "Implementação" com os números reais e as anomalias.
+> **Situação (27/10/2026):** M-01…M-18 implementadas e conferidas contra o `DBMAIS.FDB` real (3.5, 4.1 e 5.1), numa **execução só** pela T07 (decisão do usuário). Cada MD traz a seção "Implementação" com os números reais e as anomalias.
 
 | Etapa | Parte (fase) | Depende de | Origem → destino |
 |---|---|---|---|

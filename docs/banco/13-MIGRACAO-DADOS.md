@@ -33,8 +33,8 @@
 | M-13 | Pedidos de venda | `DISTINCT (empresa, COD, ANO, ID_PEDIDOS_VENDAS)` das propostas | 1 pedido por proposta: `NR_PEDIDO = ID_PEDIDOS_VENDAS`, `ID_LAB_PROPOSTAS` = maior revisão que tem o número, `DT_PEDIDO = DT_AUTORIZACAO`, `SITUACAO = 'CONCLUIDO'` se todas as amostras têm boletim, senão `'EM_EXECUCAO'`; itens = produtos dessa revisão |
 | M-14 | Amostras | `LAB_HIST_AMOSTRAS` + `_OBSERVACAO` | `ANO = 2000 + ANO` (0 → ano da entrega); `ID_LAB_PROPOSTAS_PRODUTOS` por (proposta, item); `ID_PEDIDOS_VENDA` pelo número; `NR_AMOSTRA` = `FN_NR_AMOSTRA_ID`; por (empresa, ano, cod): `ID_AMOSTRA_RAIZ` = revisão 0, `ID_AMOSTRA_ORIGEM` = revisão anterior, `ULTIMA_REVISAO` na maior; revisões sem `COLETOR`/`DATAHORACOLETA` copiam da raiz |
 | M-15 | Testes, estoque e arquivo | `LAB_HIST_AMOSTRAS_TESTES` (`ID_TESTE_ORIGEM` = teste equivalente da revisão anterior por (parâmetro, método), quando único), `LAB_MOV_AMOSTRAS` (`AMOSTRA_COMPLEMENTAR='A'` → `AUTOMATICA=1`; movimentos de revisões > 0 **descartados**: eram entradas duplicadas), `LAB_MOV_AMOSTRAS_PARAM`, `LAB_LOCAL_AMOSTRAS` (`STATUS 0→ARQUIVADA, 1→DESCARTADA`; aponta para a raiz; se houver 2, fica o mais recente) | Depois: `CALL PR_ATUALIZA_SALDO(id)` para cada raiz; `LAB_HIST_AMOSTRAS_LOG` migra como JSON (`ACAO` I/A/E) — opcional, 10.509 linhas |
-| M-16 | Resultados | `LAB_RESULTADOS_ANALISES`, `LAB_RESULTADOS_PARAM` | `REVISAO` renumerada 0..n por amostra raiz (ordem: revisão antiga, ID); `ULTIMA_REVISAO` na maior; `ID_RESULTADO_ORIGEM` = anterior; `ID_PARAM_ORIGEM` por teste equivalente; `VR_EXP_*` → inteiro; recalcular `RESULTADO_FORMATADO`/`ESPECIF_FORMATADA` com as funções (UPDATE em lote após a carga) |
-| M-17 | Boletins | `LAB_BOLETIM_ANALISES` + `LAB_BOLETIM_OBS` + `LAB_BOLETIM_PARAMETROS` | `COD_BOLETIM` = número base da amostra (sem " Rnn"); `REVISAO` renumerada 0..n por código (ordem `REVISAO`, ID); `ULTIMA_REVISAO` na maior; `DH_GERACAO` nulo → `DT_BOLETIM`; **`DH_EMISSAO = DH_GERACAO`** (todo o histórico fica congelado — D-11); `ID_BOLETINS_STATUS` = "Enviado ao cliente"; `RESULTADO_CONCAT` mantido como estava impresso |
+| M-16 | Resultados | `LAB_RESULTADOS_ANALISES`, `LAB_RESULTADOS_PARAM` | `REVISAO` renumerada 0..n por amostra raiz (ordem: revisão antiga, ID); `ULTIMA_REVISAO` na maior; `ID_RESULTADO_ORIGEM` = anterior; `ID_PARAM_ORIGEM` por teste equivalente; `VR_EXP_*` → inteiro; `RESULTADO_FORMATADO`/`ESPECIF_FORMATADA` calculados pela `TG_RESPAR_BI` (formata também na migração); data do resultado antes do início → início = resultado; teste de outra amostra → equivalente; teste repetido no resultado → uma linha (5.1) |
+| M-17 | Boletins | `LAB_BOLETIM_ANALISES` + `LAB_BOLETIM_OBS` + `LAB_BOLETIM_PARAMETROS` | `COD_BOLETIM` = número base da amostra (sem " Rnn"); `REVISAO` renumerada 0..n por código (ordem `REVISAO`, ID); `ULTIMA_REVISAO` na maior; `DH_GERACAO` nulo → `DT_BOLETIM`; **`DH_EMISSAO = DH_GERACAO`** (todo o histórico fica congelado — D-11); `ID_BOLETINS_STATUS` = "Enviado ao cliente"; `RESULTADO_CONCAT` mantido como estava impresso; boletim na amostra do resultado (7 apontavam para a vizinha); linhas antigas de parâmetros apagados/relançados só entram se o parâmetro não estiver no boletim (5.1) |
 | M-18 | Sequências | — | `SEQUENCIAS_DOCUMENTOS`: `AMOSTRA` por ano = `MAX(COD_AMOSTRA)`; `PROPOSTA` por ano = `MAX(COD_PROPOSTA)` (ignorar os 12 com COD = ID); `PEDIDO_VENDA` = `MAX(NR_PEDIDO)`; `PRODUTO` = `SYS_TABELAS_ID` |
 
 ## 3. Conferências obrigatórias (relatório final da tela)
@@ -46,8 +46,8 @@
 | Propostas / produtos / análises | 2.358 / 5.761 / 19.252 |
 | Pedidos de venda | nº distintos de `ID_PEDIDOS_VENDAS` por proposta (≈ 1.435 = 1.454 − repetições) |
 | Amostras / testes | 5.770 / 20.551 |
-| Resultados / parâmetros | 5.345 / 19.528 |
-| Boletins / parâmetros | 5.312 / 19.615 |
+| Resultados / parâmetros | 5.345 / 19.528 (migrados 5.345 / 19.497: 31 repetidos fundidos) |
+| Boletins / parâmetros | 5.312 / 19.615 (migrados 5.312 / 19.469: 146 linhas antigas/repetidas, todas nas anomalias) |
 | Soma `VR_TOTAL_PROPOSTA` por ano | igual ao legado (centavos) |
 | Amostras por ano (2013…2018) | 62 / 611 / 511 / 663 / 2.482 / 1.440 (+1 com ano 0) |
 | `SELECT NR_AMOSTRA` de 20 amostras sorteadas | idêntico ao `VW_LAB_HIST_AMOSTRA.NR_AMOSTRA` do legado |

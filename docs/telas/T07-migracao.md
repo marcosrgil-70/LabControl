@@ -90,13 +90,23 @@
   - 178 localizações duplicadas;
   - 119 linhas de log órfãs.
 
+## Implementação — parte 3 (tarefa 5.1, 27/10/2026)
+- **Etapas:** `Etapas/M16Resultados`, `M17Boletins`, `M18Sequencias`; a tela e a confirmação passam a dizer M-01 a M-18.
+- **Decisões do usuário:** resultado com data antes do início → início = data do resultado (63); boletim com amostra diferente da do resultado → fica na amostra do resultado, código recalculado (7).
+- **Resultado contra o `DBMAIS.FDB` real** (`MigracaoTests`):
+  - todas as conferências verdes; M-16 ~60 s, M-17 ~70 s, M-18 < 1 s;
+  - 5.345 resultados, 19.497 parâmetros (31 repetidos fundidos);
+  - 5.312 boletins, **todos emitidos** com status "ENVIADO AO CLIENTE", 19.469 linhas (146 não migradas, todas listadas);
+  - próximo número de amostra/proposta/pedido/produto conferido num savepoint desfeito.
+- **Anomalias da parte 3:** ver M-16…M-18 › Implementação.
+
 ## Critérios de aceite
 - [x] Parte 1: todas as conferências verdes num banco limpo — `MigracaoTests`.
 - [x] Login de usuário migrado com troca obrigatória — mesmo teste.
-- [ ] Todas as conferências do doc 13 §3 — parte 2 (propostas, pedidos, amostras, testes, saldo) ✅ na 4.1; resultados e boletins na 5.1.
+- [x] Todas as conferências do doc 13 §3 — parte 2 (propostas, pedidos, amostras, testes, saldo) na 4.1; resultados, boletins e sequências na 5.1.
 - [x] Nº das amostras idêntico ao legado — **todas** conferidas na 4.1 (não só 20).
-- [ ] Boletins migrados congelados (emitidos) e somente leitura — 5.1.
+- [x] Boletins migrados congelados (emitidos) e somente leitura — 5.1 (`MigracaoTests`: alteração recusada com a migração desligada).
 - [x] Relatório de anomalias gerado (tela + CSV).
 - [x] Teste no navegador da tela (`CrudNavegadorTelasTests.Migracao_tela_valida_o_pedido_sem_executar`) — passou em 22/10/2026 (pendência 17).
 
-**Status:** 🟨 M-01…M-15 prontas (3.5 e 4.1); parte 3 (M-16…M-18: resultados, boletins, sequências) na 5.1.
+**Status:** ✅ M-01…M-18 prontas (3.5, 4.1 e 5.1), numa execução só.
