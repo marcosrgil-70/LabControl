@@ -35,6 +35,9 @@ Filtros: nº pedido, cliente, situação, período, nº proposta. Colunas: nº, 
 ## Impressão
 PDF "Pedido de Venda" (layout do `frx_PedVenda`): empresa, nº do pedido, cliente/CNPJ/contato/fone/e-mail, datas de solicitação/validade, produtos e análises (método, prazo, idioma, qtde, tipo de documento), totais e condição de pagamento.
 
+## Como implementar (6.2)
+Passo a passo detalhado, com o que já existe no banco e na aplicação, a pendência 24 (conclusão automática na emissão do boletim) e as perguntas para o usuário: [F6 › 6.2 › Como fazer](../plano/F6-propostas-pedidos.md#como-fazer-levantado-em-27102026-antes-de-começar).
+
 ## Aceite
 - [ ] Sem data de autorização não gera ("É obrigatório o preenchimento da Data Autorização para gerar o Pedido de Venda").
 - [ ] Um pedido por proposta (todas as revisões).

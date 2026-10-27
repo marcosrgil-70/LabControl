@@ -35,3 +35,12 @@ Cliente aprovou a R+1 → T21 "Atualizar" → `SP_ATUALIZAR_PEDIDO_REVISAO` (val
 - Segundo pedido para a mesma proposta (qualquer revisão) → "Já existe Pedido de Venda para esta proposta."
 - Amostra recebida antes do pedido passa a mostrar o nº do pedido depois da geração (roteiro doc 12 §7 item 4).
 - Recebida × contratada correta com amostras em revisões diferentes da proposta.
+
+## Situação da implementação (27/10/2026)
+- **Feito:** banco completo (tabelas, `TG_PEDVEN_BI`, `VW_PEDIDOS_VENDA_SALDO`, `SP_GERAR_PEDIDO_VENDA`, `SP_ATUALIZAR_PEDIDO_REVISAO`); ligação da amostra ao pedido e passagem ABERTO → EM_EXECUCAO no recebimento (4.3); conclusão dos pedidos migrados na M-17 (pendência 23, 5.5).
+- **Falta (6.2):**
+  - a tela T21;
+  - a geração pela proposta;
+  - o PDF;
+  - a **conclusão automática na emissão do boletim** (pendência 24): procedure `PR_ATUALIZAR_SITUACAO_PEDIDO` chamada pelo `SP_EMITIR_BOLETIM`.
+  - Passo a passo em [F6 › 6.2 › Como fazer](../plano/F6-propostas-pedidos.md#como-fazer-levantado-em-27102026-antes-de-começar).
