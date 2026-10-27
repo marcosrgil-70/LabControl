@@ -2,6 +2,14 @@
 
 Responda sempre em português do Brasil.
 
+## Idioma das mensagens (pedido do usuário, 27/10/2026)
+**Todas as mensagens para o usuário têm que ser em português do Brasil** — sem exceção:
+- respostas, resumos de fim de tarefa ou de fase, planos, perguntas e avisos de andamento ("estou fazendo X");
+- textos curtos entre uma ferramenta e outra, inclusive enquanto espera testes ou tarefas em segundo plano;
+- mensagens de commit, comentários no código, documentação e textos das telas.
+
+Só ficam no original os nomes técnicos (classes, métodos, comandos, mensagens de erro copiadas de ferramentas). Antes de enviar um resumo, releia: se alguma frase saiu em inglês, reescreva em português.
+
 ## Contexto
 Reescrita do sistema de laboratório **Delphi 7 + Firebird** (`C:\Project\Laboratorio`, banco `DBMAIS.FDB`) em **ASP.NET Core MVC .NET 10 + MySQL 8**, **multiempresa (tudo por empresa)**.
 
