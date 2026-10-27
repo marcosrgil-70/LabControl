@@ -198,7 +198,48 @@ public sealed class M17Boletins : IEtapaMigracao
             await c.Db.LabBoletimAnalises.GroupBy(b => b.CodBoletim).Select(g => g.Sum(b => b.UltimaRevisao ? 1 : 0)).CountAsync(n => n != 1, ct));
         c.Conferir("boletins não emitidos", 0, await c.Db.LabBoletimAnalises.CountAsync(b => b.DhEmissao == null, ct));
         c.Log($"{codigos.Count} boletins, {totalPar} linhas; {trocados} linha(s) religada(s) ao parâmetro equivalente, {naoMigrados} não migrada(s).");
+        await ConcluirPedidosAsync(c, ct);
         return codigos.Count + totalPar;
+    }
+
+    /// <summary>
+    /// Pendência 23 (5.5): a M-13 deixou para cá o <c>CONCLUIDO</c> dos pedidos (P08: itens recebidos + boletins emitidos).
+    /// Concluído = em execução, cada item recebeu ao menos a quantidade contratada (amostras revisão 0 do item, como a
+    /// <c>VW_PEDIDOS_VENDA_SALDO</c>) e toda amostra vigente do pedido tem o boletim vigente da amostra física emitido.
+    /// Com tudo emitido mas faltando amostra, continua em execução (anomalia). Calculado aqui com consultas simples: a
+    /// view, correlacionada item a item, passava dos 30 s nos 3.318 itens do legado.
+    /// </summary>
+    private static async Task ConcluirPedidosAsync(ContextoMigracao c, CancellationToken ct)
+    {
+        var emExecucao = await c.Db.PedidosVenda.Where(p => p.Situacao == SituacaoPedido.EmExecucao)
+            .Select(p => new { p.IdPedidosVenda, p.AnoProposta, p.CodProposta }).ToListAsync(ct);
+        var itens = await c.Db.PedidosVendaItens
+            .Select(i => new { i.IdPedidosVenda, i.LabPropostaProduto.Item, i.QtdeContratada }).ToListAsync(ct);
+        var recebidas = (await c.Db.LabHistAmostras.Where(a => a.Revisao == 0)
+                .Select(a => new { a.LabProposta.AnoProposta, a.LabProposta.CodProposta, a.LabPropostaProduto.Item }).ToListAsync(ct))
+            .GroupBy(a => a).ToDictionary(g => g.Key, g => g.Count());
+        var vigentes = (await c.Db.LabHistAmostras.Where(a => a.UltimaRevisao && a.IdPedidosVenda != null)
+            .Select(a => new { Pedido = a.IdPedidosVenda!.Value, Raiz = a.IdAmostraRaiz ?? a.IdLabHistAmostras }).ToListAsync(ct)).ToLookup(a => a.Pedido, a => a.Raiz);
+        var emitidas = (await c.Db.LabBoletimAnalises.Where(b => b.UltimaRevisao && b.DhEmissao != null)
+            .Select(b => b.LabHistAmostra.IdAmostraRaiz ?? b.IdLabHistAmostras).ToListAsync(ct)).ToHashSet();
+        var itensDoPedido = itens.ToLookup(i => i.IdPedidosVenda);
+
+        var concluir = new List<int>();
+        var faltando = 0;
+        foreach (var p in emExecucao)
+        {
+            if (!vigentes[p.IdPedidosVenda].All(emitidas.Contains)) continue;
+            var tudoRecebido = itensDoPedido[p.IdPedidosVenda].All(i =>
+                recebidas.GetValueOrDefault(new { p.AnoProposta, p.CodProposta, i.Item }) >= i.QtdeContratada);
+            if (tudoRecebido) concluir.Add(p.IdPedidosVenda);
+            else faltando++;
+        }
+        var concluidos = concluir.Count == 0 ? 0 : await c.Db.PedidosVenda.Where(p => concluir.Contains(p.IdPedidosVenda))
+            .ExecuteUpdateAsync(u => u.SetProperty(p => p.Situacao, SituacaoPedido.Concluido), ct);
+        if (faltando > 0)
+            c.Anomalia($"{faltando} pedido(s) com todas as amostras com boletim emitido, mas com item recebido abaixo do contratado — ficam em execução (concluir na T21, se for o caso).");
+        c.Conferir("pedidos concluídos (itens recebidos e boletins emitidos)", concluir.Count, concluidos);
+        c.Log($"{concluidos} pedido(s) de venda concluídos (itens recebidos e boletins emitidos); {faltando} em execução com item faltando.");
     }
 
     // número base como o legado montava (VW_LAB_HIST_AMOSTRA; os códigos dos tipos são os IDs do legado)

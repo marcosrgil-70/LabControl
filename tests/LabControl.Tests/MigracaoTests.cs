@@ -1,5 +1,6 @@
 using LabControl.Data;
 using LabControl.Infra;
+using LabControl.Models;
 using LabControl.Services.Migracao;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -87,6 +88,14 @@ public class MigracaoTests(ITestOutputHelper saida)
         var emitido = await db.EmpresasParametros.Select(p => p.IdBoletinsStatusEmitido).SingleAsync();
         Assert.Equal("ENVIADO AO CLIENTE", await db.BoletinsStatus.Where(st => st.IdBoletinsStatus == emitido).Select(st => st.Descricao).SingleAsync());
         Assert.Equal(0, await db.LabBoletimAnalises.CountAsync(b => b.IdBoletinsStatus != emitido));
+        // pendência 23 (5.5): pedidos com tudo recebido e todos os boletins emitidos ficam concluídos
+        var situacoes = await db.PedidosVenda.GroupBy(p => p.Situacao).Select(g => new { g.Key, N = g.Count() }).ToDictionaryAsync(g => g.Key, g => g.N);
+        saida.WriteLine("Pedidos por situação: " + string.Join("; ", situacoes.Select(s => $"{s.Key} {s.Value}")));
+        // 309 dos 449 em execução têm tudo emitido, mas receberam menos amostras que o contratado (anomalia da M-17)
+        Assert.Equal((974, 449, 10), (situacoes.GetValueOrDefault(SituacaoPedido.Concluido), situacoes.GetValueOrDefault(SituacaoPedido.EmExecucao),
+            situacoes.GetValueOrDefault(SituacaoPedido.Aberto)));
+        Assert.Equal(1433, situacoes.Values.Sum());
+
         // o texto do resultado fica como foi impresso (boletim 04-00072-01/14 do legado)
         Assert.Contains("<  1", await db.LabBoletimParametros.Where(bp => bp.LabBoletimAnalise.IdLegado == 209).Select(bp => bp.ResultadoConcat).ToListAsync());
         Assert.Equal("04-00072-01/14", await db.LabBoletimAnalises.Where(b => b.IdLegado == 209).Select(b => b.CodBoletim).SingleAsync());
