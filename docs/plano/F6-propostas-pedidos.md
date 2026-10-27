@@ -8,6 +8,7 @@
 ---
 
 ### 6.1 T20 completa
+> ✅ **Concluída em 27/10/2026** — ver [T20 › Implementação 6.1](../telas/T20-propostas.md#implementação-tarefa-61--proposta-completa-27102026); aceite em `PropostasTests`, `ImportadorTextoTests` e no navegador `Proposta_selecao_multipla_contrato_pdf_e_revisao`. Decisões: importar Word/HTML/TXT (permissão `PROPOSTAS.ALTERAR`); PDF com a Autorização de Serviço.
 - **Passos:** seleção múltipla de parâmetros (modal com lista + campos padrão → N linhas); regra Alterar × Gerar revisão (bloqueio com envio/pedido/amostra; pergunta Sim/Não/Cancelar); **gerar revisão** (painel de revisões, motivo, `SP_GERAR_REVISAO_PROPOSTA`, destaque `ST_REV_ANTERIOR`); revisões antigas somente leitura; contrato (editor + importar arquivo + contrato padrão); **PDF da proposta**; trocar produto; excluir com regras.
 - **Aceite:** [aceite da T20](../telas/T20-propostas.md#aceite).
 - **Esforço:** G
@@ -21,6 +22,6 @@
 `/code-review`; conferir números do pedido no boletim e nas etiquetas.
 
 ## Definição de pronto
-- [ ] Proposta com revisão correta (sem copiar pedido/status) e PDF.
+- [x] Proposta com revisão correta (sem copiar pedido/status) e PDF. — 6.1
 > Dúvida 5 do plano (em aberto): pedir ao usuário os **modelos atuais (PDF/papel) da proposta e do pedido** antes de montar os PDFs.
 - [ ] Um pedido por proposta, recebido × contratado correto.

@@ -15,11 +15,12 @@ Migração do sistema **Delphi 7 + Firebird 2.5** (`C:\Project\Laboratorio`) par
     - **T26 Resultados** (fila de análises, lançamento por teste, prévia como no boletim, revisão/desfazer);
     - **T27 Boletim** (montagem, prévia, **emissão em PDF com SHA-256** numa pasta do servidor, reimpressão conferida, 2ª via do migrado, revisão/desfazer);
     - **5.5:** pedidos de venda concluídos na migração, testes de aceite da fase e `/code-review high` com 10 achados corrigidos.
-  - Suíte de testes: 242/242.
+  - Fase 6, tarefa 6.1: **T20 proposta completa** (seleção múltipla, revisão, contrato com importação de Word, PDF com a Autorização de Serviço, trocar produto).
+  - Suíte de testes: 248/248.
 - **Decisões recentes do usuário (27/10/2026):** QuestPDF; PDFs numa pasta do servidor (`Boletins:Pasta`); layout do boletim a partir do Delphi, validado com 3 boletins reais na 5.4; dados inconsistentes do legado corrigidos na migração (datas invertidas → início = resultado; boletim na amostra vizinha → amostra do resultado).
 - **A fazer:**
   - Fase 5: só a 5.4, layout do PDF com os boletins reais (aguarda os modelos do laboratório) — passo a passo em [F5](plano/F5-resultados-boletim.md); sem os modelos, dá para seguir a Fase 6 ou 7;
-  - Fase 6: proposta completa e pedido de venda (com a pendência 24, conclusão automática do pedido na emissão);
+  - Fase 6: 6.1 proposta completa ✅ (27/10/2026); 6.2 pedido de venda (com a pendência 24, conclusão automática do pedido na emissão);
   - Fase 7: movimentação e localização;
   - Fase 8: relatórios, auditoria, e-mail;
   - Fase 9: homologação e virada (pendência 27: pasta dos boletins no backup).
@@ -63,7 +64,7 @@ Legenda: ⚠️ particularidades · ⚠️⚠️ crítica.
 | 3 | [T13 Profissionais](telas/T13-profissionais.md) | `un_Entidades` (funcionário) | ✅ |
 | 3 | [T14 Produtos](telas/T14-produtos.md) | `un_Produtos` | ✅ |
 | 3 | [T15 Parâmetros de análise](telas/T15-parametros-analise.md) | `un_ParametrosAnalises` | ✅ |
-| 4/6 | [T20 **Propostas** ⚠️](telas/T20-propostas.md) | `un_Propostas` | 🟨 essencial (4.2); completa na 6.1 |
+| 4/6 | [T20 **Propostas** ⚠️](telas/T20-propostas.md) | `un_Propostas` | ✅ completa (4.2 + 6.1) |
 | 6 | [T21 **Pedidos de venda** ⚠️](telas/T21-pedidos-venda.md) | botão Ped.Venda da proposta | ⬜ 6.2 |
 | 4 | [T22 **Recebimento de amostras** ⚠️⚠️](telas/T22-recebimento-amostras.md) | `un_MovHistAmostras` | ✅ 4.3 |
 | 7 | [T23 Movimentação de amostras](telas/T23-movimentacao-amostras.md) | `un_MovimentacaoAmostras` | ⬜ 7.1 |

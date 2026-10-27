@@ -32,3 +32,6 @@
 - Tentar revisar uma revisão antiga → "Só é possível revisar…" (validação da tela) / origem inválida.
 - Alterar análise da R0 depois da R1 → "Revisão antiga da proposta é somente leitura."
 - Motivo vazio → "Informe o motivo da revisão."
+
+## Implementação (tarefa 6.1, 27/10/2026)
+`PropostaService.GerarRevisaoAsync` (só a vigente, motivo obrigatório) → `Procedures.GerarRevisaoPropostaAsync`, fora da transação do EF; a tela abre a revisão nova, com o painel "Revisões" e as linhas "rev. anterior". Cobertos em `PropostasTests.Revisao_copia_tudo_marca_linhas_e_trava_a_anterior` (roteiro 12 §7 item 10: `-R1`, 2 linhas `ST_REV_ANTERIOR`, total 270,00, status inicial, sem envio/autorização, contrato copiado, R0 somente leitura, motivo vazio, revisar a antiga recusado) e no navegador. **Status:** ✅

@@ -9,10 +9,11 @@ using Microsoft.EntityFrameworkCore;
 namespace LabControl.Services;
 
 /// <summary>
-/// T20 — Propostas, parte essencial (4.2; P05/P06): consulta, inclusão, alteração <b>sem revisão</b> e exclusão.
+/// T20 — Propostas (4.2 essencial; 6.1 completa — P05/P06/P07): consulta, inclusão, alteração sem revisão, exclusão,
+/// revisão (<c>SP_GERAR_REVISAO_PROPOSTA</c>), contrato, troca de produto (<c>SP_TROCAR_PRODUTO_PROPOSTA</c>) e PDF.
 /// Cabeçalho, textos, produtos e análises gravam juntos numa transação. Número/ano pelo banco (<c>TG_PROPOSTAS_BI</c>),
 /// item pelo <c>TG_PROPPROD_BI</c>, valores da linha pelo <c>TG_PRODAN_BI/BU</c> e totais pelo <c>SP_RECALCULAR_PROPOSTA</c>
-/// — a tela só recalcula para exibir. Revisão, seleção múltipla, contrato e PDF ficam para a 6.1.
+/// — a tela só recalcula para exibir.
 /// </summary>
 public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ctx, Procedures procedures)
 {
@@ -94,6 +95,11 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
         var vm = new PropostaVM
         {
             Id = p.IdLabPropostas, NrProposta = p.NrProposta, DtEnvioCliente = p.DtEnvioCliente, Bloqueio = await BloqueioAsync(p),
+            Revisao = p.RevProposta, MotivoRevisao = p.MotivoRevisao, UltimaRevisao = p.UltimaRevisao,
+            Revisoes = await db.VwLabPropostas.AsNoTracking().Where(v => v.AnoProposta == p.AnoProposta && v.CodProposta == p.CodProposta)
+                .OrderByDescending(v => v.RevProposta)
+                .Select(v => new PropostaRevisaoVM(v.IdLabPropostas, v.NrProposta, v.RevProposta, v.Status, v.DtValidade, v.VrTotalProposta, v.MotivoRevisao, v.UltimaRevisao))
+                .ToListAsync(),
             NrPedido = await db.VwLabPropostas.AsNoTracking().Where(v => v.IdLabPropostas == id).Select(v => v.NrPedidoFmt).SingleOrDefaultAsync(),
             DtSolicitacao = p.DtSolicitacao, DtValidade = p.DtValidade, IdLabPropostasStatus = p.IdLabPropostasStatus, DtAutorizacao = p.DtAutorizacao,
             IdEntidadesComerc = p.IdEntidadesComerc, IdEntidades = p.IdEntidades, IdEntContato = p.IdEntContato,
@@ -103,7 +109,7 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
             IdCondicoesPagtos = p.IdCondicoesPagtos, IdMoedas = p.IdMoedas,
             VrSomaVrAnalis = p.VrSomaVrAnalis, VrSomaDescAnalis = p.VrSomaDescAnalis, VrSomaVrTotAnalis = p.VrSomaVrTotAnalis, VrTotalProposta = p.VrTotalProposta,
             TxItensSolicitados = HtmlSimples.Limpar(t?.TxItensSolicitados), TxItensAdquiridos = HtmlSimples.Limpar(t?.TxItensAdquiridos),
-            TxObservacao = HtmlSimples.Limpar(t?.TxObservacao), ItensJson = JsonSerializer.Serialize(itens, Json),
+            TxObservacao = HtmlSimples.Limpar(t?.TxObservacao), TxContrato = HtmlSimples.Limpar(t?.TxContrato), ItensJson = JsonSerializer.Serialize(itens, Json),
         };
         await PrepararAsync(vm);
         return vm;
@@ -163,6 +169,7 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
             .OrderBy(x => x.Descricao).Select(x => new OpcaoVM(x.IdIdiomas, x.Descricao)).ToListAsync();
         o.Prazos = await db.Prazos.AsNoTracking().Where(x => x.Ativo || prazos.Contains(x.IdPrazos))
             .OrderBy(x => x.QtdeDias).ThenBy(x => x.Descricao).Select(x => new OpcaoVM(x.IdPrazos, x.Descricao)).ToListAsync();
+        vm.TemContratoPadrao = await ContratoPadraoAsync() is not null;
         o.Cliente = cliente is { } cl ? await EntidadeAsync(cl, vm.IdEntContato, vm.IdEntEndLaudo, vm.IdEntContatoResultado) : null;
         o.Cobranca = cobranca is { } cb ? await EntidadeAsync(cb, vm.IdEntEndCobranca, vm.IdEntContatoNf) : null;
     }
@@ -291,6 +298,7 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
             textos.TxItensSolicitados = HtmlSimples.Limpar(vm.TxItensSolicitados);
             textos.TxItensAdquiridos = HtmlSimples.Limpar(vm.TxItensAdquiridos);
             textos.TxObservacao = HtmlSimples.Limpar(vm.TxObservacao);
+            textos.TxContrato = HtmlSimples.Limpar(vm.TxContrato);
 
             await GravarItensAsync(p.IdLabPropostas, itens);
             // desconto geral sem mexer nas análises também recalcula o cabeçalho (P06)
@@ -416,7 +424,103 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
         return r.Sucesso ? Resultado.Ok() : r.Falha;
     }
 
+    // ------------------------------------------------------------------ revisão, contrato, troca de produto (6.1)
+
+    /// <summary>
+    /// Gera a revisão (P07) a partir da revisão vigente e devolve o ID da nova. O banco copia cabeçalho (status inicial,
+    /// sem envio, autorização ou pedido), textos sem a autorização, produtos e análises com <c>ST_REV_ANTERIOR</c>.
+    /// </summary>
+    public async Task<Resultado<int>> GerarRevisaoAsync(int id, string? motivo)
+    {
+        var p = await db.LabPropostas.AsNoTracking().Where(x => x.IdLabPropostas == id).Select(x => new { x.UltimaRevisao, x.NrProposta }).SingleOrDefaultAsync();
+        if (p is null) return Resultado.Erro(MensagemNaoEncontrada);
+        if (!p.UltimaRevisao) return Resultado.Erro($"Só é possível revisar a última revisão da proposta ({p.NrProposta} já foi substituída).");
+        if (Textos.Limpo(motivo) is not { } m) return Resultado.Erro("Informe o motivo da revisão.", "motivo");
+        var r = await procedures.GerarRevisaoPropostaAsync(id, m.Length > 500 ? m[..500] : m);
+        return r.Sucesso ? Resultado.Ok(r.Valor.IdNovo) : Resultado.Erro(r.Mensagem!);
+    }
+
+    /// <summary>Contrato padrão da empresa (T05 › textos), para o botão "Usar contrato padrão".</summary>
+    public async Task<string?> ContratoPadraoAsync() =>
+        HtmlSimples.Limpar(await db.EmpresasParametros.AsNoTracking().Select(p => p.TextoPadraoContrato).SingleOrDefaultAsync());
+
+    /// <summary>
+    /// Troca o produto de um item na revisão vigente e nas amostras recebidas por ela (<c>SP_TROCAR_PRODUTO_PROPOSTA</c>);
+    /// o banco recusa amostra com boletim emitido.
+    /// </summary>
+    public async Task<Resultado> TrocarProdutoAsync(int id, int idProdutoAtual, int? idProdutoNovo)
+    {
+        var p = await db.LabPropostas.AsNoTracking().SingleOrDefaultAsync(x => x.IdLabPropostas == id);
+        if (p is null) return Resultado.Erro(MensagemNaoEncontrada);
+        if (!p.UltimaRevisao) return Resultado.Erro("Revisão antiga da proposta é somente leitura.");
+        if (idProdutoNovo is not { } novo) return Resultado.Erro("Escolha o produto novo.", "idProdutoNovo");
+        if (novo == idProdutoAtual) return Resultado.Erro("O produto novo é o mesmo de agora.", "idProdutoNovo");
+        if (!await db.LabPropostasProdutos.AnyAsync(x => x.IdLabPropostas == id && x.IdProdutos == idProdutoAtual))
+            return Resultado.Erro("O produto escolhido não está nesta proposta.");
+        if (!await db.Produtos.AnyAsync(x => x.IdProdutos == novo && !x.Inativo)) return Resultado.Erro("Escolha um produto ativo da lista.", "idProdutoNovo");
+        return await procedures.TrocarProdutoPropostaAsync(id, idProdutoAtual, novo);
+    }
+
+    // ------------------------------------------------------------------ PDF (6.1)
+
+    /// <summary>PDF da proposta (com a página "Autorização de Serviço"); revisão substituída sai marcada.</summary>
+    public async Task<Resultado<ArquivoPdf>> ImprimirAsync(int id)
+    {
+        var d = await DocumentoAsync(id);
+        if (d is null) return Resultado.Erro(MensagemNaoEncontrada);
+        return Resultado.Ok(new ArquivoPdf(Propostas.PropostaPdf.Gerar(d), $"Proposta {d.NrProposta.Replace('/', '-')}.pdf"));
+    }
+
+    public async Task<Propostas.PropostaDocumento?> DocumentoAsync(int id)
+    {
+        var v = await db.VwLabPropostas.AsNoTracking().SingleOrDefaultAsync(x => x.IdLabPropostas == id);
+        if (v is null) return null;
+        var t = await db.LabPropostasTextos.AsNoTracking().SingleOrDefaultAsync(x => x.IdLabPropostas == id);
+        var analises = await db.VwLabPropostasAnalises.AsNoTracking().Where(a => a.IdLabPropostas == id)
+            .OrderBy(a => a.Item).ThenBy(a => a.IdLabPropostasProdanalises).ToListAsync();
+        var emp = await db.Empresas.AsNoTracking().Where(e => e.IdEmpresas == v.IdEmpresas)
+            .Select(e => new { e.RazaoSocial, e.Cnpj, e.Logo, e.CabecalhoLaudo, e.RodapeLaudo, e.IdEntidades }).SingleAsync();
+        var endEmp = await db.VwEntidadesEnderecos.AsNoTracking().Where(e => e.IdEntidades == emp.IdEntidades && !e.Inativo)
+            .OrderBy(e => e.IdEntidadesEnderecos).Select(e => new[] { e.EnderecoLinha1, e.EnderecoLinha2 }).FirstOrDefaultAsync();
+        var enderecos = await db.VwEntidadesEnderecos.AsNoTracking()
+            .Where(e => e.IdEntidadesEnderecos == v.IdEntEndLaudo || e.IdEntidadesEnderecos == v.IdEntEndCobranca)
+            .ToDictionaryAsync(e => e.IdEntidadesEnderecos, e => new[] { e.EnderecoLinha1, e.EnderecoLinha2 }.OfType<string>().ToList());
+        async Task<string?> FoneAsync(int? entidade) => entidade is null ? null : await db.EntidadesFones.AsNoTracking()
+            .Where(x => x.IdEntidades == entidade && !x.Inativo).OrderByDescending(x => x.Principal).Select(x => "(" + x.Ddd + ") " + x.Fone).FirstOrDefaultAsync();
+        static string? Contato(string? nome, string? email) => nome is null && email is null ? null : string.Join(" — ", new[] { nome, email }.OfType<string>().Distinct());
+
+        return new Propostas.PropostaDocumento
+        {
+            EmpresaNome = emp.RazaoSocial, EmpresaCnpj = emp.Cnpj is { Length: > 0 } c ? Documentos.FormatarCnpj(c) : null,
+            EmpresaEndereco = endEmp?.OfType<string>().ToList() ?? [], EmpresaFone = await FoneAsync(emp.IdEntidades),
+            Logo = ImagemValida(emp.Logo), Cabecalho = Textos.Limpo(emp.CabecalhoLaudo), Rodape = Textos.Limpo(emp.RodapeLaudo),
+            NrProposta = v.NrProposta, RevisaoSubstituida = !v.UltimaRevisao, DtSolicitacao = v.DtSolicitacao, DtValidade = v.DtValidade,
+            Comercial = v.ComercialNome, ClienteNome = v.ClienteNome, ClienteDocumento = v.ClienteCpfCnpj,
+            Contato = v.NomeContato, Departamento = v.ContatoDepartamento, ContatoEmail = v.ContatoEmail, ClienteFone = await FoneAsync(v.IdEntidades),
+            EnderecoLaudo = enderecos.GetValueOrDefault(v.IdEntEndLaudo) ?? [], ContatoResultado = Contato(v.ContatoResultado, v.EmailResultado),
+            CobrancaNome = v.CobrancaNome, CobrancaDocumento = v.CobrancaCpfCnpj,
+            EnderecoCobranca = v.IdEntEndCobranca is { } ec ? enderecos.GetValueOrDefault(ec) ?? [] : [], ContatoNf = Contato(v.ContatoNf, v.EmailNf),
+            Produtos = analises.GroupBy(a => (a.Item, a.ProdutoDescricao, a.QtdeProduto))
+                .Select(g => new Propostas.ProdutoProposta(g.Key.Item, g.Key.ProdutoDescricao, g.Key.QtdeProduto,
+                    g.Select(a => new Propostas.LinhaAnaliseProposta(a.Parametro, a.TipoAnalise, a.Metodo, a.Prazo, a.Idioma,
+                        a.TipoDocumento == TipoDocumento.Relatorio ? "Relatório" : "Boletim", a.QtdeAmostras, a.VrUnitario, a.VrDesconto, a.VrTotal)).ToList()))
+                .ToList(),
+            TotalAnalises = v.VrSomaVrTotAnalis, DescontoGeral = v.VrDesconto, ValorTotal = v.VrTotalProposta,
+            CondicaoPagamento = v.CondicaoPagamento, Moeda = v.Moeda,
+            ItensSolicitados = HtmlSimples.Limpar(t?.TxItensSolicitados), ItensAdquiridos = HtmlSimples.Limpar(t?.TxItensAdquiridos),
+            Observacao = HtmlSimples.Limpar(t?.TxObservacao), Contrato = HtmlSimples.Limpar(t?.TxContrato),
+        };
+    }
+
     // ------------------------------------------------------------------ apoio
+
+    // logo que o QuestPDF não lê não pode derrubar a impressão: sai sem ele
+    private static byte[]? ImagemValida(byte[]? imagem)
+    {
+        if (imagem is null) return null;
+        try { QuestPDF.Infrastructure.Image.FromBinaryData(imagem).Dispose(); return imagem; }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { return null; }
+    }
 
     private static bool LerPercentual(string? texto, out decimal valor)
     {

@@ -119,10 +119,10 @@ Grid: nº proposta, status (cor), CPF/CNPJ, cliente, nº pedido, valor total. Na
 ## Aceite
 - [x] Totais conferem com o roteiro do doc 12 §7 (300,00 − 10% = 270,00) — `PropostasTests.Inclusao_numera_pelo_banco_e_calcula_os_valores_do_roteiro` e navegador.
 - [x] Proposta nova recebe o número do banco (`00000N/AA-R0`, ano do servidor) — mesmos testes.
-- [ ] Seleção múltipla cria N linhas com método/idioma/prazo/tipo da linha base — 6.1. Na 4.2, a análise nova já vem com método/idioma/prazo/documento da anterior do produto.
-- [ ] Revisão nova com linhas antigas marcadas; revisão antiga somente leitura — 6.1. A marcação "rev. anterior" e o bloqueio da revisão antiga já existem na 4.2.
+- [x] Seleção múltipla cria N linhas com método/idioma/prazo/tipo da linha base — 6.1: modal com filtro, padrões da última análise do produto e o método padrão de cada parâmetro (navegador `Proposta_selecao_multipla_contrato_pdf_e_revisao`).
+- [x] Revisão nova com linhas antigas marcadas; revisão antiga somente leitura — 6.1 (`PropostasTests.Revisao_copia_tudo_marca_linhas_e_trava_a_anterior` + navegador).
 - [x] Proposta com amostra recebida não pode ser alterada sem revisão — `PropostasTests.Com_amostra_fica_bloqueada_e_nao_exclui_sem_amostra_exclui`.
-- [ ] PDF da proposta — 6.1.
+- [x] PDF da proposta — 6.1, com a página "Autorização de Serviço" (`PropostasTests.Contrato_padrao_troca_de_produto_e_pdf` + navegador); layout fino com os modelos reais (dúvida 5).
 
 > **Cadastro rápido "+" (pendência 3):** feito na 4.2.
 > - Método, idioma e prazo com `lc-rapido` no modal da análise.
@@ -162,4 +162,14 @@ Grid: nº proposta, status (cor), CPF/CNPJ, cliente, nº pedido, valor total. Na
   - `PropostasTests` (4): roteiro de valores, obrigatórios, alteração com qtde propagada e desconto digitado, bloqueio/exclusão;
   - navegador `CrudNavegadorTelasTests.Proposta_crud_com_produto_analises_e_valores`.
 
-**Status:** 🟨 parte essencial pronta na 4.2 (consulta, inclusão, alteração sem revisão, exclusão). Revisão, seleção múltipla, contrato, PDF, trocar produto e pedido na 6.1/6.2.
+## Implementação (tarefa 6.1 — proposta completa, 27/10/2026)
+- **Decisões do usuário (27/10/2026):** importar contrato de **Word (.docx), HTML e TXT**; PDF **com a página "Autorização de Serviço (AS)"** como no legado.
+- **Seleção múltipla** (`propostas.js` + modal `#modalSelecao`): lista de parâmetros ativos com filtro e "Marcar os visíveis"; os que já estão no produto vêm desabilitados; idioma, prazo e documento comuns (padrão = última análise do produto), método padrão de cada parâmetro (ou o escolhido, se o parâmetro não tiver); valor unitário do cadastro. Cria as linhas no JSON e grava com o "Gravar" de sempre (o servidor valida cada uma).
+- **Revisão** (`PropostaService.GerarRevisaoAsync` → `SP_GERAR_REVISAO_PROPOSTA`): só da vigente, motivo obrigatório; abre a revisão nova. Botão no rodapé quando a proposta é editável e **no aviso de bloqueio** quando ela está enviada, com pedido ou com amostra. A pergunta Sim/Não/Cancelar do Delphi virou: "Gravar" altera sem revisão; "Gerar revisão" cria a nova a partir do que está gravado (o modal avisa que alterações não gravadas se perdem).
+- **Aba Revisões:** todas as revisões (nº, status, validade, valor, motivo), a vigente marcada, link para abrir as outras.
+- **Aba Contrato** (`TX_CONTRATO`): editor simples; "Usar contrato padrão" (`TEXTO_PADRAO_CONTRATO` da T05; pergunta antes de substituir); "Importar arquivo" (`POST /Propostas/ImportarContrato`, até 2 MB) por `Infra/ImportadorTexto.cs` — Word pelo pacote **DocumentFormat.OpenXml 3.5.1** (parágrafos, negrito, itálico, sublinhado, listas; tabelas e imagens ficam de fora, com aviso), HTML limpo pelo `HtmlSimples`, TXT em parágrafos.
+- **PDF** (`Services/Propostas/PropostaPdf.cs`, QuestPDF): proposta técnica e comercial (empresa, nº, solicitação/validade, dados comerciais, dados do laudo e da nota fiscal, análises por produto — coluna de desconto só se houver —, totais, condição de pagamento, itens solicitados/adquiridos, observação, contrato com a formatação) + página **"Autorização de Serviço"** (proposta, cliente, "enviar correspondências aos cuidados de", "enviar amostras para", assinatura/carimbo, data, "ANEXAR NO RECIPIENTE DA AMOSTRA…"). Revisão substituída sai com marca d'água. Sem texto de autorização inventado e sem a linha do fornecedor do sistema antigo.
+- **Trocar produto** (`SP_TROCAR_PRODUTO_PROPOSTA`): modal na revisão vigente (produto atual da proposta → novo ativo), troca na proposta e nas amostras recebidas por ela; o banco recusa amostra com boletim emitido.
+- **Testes:** `PropostasTests` (+3: revisão, contrato/troca/PDF, HTML → PDF), `ImportadorTextoTests` (2) e navegador `Proposta_selecao_multipla_contrato_pdf_e_revisao`.
+
+**Status:** ✅ concluída na tarefa 6.1 (27/10/2026); layout fino do PDF com os modelos reais (dúvida 5). Pedido de venda na 6.2 (T21).

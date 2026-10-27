@@ -47,6 +47,13 @@ public sealed class PropostaVM
     public DateOnly? DtEnvioCliente { get; set; }
     /// <summary>Por que a proposta não pode ser alterada aqui (revisão antiga, enviada, com pedido ou com amostra); null = editável.</summary>
     public string? Bloqueio { get; set; }
+    public int Revisao { get; set; }
+    public string? MotivoRevisao { get; set; }
+    public bool UltimaRevisao { get; set; } = true;
+    /// <summary>Todas as revisões da proposta (painel "Revisões", 6.1), da mais nova para a mais antiga.</summary>
+    [ValidateNever] public IReadOnlyList<PropostaRevisaoVM> Revisoes { get; set; } = [];
+    /// <summary>A empresa tem contrato padrão (botão "Usar contrato padrão").</summary>
+    public bool TemContratoPadrao { get; set; }
 
     [Display(Name = "Data da solicitação")]
     public DateOnly? DtSolicitacao { get; set; }
@@ -95,6 +102,8 @@ public sealed class PropostaVM
     public string? TxItensSolicitados { get; set; }
     public string? TxItensAdquiridos { get; set; }
     public string? TxObservacao { get; set; }
+    /// <summary>Aba Contrato (6.1).</summary>
+    public string? TxContrato { get; set; }
 
     /// <summary>Produtos e análises (<see cref="PropostaItemVM"/>[]) em JSON.</summary>
     public string? ItensJson { get; set; }
@@ -129,6 +138,9 @@ public sealed class PropostaAnaliseVM
     public decimal VrDesconto { get; set; }
     public bool StRevAnterior { get; set; }
 }
+
+/// <summary>Uma revisão da proposta no painel "Revisões".</summary>
+public sealed record PropostaRevisaoVM(int Id, string NrProposta, int Revisao, string Status, DateOnly? DtValidade, decimal VrTotal, string? Motivo, bool Vigente);
 
 /// <summary>Opção de combo com dados extras para a tela (JSON).</summary>
 public sealed record OpcaoExtraVM(int Id, string Nome, IReadOnlyDictionary<string, object?> Extra);

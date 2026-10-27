@@ -52,4 +52,4 @@ Produto antigo → novo na proposta e nas amostras **dessa** proposta (`SP_TROCA
   - exclusão (revisão 0, sem revisões/pedido/amostras).
 - **Novas validações:** contato/endereço do cliente ou da cobrança; endereço da cobrança obrigatório; desconto geral ≤ total; usuário sem profissional não inclui.
 - **Bloqueio:** revisão antiga, com pedido, com amostra ou enviada → somente leitura com o motivo.
-- **A fazer (6.1):** pergunta "gerar revisão?" e "Gerar revisão" (P07), seleção múltipla, contrato, PDF, trocar produto. Ver [T20 › Implementação](../telas/T20-propostas.md#implementação-tarefa-42--parte-essencial-23102026).
+- **6.1 (27/10/2026):** "Gerar revisão" (P07), seleção múltipla, contrato (padrão e importar Word/HTML/TXT), PDF com a Autorização de Serviço e trocar produto. Ver [T20 › Implementação 6.1](../telas/T20-propostas.md#implementação-tarefa-61--proposta-completa-27102026).

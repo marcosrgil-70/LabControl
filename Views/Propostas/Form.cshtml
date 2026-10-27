@@ -4,7 +4,11 @@
     var inclusao = Model.Id == 0;
     ViewData["Title"] = inclusao ? "Nova proposta" : $"Proposta {Model.NrProposta}";
     var podeGravar = Usuario.TemPermissao(inclusao ? "PROPOSTAS.INCLUIR" : "PROPOSTAS.ALTERAR") && Model.Bloqueio is null;
+    var podeRevisar = !inclusao && Model.UltimaRevisao && Usuario.TemPermissao("PROPOSTAS.REVISAR");
+    var podeTrocar = !inclusao && Model.UltimaRevisao && Usuario.TemPermissao("PROPOSTAS.ALTERAR");
     var o = Model.Opcoes;
+    var produtosDaProposta = (LabControl.Services.PropostaService.LerItens(Model.ItensJson) ?? []).Where(i => i.Id != 0).Select(i => i.IdProdutos).Distinct()
+        .Select(id => o.Produtos.FirstOrDefault(p => p.Id == id)).OfType<OpcaoExtraVM>().ToList();
     var br = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
     var erroItens = ViewData.ModelState[nameof(PropostaVM.ItensJson)]?.Errors.FirstOrDefault()?.ErrorMessage;
     // dados para o propostas.js (produtos com unidade, parâmetros com tipo/valor/método padrão, contatos e endereços)
@@ -26,7 +30,12 @@
 
 @if (Model.Bloqueio is not null)
 {
-    <div class="alert alert-warning py-2"><i class="bi bi-lock me-1"></i>@Model.Bloqueio</div>
+    <div class="alert alert-warning py-2 d-flex align-items-center flex-wrap gap-2" id="avisoBloqueio"><span><i class="bi bi-lock me-1"></i>@Model.Bloqueio</span>
+        @if (podeRevisar)
+        {
+            <button type="button" class="btn btn-warning btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalRevisao"><i class="bi bi-files me-1"></i>Gerar revisão</button>
+        }
+    </div>
 }
 
 <form method="post" asp-action="@(inclusao ? "Criar" : "Editar")" asp-route-id="@(inclusao ? null : Model.Id)" id="formProposta" novalidate
@@ -36,6 +45,7 @@
     <input type="hidden" asp-for="TxItensSolicitados" />
     <input type="hidden" asp-for="TxItensAdquiridos" />
     <input type="hidden" asp-for="TxObservacao" />
+    <input type="hidden" asp-for="TxContrato" />
     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
     @if (erroItens is not null)
     {
@@ -46,6 +56,11 @@
         <li class="nav-item"><button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#abaProposta" role="tab">Proposta</button></li>
         <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#abaAnalises" role="tab" id="botaoAbaAnalises">Análises <span class="badge text-bg-secondary ms-1" id="contagemAnalises">0</span></button></li>
         <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#abaTextos" role="tab">Informações gerais</button></li>
+        <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#abaContrato" role="tab" id="botaoAbaContrato">Contrato</button></li>
+        @if (!inclusao)
+        {
+            <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#abaRevisoes" role="tab" id="botaoAbaRevisoes">Revisões <span class="badge text-bg-secondary ms-1">@Model.Revisoes.Count</span></button></li>
+        }
     </ul>
 
     <fieldset disabled="@(!podeGravar)">
@@ -86,6 +101,10 @@
                                 <label class="form-label small mb-0">Pedido</label>
                                 <div class="form-control-plaintext small font-monospace">@Model.NrPedido</div>
                             </div>
+                            @if (Model.Revisao > 0)
+                            {
+                                <div class="col-12 small"><span class="text-body-secondary">Revisão @Model.Revisao — motivo:</span> @Model.MotivoRevisao</div>
+                            }
                         </div>
                     </div>
                 </div>
@@ -209,7 +228,8 @@
             </div>
             <div class="d-flex align-items-center mb-2">
                 <h6 class="mb-0">Parâmetros para as análises <span class="text-body-secondary small" id="produtoSelecionado"></span></h6>
-                <button type="button" class="btn btn-outline-primary btn-sm ms-auto" data-acao="incluir-analise"><i class="bi bi-plus-lg me-1"></i>Incluir análise</button>
+                <button type="button" class="btn btn-outline-primary btn-sm ms-auto me-1" data-acao="selecionar-parametros"><i class="bi bi-list-check me-1"></i>Selecionar parâmetros</button>
+                <button type="button" class="btn btn-outline-primary btn-sm" data-acao="incluir-analise"><i class="bi bi-plus-lg me-1"></i>Incluir análise</button>
             </div>
             <div class="table-responsive">
                 <table class="table table-sm table-hover align-middle mb-0" id="tabelaAnalises">
@@ -238,11 +258,80 @@
                 </div>
             }
         </div>
+
+        @* ---------------------------------------------------------------- aba Contrato (6.1) *@
+        <div class="tab-pane fade" id="abaContrato" role="tabpanel">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                <label class="form-label small fw-semibold mb-0" id="rotulo-TxContrato">Contrato</label>
+                @if (podeGravar)
+                {
+                    @if (Model.TemContratoPadrao)
+                    {
+                        <button type="button" class="btn btn-outline-secondary btn-sm ms-auto" data-acao="contrato-padrao"><i class="bi bi-file-earmark-text me-1"></i>Usar contrato padrão</button>
+                    }
+                    @if (Usuario.TemPermissao("PROPOSTAS.ALTERAR"))
+                    {
+                        <label class="btn btn-outline-secondary btn-sm mb-0 @(Model.TemContratoPadrao ? "" : "ms-auto")" for="arquivoContrato"><i class="bi bi-upload me-1"></i>Importar arquivo</label>
+                        <input type="file" id="arquivoContrato" class="d-none" accept=".docx,.html,.htm,.txt" />
+                    }
+                }
+            </div>
+            <div class="alert alert-info py-1 small d-none" id="avisoContrato"></div>
+            <div class="border rounded">
+                <div class="btn-toolbar border-bottom p-1 gap-1" data-barra="TxContrato">
+                    <button type="button" class="btn btn-sm btn-light" data-comando="bold" title="Negrito"><i class="bi bi-type-bold"></i></button>
+                    <button type="button" class="btn btn-sm btn-light" data-comando="italic" title="Itálico"><i class="bi bi-type-italic"></i></button>
+                    <button type="button" class="btn btn-sm btn-light" data-comando="underline" title="Sublinhado"><i class="bi bi-type-underline"></i></button>
+                    <button type="button" class="btn btn-sm btn-light" data-comando="insertUnorderedList" title="Lista"><i class="bi bi-list-ul"></i></button>
+                </div>
+                <div class="p-2 texto-rico" style="min-height: 16rem" contenteditable="@(podeGravar ? "true" : "false")" data-texto="TxContrato" role="textbox" aria-multiline="true" aria-labelledby="rotulo-TxContrato"></div>
+            </div>
+            <div class="form-text">Importar aceita Word (.docx), HTML e texto (até 2 MB). Do Word vêm parágrafos, negrito, itálico, sublinhado e listas.</div>
+        </div>
+
+        @if (!inclusao)
+        {
+            @* ---------------------------------------------------------------- aba Revisões (6.1) *@
+            <div class="tab-pane fade" id="abaRevisoes" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0" id="tabelaRevisoes">
+                        <thead><tr><th>Proposta</th><th class="text-center">Revisão</th><th>Status</th><th>Validade</th><th class="text-end">Valor total</th><th>Motivo</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var r in Model.Revisoes)
+                            {
+                                <tr class="@(r.Id == Model.Id ? "table-active" : "")">
+                                    <td class="font-monospace small">@r.NrProposta</td>
+                                    <td class="text-center">@r.Revisao @if (r.Vigente) { <span class="badge text-bg-success ms-1">vigente</span> }</td>
+                                    <td class="small">@r.Status</td>
+                                    <td class="small">@r.DtValidade?.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-end">@r.VrTotal.ToString("N2", br)</td>
+                                    <td class="small">@r.Motivo</td>
+                                    <td class="text-end">@if (r.Id != Model.Id) { <a asp-action="Editar" asp-route-id="@r.Id" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-up-right me-1"></i>Abrir</a> }</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="form-text">Só a revisão vigente pode ser alterada ou revisada; as anteriores ficam somente leitura.</div>
+            </div>
+        }
     </div>
     </fieldset>
 
     <div class="d-flex gap-2">
         <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+        @if (!inclusao)
+        {
+            <a asp-action="Imprimir" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-secondary" lc-permissao="PROPOSTAS.IMPRIMIR" id="botaoImprimir"><i class="bi bi-printer me-1"></i>Imprimir</a>
+        }
+        @if (podeRevisar && Model.Bloqueio is null)
+        {
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalRevisao" id="botaoRevisao"><i class="bi bi-files me-1"></i>Gerar revisão</button>
+        }
+        @if (podeTrocar && produtosDaProposta.Count > 0)
+        {
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalTrocarProduto" id="botaoTrocarProduto"><i class="bi bi-arrow-left-right me-1"></i>Trocar produto</button>
+        }
         @if (!inclusao && podeGravar)
         {
             <button type="submit" form="formExcluir" class="btn btn-outline-danger" lc-permissao="PROPOSTAS.EXCLUIR"><i class="bi bi-trash me-1"></i>Excluir</button>
@@ -258,6 +347,36 @@
 {
     <form method="post" asp-action="Excluir" asp-route-id="@Model.Id" id="formExcluir"
           data-confirmar="Excluir a proposta @Model.NrProposta? Os produtos, análises e textos dela também são apagados."></form>
+
+    <div class="modal fade" id="modalRevisao" tabindex="-1" aria-labelledby="tituloRevisao">
+        <div class="modal-dialog">
+            <form method="post" asp-action="Revisao" asp-route-id="@Model.Id" class="modal-content">
+                <div class="modal-header py-2"><h6 class="modal-title" id="tituloRevisao">Gerar revisão da proposta @Model.NrProposta</h6><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+                <div class="modal-body">
+                    <p class="small text-body-secondary mb-2">A revisão nova copia o que está <b>gravado</b> (produtos, análises, textos e contrato) com o status inicial, sem data de envio, autorização ou pedido. A atual fica somente leitura. Alterações não gravadas nesta tela se perdem.</p>
+                    <label class="form-label small" for="motivoRevisao">Motivo <span class="text-danger">*</span></label>
+                    <textarea name="motivo" id="motivoRevisao" class="form-control" rows="3" maxlength="500" required></textarea>
+                </div>
+                <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Gerar revisão</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalTrocarProduto" tabindex="-1" aria-labelledby="tituloTrocar">
+        <div class="modal-dialog">
+            <form method="post" asp-action="TrocarProduto" asp-route-id="@Model.Id" class="modal-content" data-confirmar="Trocar o produto nesta proposta e em todas as amostras recebidas por ela?">
+                <div class="modal-header py-2"><h6 class="modal-title" id="tituloTrocar">Trocar produto</h6><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+                <div class="modal-body">
+                    <p class="small text-body-secondary mb-2">Troca na proposta e nas amostras recebidas por ela. Amostra com boletim emitido não muda: gere antes uma revisão da amostra.</p>
+                    <label class="form-label small" for="idProdutoAtual">Produto atual</label>
+                    <select name="idProdutoAtual" id="idProdutoAtual" class="form-select mb-2" asp-items="@(new SelectList(produtosDaProposta, "Id", "Nome"))"></select>
+                    <label class="form-label small" for="idProdutoNovo">Produto novo <span class="text-danger">*</span></label>
+                    <select name="idProdutoNovo" id="idProdutoNovo" class="form-select" asp-items="@(new SelectList(o.Produtos, "Id", "Nome"))"><option value="">—</option></select>
+                </div>
+                <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Trocar</button></div>
+            </form>
+        </div>
+    </div>
 }
 
 @* ---------------------------------------------------------------- modal do produto *@
@@ -288,6 +407,42 @@
                 </div>
             </div>
             <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">OK</button></div>
+        </form>
+    </div>
+</div>
+
+@* ---------------------------------------------------------------- modal da seleção múltipla (6.1) *@
+<div class="modal fade" id="modalSelecao" tabindex="-1" aria-labelledby="tituloSelecao">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <form class="modal-content" id="formSelecao" novalidate>
+            <div class="modal-header py-2"><h6 class="modal-title" id="tituloSelecao">Selecionar parâmetros <span class="text-body-secondary small" id="selecaoProduto"></span></h6><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-danger py-2 d-none" data-erro></div>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4"><label class="form-label small mb-0" for="selMetodo">Método (se o parâmetro não tiver padrão)</label>
+                        <select class="form-select form-select-sm" id="selMetodo" asp-items="@(new SelectList(o.Metodos, "Id", "Nome"))"><option value="">—</option></select>
+                        <div class="form-check mt-1"><input class="form-check-input" type="checkbox" id="selMetodoPadrao" checked /><label class="form-check-label small" for="selMetodoPadrao">Usar o método padrão de cada parâmetro</label></div></div>
+                    <div class="col-md-3"><label class="form-label small mb-0" for="selIdioma">Idioma <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="selIdioma" asp-items="@(new SelectList(o.Idiomas, "Id", "Nome"))"><option value="">—</option></select></div>
+                    <div class="col-md-3"><label class="form-label small mb-0" for="selPrazo">Prazo <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="selPrazo" asp-items="@(new SelectList(o.Prazos, "Id", "Nome"))"><option value="">—</option></select></div>
+                    <div class="col-md-2"><span class="form-label small d-block mb-0">Documento</span>
+                        <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="selDocumento" id="selBoletim" value="BOLETIM" checked /><label class="form-check-label small" for="selBoletim">Boletim</label></div>
+                        <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="selDocumento" id="selRelatorio" value="RELATORIO" /><label class="form-check-label small" for="selRelatorio">Relatório</label></div></div>
+                </div>
+                <div class="row g-2 mb-2 align-items-end">
+                    <div class="col-md-6"><label class="form-label small mb-0" for="selFiltro">Filtrar parâmetros</label><input class="form-control form-control-sm" id="selFiltro" placeholder="parte do nome ou do tipo de análise" /></div>
+                    <div class="col-auto"><button type="button" class="btn btn-outline-secondary btn-sm" data-acao="marcar-visiveis"><i class="bi bi-check2-all me-1"></i>Marcar os visíveis</button></div>
+                    <div class="col-auto small text-body-secondary" id="selContagem"></div>
+                </div>
+                <div class="table-responsive border rounded" style="max-height: 45vh">
+                    <table class="table table-sm table-hover align-middle mb-0" id="tabelaSelecao">
+                        <thead class="sticky-top bg-body"><tr><th></th><th>Parâmetro</th><th>Tipo de análise</th><th class="text-end">Valor</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Incluir selecionados</button></div>
         </form>
     </div>
 </div>

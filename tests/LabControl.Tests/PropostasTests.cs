@@ -166,4 +166,84 @@ public class PropostasTests
         Assert.False(await c.Db.LabPropostas.AnyAsync(p => p.IdLabPropostas == id));
         Assert.False(await c.Db.LabPropostasProdutos.AnyAsync(p => p.IdLabPropostas == id)); // cascata
     }
+
+    /// <summary>
+    /// 6.1 — revisão (P07, roteiro 12 §7 item 10): R1 com as linhas marcadas como da revisão anterior, status inicial,
+    /// sem envio/autorização, contrato copiado; R0 somente leitura; motivo obrigatório; só a vigente se revisa.
+    /// </summary>
+    [Fact]
+    public async Task Revisao_copia_tudo_marca_linhas_e_trava_a_anterior()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var s = Servico(c);
+        var vm = await NovaAsync(c);
+        vm.TxContrato = "<p>Cláusula <strong>1</strong></p>";
+        var r0 = await s.GravarAsync(vm);
+        Assert.True(r0.Sucesso, r0.Mensagem);
+        var hoje = await c.HojeAsync();
+        await c.Db.LabPropostas.Where(p => p.IdLabPropostas == r0.Valor).ExecuteUpdateAsync(u => u.SetProperty(p => p.DtAutorizacao, hoje));
+
+        Assert.Contains("motivo", (await s.GerarRevisaoAsync(r0.Valor, " ")).Mensagem);
+        var r1 = await s.GerarRevisaoAsync(r0.Valor, "Cliente pediu mais um parâmetro");
+        Assert.True(r1.Sucesso, r1.Mensagem);
+        c.Db.ChangeTracker.Clear();
+
+        var nova = (await s.CarregarAsync(r1.Valor))!;
+        Assert.Equal($"000002/{hoje.Year % 100:00}-R1", nova.NrProposta);
+        Assert.Equal((1, "Cliente pediu mais um parâmetro", (string?)null), (nova.Revisao, nova.MotivoRevisao, nova.Bloqueio));
+        Assert.Equal("<p>Cláusula <strong>1</strong></p>", nova.TxContrato);
+        var p1 = await c.Db.LabPropostas.AsNoTracking().SingleAsync(p => p.IdLabPropostas == r1.Valor);
+        Assert.Equal((null, null, 270m), (p1.DtAutorizacao, p1.DtEnvioCliente, p1.VrTotalProposta));
+        Assert.Equal(await c.Db.EmpresasParametros.Select(x => x.IdLabPropostasStatusInicial).SingleAsync(), p1.IdLabPropostasStatus);
+        var linhas = PropostaService.LerItens(nova.ItensJson)!.SelectMany(i => i.Analises).ToList();
+        Assert.Equal(2, linhas.Count);
+        Assert.All(linhas, l => Assert.True(l.StRevAnterior));
+        Assert.Equal([1, 0], nova.Revisoes.Select(x => x.Revisao));
+        Assert.True(nova.Revisoes[0].Vigente);
+
+        // a R0 ficou só de consulta e não se revisa mais
+        var antiga = (await s.CarregarAsync(r0.Valor))!;
+        Assert.Equal("Revisão antiga da proposta é somente leitura.", antiga.Bloqueio);
+        Assert.Equal("Revisão antiga da proposta é somente leitura.", (await s.GravarAsync(antiga)).Mensagem);
+        Assert.Contains("Só é possível revisar a última", (await s.GerarRevisaoAsync(r0.Valor, "outra")).Mensagem);
+    }
+
+    /// <summary>6.1 — contrato padrão, troca de produto (proposta + amostras) e PDF com a Autorização de Serviço.</summary>
+    [Fact]
+    public async Task Contrato_padrao_troca_de_produto_e_pdf()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var s = Servico(c);
+        await c.Db.EmpresasParametros.ExecuteUpdateAsync(u => u.SetProperty(p => p.TextoPadraoContrato, "<p>Contrato <em>padrão</em></p>"));
+        Assert.Equal("<p>Contrato <em>padrão</em></p>", await s.ContratoPadraoAsync());
+
+        // troca na proposta e na amostra recebida por ela
+        var amostra = c.NovaAmostra(await c.HojeAsync());
+        c.Db.Add(amostra);
+        await c.Db.SaveChangesAsync();
+        var outro = new Produto { Descricao = "QUEIJO PRATO", IdUnidades = c.Unidade.IdUnidades };
+        c.Db.Add(outro);
+        await c.Db.SaveChangesAsync();
+        Assert.Contains("mesmo", (await s.TrocarProdutoAsync(c.Proposta.IdLabPropostas, c.Produto.IdProdutos, c.Produto.IdProdutos)).Mensagem);
+        Assert.Contains("não está nesta proposta", (await s.TrocarProdutoAsync(c.Proposta.IdLabPropostas, outro.IdProdutos, c.Produto.IdProdutos)).Mensagem);
+        var troca = await s.TrocarProdutoAsync(c.Proposta.IdLabPropostas, c.Produto.IdProdutos, outro.IdProdutos);
+        Assert.True(troca.Sucesso, troca.Mensagem);
+        Assert.Equal(outro.IdProdutos, await c.Db.LabPropostasProdutos.Where(x => x.IdLabPropostas == c.Proposta.IdLabPropostas).Select(x => x.IdProdutos).SingleAsync());
+        Assert.Equal(outro.IdProdutos, await c.Db.LabHistAmostras.Where(x => x.IdLabHistAmostras == amostra.IdLabHistAmostras).Select(x => x.IdProdutos).SingleAsync());
+
+        // PDF: proposta + Autorização de Serviço
+        var pdf = await s.ImprimirAsync(c.Proposta.IdLabPropostas);
+        Assert.True(pdf.Sucesso, pdf.Mensagem);
+        Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString(pdf.Valor.Conteudo, 0, 4));
+        Assert.StartsWith($"Proposta {c.Proposta.NrProposta.Replace('/', '-')}", pdf.Valor.Nome);
+        var doc = (await s.DocumentoAsync(c.Proposta.IdLabPropostas))!;
+        Assert.Equal(("QUEIJO PRATO", 2), (doc.Produtos.Single().Produto, doc.Produtos.Single().Analises.Count));
+    }
+
+    [Fact]
+    public void Html_dos_editores_vira_paragrafos_do_pdf()
+    {
+        var p = LabControl.Services.Propostas.PropostaPdf.TextoSimples("<p>Primeiro <strong>negrito</strong></p><ul><li>um</li><li>dois</li></ul>linha<br>quebrada");
+        Assert.Equal([(false, "Primeiro negrito"), (true, "um"), (true, "dois"), (false, "linha"), (false, "quebrada")], p);
+    }
 }

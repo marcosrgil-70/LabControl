@@ -831,6 +831,66 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         Assert.Empty(s.ErrosJs);
     }
 
+    /// <summary>
+    /// T20 completa (6.1): seleção múltipla de parâmetros (filtro, "marcar os visíveis", padrões da última análise),
+    /// contrato padrão, gravação, PDF e gerar revisão pelo modal (abre a R1, painel com as duas revisões).
+    /// </summary>
+    [Fact]
+    public async Task Proposta_selecao_multipla_contrato_pdf_e_revisao()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var metodo = await c.Db.LabPropostasProdanalises.Where(a => a.IdLabPropostas == c.Proposta.IdLabPropostas).Select(a => a.IdAnalisesMetodos).FirstAsync();
+        c.Db.AddRange(
+            new Models.LabParametroAnalise { Descricao = "PARAM NAV COLIFORMES", DescReduzida = "COLIFORMES", IdAnalisesTipo = c.TipoAnalise.IdAnalisesTipo, VrUnitario = 30, IdAnalisesMetodos = metodo },
+            new Models.LabParametroAnalise { Descricao = "PARAM NAV BOLORES", DescReduzida = "BOLORES", IdAnalisesTipo = c.TipoAnalise.IdAnalisesTipo, VrUnitario = 20, IdAnalisesMetodos = metodo });
+        await c.Db.SaveChangesAsync();
+        await c.Db.EmpresasParametros.ExecuteUpdateAsync(u => u.SetProperty(x => x.TextoPadraoContrato, "<p>Contrato padrão do laboratório</p>"));
+        // a proposta do cenário não tem endereço/contato da cobrança, obrigatórios na tela
+        await c.Db.LabPropostas.Where(x => x.IdLabPropostas == c.Proposta.IdLabPropostas).ExecuteUpdateAsync(u => u
+            .SetProperty(x => x.IdEntEndCobranca, c.Proposta.IdEntEndLaudo).SetProperty(x => x.IdEntContatoNf, c.Proposta.IdEntContatoResultado));
+        await using var s = await app.EntrarAsync(c, comProfissional: true);
+        var p = s.Pagina;
+        var id = c.Proposta.IdLabPropostas;
+
+        await s.IrAsync($"/Propostas/Editar/{id}");
+        await p.ClickAsync("#botaoAbaAnalises");
+        await p.ClickAsync("[data-acao=selecionar-parametros]");
+        await Assertions.Expect(p.Locator("#tabelaSelecao tbody tr:has-text('CONTAGEM TOTAL') input")).ToBeDisabledAsync(); // já no produto
+        await p.FillAsync("#selFiltro", "param nav");
+        await Assertions.Expect(p.Locator("#tabelaSelecao tbody tr:visible")).ToHaveCountAsync(2);
+        await p.ClickAsync("[data-acao=marcar-visiveis]");
+        await Assertions.Expect(p.Locator("#selContagem")).ToHaveTextAsync("2 marcado(s)");
+        await Assertions.Expect(p.Locator("#selPrazo option:checked")).ToHaveTextAsync("10 DIAS"); // da última análise
+        await p.ClickAsync("#formSelecao button[type=submit]");
+        await Assertions.Expect(p.Locator("#tabelaAnalises tbody tr")).ToHaveCountAsync(4);
+        await Assertions.Expect(p.Locator("#tabelaAnalises tbody")).ToContainTextAsync("PARAM NAV BOLORES");
+
+        await p.ClickAsync("#botaoAbaContrato");
+        await p.ClickAsync("[data-acao=contrato-padrao]");
+        await Assertions.Expect(p.Locator("[data-texto=TxContrato]")).ToContainTextAsync("Contrato padrão do laboratório");
+        await p.ClickAsync("#formProposta button[type=submit]:has-text('Gravar')");
+        Assert.StartsWith("Nr. da Proposta:", await s.AlertaAsync());
+        Assert.Equal(4, await c.Db.LabPropostasProdanalises.CountAsync(a => a.IdLabPropostas == id));
+        Assert.Contains("Contrato padrão", await c.Db.LabPropostasTextos.Where(t => t.IdLabPropostas == id).Select(t => t.TxContrato).SingleAsync());
+
+        // PDF numa aba nova
+        Assert.Equal("_blank", await p.GetAttributeAsync("#botaoImprimir", "target"));
+        var pdf = await p.APIRequest.GetAsync(app.Url + await p.GetAttributeAsync("#botaoImprimir", "href"));
+        Assert.Equal("application/pdf", pdf.Headers["content-type"]);
+
+        // gerar revisão: abre a R1 com as 4 linhas da anterior e o painel com as duas revisões
+        await p.ClickAsync("#botaoRevisao");
+        await p.FillAsync("#motivoRevisao", "Cliente pediu desconto");
+        await p.ClickAsync("#modalRevisao button[type=submit]");
+        Assert.StartsWith("Revisão criada:", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#nrProposta")).ToContainTextAsync("-R1");
+        await p.ClickAsync("#botaoAbaRevisoes");
+        await Assertions.Expect(p.Locator("#tabelaRevisoes tbody tr")).ToHaveCountAsync(2);
+        await p.ClickAsync("#botaoAbaAnalises");
+        await Assertions.Expect(p.Locator("#tabelaAnalises tbody .badge:has-text('rev. anterior')")).ToHaveCountAsync(4);
+        Assert.Empty(s.ErrosJs);
+    }
+
     /// <summary>T25 (4.5): do recebimento para as etiquetas com a amostra marcada; impressora escolhida; quantidade; sigilo do produto.</summary>
     [Fact]
     public async Task Etiquetas_a_partir_do_recebimento_imprimem_na_escolhida()

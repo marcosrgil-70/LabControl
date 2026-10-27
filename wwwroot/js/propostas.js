@@ -1,4 +1,4 @@
-// T20 — Proposta (tarefa 4.2). Produtos × análises editados na página e gravados junto com o cabeçalho (campo
+// T20 — Proposta (tarefas 4.2 e 6.1). Produtos × análises editados na página e gravados junto com o cabeçalho (campo
 // ItensJson, uma transação no servidor). Contatos/endereços do cliente e da empresa de cobrança vêm por AJAX
 // (/Propostas/Entidade/{id}) com as sugestões da T20. Valores recalculados aqui só para exibir: ao gravar, o banco
 // recalcula (triggers + SP_RECALCULAR_PROPOSTA, P06).
@@ -234,6 +234,7 @@
                 }
                 break;
             case 'incluir-analise': abrirAnalise(null); break;
+            case 'selecionar-parametros': abrirSelecao(); break;
             case 'alterar-analise': abrirAnalise(k); break;
             case 'excluir-analise':
                 if (confirm('Excluir esta análise?')) { itens[selecionado].analises.splice(k, 1); desenhar(); }
@@ -300,6 +301,94 @@
         b.closest('.border').querySelector('[data-texto]').focus();
         document.execCommand(b.dataset.comando);
     }));
+
+    // ------------------------------------------------------------ seleção múltipla de parâmetros (6.1; Delphi Btn_SelParam)
+    // marca vários parâmetros e inclui todos de uma vez no produto escolhido, com idioma/prazo/documento comuns e o
+    // método padrão de cada parâmetro (ou o escolhido); valor unitário = o do cadastro do parâmetro
+    const modalSelecao = bootstrap.Modal.getOrCreateInstance($('modalSelecao'));
+    const visiveis = () => [...$('tabelaSelecao').tBodies[0].rows].filter(r => !r.hidden);
+    const contarSelecao = () => {
+        const n = $('tabelaSelecao').querySelectorAll('tbody input:checked').length;
+        $('selContagem').textContent = n ? `${n} marcado(s)` : '';
+    };
+    const abrirSelecao = () => {
+        const item = itens[selecionado];
+        if (!item) { alert('Inclua ou selecione um produto antes.'); return; }
+        const ja = new Set(item.analises.map(a => a.idParametro));
+        $('tabelaSelecao').tBodies[0].innerHTML = dados.parametros.map(p => `
+            <tr data-busca="${esc((p.nome + ' ' + (p.extra.tipo ?? '')).toLowerCase())}">
+                <td><input type="checkbox" class="form-check-input" value="${p.id}" id="sel_${p.id}" ${ja.has(p.id) ? 'disabled' : ''} /></td>
+                <td><label for="sel_${p.id}" class="mb-0">${esc(p.nome)}</label>${ja.has(p.id) ? ' <span class="badge text-bg-light border">já no produto</span>' : ''}</td>
+                <td class="small">${esc(p.extra.tipo)}</td>
+                <td class="text-end small">${fmt(p.extra.unitario ?? 0)}</td></tr>`).join('');
+        // padrões = a última análise do produto (como o legado copiava da linha base)
+        const base = item.analises.at(-1);
+        $('selMetodo').value = base ? String(base.idMetodo) : '';
+        $('selIdioma').value = base ? String(base.idIdioma) : ($('selIdioma').options.length === 2 ? $('selIdioma').options[1].value : '');
+        $('selPrazo').value = base ? String(base.idPrazo) : '';
+        (document.querySelector(`[name=selDocumento][value="${base?.tipoDocumento ?? 'BOLETIM'}"]`) ?? $('selBoletim')).checked = true;
+        $('selFiltro').value = '';
+        $('selecaoProduto').textContent = `— item ${item.item || 'novo'}: ${produtos.get(item.idProdutos)?.nome ?? ''}`;
+        erroModal($('modalSelecao'), null);
+        contarSelecao();
+        modalSelecao.show();
+    };
+    $('modalSelecao').addEventListener('shown.bs.modal', () => $('selFiltro').focus());
+    $('selFiltro').addEventListener('input', () => {
+        const termo = $('selFiltro').value.trim().toLowerCase();
+        for (const r of $('tabelaSelecao').tBodies[0].rows) r.hidden = termo !== '' && !r.dataset.busca.includes(termo);
+    });
+    $('tabelaSelecao').addEventListener('change', contarSelecao);
+    $('modalSelecao').querySelector('[data-acao="marcar-visiveis"]').addEventListener('click', () => {
+        for (const r of visiveis()) { const c = r.querySelector('input'); if (!c.disabled) c.checked = true; }
+        contarSelecao();
+    });
+    $('formSelecao').addEventListener('submit', e => {
+        e.preventDefault();
+        const item = itens[selecionado];
+        const marcados = [...$('tabelaSelecao').querySelectorAll('tbody input:checked')].map(c => parametros.get(Number(c.value)));
+        if (!marcados.length) return erroModal($('modalSelecao'), 'Nenhum parâmetro foi selecionado.');
+        const idIdioma = Number($('selIdioma').value), idPrazo = Number($('selPrazo').value);
+        if (!idIdioma) return erroModal($('modalSelecao'), 'Escolha o idioma.');
+        if (!idPrazo) return erroModal($('modalSelecao'), 'Escolha o prazo.');
+        const metodoComum = Number($('selMetodo').value);
+        const metodoDe = p => ($('selMetodoPadrao').checked && p.extra.metodo) || metodoComum;
+        const semMetodo = marcados.filter(p => !metodoDe(p));
+        if (semMetodo.length) return erroModal($('modalSelecao'), `Escolha o método: ${semMetodo.map(p => p.nome).join(', ')} não tem método padrão.`);
+        const tipoDocumento = document.querySelector('[name=selDocumento]:checked')?.value ?? 'BOLETIM';
+        for (const p of marcados)
+            item.analises.push({ id: 0, stRevAnterior: false, idParametro: p.id, idMetodo: metodoDe(p), idIdioma, idPrazo, tipoDocumento,
+                vrUnitario: p.extra.unitario ?? 0, porcDesconto: 0, vrDesconto: 0 });
+        modalSelecao.hide();
+        desenhar();
+    });
+
+    // ------------------------------------------------------------ contrato (6.1): contrato padrão e importar arquivo
+    const editorContrato = document.querySelector('[data-texto="TxContrato"]');
+    const avisoContrato = msg => { $('avisoContrato').textContent = msg ?? ''; $('avisoContrato').classList.toggle('d-none', !msg); };
+    const porNoContrato = html => {
+        if (editorContrato.textContent.trim() && !confirm('Substituir o texto atual do contrato?')) return false;
+        editorContrato.innerHTML = html ?? '';
+        return true;
+    };
+    document.querySelector('[data-acao="contrato-padrao"]')?.addEventListener('click', async () => {
+        const r = await fetch('/Propostas/ContratoPadrao', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!r.ok) return avisoContrato('Não foi possível buscar o contrato padrão.');
+        if (porNoContrato((await r.json()).html)) avisoContrato('Contrato padrão da empresa aplicado: confira e grave a proposta.');
+    });
+    $('arquivoContrato')?.addEventListener('change', async e => {
+        const arquivo = e.target.files[0];
+        e.target.value = '';
+        if (!arquivo) return;
+        const corpo = new FormData();
+        corpo.append('arquivo', arquivo);
+        corpo.append('__RequestVerificationToken', form.querySelector('[name=__RequestVerificationToken]').value);
+        const r = await fetch('/Propostas/ImportarContrato', { method: 'POST', body: corpo, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (r.status === 422) return avisoContrato((await r.json()).erro);
+        if (!r.ok) return avisoContrato(r.status === 413 ? 'Arquivo maior que 2 MB.' : 'Não foi possível importar o arquivo.');
+        const { html, aviso } = await r.json();
+        if (porNoContrato(html)) avisoContrato(`Arquivo "${arquivo.name}" importado${aviso ? ' — ' + aviso : ''}. Confira e grave a proposta.`);
+    });
 
     // ------------------------------------------------------------ gravar
     form.addEventListener('submit', () => {
