@@ -27,4 +27,4 @@
 - Alterar parâmetro de resultado com boletim emitido → "Resultado com boletim emitido: gere uma revisão do resultado."
 
 ## Implementação (tarefa 5.2, 27/10/2026)
-`ResultadoService.GerarRevisaoAsync` (motivo + "Revisar também o boletim", padrão marcado) e `DesfazerRevisaoAsync` pelas procedures, fora da transação do EF; a tela abre a revisão nova (ou a anterior, ao desfazer). Cenários em `ResultadosTests.Boletim_emitido_exige_revisao…`. O item 9 do roteiro (cascata a partir da revisão da **amostra**) entra no `AceiteFase5Tests` (5.5). **Status:** ✅
+`ResultadoService.GerarRevisaoAsync` (motivo + "Revisar também o boletim", padrão marcado) e `DesfazerRevisaoAsync` pelas procedures, fora da transação do EF; a tela abre a revisão nova (ou a anterior, ao desfazer). Cenários em `ResultadosTests.Boletim_emitido_exige_revisao…`. O item 9 do roteiro (cascata a partir da revisão da **amostra**) está no `AceiteFase5Tests` (5.5). **Status:** ✅

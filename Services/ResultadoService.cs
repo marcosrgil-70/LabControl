@@ -46,8 +46,9 @@ public sealed partial class ResultadoService(LabDbContext db, IEmpresaContexto c
                 db.LabResultadosParam.Count(p => p.IdLabResultadosAnalises == x.r.IdLabResultadosAnalises)))
             .ToListAsync();
 
+        // a fila só é lida com a aba dela aberta; a contagem vai sempre (badge da aba)
         var fila = db.VwLabTestesPendentes.AsNoTracking();
-        var filaItens = await fila.OrderBy(t => t.DtPrevista == null).ThenBy(t => t.DtPrevista).ThenBy(t => t.NrAmostra).Take(200)
+        var filaItens = !f.Fila ? [] : await fila.OrderBy(t => t.DtPrevista == null).ThenBy(t => t.DtPrevista).ThenBy(t => t.NrAmostra).Take(200)
             .Select(t => new TestePendenteVM(t.IdLabHistAmostras, t.NrAmostra, t.Parametro, t.DtPrevista, t.DiasParaPrazo, t.ClienteNome, t.ProdutoDescricao))
             .ToListAsync();
         return new ResultadoListaVM { Filtro = f, Itens = itens, Total = total, Fila = filaItens, TotalFila = await fila.CountAsync() };
@@ -220,7 +221,8 @@ public sealed partial class ResultadoService(LabDbContext db, IEmpresaContexto c
         var hoje = await db.HojeAsync();
         var testes = (await db.LabHistAmostrasTestes.Where(t => t.IdLabHistAmostras == vm.IdAmostra).Select(t => t.IdLabHistAmostrasTestes).ToListAsync()).ToHashSet();
         var existentes = cabecalho is null ? [] : await db.LabResultadosParam.Where(p => p.IdLabResultadosAnalises == cabecalho.IdLabResultadosAnalises).ToListAsync();
-        var analistas = (await db.EntidadesFuncionarios.Where(f => f.ExecutaAnalise).Select(f => f.IdEntidades).ToListAsync()).ToHashSet();
+        // quem executa análise e está ativo (o combo só oferece esses; o POST pode vir de um formulário antigo)
+        var analistas = (await db.VwProfissionais.Where(p => p.ExecutaAnalise && !p.Inativo).Select(p => p.IdEntidades).ToListAsync()).ToHashSet();
 
         var gravar = new List<(ResultadoLinhaVM Linha, LabResultadoParam? Atual, Valores V)>();
         for (var i = 0; i < vm.Linhas.Count; i++)
@@ -229,15 +231,20 @@ public sealed partial class ResultadoService(LabDbContext db, IEmpresaContexto c
             var atual = l.IdParam > 0 ? existentes.SingleOrDefault(p => p.IdLabResultadosParam == l.IdParam) : null;
             if (l.IdParam > 0 && atual is null) return Resultado.Erro($"{l.Parametro}: o resultado deste parâmetro não foi encontrado (pode ter sido excluído).");
             if (atual is null && !l.Lancar) continue;
+            // linha gravada e não mexida: não revalida (dados migrados do legado podem não seguir as regras novas e não
+            // podem impedir que o usuário lance os outros parâmetros) nem regrava
+            if (atual is not null && !Mudou(l, atual)) continue;
             if (atual is null && !testes.Contains(l.IdTeste)) return Resultado.Erro("O parâmetro não pertence à amostra do resultado.");
             if (atual is null && existentes.Any(p => p.IdLabHistAmostrasTestes == l.IdTeste)) return Resultado.Erro($"{l.Parametro}: este parâmetro já tem resultado nesta revisão.");
             if (l.IdAnalista is { } an && !analistas.Contains(an) && an != atual?.IdEntidadesFuncAnalise)
-                return Resultado.Erro($"{l.Parametro}: o responsável precisa ser um profissional que executa análise.", Campo(i, nameof(l.IdAnalista)));
+                return Resultado.Erro($"{l.Parametro}: o responsável precisa ser um profissional ativo que executa análise.", Campo(i, nameof(l.IdAnalista)));
             var v = Validar(l, i, entrega, hoje);
             if (!v.Sucesso) return Resultado.Erro(v.Mensagem!, v.Campo);
             gravar.Add((l, atual, v.Valor));
         }
-        if (gravar.Count == 0) return Resultado.Erro("Lance o resultado de ao menos um parâmetro (\"Lançar\" ou \"Lançar todos\").");
+        if (gravar.Count == 0)
+            return cabecalho is not null ? Resultado.Ok(cabecalho.IdLabResultadosAnalises) // nada mudou
+                : Resultado.Erro("Lance o resultado de ao menos um parâmetro (\"Lançar\" ou \"Lançar todos\").");
 
         return await ErrosMySql.CapturarAsync(async () =>
         {
@@ -268,6 +275,23 @@ public sealed partial class ResultadoService(LabDbContext db, IEmpresaContexto c
     }
 
     private sealed record Valores(DateOnly Inicio, DateOnly Fim, decimal? Qtde, string? Simbolo, string? Valor, string? EspecSimbolo, string? EspecValor);
+
+    /// <summary>O formulário traz algo diferente do gravado? Compara o que vale para o tipo (o banco limpa o resto).</summary>
+    private static bool Mudou(ResultadoLinhaVM l, LabResultadoParam p)
+    {
+        static bool Igual(string? a, string? b) => Textos.Limpo(a) == Textos.Limpo(b);
+        if (l.IdAnalista != p.IdEntidadesFuncAnalise || l.DtInicial != p.DtInicial || l.DtResultado != p.DtResultado
+            || !Igual(l.QtAmostra, p.QtAmostra?.ToString("0.####", PtBr)) || l.IdUnidadeAmostra != p.IdUnidadesAmostra
+            || l.Numerico != p.TipoResultado || l.EspecNumerica != p.TipoResultadoEspecif || l.Conforme != p.VrSatisfeito)
+            return true;
+        var resultado = l.Numerico
+            ? !Igual(l.Simbolo, p.SimboloGrandeza) || !Igual(l.Valor, p.VrResultado) || (l.Expoente ?? 0) != (p.VrExpResultado ?? 0) || l.IdUnidade != p.IdUnidades
+            : l.IdTipoResultado != p.IdLabTiposResultados;
+        var especificacao = l.EspecNumerica
+            ? !Igual(l.EspecSimbolo, p.SimboloGrEspecif) || !Igual(l.EspecValor, p.VrResultadoEspecif) || (l.EspecExpoente ?? 0) != (p.VrExpEspecif ?? 0) || l.EspecIdUnidade != p.IdUnidadesEspecif
+            : l.EspecIdTipoResultado != p.IdLabTipoResultadosEsp;
+        return resultado || especificacao;
+    }
 
     private static string Campo(int i, string campo) => $"{nameof(ResultadoVM.Linhas)}[{i}].{campo}";
 

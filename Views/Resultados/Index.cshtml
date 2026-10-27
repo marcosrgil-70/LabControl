@@ -19,9 +19,10 @@
 <p class="small text-body-secondary mb-3">Um resultado por revisão da amostra, com uma linha por teste. O texto que vai para o boletim é montado pelo sistema.</p>
 
 <ul class="nav nav-tabs" role="tablist">
-    <li class="nav-item"><button class="nav-link @(f.Fila ? "" : "active")" type="button" data-bs-toggle="tab" data-bs-target="#abaConsulta" role="tab">Consulta</button></li>
-    <li class="nav-item"><button class="nav-link @(f.Fila ? "active" : "")" type="button" data-bs-toggle="tab" data-bs-target="#abaFila" role="tab" id="botaoFila">
-        Fila de análises <span class="badge text-bg-secondary ms-1">@Model.TotalFila</span></button></li>
+    @* abas por link: a fila (consulta pesada) só é lida quando a aba dela é aberta *@
+    <li class="nav-item"><a class="nav-link @(f.Fila ? "" : "active")" asp-action="Index" asp-all-route-data="@Rota(f.Pagina)" role="tab">Consulta</a></li>
+    <li class="nav-item"><a class="nav-link @(f.Fila ? "active" : "")" asp-action="Index" asp-route-Fila="true" role="tab" id="botaoFila">
+        Fila de análises <span class="badge text-bg-secondary ms-1">@Model.TotalFila</span></a></li>
 </ul>
 
 <div class="tab-content border border-top-0 rounded-bottom p-3 bg-body">

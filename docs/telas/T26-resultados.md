@@ -82,6 +82,7 @@ Atalho novo: **Fila de análises** (`VW_LAB_TESTES_PENDENTES`) — testes sem re
 - **Regras no serviço:** digitador = profissional do usuário; datas (início ≥ entrega, resultado ≥ início e ≤ hoje do servidor); valor com vírgula (`^-?\d+(,\d+)?$`) obrigatório no numérico; tipo obrigatório no descritivo; símbolos `<` `>` `≤` `≥` `~`; analista que executa análise; teste da amostra. Mensagens no campo (`Linhas[i].Campo`).
 - **Travas:** revisão antiga e boletim emitido deixam só consulta; excluir parâmetro recusado se estiver num boletim; "Excluir todos" só na revisão 0 sem boletim; `UQ_RESPAR_TESTE`/`UQ_RES_REV` com mensagem amigável (`ErrosMySql`).
 - **Revisão / desfazer:** `SP_GERAR_REVISAO_RESULTADO` (motivo + "Revisar também o boletim", padrão marcado) abre a revisão nova; `SP_EXCLUIR_REVISAO_RESULTADO` volta para a anterior.
-- **Testes:** `ResultadosTests` (9) e `CrudNavegadorTelasTests.Resultado_lanca_todos_com_previa_e_exclui_parametro`.
+- **Depois do `/code-review` (5.5):** só as linhas **novas ou alteradas** são validadas e regravadas (dados do legado fora das regras novas — 36 linhas com início antes da entrega, 5 valores com ponto — não travam o lançamento dos outros parâmetros); analista precisa estar **ativo**; a aba "Fila de análises" virou link (`?Fila=true`) e a fila só é lida com ela aberta; prévia com expoente por `ResultadoTexto.Html`.
+- **Testes:** `ResultadosTests` (10) e `CrudNavegadorTelasTests.Resultado_lanca_todos_com_previa_e_exclui_parametro`.
 
 **Status:** ✅ concluída na tarefa 5.2 (27/10/2026).

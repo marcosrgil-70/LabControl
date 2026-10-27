@@ -9,7 +9,8 @@ namespace LabControl.Infra;
 /// </summary>
 public sealed class ArmazemBoletins(string raiz)
 {
-    public string Raiz { get; } = Path.GetFullPath(raiz);
+    // sem a barra final ("D:\Boletins\", "E:\"): a conferência de "dentro da pasta" acrescenta a dela
+    public string Raiz { get; } = Path.TrimEndingDirectorySeparator(Path.GetFullPath(raiz));
 
     /// <summary>Pasta de <c>Boletins:Pasta</c> (relativa ao ContentRoot ou absoluta; padrão <c>storage/boletins</c>).</summary>
     public static ArmazemBoletins DaConfiguracao(IConfiguration config, IWebHostEnvironment env) =>
@@ -32,14 +33,21 @@ public sealed class ArmazemBoletins(string raiz)
         return completo;
     }
 
-    /// <summary>Grava o PDF (substitui um que tenha sobrado de uma emissão que falhou) e devolve o SHA-256 em hexadecimal.</summary>
-    public async Task<string> GravarAsync(string relativo, byte[] pdf)
+    /// <summary>
+    /// 1º passo da emissão: grava o PDF com um nome provisório e único ao lado do definitivo e devolve esse nome e o SHA-256.
+    /// Duas emissões ao mesmo tempo nunca escrevem no mesmo arquivo; só quem o banco aceitar <see cref="Confirmar"/>.
+    /// </summary>
+    public async Task<(string Provisorio, string Hash)> PrepararAsync(string relativo, byte[] pdf)
     {
-        var completo = Completo(relativo);
+        var provisorio = $"{relativo}.{Guid.NewGuid():N}.tmp";
+        var completo = Completo(provisorio);
         Directory.CreateDirectory(Path.GetDirectoryName(completo)!);
         await File.WriteAllBytesAsync(completo, pdf);
-        return Hash(pdf);
+        return (provisorio, Hash(pdf));
     }
+
+    /// <summary>2º passo, depois que o banco registrou a emissão: o provisório vira o arquivo definitivo.</summary>
+    public void Confirmar(string provisorio, string relativo) => File.Move(Completo(provisorio), Completo(relativo), overwrite: true);
 
     /// <summary>O arquivo gravado, ou null se não existe.</summary>
     public async Task<byte[]?> LerAsync(string relativo)

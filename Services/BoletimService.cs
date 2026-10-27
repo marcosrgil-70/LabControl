@@ -134,12 +134,11 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
         if (a is not null) (vm.NrAmostra, vm.Produto, vm.Lote, vm.Cliente) = (a.NrAmostra, a.ProdutoDescricao, a.NrLote, a.ClienteNome);
         vm.RevisaoResultado = await db.LabResultadosAnalises.Where(r => r.IdLabResultadosAnalises == vm.IdResultado).Select(r => r.Revisao).FirstOrDefaultAsync();
 
-        vm.Parametros = vm.Id == 0 ? [] : await db.LabBoletimParametros.AsNoTracking().Where(p => p.IdLabBoletimAnalises == vm.Id)
-            .OrderBy(p => p.Ordem).ThenBy(p => p.IdLabBoletimParametros)
-            .Select(p => new ParametroBoletimVM(p.IdLabBoletimParametros, p.Ordem, p.DescParametro, p.ResultadoConcat, p.TipoResultadoDesc,
-                p.UnidadeSg, p.Especificacao, p.Acreditado))
-            .ToListAsync();
-        var noBoletim = vm.Id == 0 ? [] : await db.LabBoletimParametros.Where(p => p.IdLabBoletimAnalises == vm.Id).Select(p => p.IdLabResultadosParam).ToListAsync();
+        var linhas = vm.Id == 0 ? [] : await db.LabBoletimParametros.AsNoTracking().Where(p => p.IdLabBoletimAnalises == vm.Id)
+            .OrderBy(p => p.Ordem).ThenBy(p => p.IdLabBoletimParametros).ToListAsync();
+        vm.Parametros = linhas.Select(p => new ParametroBoletimVM(p.IdLabBoletimParametros, p.Ordem, p.DescParametro, p.ResultadoConcat,
+            p.TipoResultadoDesc, p.UnidadeSg, p.Especificacao, p.Acreditado)).ToList();
+        var noBoletim = linhas.Select(p => p.IdLabResultadosParam).ToHashSet();
         vm.Disponiveis = (await db.VwLabResultados.AsNoTracking().Where(r => r.IdLabResultadosAnalises == vm.IdResultado)
                 .OrderByDescending(r => r.Auditado).ThenBy(r => r.DescReduzida).ToListAsync())
             .Where(r => !noBoletim.Contains(r.IdLabResultadosParam))
@@ -189,10 +188,11 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
         }
         if (vm.DtBoletim is not { } data) return Resultado.Erro("Data do boletim é obrigatória.", nameof(vm.DtBoletim));
         if (data > await db.HojeAsync()) return Resultado.Erro("A data do boletim não pode ser depois de hoje.", nameof(vm.DtBoletim));
-        var assinam = await db.EntidadesFuncionarios.Where(f => f.AssinaBoletim).Select(f => f.IdEntidades).ToListAsync();
+        // quem assina boletim e está ativo (o combo só oferece esses; o POST pode vir de um formulário antigo)
+        var assinam = await db.VwProfissionais.Where(p => p.AssinaBoletim && !p.Inativo).Select(p => p.IdEntidades).ToListAsync();
         foreach (var (resp, campo, atual) in new[] { (vm.IdResponsavel1, nameof(vm.IdResponsavel1), b?.IdEntidadesFuncResp), (vm.IdResponsavel2, nameof(vm.IdResponsavel2), b?.IdEntidadesFuncResp2) })
             if (resp is { } r && !assinam.Contains(r) && r != atual)
-                return Resultado.Erro("O responsável precisa ser um profissional que assina boletim.", campo);
+                return Resultado.Erro("O responsável precisa ser um profissional ativo que assina boletim.", campo);
         if (vm.IdResponsavel2 is not null && vm.IdResponsavel2 == vm.IdResponsavel1)
             return Resultado.Erro("Os dois responsáveis precisam ser profissionais diferentes.", nameof(vm.IdResponsavel2));
         if (ctx.ProfissionalId is not { } gerador)
@@ -356,19 +356,42 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
         // código e revisão relidos do banco (a trigger dá o código; a entidade rastreada pode estar desatualizada)
         var gravado = await db.LabBoletimAnalises.AsNoTracking().Where(x => x.IdLabBoletimAnalises == id).Select(x => new { x.CodBoletim, x.Revisao }).SingleAsync();
         var relativo = ArmazemBoletins.CaminhoRelativo(codEmpresa, (await db.HojeAsync()).Year, gravado.CodBoletim, gravado.Revisao);
-        var hash = await armazem.GravarAsync(relativo, BoletimPdf.Gerar(d));
+        // nome provisório e único: uma 2ª emissão simultânea (duplo clique, dois usuários) nunca sobrescreve nem apaga
+        // o arquivo de quem o banco aceitou
+        var (provisorio, hash) = await armazem.PrepararAsync(relativo, BoletimPdf.Gerar(d));
+        Resultado r;
         try
         {
-            var r = await procedures.EmitirBoletimAsync(id, relativo, hash);
-            if (!r.Sucesso) armazem.Apagar(relativo);
-            return r;
+            // o que entrou no PDF ainda é o que está gravado (outro usuário pode ter alterado enquanto o PDF era gerado)
+            if (Chave(d) != Chave((await DocumentoAsync(id, ModoBoletim.Emitido))!))
+            {
+                armazem.Apagar(provisorio);
+                return Resultado.Erro("O boletim foi alterado por outro usuário enquanto era emitido: confira e emita de novo.");
+            }
+            r = await procedures.EmitirBoletimAsync(id, relativo, hash);
         }
         catch
         {
-            armazem.Apagar(relativo); // nada de arquivo órfão
+            armazem.Apagar(provisorio); // nada de arquivo órfão
             throw;
         }
+        if (!r.Sucesso)
+        {
+            armazem.Apagar(provisorio);
+            return r;
+        }
+        try { armazem.Confirmar(provisorio, relativo); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // o banco já registrou a emissão (caminho + hash); o PDF certo está no provisório, conferível pelo hash
+            log.LogCritical(ex, "Boletim {Id} emitido, mas o PDF não foi renomeado de {Provisorio} para {Arquivo}", id, provisorio, relativo);
+            return Resultado.Erro($"O boletim foi emitido, mas o PDF não pôde ser gravado com o nome definitivo. Avise o administrador (arquivo {provisorio}).");
+        }
+        return r;
     }
+
+    // conteúdo do laudo para comparar antes e depois de gerar o PDF
+    private static string Chave(BoletimDocumento d) => System.Text.Json.JsonSerializer.Serialize(d);
 
     /// <summary>
     /// Reimpressão do emitido: o PDF gravado, conferido pelo SHA-256 (divergente ou ausente = alerta de integridade).
@@ -385,7 +408,14 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
             var d = (await DocumentoAsync(id, ModoBoletim.SegundaViaMigrado))!;
             return Resultado.Ok(new ArquivoPdf(BoletimPdf.Gerar(d), $"2a via {NomeArquivo(d)}"));
         }
-        var pdf = await armazem.LerAsync(b.ArquivoPdf);
+        byte[]? pdf;
+        try { pdf = await armazem.LerAsync(b.ArquivoPdf); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            // pasta fora do ar, sem permissão ou caminho do banco fora da pasta: também é alerta, nunca página de erro
+            log.LogError(ex, "Integridade do boletim {Id} ({Arquivo}): arquivo ilegível", id, b.ArquivoPdf);
+            return Resultado.Erro($"ALERTA DE INTEGRIDADE: o PDF emitido do boletim {b.CodBoletim} R{b.Revisao:00} não pôde ser lido da pasta dos boletins ({ex.Message}). Avise o administrador.");
+        }
         if (pdf is null || ArmazemBoletins.Hash(pdf) != b.HashPdf)
         {
             log.LogError("Integridade do boletim {Id} ({Arquivo}): {Problema}", id, b.ArquivoPdf, pdf is null ? "arquivo ausente" : "hash diferente do gravado na emissão");

@@ -24,6 +24,18 @@ public static partial class ResultadoTexto
 
     public static string? Impresso(string? formatado) => Partes(formatado)?.ToString();
 
+    /// <summary>Para as telas: HTML com o expoente em <c>&lt;sup&gt;</c> (texto codificado); vazio vira <paramref name="vazio"/>.</summary>
+    public static Microsoft.AspNetCore.Html.IHtmlContent Html(string? formatado, string vazio = "")
+    {
+        var e = System.Text.Encodings.Web.HtmlEncoder.Default;
+        return new Microsoft.AspNetCore.Html.HtmlString(Partes(formatado) switch
+        {
+            null => vazio,
+            { Expoente: null } p => e.Encode(p.Antes),
+            var p => $"{e.Encode(p.Antes)} × 10<sup>{e.Encode(p.Expoente)}</sup>{e.Encode(p.Depois)}",
+        });
+    }
+
     private const string Digitos = "⁰¹²³⁴⁵⁶⁷⁸⁹";
 
     public static string Sobrescrito(string expoente) =>

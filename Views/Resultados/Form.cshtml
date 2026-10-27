@@ -1,6 +1,5 @@
 @model ResultadoVM
 @inject IEmpresaContexto Usuario
-@using Microsoft.AspNetCore.Html
 @{
     var inclusao = Model.Id == 0;
     ViewData["Title"] = $"Resultado — {Model.NrAmostra}";
@@ -8,16 +7,6 @@
     var o = Model.Opcoes;
     var pendentes = Model.Linhas.Count(l => l.IdParam == 0);
     var simbolos = ResultadoOpcoesVM.Simbolos;
-}
-@functions {
-    // "< 1,0e2 UFC/g" (banco) → "< 1,0 × 10<sup>2</sup> UFC/g" (como sai no boletim)
-    static IHtmlContent Previa(string? formatado)
-    {
-        var p = LabControl.Infra.ResultadoTexto.Partes(formatado);
-        if (p is null) return new HtmlString("<span class=\"text-body-secondary\">—</span>");
-        var e = System.Text.Encodings.Web.HtmlEncoder.Default;
-        return new HtmlString(p.Expoente is null ? e.Encode(p.Antes) : $"{e.Encode(p.Antes)} × 10<sup>{e.Encode(p.Expoente)}</sup>{e.Encode(p.Depois)}");
-    }
 }
 
 <nav aria-label="breadcrumb">
@@ -82,8 +71,8 @@
                 @if (l.Acreditado) { <span class="badge text-bg-success" title="Parâmetro acreditado">acreditado</span> }
                 @if (l.NoBoletim) { <span class="badge text-bg-info" title="Este resultado está num boletim">no boletim</span> }
                 <span class="ms-auto small" data-previa-banco>
-                    @if (l.IdParam > 0) { <span class="text-body-secondary">Resultado:</span> <span class="fw-semibold">@Previa(l.ResultadoFormatado)</span>
-                        @if (l.EspecFormatada is not null) { <span class="text-body-secondary ms-2">Especificação:</span> <span>@Previa(l.EspecFormatada)</span> } }
+                    @if (l.IdParam > 0) { <span class="text-body-secondary">Resultado:</span> <span class="fw-semibold">@LabControl.Infra.ResultadoTexto.Html(l.ResultadoFormatado, "<span class=\"text-body-secondary\">—</span>")</span>
+                        @if (l.EspecFormatada is not null) { <span class="text-body-secondary ms-2">Especificação:</span> <span>@LabControl.Infra.ResultadoTexto.Html(l.EspecFormatada)</span> } }
                     else if (!aberto) { <span class="badge text-bg-warning">pendente</span> }
                 </span>
                 @if (!aberto)

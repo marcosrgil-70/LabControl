@@ -66,12 +66,16 @@ public sealed class M17Boletins : IEtapaMigracao
         var mapa = c.Mapa("LAB_BOLETIM_ANALISES");
 
         var migrar = new List<(LinhaFb B, int Resultado, int Amostra)>();
+        var semResultado = new HashSet<int>(); // boletim de resultado que não migrou: anomalia, fora das contagens
         var amostraTrocada = new HashSet<int>();
         foreach (var b in boletins)
         {
             var antigo = b.IntObrigatorio("ID_LAB_BOLETIM_ANALISES");
             if (c.Novo("LAB_RESULTADOS_ANALISES", b.Int("ID_LAB_RESULTADO_ANALISES"), $"boletim {antigo}") is not { } res)
-                continue; // anomalia já registrada
+            {
+                semResultado.Add(antigo); // anomalia já registrada
+                continue;
+            }
             var amostra = resultados[res].IdLabHistAmostras;
             if (c.Mapa("LAB_HIST_AMOSTRAS").GetValueOrDefault(b.IntObrigatorio("ID_LAB_HIST_AMOSTRAS")) != amostra)
             {
@@ -192,8 +196,9 @@ public sealed class M17Boletins : IEtapaMigracao
             c.Anomalia($"boletim {antigo}: código impresso {impresso[antigo]} — no v2 {b.CodBoletim}{(motivo is null ? "" : $" ({motivo})")}.");
         }
         c.Conferir("boletins com código diferente do impresso sem explicação", 0, diferentes);
-        c.Conferir("boletins do legado", boletins.Count, codigos.Count);
-        c.Conferir("linhas de boletim (legado − não migradas)", linhas.Sum(g => g.Count()) - naoMigrados, await c.Db.LabBoletimParametros.CountAsync(ct));
+        c.Conferir("boletins do legado (− de resultado não migrado)", boletins.Count - semResultado.Count, codigos.Count);
+        c.Conferir("linhas de boletim (legado − não migradas − de boletim não migrado)",
+            linhas.Sum(g => g.Count()) - naoMigrados - semResultado.Sum(b => linhas[b].Count()), await c.Db.LabBoletimParametros.CountAsync(ct));
         c.Conferir("códigos com exatamente uma última revisão", 0,
             await c.Db.LabBoletimAnalises.GroupBy(b => b.CodBoletim).Select(g => g.Sum(b => b.UltimaRevisao ? 1 : 0)).CountAsync(n => n != 1, ct));
         c.Conferir("boletins não emitidos", 0, await c.Db.LabBoletimAnalises.CountAsync(b => b.DhEmissao == null, ct));

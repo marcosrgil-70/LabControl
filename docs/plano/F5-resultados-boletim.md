@@ -40,6 +40,7 @@
 - **Esforço:** M · **Depende de:** 5.3 e dos modelos do laboratório
 
 ### 5.5 Testes de aceite + revisão
+> ✅ **Concluída em 27/10/2026** — pendência 23 (pedidos concluídos na migração), `AceiteFase5Tests` (cascata pela revisão da amostra; dois boletins para o mesmo resultado), `/code-review high` com 10 achados corrigidos (ver Diário); teste guiado com o laboratório na pendência 28. Fica aberta só a 5.4.
 - **Como fazer:**
   1. **Pendência 23** primeiro (pedidos concluídos na migração): é a última peça da migração parte 3; rodar `MigracaoTests` depois.
   2. **`AceiteFase5Tests`** (como o `AceiteFase4Tests`): os cenários do P14–P18 que ainda não têm teste e a **cascata completa** do roteiro 12 §7 itens 6–9 pela aplicação — amostra → resultado → boletim emitido → revisão da **amostra** (gera resultado e boletim novos não emitidos, apontando para os novos) → editar → emitir de novo → desfazer onde permitido. Incluir: boletim migrado com 2 boletins para o mesmo resultado (120 casos) revisando sem erro (P18) e "Alterar a amostra com boletim emitido" recusado (P17).
@@ -49,4 +50,4 @@
 - **Esforço:** M
 ## Definição de pronto
 - [x] Boletim emitido imutável (banco) e reimpressão idêntica (hash). — 5.3 (`BoletinsTests`)
-- [ ] Revisões em cascata corretas (resultado e boletim ✅ na 5.2/5.3; cascata a partir da amostra na 5.5); histórico migrado congelado ✅ (5.1).
+- [x] Revisões em cascata corretas (resultado e boletim na 5.2/5.3; a partir da amostra no `AceiteFase5Tests`, 5.5); histórico migrado congelado (5.1).

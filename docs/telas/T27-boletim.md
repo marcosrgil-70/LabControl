@@ -82,7 +82,8 @@ Filtros: cliente (filtra as amostras), amostra, "exibir a partir de" (−365 dia
 - **Emissão:** valida (responsáveis, parâmetros, profissional) → PDF definitivo → arquivo em `Boletins:Pasta` (`storage/boletins`, fora do git) como `{empresa}/{ano}/{código} R{rev}.pdf` → SHA-256 → `SP_EMITIR_BOLETIM`; se a procedure falhar, o arquivo é apagado.
 - **Depois de emitido:** só o status muda ("Gravar status"); "Imprimir" devolve o arquivo gravado conferido pelo hash (divergente ou ausente → **alerta de integridade** + log); boletim migrado (sem arquivo) imprime "2ª via" gerada dos dados, sem gravar.
 - **Revisão / desfazer** pelas procedures (motivo obrigatório; desfazer só não emitida).
-- **Testes:** `BoletinsTests` (7) e navegador `Boletim_monta_reordena_visualiza_e_emite`.
+- **Depois do `/code-review` (5.5):** emissão com arquivo provisório + conferência do conteúdo antes da procedure (P17 › Implementação); pasta configurada com barra no fim aceita; reimpressão ilegível vira alerta de integridade; responsáveis precisam estar **ativos**; parâmetros do boletim lidos numa consulta só.
+- **Testes:** `BoletinsTests` (8) e `AceiteFase5Tests` (cascata pela revisão da amostra; dois boletins para o mesmo resultado) e navegador `Boletim_monta_reordena_visualiza_e_emite`.
 - **Para a 5.4:** comparar com 3 boletins reais (dúvida 5) e ajustar o visual; o rodapé não tem frase fixa — o texto legal é o `RODAPE_LAUDO` da empresa.
 
 **Status:** ✅ concluída na tarefa 5.3 (27/10/2026); layout validado com boletins reais na 5.4.

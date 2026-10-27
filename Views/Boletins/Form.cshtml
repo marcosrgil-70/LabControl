@@ -1,6 +1,5 @@
 @model BoletimVM
 @inject IEmpresaContexto Usuario
-@using Microsoft.AspNetCore.Html
 @{
     var inclusao = Model.Id == 0;
     var emitido = Model.DhEmissao is not null;
@@ -9,15 +8,6 @@
     var editavel = podeGravar && !emitido;          // tudo
     var soStatus = podeGravar && emitido;           // emitido: o banco só deixa mudar o status
     var o = Model.Opcoes;
-}
-@functions {
-    static IHtmlContent Previa(string? formatado)
-    {
-        var p = LabControl.Infra.ResultadoTexto.Partes(formatado);
-        if (p is null) return HtmlString.Empty;
-        var e = System.Text.Encodings.Web.HtmlEncoder.Default;
-        return new HtmlString(p.Expoente is null ? e.Encode(p.Antes) : $"{e.Encode(p.Antes)} × 10<sup>{e.Encode(p.Expoente)}</sup>{e.Encode(p.Depois)}");
-    }
 }
 
 <nav aria-label="breadcrumb">
@@ -157,9 +147,9 @@
                                         else { @(i + 1) }
                                     </td>
                                     <td class="small">@p.Parametro @if (p.Acreditado) { <span class="badge text-bg-success" title="Parâmetro acreditado">acreditado</span> }</td>
-                                    <td class="small">@Previa(p.Resultado ?? p.Descritivo)</td>
+                                    <td class="small">@LabControl.Infra.ResultadoTexto.Html(p.Resultado ?? p.Descritivo)</td>
                                     <td class="small">@p.Unidade</td>
-                                    <td class="small">@Previa(p.Especificacao)</td>
+                                    <td class="small">@LabControl.Infra.ResultadoTexto.Html(p.Especificacao)</td>
                                     <td class="text-end">
                                         @if (editavel)
                                         {

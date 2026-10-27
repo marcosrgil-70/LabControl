@@ -61,11 +61,16 @@ public sealed class M16Resultados : IEtapaMigracao
 
         // cadeias de revisão por amostra física
         var cadeias = new List<List<LinhaFb>>();
+        var semAmostra = new List<int>(); // resultados de amostra que não migrou: anomalia, fora das contagens
         foreach (var g in resultados.GroupBy(r => raiz.TryGetValue(r.IntObrigatorio("ID_LAB_HIST_AMOSTRAS"), out var rz) ? rz : 0))
         {
             if (g.Key == 0)
             {
-                foreach (var r in g) c.Anomalia($"resultado {r.IntObrigatorio("ID_LAB_RESULTADOS_ANALISES")}: amostra {r.IntObrigatorio("ID_LAB_HIST_AMOSTRAS")} não migrada — não migrado.");
+                foreach (var r in g)
+                {
+                    semAmostra.Add(r.IntObrigatorio("ID_LAB_RESULTADOS_ANALISES"));
+                    c.Anomalia($"resultado {r.IntObrigatorio("ID_LAB_RESULTADOS_ANALISES")}: amostra {r.IntObrigatorio("ID_LAB_HIST_AMOSTRAS")} não migrada — não migrado.");
+                }
                 continue;
             }
             cadeias.Add(g.OrderBy(r => amostras[r.IntObrigatorio("ID_LAB_HIST_AMOSTRAS")].IntObrigatorio("REVISAO"))
@@ -193,8 +198,9 @@ public sealed class M16Resultados : IEtapaMigracao
         }
 
         if (outraAmostra > 0) c.Log($"{outraAmostra} parâmetro(s) com teste de outra amostra no legado (ver anomalias).");
-        c.Conferir("resultados do legado", resultados.Count, await c.Db.LabResultadosAnalises.CountAsync(ct));
-        c.Conferir("parâmetros (legado − repetidos fundidos)", parametros.Sum(g => g.Count()) - fundidos.Count, await c.Db.LabResultadosParam.CountAsync(ct));
+        c.Conferir("resultados do legado (− sem amostra migrada)", resultados.Count - semAmostra.Count, await c.Db.LabResultadosAnalises.CountAsync(ct));
+        c.Conferir("parâmetros (legado − repetidos fundidos − de resultado sem amostra migrada)",
+            parametros.Sum(g => g.Count()) - fundidos.Count - semAmostra.Sum(r => parametros[r].Count()), await c.Db.LabResultadosParam.CountAsync(ct));
         c.Conferir("amostras físicas com exatamente uma última revisão do resultado", 0,
             await c.Db.LabResultadosAnalises.GroupBy(r => r.LabHistAmostra.IdAmostraRaiz ?? r.IdLabHistAmostras)
                 .Select(g => g.Sum(r => r.UltimaRevisao ? 1 : 0)).CountAsync(n => n != 1, ct));

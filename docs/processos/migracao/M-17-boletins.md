@@ -34,6 +34,8 @@
 - `Services/Migracao/Etapas/M17Boletins.cs`, INSERT direto em lote por camada de revisão + um `UPDATE … JOIN` para os textos congelados das linhas.
 - **7** boletins passados para a amostra do resultado; **3** códigos diferentes do impresso, todos explicados (1 amostra corrigida, 1 amostra do ano 0 renumerada na M-14, 1 em que o legado imprimiu `03-01585-01/17` para a amostra `03-01584-01/17`).
 - Linhas: **143** religadas ao parâmetro equivalente; **146** não migradas — **118** antigas já cobertas pela linha atual, **22** repetidas (parâmetros fundidos na M-16), **6** de parâmetro apagado sem equivalente (boletins 864, 1276, 1277, 1278 e 4347); **2** de outro resultado sem equivalente mantidas.
+- **Pedidos de venda (pendência 23, 5.5):** no fim da etapa, o pedido em execução com cada item recebido (amostras revisão 0, como a `VW_PEDIDOS_VENDA_SALDO`) e com o boletim vigente de toda amostra emitido vira `CONCLUIDO` — **974** pedidos; **309** têm tudo emitido mas receberam menos amostras que o contratado e ficam em execução (anomalia); 449 em execução e 10 abertos no total. Calculado em C#: o `UPDATE` sobre a view passava dos 30 s.
+- Contagens descontam os boletins de resultado não migrado (`/code-review` 5.5).
 - ~70 s. Com a migração desligada, alterar um boletim migrado é recusado ("Este boletim foi emitido…" — `MigracaoTests`).
 
 **Status:** ✅ implementada na tarefa 5.1 (27/10/2026); conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`).

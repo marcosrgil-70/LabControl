@@ -1,4 +1,5 @@
 using System.Data.Common;
+using LabControl.Infra;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -40,8 +41,12 @@ public sealed class M18Sequencias : IEtapaMigracao
         try
         {
             await Escalar(c, "SET @LC_MIGRACAO = 0", ct);
+            var procedures = new Procedures(c.Db, c.Empresa);
             foreach (var (tipo, ano) in conferir)
-                obtidos.Add($"{tipo} {ano}: {await Escalar(c, $"CALL SP_PROXIMO_NUMERO({c.IdEmpresa}, '{tipo}', {ano}, @LC_M18); SELECT @LC_M18", ct)}");
+            {
+                var n = await procedures.ProximoNumeroAsync(tipo, ano);
+                obtidos.Add($"{tipo} {ano}: {(n.Sucesso ? n.Valor.ToString() : n.Mensagem)}");
+            }
         }
         finally
         {

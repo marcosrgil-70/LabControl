@@ -143,6 +143,18 @@ public sealed class Procedures(LabDbContext db, IEmpresaContexto empresa)
     }
 
     /// <summary>
+    /// Próximo número da sequência (<c>SP_PROXIMO_NUMERO</c>), na empresa ativa. Na aplicação quem numera são as
+    /// triggers; esta chamada existe para a conferência da migração (M-18), feita num savepoint desfeito em seguida.
+    /// </summary>
+    public async Task<Resultado<int>> ProximoNumeroAsync(string tipoDocumento, int ano)
+    {
+        if (empresa.EmpresaId is not { } idEmpresa) return Resultado.Erro("Nenhuma empresa ativa.");
+        var r = await ChamarAsync("SP_PROXIMO_NUMERO", false,
+            [("p_id_empresa", idEmpresa), ("p_tipo", tipoDocumento), ("p_ano", ano)], "p_numero");
+        return r.Sucesso ? Resultado.Ok(Int(r.Valor["p_numero"])) : Resultado.Erro(r.Mensagem!);
+    }
+
+    /// <summary>
     /// Libera (ou volta a bloquear) a data de entrega além de DIAS_RETROATIVOS_ENTREGA. Só depois da confirmação do
     /// usuário E da permissão AMOSTRAS.ENTREGA_RETROATIVA. Exige transação aberta: a variável vale para a conexão,
     /// e fora de transação o EF pode abrir outra conexão (o interceptor zera a variável).

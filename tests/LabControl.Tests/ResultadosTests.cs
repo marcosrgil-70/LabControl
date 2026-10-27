@@ -209,6 +209,47 @@ public class ResultadosTests
         Assert.Contains("boletim", (await s.ExcluirTodosAsync(res.IdLabResultadosAnalises)).Mensagem);
     }
 
+    /// <summary>
+    /// /code-review 5.5: linha migrada fora das regras novas (início antes da entrega, "3.5" com ponto) não pode travar o
+    /// lançamento dos outros parâmetros; só a linha alterada é validada. Analista inativo é recusado.
+    /// </summary>
+    [Fact]
+    public async Task Linha_do_legado_fora_das_regras_nao_trava_os_outros_e_analista_inativo_e_recusado()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var s = Servico(c);
+        var hoje = await c.HojeAsync();
+        var a = await AmostraAsync(c, hoje);
+        var testes = await c.Db.LabHistAmostrasTestes.Where(t => t.IdLabHistAmostras == a.IdLabHistAmostras).ToListAsync();
+        var res = new LabResultadoAnalise { IdLabHistAmostras = a.IdLabHistAmostras, IdEntidadesFuncDig = c.Ativa.ProfissionalId!.Value };
+        c.Db.Add(res);
+        await c.Db.SaveChangesAsync();
+        c.Db.Add(new LabResultadoParam { IdLabResultadosAnalises = res.IdLabResultadosAnalises, IdLabHistAmostrasTestes = testes[0].IdLabHistAmostrasTestes,
+            DtInicial = hoje.AddDays(-5), DtResultado = hoje, TipoResultado = true, VrResultado = "3.5" }); // como veio do legado
+        await c.Db.SaveChangesAsync();
+        c.Db.ChangeTracker.Clear();
+
+        var vm = (await s.CarregarAsync(res.IdLabResultadosAnalises))!;
+        var pendente = vm.Linhas.Single(l => l.IdParam == 0);
+        (pendente.Lancar, pendente.DtInicial, pendente.DtResultado, pendente.Numerico, pendente.IdTipoResultado) =
+            (true, hoje, hoje, false, c.Ausencia.IdLabTiposResultados);
+        var r = await s.GravarAsync(vm);
+        Assert.True(r.Sucesso, r.Mensagem);
+        Assert.Equal(2, await c.Db.LabResultadosParam.CountAsync(p => p.IdLabResultadosAnalises == res.IdLabResultadosAnalises));
+
+        // mexer na linha do legado: aí sim ela é validada
+        vm = (await s.CarregarAsync(res.IdLabResultadosAnalises))!;
+        vm.Linhas.Single(l => l.Valor == "3.5").Expoente = 1;
+        Assert.Contains("antes da entrega", (await s.GravarAsync(vm)).Mensagem);
+
+        // analista inativo (POST de formulário antigo)
+        await c.Db.Entidades.Where(e => e.IdEntidades == c.Ativa.ProfissionalId).ExecuteUpdateAsync(u => u.SetProperty(e => e.Inativo, true));
+        vm = (await s.CarregarAsync(res.IdLabResultadosAnalises))!;
+        var desc = vm.Linhas.Single(l => !l.Numerico);
+        desc.IdAnalista = c.Ativa.ProfissionalId;
+        Assert.Contains("profissional ativo", (await s.GravarAsync(vm)).Mensagem);
+    }
+
     [Theory]
     [InlineData("< 1,0e2 UFC/g", "< 1,0 × 10² UFC/g")]
     [InlineData("3,5e-3 mg/L", "3,5 × 10⁻³ mg/L")]

@@ -26,7 +26,7 @@
 - [x] Próxima amostra/proposta/pedido/produto de teste recebe o número esperado; sequências intactas depois do teste.
 
 ## Implementação (tarefa 5.1, 27/10/2026)
-- `Services/Migracao/Etapas/M18Sequencias.cs` (sem gravação: só conferências).
+- `Services/Migracao/Etapas/M18Sequencias.cs` (sem gravação: só conferências). O próximo número sai de `Procedures.ProximoNumeroAsync` (regra do CLAUDE.md: procedures só pelo `Procedures`; `/code-review` 5.5).
 - Últimos números migrados: AMOSTRA 2013–2018 = 63, 678, 521, 656, 2.484, 1.402; PROPOSTA 2012–2018 = 51, 45, 727, 233, 638, 1.405, 1.799; PEDIDO_VENDA 1.471; PRODUTO 3.801. No ano atual (2026) não há amostra nem proposta do legado: o próximo número é 1.
 
 **Status:** ✅ implementada na tarefa 5.1 (27/10/2026); conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`).

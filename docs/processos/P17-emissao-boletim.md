@@ -41,8 +41,9 @@ Todo boletim migrado recebe `DH_EMISSAO = DH_GERACAO` (histórico congelado); se
 
 ## Implementação (tarefa 5.3, 27/10/2026)
 - `BoletimService.EmitirAsync`: passos 1–6 acima. Arquivo em `Boletins:Pasta` (padrão `storage/boletins`, fora do git) como `{empresa}/{ano}/{código com "/"→"-"} R{rev}.pdf`; caminho **relativo** no banco (a pasta pode mudar de lugar).
-- Falha na procedure (de negócio ou técnica) apaga o arquivo antes de devolver/propagar o erro.
+- **Concorrência (`/code-review` 5.5):** o PDF é gravado primeiro com um **nome provisório único** (`… R00.pdf.{guid}.tmp`) e só vira o definitivo (`ArmazemBoletins.Confirmar`) depois que o `SP_EMITIR_BOLETIM` aceita — um duplo clique ou dois usuários emitindo ao mesmo tempo não sobrescrevem nem apagam o arquivo de quem venceu. Antes de chamar a procedure, o conteúdo do laudo é relido e comparado com o que entrou no PDF: se outro usuário alterou o boletim nesse meio-tempo, a emissão é recusada ("O boletim foi alterado por outro usuário enquanto era emitido").
+- Falha na procedure (de negócio ou técnica) apaga o provisório antes de devolver/propagar o erro.
 - Depois de emitido, a tela só deixa mudar o **status** ("Gravar status"), única coisa que o `TG_BOLETIM_BU` permite.
-- `ImprimirAsync`: lê o arquivo e confere o SHA-256; divergente ou ausente → **"ALERTA DE INTEGRIDADE"** na tela + log de erro. Boletim migrado (sem arquivo) → 2ª via gerada dos dados, sem gravar.
-- **Passo 7 (pedido de venda concluído na emissão) não foi feito:** pendência 24 (6.2). Na migração, pendência 23 (5.5).
+- `ImprimirAsync`: lê o arquivo e confere o SHA-256; divergente, ausente ou **ilegível** (pasta fora do ar, sem permissão, caminho fora da pasta) → **"ALERTA DE INTEGRIDADE"** na tela + log de erro, nunca página de erro. Boletim migrado (sem arquivo) → 2ª via gerada dos dados, sem gravar.
+- **Passo 7 (pedido de venda concluído na emissão) não foi feito:** pendência 24 (6.2). Na migração foi feito na 5.5 (pendência 23).
 - Cenários acima em `BoletinsTests`. **Status:** ✅ (menos o passo 7)

@@ -210,6 +210,26 @@ public class BoletinsTests : IDisposable
         Assert.False(Directory.Exists(_pasta));
     }
 
+    /// <summary>
+    /// /code-review 5.5: pasta configurada com a barra no fim funciona; duas emissões ao mesmo tempo gravam em provisórios
+    /// diferentes, e a que falha apaga só o seu — o arquivo confirmado continua.
+    /// </summary>
+    [Fact]
+    public async Task Armazem_aceita_barra_no_fim_e_provisorios_nao_se_atropelam()
+    {
+        var armazem = new ArmazemBoletins(_pasta + Path.DirectorySeparatorChar);
+        const string rel = "001/2026/04-00001-01-26 R00.pdf";
+        var (a, hashA) = await armazem.PrepararAsync(rel, [1, 2, 3]);
+        var (b, _) = await armazem.PrepararAsync(rel, [9, 9]);
+        Assert.NotEqual(a, b);
+        armazem.Confirmar(a, rel);   // a emissão aceita pelo banco
+        armazem.Apagar(b);           // a outra falhou ("Boletim já emitido")
+        var lido = await armazem.LerAsync(rel);
+        Assert.Equal(hashA, ArmazemBoletins.Hash(lido!));
+        Assert.Single(Directory.GetFiles(_pasta, "*", SearchOption.AllDirectories));
+        Assert.Throws<InvalidOperationException>(() => armazem.Apagar("../fora.pdf"));
+    }
+
     [Theory]
     [InlineData("001", 2026, "04-00012-01/26", 0, "001/2026/04-00012-01-26 R00.pdf")]
     [InlineData("002", 2027, "02-01220-01/18", 3, "002/2027/02-01220-01-18 R03.pdf")]

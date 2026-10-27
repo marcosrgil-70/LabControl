@@ -13,16 +13,17 @@ Migração do sistema **Delphi 7 + Firebird 2.5** (`C:\Project\Laboratorio`) par
   - Fase 5, tarefas 5.1 a 5.3:
     - **migração completa M-01…M-18** (resultados e boletins do legado; boletins entram emitidos e congelados);
     - **T26 Resultados** (fila de análises, lançamento por teste, prévia como no boletim, revisão/desfazer);
-    - **T27 Boletim** (montagem, prévia, **emissão em PDF com SHA-256** numa pasta do servidor, reimpressão conferida, 2ª via do migrado, revisão/desfazer).
-  - Suíte de testes: 238/238.
+    - **T27 Boletim** (montagem, prévia, **emissão em PDF com SHA-256** numa pasta do servidor, reimpressão conferida, 2ª via do migrado, revisão/desfazer);
+    - **5.5:** pedidos de venda concluídos na migração, testes de aceite da fase e `/code-review high` com 10 achados corrigidos.
+  - Suíte de testes: 242/242.
 - **Decisões recentes do usuário (27/10/2026):** QuestPDF; PDFs numa pasta do servidor (`Boletins:Pasta`); layout do boletim a partir do Delphi, validado com 3 boletins reais na 5.4; dados inconsistentes do legado corrigidos na migração (datas invertidas → início = resultado; boletim na amostra vizinha → amostra do resultado).
 - **A fazer:**
-  - Fase 5: 5.4 layout do PDF com os boletins reais (aguarda os modelos do laboratório), 5.5 aceite + `/code-review high` (com a pendência 23, pedidos concluídos na migração) — passo a passo em [F5](plano/F5-resultados-boletim.md);
+  - Fase 5: só a 5.4, layout do PDF com os boletins reais (aguarda os modelos do laboratório) — passo a passo em [F5](plano/F5-resultados-boletim.md); sem os modelos, dá para seguir a Fase 6 ou 7;
   - Fase 6: proposta completa e pedido de venda (com a pendência 24, conclusão automática do pedido na emissão);
   - Fase 7: movimentação e localização;
   - Fase 8: relatórios, auditoria, e-mail;
   - Fase 9: homologação e virada (pendência 27: pasta dos boletins no backup).
-- **Pendências abertas e dúvidas:** [00-PLANO-EXECUCAO.md › Pendências registradas](00-PLANO-EXECUCAO.md#pendências-registradas-a-executar) e [§7 Dúvidas](00-PLANO-EXECUCAO.md#7-dúvidas-em-aberto-perguntar-ao-usuário-quando-chegar-a-hora). As que dependem do laboratório: impressão de teste na Argox (21), teste manual guiado da Fase 4 (22) e os 3 boletins reais (25).
+- **Pendências abertas e dúvidas:** [00-PLANO-EXECUCAO.md › Pendências registradas](00-PLANO-EXECUCAO.md#pendências-registradas-a-executar) e [§7 Dúvidas](00-PLANO-EXECUCAO.md#7-dúvidas-em-aberto-perguntar-ao-usuário-quando-chegar-a-hora). As que dependem do laboratório: impressão de teste na Argox (21), testes manuais guiados das Fases 4 e 5 (22 e 28) e os 3 boletins reais (25).
 ## Organização
 | Pasta | Conteúdo | Quantidade |
 |---|---|---|
