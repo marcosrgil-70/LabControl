@@ -96,6 +96,8 @@ public static partial class ErrosMySql
         ["UQ_ENTEML"] = "Este e-mail já está cadastrado para esta entidade.",
         ["UQ_PROD_COD"] = "Já existe um produto com este código.",
         ["UQ_PARAM_DESC"] = "Já existe um parâmetro de análise com esta descrição.",
+        ["UQ_RESPAR_TESTE"] = "Este parâmetro já tem resultado nesta revisão.",
+        ["UQ_RES_REV"] = "Esta amostra já tem resultado — abra o existente.",
     };
 
     // (ID_EMPRESAS, DESCRICAO) dos cadastros auxiliares

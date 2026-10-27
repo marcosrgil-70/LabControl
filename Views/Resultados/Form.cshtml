@@ -1,0 +1,255 @@
+@model ResultadoVM
+@inject IEmpresaContexto Usuario
+@using Microsoft.AspNetCore.Html
+@{
+    var inclusao = Model.Id == 0;
+    ViewData["Title"] = $"Resultado — {Model.NrAmostra}";
+    var podeGravar = Usuario.TemPermissao(inclusao ? "RESULTADOS.INCLUIR" : "RESULTADOS.ALTERAR") && Model.Bloqueio is null;
+    var o = Model.Opcoes;
+    var pendentes = Model.Linhas.Count(l => l.IdParam == 0);
+    var simbolos = ResultadoOpcoesVM.Simbolos;
+}
+@functions {
+    // "< 1,0e2 UFC/g" (banco) → "< 1,0 × 10<sup>2</sup> UFC/g" (como sai no boletim)
+    static IHtmlContent Previa(string? formatado)
+    {
+        var p = LabControl.Infra.ResultadoTexto.Partes(formatado);
+        if (p is null) return new HtmlString("<span class=\"text-body-secondary\">—</span>");
+        var e = System.Text.Encodings.Web.HtmlEncoder.Default;
+        return new HtmlString(p.Expoente is null ? e.Encode(p.Antes) : $"{e.Encode(p.Antes)} × 10<sup>{e.Encode(p.Expoente)}</sup>{e.Encode(p.Depois)}");
+    }
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-2">
+        <li class="breadcrumb-item"><a asp-action="Index">Resultados</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.NrAmostra@(Model.Revisao > 0 ? $" — revisão {Model.Revisao}" : "")</li>
+    </ol>
+</nav>
+
+@if (Model.Bloqueio is not null)
+{
+    <div class="alert alert-warning py-2" id="avisoBloqueio"><i class="bi bi-lock me-1"></i>@Model.Bloqueio</div>
+}
+
+<div class="card mb-3">
+    <div class="card-body py-2 row g-2 small">
+        <div class="col-sm-6 col-lg-3"><div class="text-body-secondary">Amostra</div><div class="font-monospace fw-semibold" id="nrAmostra">@Model.NrAmostra</div></div>
+        <div class="col-sm-6 col-lg-3"><div class="text-body-secondary">Produto (nome da amostra)</div><div>@Model.Produto</div></div>
+        <div class="col-sm-6 col-lg-2"><div class="text-body-secondary">Tipo da amostra</div><div>@Model.TipoAmostra</div></div>
+        <div class="col-sm-6 col-lg-2"><div class="text-body-secondary">Tipo de análise</div><div>@Model.TipoAnalise</div></div>
+        <div class="col-sm-6 col-lg-2"><div class="text-body-secondary">Entrega</div><div>@Model.DtEntrega.ToString("dd/MM/yyyy")</div></div>
+        <div class="col-sm-6 col-lg-3"><div class="text-body-secondary">Cliente</div><div>@Model.Cliente</div></div>
+        <div class="col-sm-6 col-lg-2"><div class="text-body-secondary">Revisão do resultado</div><div>@(inclusao ? "nova" : Model.Revisao.ToString())@(Model.UltimaRevisao ? "" : " (antiga)")</div></div>
+        @if (Model.Revisao > 0)
+        {
+            <div class="col-lg-7"><div class="text-body-secondary">Motivo da revisão</div><div>@Model.MotivoRevisao</div></div>
+        }
+    </div>
+</div>
+
+<form method="post" asp-action="@(inclusao ? "Criar" : "Editar")" asp-route-id="@(inclusao ? null : Model.Id)" id="formResultado" novalidate
+      data-entrega="@Model.DtEntrega.ToString("yyyy-MM-dd")" data-hoje="@o.Hoje.ToString("yyyy-MM-dd")" data-analista="@o.AnalistaPadrao">
+    <input type="hidden" asp-for="IdAmostra" />
+    <div asp-validation-summary="All" class="alert alert-danger py-2"></div>
+
+    <div class="d-flex align-items-center mb-2">
+        <h6 class="mb-0">Parâmetros <span class="badge text-bg-secondary ms-1">@Model.Linhas.Count</span>
+            @if (pendentes > 0) { <span class="badge text-bg-warning ms-1" title="Testes da amostra sem resultado">@pendentes pendente(s)</span> }</h6>
+        @if (podeGravar && pendentes > 0)
+        {
+            <button type="button" class="btn btn-outline-primary btn-sm ms-auto" id="botaoLancarTodos"><i class="bi bi-list-check me-1"></i>Lançar todos</button>
+        }
+    </div>
+    @if (Model.Linhas.Count == 0)
+    {
+        <div class="alert alert-info py-2 small">A amostra não tem testes. Os testes vêm das análises do produto na proposta (Recebimento de Amostras).</div>
+    }
+
+    <fieldset disabled="@(!podeGravar)">
+    @for (var i = 0; i < Model.Linhas.Count; i++)
+    {
+        var l = Model.Linhas[i];
+        var aberto = l.IdParam > 0 || l.Lancar;
+        <div class="card mb-2" data-linha data-teste="@l.IdTeste">
+            <input type="hidden" asp-for="Linhas[i].IdTeste" />
+            <input type="hidden" asp-for="Linhas[i].IdParam" />
+            <input type="hidden" asp-for="Linhas[i].Parametro" />
+            <input type="hidden" asp-for="Linhas[i].Lancar" value="@(l.Lancar ? "true" : "false")" data-lancar />
+            <div class="card-header py-1 d-flex flex-wrap align-items-center gap-2">
+                <span class="fw-semibold">@l.Parametro</span>
+                <span class="small text-body-secondary">@l.Metodo</span>
+                @if (l.Acreditado) { <span class="badge text-bg-success" title="Parâmetro acreditado">acreditado</span> }
+                @if (l.NoBoletim) { <span class="badge text-bg-info" title="Este resultado está num boletim">no boletim</span> }
+                <span class="ms-auto small" data-previa-banco>
+                    @if (l.IdParam > 0) { <span class="text-body-secondary">Resultado:</span> <span class="fw-semibold">@Previa(l.ResultadoFormatado)</span>
+                        @if (l.EspecFormatada is not null) { <span class="text-body-secondary ms-2">Especificação:</span> <span>@Previa(l.EspecFormatada)</span> } }
+                    else if (!aberto) { <span class="badge text-bg-warning">pendente</span> }
+                </span>
+                @if (!aberto)
+                {
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-botao-lancar><i class="bi bi-pencil-square me-1"></i>Lançar</button>
+                }
+                @if (l.IdParam > 0 && podeGravar && !l.NoBoletim)
+                {
+                    <button type="submit" form="formExcluirParametro" name="idParam" value="@l.IdParam" class="btn btn-outline-danger btn-sm" lc-permissao="RESULTADOS.EXCLUIR"
+                            data-confirmar-texto="Excluir o resultado de &quot;@l.Parametro&quot;?"><i class="bi bi-trash me-1"></i>Excluir</button>
+                }
+            </div>
+            <div class="card-body py-2 @(aberto ? "" : "d-none")" data-corpo>
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label small mb-0" asp-for="Linhas[i].IdAnalista">Responsável (analista)</label>
+                        <select asp-for="Linhas[i].IdAnalista" asp-items="@(new SelectList(o.Analistas, "Id", "Nome", l.IdAnalista))" class="form-select form-select-sm" data-analista><option value="">—</option></select>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-0" asp-for="Linhas[i].DtInicial">Data início <span class="text-danger">*</span></label>
+                        <input asp-for="Linhas[i].DtInicial" type="date" class="form-control form-control-sm" data-inicio />
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-0" asp-for="Linhas[i].DtResultado">Data resultado <span class="text-danger">*</span></label>
+                        <input asp-for="Linhas[i].DtResultado" type="date" max="@o.Hoje.ToString("yyyy-MM-dd")" class="form-control form-control-sm" data-fim />
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-0" asp-for="Linhas[i].QtAmostra">Qtde. amostra</label>
+                        <input asp-for="Linhas[i].QtAmostra" class="form-control form-control-sm" inputmode="decimal" />
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-0" asp-for="Linhas[i].IdUnidadeAmostra">Unidade</label>
+                        <select asp-for="Linhas[i].IdUnidadeAmostra" asp-items="@(new SelectList(o.Unidades, "Id", "Nome", l.IdUnidadeAmostra))" class="form-select form-select-sm"><option value="">—</option></select>
+                    </div>
+
+                    @* resultado e especificação: mesmo bloco, prefixos diferentes *@
+                    @foreach (var espec in new[] { false, true })
+                    {
+                        var numerico = espec ? l.EspecNumerica : l.Numerico;
+                        <div class="col-lg-6" data-grupo="@(espec ? "espec" : "resultado")">
+                            <div class="border rounded p-2 h-100">
+                                <div class="d-flex align-items-center mb-1">
+                                    <span class="small fw-semibold me-3">@(espec ? "Especificação" : "Resultado")</span>
+                                    <div class="form-check form-switch mb-0">
+                                        @if (espec)
+                                        {
+                                            <input asp-for="Linhas[i].EspecNumerica" class="form-check-input" data-numerico />
+                                            <label class="form-check-label small" asp-for="Linhas[i].EspecNumerica">Especificação numérica</label>
+                                        }
+                                        else
+                                        {
+                                            <input asp-for="Linhas[i].Numerico" class="form-check-input" data-numerico />
+                                            <label class="form-check-label small" asp-for="Linhas[i].Numerico">Resultado numérico</label>
+                                        }
+                                    </div>
+                                    <span class="ms-auto small text-body-secondary" data-previa title="Prévia (o texto definitivo é montado pelo sistema ao gravar)"></span>
+                                </div>
+                                <div class="row g-1 align-items-end @(numerico ? "" : "d-none")" data-campos-numerico>
+                                    <div class="col-3 col-sm-2">
+                                        <label class="form-label small mb-0">Símbolo</label>
+                                        <select name="Linhas[@i].@(espec ? "EspecSimbolo" : "Simbolo")" class="form-select form-select-sm" data-simbolo>
+                                            <option value=""></option>
+                                            @foreach (var s in simbolos)
+                                            {
+                                                <option value="@s" selected="@(s == (espec ? l.EspecSimbolo : l.Simbolo))">@s</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-5 col-sm-3">
+                                        <label class="form-label small mb-0">Valor</label>
+                                        <input name="Linhas[@i].@(espec ? "EspecValor" : "Valor")" value="@(espec ? l.EspecValor : l.Valor)" class="form-control form-control-sm" maxlength="20" inputmode="decimal" placeholder="3,5" data-valor />
+                                    </div>
+                                    <div class="col-4 col-sm-2">
+                                        <label class="form-label small mb-0">× 10<sup>n</sup></label>
+                                        <input name="Linhas[@i].@(espec ? "EspecExpoente" : "Expoente")" value="@(espec ? l.EspecExpoente : l.Expoente)" type="number" min="-99" max="99" class="form-control form-control-sm" data-expoente />
+                                    </div>
+                                    <div class="col-sm-5">
+                                        <label class="form-label small mb-0">Unidade</label>
+                                        <select name="Linhas[@i].@(espec ? "EspecIdUnidade" : "IdUnidade")" class="form-select form-select-sm" data-unidade>
+                                            <option value="">—</option>
+                                            @foreach (var u in o.Unidades)
+                                            {
+                                                <option value="@u.Id" selected="@(u.Id == (espec ? l.EspecIdUnidade : l.IdUnidade))">@u.Nome</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="@(numerico ? "d-none" : "")" data-campos-descritivo>
+                                    <label class="form-label small mb-0">Tipo de resultado (descritivo)</label>
+                                    @if (espec)
+                                    {
+                                        <select asp-for="Linhas[i].EspecIdTipoResultado" asp-items="@(new SelectList(o.TiposResultado, "Id", "Nome", l.EspecIdTipoResultado))" lc-rapido="LAB_TIPOS_RESULTADOS" class="form-select form-select-sm" data-tipo><option value="">—</option></select>
+                                    }
+                                    else
+                                    {
+                                        <select asp-for="Linhas[i].IdTipoResultado" asp-items="@(new SelectList(o.TiposResultado, "Id", "Nome", l.IdTipoResultado))" lc-rapido="LAB_TIPOS_RESULTADOS" class="form-select form-select-sm" data-tipo><option value="">—</option></select>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-0" for="Linhas_@(i)__Conforme">Conforme?</label>
+                        <select name="Linhas[@i].Conforme" id="Linhas_@(i)__Conforme" class="form-select form-select-sm">
+                            <option value="" selected="@(l.Conforme is null)">—</option>
+                            <option value="true" selected="@(l.Conforme == true)">Sim</option>
+                            <option value="false" selected="@(l.Conforme == false)">Não</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    </fieldset>
+
+    <div class="d-flex flex-wrap gap-2 mt-3">
+        <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+        @if (!inclusao && Model.UltimaRevisao)
+        {
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalRevisao" lc-permissao="RESULTADOS.REVISAR" id="botaoRevisao"><i class="bi bi-files me-1"></i>Criar revisão</button>
+            @if (Model.Revisao > 0 && !Model.TemBoletim)
+            {
+                <button type="submit" form="formDesfazer" class="btn btn-outline-secondary" lc-permissao="RESULTADOS.DESFAZER_REVISAO" id="botaoDesfazer"><i class="bi bi-arrow-counterclockwise me-1"></i>Desfazer última revisão</button>
+            }
+            @if (podeGravar && Model.Revisao == 0 && !Model.TemBoletim)
+            {
+                <button type="submit" form="formExcluirTodos" class="btn btn-outline-danger" lc-permissao="RESULTADOS.EXCLUIR" id="botaoExcluirTodos"><i class="bi bi-trash me-1"></i>Excluir todos</button>
+            }
+        }
+        @if (!inclusao && !Model.UltimaRevisao)
+        {
+            <span class="small text-body-secondary align-self-center">Revisão antiga: abra a vigente pela consulta.</span>
+        }
+        @if (podeGravar)
+        {
+            <button type="submit" class="btn btn-primary ms-auto" id="botaoGravar"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+        }
+    </div>
+</form>
+
+@if (!inclusao)
+{
+    <form method="post" asp-action="ExcluirParametro" asp-route-id="@Model.Id" id="formExcluirParametro" data-confirmar="Excluir o resultado deste parâmetro?"></form>
+    <form method="post" asp-action="ExcluirTodos" asp-route-id="@Model.Id" id="formExcluirTodos" data-confirmar="Deseja excluir todos os resultados desta Amostra?"></form>
+    <form method="post" asp-action="DesfazerRevisao" asp-route-id="@Model.Id" id="formDesfazer"
+          data-confirmar="Desfazer a revisão @Model.Revisao? Ela é apagada e a revisão anterior volta a ser a vigente."></form>
+
+    <div class="modal fade" id="modalRevisao" tabindex="-1" aria-labelledby="tituloRevisao">
+        <div class="modal-dialog">
+            <form method="post" asp-action="Revisao" asp-route-id="@Model.Id" class="modal-content">
+                <div class="modal-header py-2"><h6 class="modal-title" id="tituloRevisao">Criar revisão do resultado — @Model.NrAmostra</h6><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+                <div class="modal-body">
+                    <p class="small text-body-secondary">A revisão atual fica somente leitura e a nova leva todos os valores, para você corrigir.</p>
+                    <label class="form-label small" for="motivoRevisao">Motivo <span class="text-danger">*</span></label>
+                    <textarea name="motivo" id="motivoRevisao" class="form-control" rows="3" maxlength="500" required></textarea>
+                    <div class="form-check mt-2">
+                        <input type="checkbox" class="form-check-input" name="revisarBoletim" id="revisarBoletim" value="true" checked />
+                        <label class="form-check-label small" for="revisarBoletim">Revisar também o boletim (o boletim novo aponta para este resultado novo e não é emitido)</label>
+                    </div>
+                </div>
+                <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Criar revisão</button></div>
+            </form>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/resultados.js" asp-append-version="true"></script>
+}

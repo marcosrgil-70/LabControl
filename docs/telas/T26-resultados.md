@@ -67,11 +67,21 @@ Atalho novo: **Fila de análises** (`VW_LAB_TESTES_PENDENTES`) — testes sem re
 - Resultado alterável depois do boletim enviado.
 
 ## Aceite
-- [ ] Numérico `<` `1,0` exp 2 UFC/g ⇒ prévia `< 1,0e2 UFC/g` (impresso `< 1,0 × 10² UFC/g`).
-- [ ] Descritivo ⇒ texto do tipo de resultado.
-- [ ] Teste de outra amostra recusado; resultado duplicado para o mesmo teste recusado.
-- [ ] Com boletim emitido, alterar exige revisão; a revisão leva todos os valores.
+- [x] Numérico `<` `1,0` exp 2 UFC/g ⇒ prévia `< 1,0e2 UFC/g` (impresso `< 1,0 × 10² UFC/g`). — `ResultadosTests.Lanca_numerico_e_descritivo…` + navegador
+- [x] Descritivo ⇒ texto do tipo de resultado. — mesmo teste (os campos numéricos são limpos pelo banco)
+- [x] Teste de outra amostra recusado; resultado duplicado para o mesmo teste recusado. — `ResultadosTests.Recusa_valor_datas…` (serviço e trigger; duplicado com mensagem amigável)
+- [x] Com boletim emitido, alterar exige revisão; a revisão leva todos os valores. — `ResultadosTests.Boletim_emitido_exige_revisao…`
 
 > **Cadastro rápido "+" (pendência 3, pronto na 2.4):** tipo de resultado com `lc-rapido="LAB_TIPOS_RESULTADOS"` no combo (T10-00), no lugar da tecla Insert do legado.
 
-**Status:** ⬜ (a v1 incompleta foi descartada — refazer sobre o v2 na 5.2)
+## Implementação (tarefa 5.2, 27/10/2026)
+- **Arquivos:** `Controllers/ResultadosController.cs`, `Services/ResultadoService.cs`, `ViewModels/ResultadoVM.cs`, `Views/Resultados/Index.cshtml` e `Form.cshtml`, `wwwroot/js/resultados.js`, `Infra/ResultadoTexto.cs` (texto do banco → impresso, `1,0e2` → `1,0 × 10²`; reaproveitado no PDF da 5.4).
+- **Consulta** (resultados × `VW_LAB_AMOSTRAS`, filtros cliente/proposta/amostra/entrega a partir de/só última revisão) e **Fila de análises** (`VW_LAB_TESTES_PENDENTES`, por data prevista, vencidos em vermelho, "Lançar").
+- **Novo resultado:** componente T29 com `data-url="/Resultados/Pesquisa"` (permissão `RESULTADOS.CONSULTAR`; só última revisão e status que permite resultado; 400 dias na 1ª abertura). `/Resultados/Amostra/{id}` abre o resultado vigente se já existe; recusa revisão antiga ou status que não permite.
+- **Formulário:** um cartão por teste da amostra; pendentes com "Lançar" e **"Lançar todos"** (início = entrega, resultado = hoje, analista = profissional do usuário se executa análise). Numérico × descritivo esconde o outro grupo; trocar o tipo do resultado troca o da especificação. Prévia ao digitar no formato do boletim; depois de gravar, o texto relido do banco com o expoente sobrescrito.
+- **Regras no serviço:** digitador = profissional do usuário; datas (início ≥ entrega, resultado ≥ início e ≤ hoje do servidor); valor com vírgula (`^-?\d+(,\d+)?$`) obrigatório no numérico; tipo obrigatório no descritivo; símbolos `<` `>` `≤` `≥` `~`; analista que executa análise; teste da amostra. Mensagens no campo (`Linhas[i].Campo`).
+- **Travas:** revisão antiga e boletim emitido deixam só consulta; excluir parâmetro recusado se estiver num boletim; "Excluir todos" só na revisão 0 sem boletim; `UQ_RESPAR_TESTE`/`UQ_RES_REV` com mensagem amigável (`ErrosMySql`).
+- **Revisão / desfazer:** `SP_GERAR_REVISAO_RESULTADO` (motivo + "Revisar também o boletim", padrão marcado) abre a revisão nova; `SP_EXCLUIR_REVISAO_RESULTADO` volta para a anterior.
+- **Testes:** `ResultadosTests` (9) e `CrudNavegadorTelasTests.Resultado_lanca_todos_com_previa_e_exclui_parametro`.
+
+**Status:** ✅ concluída na tarefa 5.2 (27/10/2026).

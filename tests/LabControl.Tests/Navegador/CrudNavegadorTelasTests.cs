@@ -722,6 +722,63 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         Assert.Empty(s.ErrosJs);
     }
 
+    /// <summary>
+    /// T26 (5.2): fila de análises, "Novo resultado" pela pesquisa, "Lançar todos", numérico com prévia no formato do
+    /// boletim, descritivo levando a especificação junto, gravação, prévia relida do banco e exclusão de um parâmetro.
+    /// </summary>
+    [Fact]
+    public async Task Resultado_lanca_todos_com_previa_e_exclui_parametro()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var amostra = c.NovaAmostra(await c.HojeAsync());
+        amostra.IdAmostrasStatus = await c.Db.AmostrasStatus.Where(st => st.PermiteResultado).Select(st => st.IdAmostrasStatus).FirstAsync();
+        c.Db.Add(amostra);
+        await c.Db.SaveChangesAsync();
+        Assert.True((await c.Procedures.AmostraGerarTestesAsync(amostra.IdLabHistAmostras)).Sucesso);
+        await using var s = await app.EntrarAsync(c, comProfissional: true);
+        var p = s.Pagina;
+
+        await s.IrAsync("/Resultados");
+        await p.ClickAsync("#botaoFila");
+        await Assertions.Expect(p.Locator("#tabelaFila tbody tr")).ToHaveCountAsync(2);
+        await Assertions.Expect(p.Locator("#tabelaFila tbody tr").First).ToContainTextAsync(amostra.NrAmostra);
+
+        await p.ClickAsync("#botaoNovoResultado");
+        await Assertions.Expect(p.Locator("#modalPesquisaAmostras [data-pesquisa-grid] tbody tr")).ToHaveCountAsync(1);
+        await p.ClickAsync("#modalPesquisaAmostras [data-selecionar]");
+        await p.WaitForURLAsync(u => u.EndsWith($"/Resultados/Amostra/{amostra.IdLabHistAmostras}"));
+        await Assertions.Expect(p.Locator("#nrAmostra")).ToHaveTextAsync(amostra.NrAmostra);
+
+        await p.ClickAsync("#botaoLancarTodos");
+        var num = p.Locator("[data-linha]", new() { HasText = "CONTAGEM TOTAL" });
+        var desc = p.Locator("[data-linha]", new() { HasText = "SALMONELLA SP" });
+        await Assertions.Expect(num.Locator("[data-corpo]")).ToBeVisibleAsync();
+        await Assertions.Expect(num.Locator("[data-inicio]")).ToHaveValueAsync(amostra.DtEntrega.ToString("yyyy-MM-dd"));
+        var resultado = num.Locator("[data-grupo=resultado]");
+        await resultado.Locator("[data-simbolo]").SelectOptionAsync("<");
+        await resultado.Locator("[data-valor]").FillAsync("1,0");
+        await resultado.Locator("[data-expoente]").FillAsync("2");
+        await resultado.Locator("[data-unidade]").SelectOptionAsync(new SelectOptionValue { Label = "UFC/g" });
+        await Assertions.Expect(resultado.Locator("[data-previa]")).ToHaveTextAsync("< 1,0 × 10² UFC/g");
+
+        // descritivo: a especificação acompanha o tipo do resultado
+        await desc.Locator("[data-grupo=resultado] [data-numerico]").UncheckAsync();
+        await Assertions.Expect(desc.Locator("[data-grupo=espec] [data-numerico]")).Not.ToBeCheckedAsync();
+        await desc.Locator("[data-grupo=resultado] [data-tipo]").SelectOptionAsync(new SelectOptionValue { Label = "Ausência em 25 g" });
+        await p.ClickAsync("#botaoGravar");
+        Assert.Equal("Resultado gravado.", await s.AlertaAsync());
+        await p.WaitForURLAsync(u => u.Contains("/Resultados/Editar/"));
+        await Assertions.Expect(num.Locator("[data-previa-banco]")).ToContainTextAsync("< 1,0 × 102 UFC/g"); // o 2 em <sup>
+        await Assertions.Expect(desc.Locator("[data-previa-banco]")).ToContainTextAsync("Ausência em 25 g");
+
+        await desc.Locator("button:has-text('Excluir')").ClickAsync();
+        Assert.Equal("Resultado do parâmetro excluído.", await s.AlertaAsync());
+        Assert.Contains(s.Dialogos, d => d.StartsWith("Excluir o resultado de \"SALMONELLA SP\""));
+        await Assertions.Expect(desc.Locator("[data-botao-lancar]")).ToBeVisibleAsync();
+        Assert.Equal(1, await c.Db.LabResultadosParam.CountAsync(x => x.LabResultadoAnalise.IdLabHistAmostras == amostra.IdLabHistAmostras));
+        Assert.Empty(s.ErrosJs);
+    }
+
     /// <summary>T25 (4.5): do recebimento para as etiquetas com a amostra marcada; impressora escolhida; quantidade; sigilo do produto.</summary>
     [Fact]
     public async Task Etiquetas_a_partir_do_recebimento_imprimem_na_escolhida()

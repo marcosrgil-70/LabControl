@@ -1,0 +1,131 @@
+@model ResultadoListaVM
+@{
+    ViewData["Title"] = "Resultados";
+    var f = Model.Filtro;
+    Dictionary<string, string> Rota(int pagina) => new Dictionary<string, string?>
+    {
+        ["Cliente"] = f.Cliente, ["Proposta"] = f.Proposta, ["Numero"] = f.Numero, ["APartirDe"] = f.APartirDe?.ToString("yyyy-MM-dd"),
+        ["SoUltima"] = f.SoUltima ? "true" : "false", ["Pagina"] = pagina.ToString(),
+    }.Where(kv => kv.Value is not null).ToDictionary(kv => kv.Key, kv => kv.Value!);
+}
+
+<div class="d-flex align-items-center mb-1">
+    <h5 class="mb-0"><i class="bi bi-clipboard-check me-2 text-primary"></i>Resultados</h5>
+    <button type="button" class="btn btn-primary btn-sm ms-auto" lc-permissao="RESULTADOS.INCLUIR" id="botaoNovoResultado"
+            data-pesquisa-amostras data-url="/Resultados/Pesquisa" data-filtros="ApenasPermiteResultado=true" data-abrir="/Resultados/Amostra/{id}">
+        <i class="bi bi-plus-lg me-1"></i>Novo resultado
+    </button>
+</div>
+<p class="small text-body-secondary mb-3">Um resultado por revisão da amostra, com uma linha por teste. O texto que vai para o boletim é montado pelo sistema.</p>
+
+<ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item"><button class="nav-link @(f.Fila ? "" : "active")" type="button" data-bs-toggle="tab" data-bs-target="#abaConsulta" role="tab">Consulta</button></li>
+    <li class="nav-item"><button class="nav-link @(f.Fila ? "active" : "")" type="button" data-bs-toggle="tab" data-bs-target="#abaFila" role="tab" id="botaoFila">
+        Fila de análises <span class="badge text-bg-secondary ms-1">@Model.TotalFila</span></button></li>
+</ul>
+
+<div class="tab-content border border-top-0 rounded-bottom p-3 bg-body">
+    <div class="tab-pane fade @(f.Fila ? "" : "show active")" id="abaConsulta" role="tabpanel">
+        <form method="get" class="row g-2 align-items-end mb-3" id="filtroResultados">
+            <div class="col-sm-4 col-lg-3">
+                <label class="form-label small mb-0" for="Cliente">Cliente (nome ou CPF/CNPJ)</label>
+                <input name="Cliente" id="Cliente" value="@f.Cliente" class="form-control form-control-sm" />
+            </div>
+            <div class="col-6 col-sm-3 col-lg-2">
+                <label class="form-label small mb-0" for="Proposta">Proposta</label>
+                <input name="Proposta" id="Proposta" value="@f.Proposta" class="form-control form-control-sm font-monospace" />
+            </div>
+            <div class="col-6 col-sm-3 col-lg-2">
+                <label class="form-label small mb-0" for="Numero">Nº da amostra</label>
+                <input name="Numero" id="Numero" value="@f.Numero" class="form-control form-control-sm font-monospace" />
+            </div>
+            <div class="col-6 col-sm-3 col-lg-2">
+                <label class="form-label small mb-0" for="APartirDe">Entrega a partir de</label>
+                <input name="APartirDe" id="APartirDe" type="date" value="@f.APartirDe?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-auto">
+                <div class="form-check mb-1">
+                    <input type="checkbox" class="form-check-input" name="SoUltima" id="SoUltima" value="true" checked="@f.SoUltima" />
+                    <label class="form-check-label small" for="SoUltima">Só a última revisão</label>
+                </div>
+                <input type="hidden" name="SoUltima" value="false" />
+            </div>
+            <div class="col-auto"><button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Pesquisar</button></div>
+        </form>
+
+        <div class="table-responsive border rounded">
+            <table class="table table-hover table-sm align-middle mb-0">
+                <thead><tr><th>Amostra</th><th class="text-center">Revisão</th><th>Entrega</th><th>Proposta</th><th>Produto</th><th>Tipo amostra</th><th>Tipo análise</th><th>Cliente</th><th class="text-end">Parâmetros</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var r in Model.Itens)
+                    {
+                        <tr class="@(r.UltimaRevisao ? "" : "text-body-secondary")">
+                            <td class="font-monospace small text-nowrap"><a asp-action="Editar" asp-route-id="@r.Id" class="text-decoration-none fw-semibold">@r.NrAmostra</a></td>
+                            <td class="small text-center">@r.Revisao @if (!r.UltimaRevisao) { <span class="badge text-bg-light border ms-1" title="Revisão antiga: somente leitura">antiga</span> }</td>
+                            <td class="small text-nowrap">@r.DtEntrega.ToString("dd/MM/yyyy")</td>
+                            <td class="small font-monospace">@r.NrProposta</td>
+                            <td class="small">@r.Produto</td>
+                            <td class="small">@r.TipoAmostra</td>
+                            <td class="small">@r.TipoAnalise</td>
+                            <td class="small">@r.Cliente</td>
+                            <td class="small text-end">@r.Parametros</td>
+                            <td class="text-end"><a asp-action="Editar" asp-route-id="@r.Id" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil me-1"></i>Abrir</a></td>
+                        </tr>
+                    }
+                    @if (Model.Itens.Count == 0)
+                    {
+                        <tr><td colspan="10" class="text-center text-body-secondary small py-3">Nenhum resultado encontrado@(f.APartirDe is null ? "" : $" para amostras entregues a partir de {f.APartirDe:dd/MM/yyyy}").</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex align-items-center small pt-2">
+            <span class="text-body-secondary">@Model.Total registro(s)</span>
+            @if (Model.Paginas > 1)
+            {
+                <nav class="ms-auto" aria-label="Páginas">
+                    <ul class="pagination pagination-sm mb-0">
+                        @foreach (var n in Enumerable.Range(1, Model.Paginas).Where(n => n <= 3 || n > Model.Paginas - 3 || Math.Abs(n - f.Pagina) <= 2))
+                        {
+                            <li class="page-item @(n == f.Pagina ? "active" : "")"><a class="page-link" asp-action="Index" asp-all-route-data="@Rota(n)">@n</a></li>
+                        }
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+
+    <div class="tab-pane fade @(f.Fila ? "show active" : "")" id="abaFila" role="tabpanel">
+        <p class="small text-body-secondary">Testes ainda sem resultado, das amostras cujo status permite lançar, pela data prevista. <span class="text-danger">Vencidos em vermelho.</span>
+            @if (Model.TotalFila > Model.Fila.Count) { <text>Mostrando os @Model.Fila.Count primeiros de @Model.TotalFila.</text> }</p>
+        <div class="table-responsive border rounded">
+            <table class="table table-hover table-sm align-middle mb-0" id="tabelaFila">
+                <thead><tr><th>Previsto</th><th>Amostra</th><th>Parâmetro</th><th>Cliente</th><th>Produto</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var t in Model.Fila)
+                    {
+                        var vencido = t.DiasParaPrazo < 0;
+                        <tr class="@(vencido ? "table-danger" : "")">
+                            <td class="small text-nowrap">@t.DtPrevista?.ToString("dd/MM/yyyy")
+                                @if (vencido) { <span class="badge text-bg-danger ms-1">vencido há @(-t.DiasParaPrazo) dia(s)</span> }
+                                else if (t.DiasParaPrazo is 0) { <span class="badge text-bg-warning ms-1">hoje</span> }</td>
+                            <td class="font-monospace small text-nowrap">@t.NrAmostra</td>
+                            <td class="small">@t.Parametro</td>
+                            <td class="small">@t.Cliente</td>
+                            <td class="small">@t.Produto</td>
+                            <td class="text-end"><a asp-action="Amostra" asp-route-id="@t.IdAmostra" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil-square me-1"></i>Lançar</a></td>
+                        </tr>
+                    }
+                    @if (Model.Fila.Count == 0)
+                    {
+                        <tr><td colspan="6" class="text-center text-body-secondary small py-3">Nenhum teste pendente.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pesquisa-amostras.js" asp-append-version="true"></script>
+}

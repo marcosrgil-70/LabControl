@@ -2,7 +2,8 @@
 //   <button type="button" data-pesquisa-amostras
 //           data-filtros="ApenasComResultado=true"          (opcional: filtros fixos da tela que abre)
 //           data-alvo-id="#IdAmostra" data-alvo-nr="#NrAmostra"   (opcional: campos a preencher)
-//           data-abrir="/Amostras/Editar/{id}">                (opcional: navegar depois de escolher)
+//           data-abrir="/Amostras/Editar/{id}"                 (opcional: navegar depois de escolher)
+//           data-url="/Resultados/Pesquisa">                  (opcional: action da tela que abre, com a permissão dela)
 // abre o modal, pesquisa no servidor (/Amostras/Pesquisa — sempre na empresa ativa) e, ao escolher (duplo clique ou
 // "Selecionar"), preenche os campos, dispara o evento 'amostra-selecionada' { id, nrAmostra } no botão e/ou navega.
 (() => {
@@ -48,7 +49,7 @@
     };
 
     const carregar = async p => {
-        const r = await fetch(`/Amostras/Pesquisa?${p}`, ajax);
+        const r = await fetch(`${origem.dataset.url ?? '/Amostras/Pesquisa'}?${p}`, ajax);
         corpo.innerHTML = r.ok ? await r.text()
             : `<div class="alert alert-danger py-2">${r.status === 403 ? 'Você não tem permissão para pesquisar amostras.' : 'Não foi possível pesquisar.'}</div>`;
         corpo.querySelector('[name=Numero]')?.focus();

@@ -14,6 +14,7 @@
 - **Esforço:** G
 
 ### 5.2 T26 — Resultados 🔵
+> ✅ **Concluída em 27/10/2026** — ver [T26 › Implementação](../telas/T26-resultados.md#implementação-tarefa-52-27102026); aceite em `ResultadosTests` e no teste de navegador `Resultado_lanca_todos_com_previa_e_exclui_parametro`.
 > Pendência 3 (2.4): combo de **tipo de resultado** com o "+" — `lc-rapido="LAB_TIPOS_RESULTADOS"` ([T10-00](../telas/T10-00-crud-auxiliares.md#implementação-tarefa-24--cadastro-rápido-)).
 - **Passos:** seleção da amostra (empresa, última revisão, permite resultado, 400 dias) e **fila de análises**; cartão por teste com numérico × descritivo (habilitação do legado), especificação, datas, analista, quantidade, conforme; "lançar todos"; prévia do texto formatado (relido do banco); cadastro rápido de tipo de resultado; excluir linha/todos com travas; **criar revisão** (com "revisar boletim") e **desfazer**.
 - **Aceite:** [aceite da T26](../telas/T26-resultados.md#aceite) + cenários do P14/P15.
