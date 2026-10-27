@@ -7,11 +7,11 @@
 > **Resumo:**
 > - **Fases 0 a 4 concluídas; Fase 5: 5.1 (migração parte 3) e 5.2 (T26 resultados)**, suíte 230/230.
 > - **A fazer:**
->   - **Fase 5:** 5.3 boletim (próxima — decidir antes a biblioteca de PDF, dúvida 10, onde guardar os PDFs, dúvida 6, e os modelos atuais, dúvida 5), 5.4 layout do PDF, 5.5 aceite + `/code-review high`;
+>   - **Fase 5:** 5.3 boletim (próxima — QuestPDF, PDFs numa pasta do servidor; dúvidas 5, 6 e 10 respondidas em 27/10/2026), 5.4 layout do PDF, 5.5 aceite + `/code-review high`;
 >   - Fase 6 (proposta completa, pedido), Fase 7 (movimentação/localização), Fase 8 (relatórios, auditoria, e-mail), Fase 9 (homologação e virada).
 > - **Abertas com o usuário/laboratório:**
 >   - pendências 12 (senha root), 21 (Argox) e 22 (teste manual guiado);
->   - dúvidas 1, 2, 5, 6, 8, 9 e **10 (biblioteca de PDF, decidir na 5.3)**.
+>   - dúvidas 1, 2, 8 e 9; os **3 boletins reais** para validar o layout na 5.4 (dúvida 5).
 > - **Técnicas a agendar:** pendências 8/9 (logo e assinatura no PDF, 5.3/5.4), 10 (carimbo de segurança da sessão), 11 e 20 (só se necessário).
 > - **Testes com dados reais:** o app de testes do usuário aponta para o banco `labcontrol_migracao` (user-secret); login `ADMINISTRADOR` / `Admin123`.
 >
@@ -47,7 +47,7 @@
 - **Fase 4:** 4.6 concluída (23/10/2026) — **Fase 4 completa**, com duas pendências que dependem do laboratório: a impressão de teste na Argox (pendência 21) e o teste manual guiado (pendência 22). `AceiteFase4Tests` cobre os cenários que faltavam (P09 extras, P10). O `/code-review high` deu 10 achados, todos corrigidos (recusa de procedure virava 500, limite do formulário das etiquetas, status do log do legado, movimentos de revisão na M-15, confirmação retroativa "grudada", órfãos na migração, relógio do banco, desempenho da M-13, consultas repetidas, CLAUDE.md). Testes 220/220.
 - **Fase 5:** 5.1 concluída (27/10/2026) — migração M-16…M-18 (resultados, boletins congelados como emitidos, conferência das sequências); todas as conferências verdes contra o legado real; erros do legado corrigidos por decisão do usuário (63 datas invertidas → início = resultado; 7 boletins na amostra vizinha → amostra do resultado); testes 220/220 (219 + `MigracaoTests` sozinho).
 - **Fase 5:** 5.2 concluída (27/10/2026) — T26 resultados: consulta + fila de análises, "Novo resultado" pela pesquisa T29, cartão por teste com "Lançar todos", numérico × descritivo, prévia como no boletim (`ResultadoTexto`), revisão (com o boletim) e desfazer; testes 230/230.
-- **Próxima tarefa:** **Fase 5 → 5.3** T27 Boletim (seleção, metodologias, prévia, **emissão PDF + hash**, revisão/desfazer) — 🔵 Opus, 📐 plan mode, ✋ modo padrão — ver [F5 › 5.3](plano/F5-resultados-boletim.md#53-t27--boletim-). **Antes de codificar:** decidir com o usuário a biblioteca de PDF (dúvida 10), onde guardar os PDFs (dúvida 6) e pedir os modelos atuais de boletim (dúvida 5). Para ter dados reais: `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar` e executar pela T07.
+- **Próxima tarefa:** **Fase 5 → 5.3** T27 Boletim (seleção, metodologias, prévia, **emissão PDF + hash**, revisão/desfazer) — 🔵 Opus, 📐 plan mode, ✋ modo padrão — ver [F5 › 5.3](plano/F5-resultados-boletim.md#53-t27--boletim-). **Decidido em 27/10/2026:** QuestPDF (dúvida 10), PDFs numa pasta do servidor por empresa/ano com caminho + SHA-256 no banco (dúvida 6), layout a partir do `frxRboletin` do Delphi e validação com 3 boletins reais na 5.4 (dúvida 5). Para ter dados reais: `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar` e executar pela T07.
 - ⚠️ A senha `root` do MySQL ficou no histórico do git (`appsettings.json` até a 0.3): trocar a senha do MySQL e atualizar o user-secret — passo a passo em [Scripts/v2/README.md › Senha do MySQL](../Scripts/v2/README.md#senha-do-mysql-onde-fica-e-como-trocar).
 - Ao retomar, apague/atualize este bloco.
 
@@ -214,12 +214,12 @@ Status do MD da tela e a matriz Delphi → C#, e escreva uma linha no Diário (�
 | 2 | Envio de boletim por e-mail: servidor SMTP e remetente? | 8 | 8.3 |
 | 3 | ~~Etiquetas: tamanho, modelo da impressora, Code 39 (legado) ou Code 128, PDF ou impressão direta (EPL2/ZPL)?~~ **Respondida em 23/10/2026:** 8 cm de largura × 5 cm de altura, impressora **Argox**, **Code 128**, **impressão direta** pedindo para escolher a impressora de destino (PPLB em RAW, sem PDF). O modelo e o modo PPLB/PPLA ficam para a impressão de teste da 4.5 | 4 | T25 |
 | 4 | ~~Perfis padrão além de ADMINISTRADOR (Recepção, Analista, Responsável Técnico, Comercial)?~~ **Respondida em 19/10/2026: sim, os 4, criados automaticamente em toda empresa nova (`SP_INICIALIZAR_EMPRESA`).** | 1 | T04 |
-| 5 | Modelos atuais (PDF/papel) do boletim, proposta e pedido para copiar o layout | 5/6 | PDFs |
-| 6 | Onde guardar os PDFs emitidos (pasta local, servidor de arquivos, banco)? | 5 | P17 |
+| 5 | ~~Modelos atuais (PDF/papel) do boletim, proposta e pedido para copiar o layout~~ **Respondida em 27/10/2026:** começar pela estrutura do `frxRboletin` (dentro do `un_Boletim.dfm` do legado); o laboratório envia **3 boletins reais** até a 5.4 (um numérico com expoente, um descritivo, um com revisão ou dois responsáveis), numa pasta **fora do repositório** (ex.: `C:\Project\Modelos\`, têm dados de clientes); proposta e pedido na Fase 6 | 5/6 | PDFs |
+| 6 | ~~Onde guardar os PDFs emitidos (pasta local, servidor de arquivos, banco)?~~ **Respondida em 27/10/2026:** **pasta no servidor**, configurável no `appsettings`, por empresa e ano; o banco guarda o caminho (`ARQUIVO_PDF`) e o SHA-256 (`HASH_PDF`), conferido na reimpressão; a pasta entra na rotina de backup. Boletim migrado (sem PDF) reimprime como "2ª via — boletim migrado" | 5 | P17 |
 | 7 | ~~Senha provisória dos usuários migrados: aleatória por usuário (recomendado) ou única?~~ **Respondida em 21/10/2026: uma senha única para todos** (digitada na T07, troca obrigatória no 1º acesso); todos com o perfil ADMINISTRADOR | 3 | M-09 |
 | 8 | Prazos em **dias úteis** são necessários? (legado só dias corridos) | 2 | T10-12 |
 | 9 | Relatórios: manter "somente amostras com pedido de venda" como padrão (comportamento do legado)? | 8 | T30-02/03 |
-| 10 | Biblioteca de PDF do boletim (e depois proposta/pedido): QuestPDF (licença Community gratuita só para faturamento < US$ 1 mi/ano; acima, paga) ou outra? Adiada pelo usuário na 4.3 (o comprovante virou página de impressão) | 5 | T27 (5.3), P17 |
+| 10 | ~~Biblioteca de PDF do boletim (e depois proposta/pedido)~~ **Respondida em 27/10/2026:** **QuestPDF** (escolha do usuário). Licença Community gratuita só para faturamento anual < US$ 1 mi; acima disso o laboratório precisa da licença paga. Também na proposta e no pedido (Fase 6) | 5 | T27 (5.3), P17 |
 
 ## 8. Riscos do projeto
 | Risco | Prob. | Impacto | Mitigação |
