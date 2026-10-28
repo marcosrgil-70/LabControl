@@ -82,7 +82,7 @@ SELECT ULTIMO_NUMERO INTO n ...;
 | R1 | Valida "revisão 0 existe" e copia `I_REVISAO` (P1) | Valida a origem (última revisão) |
 | R2 | Mapeamento de teste singleton (A6) | Mesma amostra: mesmo teste; outra amostra: `ID_TESTE_ORIGEM`. Se algum resultado ficar sem teste, a revisão é cancelada com mensagem |
 | R3 | Chama `SP_GERAR_REVISAO_BOLETIM(empresa, V_ID_OLD, V_ID)`, mas a procedure de boletim **ignora** o 3º parâmetro → o boletim novo aponta para o resultado **antigo** e lista os valores **antigos** | O boletim novo recebe o ID do resultado novo e os parâmetros mapeados por `ID_PARAM_ORIGEM` |
-| R4 | Numeração `MAX(REVISAO)+1` só da amostra atual (ao revisar a amostra, recomeça a contagem dela) | Numeração contínua por amostra física (todas as revisões da raiz), com bloqueio |
+| R4 | Numeração `MAX(REVISAO)+1` só da amostra atual (ao revisar a amostra, recomeça a contagem dela) | Numeração contínua por amostra física (todas as revisões da raiz), com bloqueio só da linha da amostra raiz (D-23) |
 | R5 | Revisões antigas editáveis/excluíveis fora de ordem | `ULTIMA_REVISAO` + `TG_RESULT_BU/BD`; desfazer só via `SP_EXCLUIR_REVISAO_RESULTADO` |
 | R6 | Resultado com boletim emitido podia ser alterado (a trava nunca existiu) | `TG_RESPAR_BU/BD` bloqueiam e pedem revisão |
 

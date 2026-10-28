@@ -67,7 +67,7 @@ catch (MySqlException ex) when (ex.SqlState == "45000") { return Resultado.Erro(
 ```sql
 CREATE PROCEDURE SP_EMITIR_BOLETIM(IN p_id_boletim INT, IN p_id_func INT, IN p_arquivo VARCHAR(255), IN p_hash CHAR(64))
 BEGIN
-  DECLARE v_emp, v_ultima, v_resp, v_resp2, v_exige2, v_status INT;
+  DECLARE v_emp, v_ultima, v_resp, v_resp2, v_exige2, v_status, v_pedido INT;
   DECLARE v_emissao DATETIME;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
@@ -99,9 +99,10 @@ BEGIN
   CALL PR_AUDITAR(v_emp, 'LAB_BOLETIM_ANALISES', p_id_boletim, 'M', NULL,
                   JSON_OBJECT('ARQUIVO_PDF', p_arquivo, 'HASH_PDF', p_hash, 'ID_ENTIDADES_FUNC_EMI', p_id_func));
   -- pendência 24: o último boletim emitido conclui o pedido (itens recebidos + boletins emitidos)
-  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT A.ID_PEDIDOS_VENDA FROM LAB_BOLETIM_ANALISES B
-                                       JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
-                                      WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_boletim));
+  SELECT A.ID_PEDIDOS_VENDA INTO v_pedido FROM LAB_BOLETIM_ANALISES B
+    JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
+   WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_boletim;
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO(v_pedido);
   COMMIT;
 END
 ```

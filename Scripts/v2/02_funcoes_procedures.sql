@@ -569,12 +569,14 @@ BEGIN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Amostra de destino não encontrada nesta empresa.';
   END IF;
 
-  -- Numeração contínua por amostra física (todas as revisões da amostra)
+  -- Numeração contínua por amostra física (todas as revisões da amostra). A trava fica só na linha da
+  -- amostra raiz (fila entre revisões da mesma amostra); o filtro por COALESCE(...) = v_raiz não usa índice
+  -- e o FOR UPDATE travava a tabela inteira de amostras (deadlock com a emissão de outro pedido — 6.3).
+  SELECT ID_LAB_HIST_AMOSTRAS INTO v_raiz FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = v_raiz FOR UPDATE;
   SELECT MAX(R.REVISAO) INTO v_max
     FROM LAB_RESULTADOS_ANALISES R
     JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = R.ID_LAB_HIST_AMOSTRAS
-   WHERE COALESCE(A.ID_AMOSTRA_RAIZ, A.ID_LAB_HIST_AMOSTRAS) = v_raiz
-   FOR UPDATE;
+   WHERE (A.ID_AMOSTRA_RAIZ = v_raiz OR A.ID_LAB_HIST_AMOSTRAS = v_raiz);
   SET p_revisao = COALESCE(v_max, -1) + 1;
 
   INSERT INTO LAB_RESULTADOS_ANALISES
@@ -586,7 +588,7 @@ BEGIN
   UPDATE LAB_RESULTADOS_ANALISES R
     JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = R.ID_LAB_HIST_AMOSTRAS
      SET R.ULTIMA_REVISAO = 0
-   WHERE COALESCE(A.ID_AMOSTRA_RAIZ, A.ID_LAB_HIST_AMOSTRAS) = v_raiz
+   WHERE (A.ID_AMOSTRA_RAIZ = v_raiz OR A.ID_LAB_HIST_AMOSTRAS = v_raiz)
      AND R.ID_LAB_RESULTADOS_ANALISES <> p_id_novo AND R.ULTIMA_REVISAO = 1;
 
   -- Mapeamento de testes pela coluna ID_TESTE_ORIGEM (o legado casava por
@@ -737,6 +739,7 @@ CREATE PROCEDURE SP_GERAR_REVISAO_AMOSTRA(IN p_id_origem INT, IN p_motivo VARCHA
                                           IN p_id_usuario INT, OUT p_id_nova INT, OUT p_revisao INT,
                                           OUT p_id_resultado_novo INT, OUT p_id_boletim_novo INT)
 BEGIN
+  DECLARE v_pedido INT;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_REVISAO = NULL; ROLLBACK; RESIGNAL; END;
   IF COALESCE(TRIM(p_motivo), '') = '' THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Informe o motivo da revisão.';
@@ -750,7 +753,8 @@ BEGIN
                   JSON_OBJECT('ID_ORIGEM', p_id_origem),
                   JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo, 'ID_RESULTADO_NOVO', p_id_resultado_novo,
                               'ID_BOLETIM_NOVO', p_id_boletim_novo));
-  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT ID_PEDIDOS_VENDA FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = p_id_nova));
+  SELECT ID_PEDIDOS_VENDA INTO v_pedido FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = p_id_nova;
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO(v_pedido);
   COMMIT;
 END$$
 
@@ -758,6 +762,7 @@ CREATE PROCEDURE SP_GERAR_REVISAO_RESULTADO(IN p_id_origem INT, IN p_motivo VARC
                                             IN p_id_usuario INT, IN p_gerar_boletim TINYINT,
                                             OUT p_id_novo INT, OUT p_revisao INT, OUT p_id_boletim_novo INT)
 BEGIN
+  DECLARE v_pedido INT;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_REVISAO = NULL; ROLLBACK; RESIGNAL; END;
   IF COALESCE(TRIM(p_motivo), '') = '' THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Informe o motivo da revisão.';
@@ -770,16 +775,17 @@ BEGIN
   CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_RESULTADOS_ANALISES WHERE ID_LAB_RESULTADOS_ANALISES = p_id_novo),
                   'LAB_RESULTADOS_ANALISES', p_id_novo, 'R', JSON_OBJECT('ID_ORIGEM', p_id_origem),
                   JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo, 'ID_BOLETIM_NOVO', p_id_boletim_novo));
-  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT A.ID_PEDIDOS_VENDA FROM LAB_RESULTADOS_ANALISES R
-                                       JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = R.ID_LAB_HIST_AMOSTRAS
-                                      WHERE R.ID_LAB_RESULTADOS_ANALISES = p_id_novo));
+  SELECT A.ID_PEDIDOS_VENDA INTO v_pedido FROM LAB_RESULTADOS_ANALISES R
+    JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = R.ID_LAB_HIST_AMOSTRAS
+   WHERE R.ID_LAB_RESULTADOS_ANALISES = p_id_novo;
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO(v_pedido);
   COMMIT;
 END$$
 
 CREATE PROCEDURE SP_GERAR_REVISAO_BOLETIM(IN p_id_origem INT, IN p_motivo VARCHAR(500), IN p_id_func INT,
                                           IN p_id_usuario INT, OUT p_id_novo INT, OUT p_revisao INT)
 BEGIN
-  DECLARE v_res, v_res_ultimo INT;
+  DECLARE v_res, v_res_ultimo, v_pedido INT;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_REVISAO = NULL; ROLLBACK; RESIGNAL; END;
   IF COALESCE(TRIM(p_motivo), '') = '' THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Informe o motivo da revisão.';
@@ -800,9 +806,10 @@ BEGIN
   CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_BOLETIM_ANALISES WHERE ID_LAB_BOLETIM_ANALISES = p_id_novo),
                   'LAB_BOLETIM_ANALISES', p_id_novo, 'R', JSON_OBJECT('ID_ORIGEM', p_id_origem),
                   JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo));
-  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT A.ID_PEDIDOS_VENDA FROM LAB_BOLETIM_ANALISES B
-                                       JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
-                                      WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_novo));
+  SELECT A.ID_PEDIDOS_VENDA INTO v_pedido FROM LAB_BOLETIM_ANALISES B
+    JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
+   WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_novo;
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO(v_pedido);
   COMMIT;
 END$$
 
@@ -864,7 +871,7 @@ END$$
 -- ---------------------------------------------------------------------
 CREATE PROCEDURE SP_EMITIR_BOLETIM(IN p_id_boletim INT, IN p_id_func INT, IN p_arquivo VARCHAR(255), IN p_hash CHAR(64))
 BEGIN
-  DECLARE v_emp, v_ultima, v_resp, v_resp2, v_exige2, v_status INT;
+  DECLARE v_emp, v_ultima, v_resp, v_resp2, v_exige2, v_status, v_pedido INT;
   DECLARE v_emissao DATETIME;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
@@ -896,9 +903,10 @@ BEGIN
   CALL PR_AUDITAR(v_emp, 'LAB_BOLETIM_ANALISES', p_id_boletim, 'M', NULL,
                   JSON_OBJECT('ARQUIVO_PDF', p_arquivo, 'HASH_PDF', p_hash, 'ID_ENTIDADES_FUNC_EMI', p_id_func));
   -- pendência 24: o último boletim emitido conclui o pedido (itens recebidos + boletins emitidos)
-  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT A.ID_PEDIDOS_VENDA FROM LAB_BOLETIM_ANALISES B
-                                       JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
-                                      WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_boletim));
+  SELECT A.ID_PEDIDOS_VENDA INTO v_pedido FROM LAB_BOLETIM_ANALISES B
+    JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
+   WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_boletim;
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO(v_pedido);
   COMMIT;
 END$$
 
@@ -922,17 +930,21 @@ corpo: BEGIN
     FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = p_id_pedido FOR UPDATE;
   IF v_sit IS NULL OR v_sit NOT IN ('EM_EXECUCAO', 'CONCLUIDO') THEN LEAVE corpo; END IF;
 
-  SET v_pendente = EXISTS (
+  -- SELECT ... INTO (leitura sem trava, a trava do pedido acima já põe as chamadas em fila); SET v = EXISTS(...)
+  -- lia com trava compartilhada e, com o filtro por COALESCE sem índice, travava amostras de outros pedidos (6.3).
+  SELECT EXISTS (
         SELECT 1 FROM LAB_HIST_AMOSTRAS A
          WHERE A.ID_PEDIDOS_VENDA = p_id_pedido AND A.ULTIMA_REVISAO = 1
            AND NOT EXISTS (SELECT 1 FROM LAB_BOLETIM_ANALISES B
                              JOIN LAB_HIST_AMOSTRAS BA ON BA.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
-                            WHERE COALESCE(BA.ID_AMOSTRA_RAIZ, BA.ID_LAB_HIST_AMOSTRAS) = COALESCE(A.ID_AMOSTRA_RAIZ, A.ID_LAB_HIST_AMOSTRAS)
+                            WHERE (BA.ID_AMOSTRA_RAIZ = COALESCE(A.ID_AMOSTRA_RAIZ, A.ID_LAB_HIST_AMOSTRAS)
+                                   OR BA.ID_LAB_HIST_AMOSTRAS = COALESCE(A.ID_AMOSTRA_RAIZ, A.ID_LAB_HIST_AMOSTRAS))
                               AND B.ULTIMA_REVISAO = 1 AND B.DH_EMISSAO IS NOT NULL))
      OR EXISTS (
         SELECT 1 FROM LAB_BOLETIM_ANALISES B
           JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
-         WHERE A.ID_PEDIDOS_VENDA = p_id_pedido AND B.ULTIMA_REVISAO = 1 AND B.DH_EMISSAO IS NULL);
+         WHERE A.ID_PEDIDOS_VENDA = p_id_pedido AND B.ULTIMA_REVISAO = 1 AND B.DH_EMISSAO IS NULL)
+    INTO v_pendente;
 
   IF v_sit = 'CONCLUIDO' THEN
     IF v_pendente THEN
@@ -944,7 +956,7 @@ corpo: BEGIN
   END IF;
 
   IF v_pendente THEN LEAVE corpo; END IF;
-  SET v_faltando = EXISTS (
+  SELECT EXISTS (
         SELECT 1 FROM PEDIDOS_VENDA_ITENS PI
           JOIN LAB_PROPOSTAS_PRODUTOS PP ON PP.ID_LAB_PROPOSTAS_PRODUTOS = PI.ID_LAB_PROPOSTAS_PRODUTOS
          WHERE PI.ID_PEDIDOS_VENDA = p_id_pedido
@@ -952,7 +964,8 @@ corpo: BEGIN
                                        JOIN LAB_PROPOSTAS PA ON PA.ID_LAB_PROPOSTAS = A.ID_LAB_PROPOSTAS
                                        JOIN LAB_PROPOSTAS_PRODUTOS PPA ON PPA.ID_LAB_PROPOSTAS_PRODUTOS = A.ID_LAB_PROPOSTAS_PRODUTOS
                                       WHERE PA.ID_EMPRESAS = v_emp AND PA.ANO_PROPOSTA = v_ano AND PA.COD_PROPOSTA = v_cod
-                                        AND PPA.ITEM = PP.ITEM AND A.REVISAO = 0));
+                                        AND PPA.ITEM = PP.ITEM AND A.REVISAO = 0))
+    INTO v_faltando;
   IF NOT v_faltando THEN
     UPDATE PEDIDOS_VENDA SET SITUACAO = 'CONCLUIDO' WHERE ID_PEDIDOS_VENDA = p_id_pedido;
     CALL PR_AUDITAR(v_emp, 'PEDIDOS_VENDA', p_id_pedido, 'A', JSON_OBJECT('SITUACAO', 'EM_EXECUCAO'),

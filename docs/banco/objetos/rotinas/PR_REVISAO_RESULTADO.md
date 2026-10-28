@@ -102,12 +102,14 @@ BEGIN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Amostra de destino não encontrada nesta empresa.';
   END IF;
 
-  -- Numeração contínua por amostra física (todas as revisões da amostra)
+  -- Numeração contínua por amostra física (todas as revisões da amostra). A trava fica só na linha da
+  -- amostra raiz (fila entre revisões da mesma amostra); o filtro por COALESCE(...) = v_raiz não usa índice
+  -- e o FOR UPDATE travava a tabela inteira de amostras (deadlock com a emissão de outro pedido — 6.3).
+  SELECT ID_LAB_HIST_AMOSTRAS INTO v_raiz FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = v_raiz FOR UPDATE;
   SELECT MAX(R.REVISAO) INTO v_max
     FROM LAB_RESULTADOS_ANALISES R
     JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = R.ID_LAB_HIST_AMOSTRAS
-   WHERE COALESCE(A.ID_AMOSTRA_RAIZ, A.ID_LAB_HIST_AMOSTRAS) = v_raiz
-   FOR UPDATE;
+   WHERE (A.ID_AMOSTRA_RAIZ = v_raiz OR A.ID_LAB_HIST_AMOSTRAS = v_raiz);
   SET p_revisao = COALESCE(v_max, -1) + 1;
 
   INSERT INTO LAB_RESULTADOS_ANALISES
@@ -119,7 +121,7 @@ BEGIN
   UPDATE LAB_RESULTADOS_ANALISES R
     JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = R.ID_LAB_HIST_AMOSTRAS
      SET R.ULTIMA_REVISAO = 0
-   WHERE COALESCE(A.ID_AMOSTRA_RAIZ, A.ID_LAB_HIST_AMOSTRAS) = v_raiz
+   WHERE (A.ID_AMOSTRA_RAIZ = v_raiz OR A.ID_LAB_HIST_AMOSTRAS = v_raiz)
      AND R.ID_LAB_RESULTADOS_ANALISES <> p_id_novo AND R.ULTIMA_REVISAO = 1;
 
   -- Mapeamento de testes pela coluna ID_TESTE_ORIGEM (o legado casava por

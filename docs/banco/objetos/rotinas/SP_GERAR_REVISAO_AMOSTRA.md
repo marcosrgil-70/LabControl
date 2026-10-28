@@ -77,6 +77,7 @@ CREATE PROCEDURE SP_GERAR_REVISAO_AMOSTRA(IN p_id_origem INT, IN p_motivo VARCHA
                                           IN p_id_usuario INT, OUT p_id_nova INT, OUT p_revisao INT,
                                           OUT p_id_resultado_novo INT, OUT p_id_boletim_novo INT)
 BEGIN
+  DECLARE v_pedido INT;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_REVISAO = NULL; ROLLBACK; RESIGNAL; END;
   IF COALESCE(TRIM(p_motivo), '') = '' THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Informe o motivo da revisão.';
@@ -90,7 +91,8 @@ BEGIN
                   JSON_OBJECT('ID_ORIGEM', p_id_origem),
                   JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo, 'ID_RESULTADO_NOVO', p_id_resultado_novo,
                               'ID_BOLETIM_NOVO', p_id_boletim_novo));
-  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT ID_PEDIDOS_VENDA FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = p_id_nova));
+  SELECT ID_PEDIDOS_VENDA INTO v_pedido FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = p_id_nova;
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO(v_pedido);
   COMMIT;
 END
 ```

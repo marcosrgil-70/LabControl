@@ -76,6 +76,7 @@ CREATE PROCEDURE SP_GERAR_REVISAO_RESULTADO(IN p_id_origem INT, IN p_motivo VARC
                                             IN p_id_usuario INT, IN p_gerar_boletim TINYINT,
                                             OUT p_id_novo INT, OUT p_revisao INT, OUT p_id_boletim_novo INT)
 BEGIN
+  DECLARE v_pedido INT;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_REVISAO = NULL; ROLLBACK; RESIGNAL; END;
   IF COALESCE(TRIM(p_motivo), '') = '' THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Informe o motivo da revisão.';
@@ -88,9 +89,10 @@ BEGIN
   CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_RESULTADOS_ANALISES WHERE ID_LAB_RESULTADOS_ANALISES = p_id_novo),
                   'LAB_RESULTADOS_ANALISES', p_id_novo, 'R', JSON_OBJECT('ID_ORIGEM', p_id_origem),
                   JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo, 'ID_BOLETIM_NOVO', p_id_boletim_novo));
-  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT A.ID_PEDIDOS_VENDA FROM LAB_RESULTADOS_ANALISES R
-                                       JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = R.ID_LAB_HIST_AMOSTRAS
-                                      WHERE R.ID_LAB_RESULTADOS_ANALISES = p_id_novo));
+  SELECT A.ID_PEDIDOS_VENDA INTO v_pedido FROM LAB_RESULTADOS_ANALISES R
+    JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = R.ID_LAB_HIST_AMOSTRAS
+   WHERE R.ID_LAB_RESULTADOS_ANALISES = p_id_novo;
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO(v_pedido);
   COMMIT;
 END
 ```

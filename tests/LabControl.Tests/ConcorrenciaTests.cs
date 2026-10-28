@@ -1,6 +1,9 @@
 using LabControl.Infra;
 using LabControl.Models;
+using LabControl.Services;
+using LabControl.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 
 namespace LabControl.Tests;
 
@@ -66,5 +69,74 @@ public class ConcorrenciaTests
         Assert.True(erros.Count == 0, $"{erros.Count} falhas:\n" + string.Join("\n", erros.Distinct()));
         var numeros = await c.Db.LabPropostas.Select(p => p.CodProposta).ToListAsync();
         Assert.Equal(numeros.Count, numeros.Distinct().Count());
+    }
+
+    /// <summary>
+    /// 6.3 (D-23): emissão de boletim e revisão de resultado de pedidos/empresas diferentes não esperam uma pela outra.
+    /// Antes, o filtro por COALESCE(ID_AMOSTRA_RAIZ, ...) sem índice e o SET v = EXISTS(...) liam a tabela inteira de
+    /// amostras com trava, e as duas rotinas davam deadlock com testes rodando em paralelo.
+    /// </summary>
+    [Fact]
+    public async Task Emissao_e_revisao_de_resultado_de_pedidos_diferentes_nao_se_travam()
+    {
+        await using var x = await Cenario.CriarAsync();
+        await using var y = await Cenario.CriarAsync();
+        var (_, _, bolX) = await x.AmostraComBoletimAsync(await x.HojeAsync());
+        var idPedidoX = await GerarPedidoAsync(x);
+        var (_, resY, _) = await y.AmostraComBoletimAsync(await y.HojeAsync());
+
+        // revisão de resultado da empresa Y aberta (sem commit) × emissão do boletim da empresa X
+        await using (await TransacaoAbertaAsync(
+            "SET @LC_REVISAO = 1; CALL PR_REVISAO_RESULTADO(@id, NULL, 'TESTE DE TRAVA', @func, @usu, 0, @n, @r, @b)",
+            ("@id", resY.IdLabResultadosAnalises), ("@func", y.Ativa.ProfissionalId), ("@usu", y.Ativa.UsuarioId)))
+        {
+            await EsperaCurtaAsync(x);
+            var emissao = await x.Procedures.EmitirBoletimAsync(bolX.IdLabBoletimAnalises, "boletins/x.pdf", new string('a', 64));
+            Assert.True(emissao.Sucesso, emissao.Mensagem);
+        }
+
+        // situação do pedido X calculada (sem commit) × revisão de resultado da empresa Y
+        await using (await TransacaoAbertaAsync("CALL PR_ATUALIZAR_SITUACAO_PEDIDO(@id)", ("@id", idPedidoX)))
+        {
+            await EsperaCurtaAsync(y);
+            var revisao = await y.Procedures.GerarRevisaoResultadoAsync(resY.IdLabResultadosAnalises, "CORRIGIR UNIDADE", gerarBoletim: false);
+            Assert.True(revisao.Sucesso, revisao.Mensagem);
+        }
+    }
+
+    private static async Task<int> GerarPedidoAsync(Cenario c)
+    {
+        var s = new PedidoVendaService(c.Db, c.Procedures, new PropostaService(c.Db, c.Ativa, c.Procedures), new ServicoAuditoria(c.Db, c.Ativa));
+        var r = await s.GerarAsync(new PedidoVendaGerarVM { IdProposta = c.Proposta.IdLabPropostas, DtAutorizacao = await c.HojeAsync() });
+        Assert.True(r.Sucesso, r.Mensagem);
+        return r.Valor;
+    }
+
+    /// <summary>Mantém a conexão do contexto aberta com espera de trava de 3 s (em vez de 50 s): esperar = falhar.</summary>
+    private static async Task EsperaCurtaAsync(Cenario c)
+    {
+        await c.Db.Database.OpenConnectionAsync();
+        await c.Db.Database.ExecuteSqlRawAsync("SET SESSION innodb_lock_wait_timeout = 3");
+    }
+
+    /// <summary>Executa o SQL numa conexão própria e devolve a transação aberta (rollback ao descartar).</summary>
+    private static async Task<IAsyncDisposable> TransacaoAbertaAsync(string sql, params (string Nome, object? Valor)[] parametros)
+    {
+        var con = new MySqlConnection(BancoTeste.ConnectionString + ";Allow User Variables=true");
+        await con.OpenAsync();
+        var tx = await con.BeginTransactionAsync();
+        await using var cmd = new MySqlCommand(sql, con, tx);
+        foreach (var (nome, valor) in parametros) cmd.Parameters.AddWithValue(nome, valor);
+        await cmd.ExecuteNonQueryAsync();
+        return new TransacaoAberta(con, tx);
+    }
+
+    private sealed record TransacaoAberta(MySqlConnection Con, MySqlTransaction Tx) : IAsyncDisposable
+    {
+        public async ValueTask DisposeAsync()
+        {
+            await Tx.RollbackAsync();
+            await Con.DisposeAsync();
+        }
     }
 }

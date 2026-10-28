@@ -64,17 +64,21 @@ corpo: BEGIN
     FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = p_id_pedido FOR UPDATE;
   IF v_sit IS NULL OR v_sit NOT IN ('EM_EXECUCAO', 'CONCLUIDO') THEN LEAVE corpo; END IF;
 
-  SET v_pendente = EXISTS (
+  -- SELECT ... INTO (leitura sem trava, a trava do pedido acima já põe as chamadas em fila); SET v = EXISTS(...)
+  -- lia com trava compartilhada e, com o filtro por COALESCE sem índice, travava amostras de outros pedidos (6.3).
+  SELECT EXISTS (
         SELECT 1 FROM LAB_HIST_AMOSTRAS A
          WHERE A.ID_PEDIDOS_VENDA = p_id_pedido AND A.ULTIMA_REVISAO = 1
            AND NOT EXISTS (SELECT 1 FROM LAB_BOLETIM_ANALISES B
                              JOIN LAB_HIST_AMOSTRAS BA ON BA.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
-                            WHERE COALESCE(BA.ID_AMOSTRA_RAIZ, BA.ID_LAB_HIST_AMOSTRAS) = COALESCE(A.ID_AMOSTRA_RAIZ, A.ID_LAB_HIST_AMOSTRAS)
+                            WHERE (BA.ID_AMOSTRA_RAIZ = COALESCE(A.ID_AMOSTRA_RAIZ, A.ID_LAB_HIST_AMOSTRAS)
+                                   OR BA.ID_LAB_HIST_AMOSTRAS = COALESCE(A.ID_AMOSTRA_RAIZ, A.ID_LAB_HIST_AMOSTRAS))
                               AND B.ULTIMA_REVISAO = 1 AND B.DH_EMISSAO IS NOT NULL))
      OR EXISTS (
         SELECT 1 FROM LAB_BOLETIM_ANALISES B
           JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
-         WHERE A.ID_PEDIDOS_VENDA = p_id_pedido AND B.ULTIMA_REVISAO = 1 AND B.DH_EMISSAO IS NULL);
+         WHERE A.ID_PEDIDOS_VENDA = p_id_pedido AND B.ULTIMA_REVISAO = 1 AND B.DH_EMISSAO IS NULL)
+    INTO v_pendente;
 
   IF v_sit = 'CONCLUIDO' THEN
     IF v_pendente THEN
@@ -86,7 +90,7 @@ corpo: BEGIN
   END IF;
 
   IF v_pendente THEN LEAVE corpo; END IF;
-  SET v_faltando = EXISTS (
+  SELECT EXISTS (
         SELECT 1 FROM PEDIDOS_VENDA_ITENS PI
           JOIN LAB_PROPOSTAS_PRODUTOS PP ON PP.ID_LAB_PROPOSTAS_PRODUTOS = PI.ID_LAB_PROPOSTAS_PRODUTOS
          WHERE PI.ID_PEDIDOS_VENDA = p_id_pedido
@@ -94,7 +98,8 @@ corpo: BEGIN
                                        JOIN LAB_PROPOSTAS PA ON PA.ID_LAB_PROPOSTAS = A.ID_LAB_PROPOSTAS
                                        JOIN LAB_PROPOSTAS_PRODUTOS PPA ON PPA.ID_LAB_PROPOSTAS_PRODUTOS = A.ID_LAB_PROPOSTAS_PRODUTOS
                                       WHERE PA.ID_EMPRESAS = v_emp AND PA.ANO_PROPOSTA = v_ano AND PA.COD_PROPOSTA = v_cod
-                                        AND PPA.ITEM = PP.ITEM AND A.REVISAO = 0));
+                                        AND PPA.ITEM = PP.ITEM AND A.REVISAO = 0))
+    INTO v_faltando;
   IF NOT v_faltando THEN
     UPDATE PEDIDOS_VENDA SET SITUACAO = 'CONCLUIDO' WHERE ID_PEDIDOS_VENDA = p_id_pedido;
     CALL PR_AUDITAR(v_emp, 'PEDIDOS_VENDA', p_id_pedido, 'A', JSON_OBJECT('SITUACAO', 'EM_EXECUCAO'),
