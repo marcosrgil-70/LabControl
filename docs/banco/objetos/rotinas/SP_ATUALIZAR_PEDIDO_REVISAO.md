@@ -1,6 +1,6 @@
 # SP_ATUALIZAR_PEDIDO_REVISAO
 
-Atualiza o pedido para a revisão vigente da proposta (valores, cobrança, condição, itens).
+Atualiza o pedido para a revisão vigente da proposta (valores, cobrança, condição, itens) e recalcula a situação (`PR_ATUALIZAR_SITUACAO_PEDIDO`: contratado menor pode concluir — 6.3).
 
 **Tipo:** Procedure pública (SP_) · **Criticidade:** 🟠 Importante · **Script:** `Scripts/v2/02_funcoes_procedures.sql`
 
@@ -31,7 +31,7 @@ Comentário do script: _Atualiza o pedido para a revisão vigente da proposta (a
 ## O que acessa
 - **Altera:** [`PEDIDOS_VENDA`](../tabelas/PEDIDOS_VENDA.md), [`PEDIDOS_VENDA_ITENS`](../tabelas/PEDIDOS_VENDA_ITENS.md)
 - **Lê:** [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md), [`LAB_PROPOSTAS_PRODUTOS`](../tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`LAB_PROPOSTAS_PRODANALISES`](../tabelas/LAB_PROPOSTAS_PRODANALISES.md)
-- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md)
+- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md), [`PR_ATUALIZAR_SITUACAO_PEDIDO`](../rotinas/PR_ATUALIZAR_SITUACAO_PEDIDO.md)
 - **Variáveis de sessão:** —
 
 ## Mensagens de negócio (SQLSTATE 45000)
@@ -94,6 +94,8 @@ corpo: BEGIN
     FROM LAB_PROPOSTAS_PRODUTOS PP WHERE PP.ID_LAB_PROPOSTAS = v_nova;
   CALL PR_AUDITAR(v_emp, 'PEDIDOS_VENDA', p_id_pedido, 'A', JSON_OBJECT('ID_LAB_PROPOSTAS', v_antiga),
                   JSON_OBJECT('ID_LAB_PROPOSTAS', v_nova));
+  -- o contratado pode ter diminuído: com tudo recebido e emitido, o pedido conclui (6.3)
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO(p_id_pedido);
   COMMIT;
 END
 ```

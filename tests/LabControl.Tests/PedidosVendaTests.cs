@@ -149,6 +149,107 @@ public class PedidosVendaTests
         });
         Assert.True(amostra.Sucesso, amostra.Mensagem);
         Assert.Equal(SituacaoPedido.EmExecucao, await SituacaoAsync(c, id));
+        // 6.3: a reabertura pelo recebimento é do banco e fica na auditoria com o motivo (antes, UPDATE sem auditoria)
+        Assert.True(await c.Db.Auditoria.AnyAsync(a => a.Tabela == "PEDIDOS_VENDA" && a.IdRegistro == id.ToString() && a.DadosDepois!.Contains("amostra ou boletim pendente")));
+    }
+
+    /// <summary>
+    /// 6.3, decisão do usuário (opção a): concluído à mão com item faltando, reaberto pela revisão do boletim, volta a
+    /// concluir sozinho na emissão; reaberto pelo usuário, volta à regra normal (só conclui com tudo recebido).
+    /// </summary>
+    [Fact]
+    public async Task Concluido_a_mao_volta_a_concluir_depois_da_revisao_do_boletim()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var s = Servico(c);
+        var (_, _, bol) = await c.AmostraComBoletimAsync(await c.HojeAsync());
+        var id = await GerarAsync(c);
+        await EmitirAsync(c, bol.IdLabBoletimAnalises);
+        Assert.Equal(SituacaoPedido.EmExecucao, await SituacaoAsync(c, id)); // contratou 2, recebeu 1
+        Assert.True((await s.ConcluirAsync(id)).Sucesso);
+
+        var rev = await c.Procedures.GerarRevisaoBoletimAsync(bol.IdLabBoletimAnalises, "CORRIGIR UNIDADE");
+        Assert.True(rev.Sucesso, rev.Mensagem);
+        Assert.Equal(SituacaoPedido.EmExecucao, await SituacaoAsync(c, id));
+        await EmitirAsync(c, rev.Valor.IdNovo);
+        Assert.Equal(SituacaoPedido.Concluido, await SituacaoAsync(c, id));
+        Assert.True(await c.Db.Auditoria.AnyAsync(a => a.Tabela == "PEDIDOS_VENDA" && a.IdRegistro == id.ToString() && a.DadosDepois!.Contains("concluído à mão antes")));
+
+        // reaberto pelo usuário: a próxima emissão não conclui (ainda falta 1 amostra)
+        Assert.True((await s.ReabrirAsync(id, "FALTA A 2ª AMOSTRA")).Sucesso);
+        var rev2 = await c.Procedures.GerarRevisaoBoletimAsync(rev.Valor.IdNovo, "OUTRA CORREÇÃO");
+        Assert.True(rev2.Sucesso, rev2.Mensagem);
+        await EmitirAsync(c, rev2.Valor.IdNovo);
+        Assert.Equal(SituacaoPedido.EmExecucao, await SituacaoAsync(c, id));
+    }
+
+    /// <summary>6.3 — "Atualizar para a revisão vigente" que reduz o contratado ao recebido conclui o pedido.</summary>
+    [Fact]
+    public async Task Atualizar_revisao_que_reduz_o_contratado_conclui()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var (_, _, bol) = await c.AmostraComBoletimAsync(await c.HojeAsync());
+        var id = await GerarAsync(c);
+        await EmitirAsync(c, bol.IdLabBoletimAnalises);
+        Assert.Equal(SituacaoPedido.EmExecucao, await SituacaoAsync(c, id));
+
+        var rev = await c.Procedures.GerarRevisaoPropostaAsync(c.Proposta.IdLabPropostas, "CLIENTE REDUZIU PARA 1");
+        Assert.True(rev.Sucesso, rev.Mensagem);
+        await c.Db.LabPropostasProdutos.Where(p => p.IdLabPropostas == rev.Valor.IdNovo).ExecuteUpdateAsync(u => u.SetProperty(p => p.QtdeAmostras, 1));
+        Assert.True((await Servico(c).AtualizarRevisaoAsync(id)).Sucesso);
+        Assert.Equal(SituacaoPedido.Concluido, await SituacaoAsync(c, id));
+    }
+
+    /// <summary>
+    /// 6.3 — amostra que troca de proposta passa para o pedido da proposta nova: etiqueta e boletim leem o nº do pedido
+    /// da amostra (VW_LAB_AMOSTRAS) e antes saíam com o pedido antigo.
+    /// </summary>
+    [Fact]
+    public async Task Amostra_que_troca_de_proposta_muda_de_pedido()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var amostras = new AmostraService(c.Db, c.Ativa, c.Procedures);
+        var amo = c.NovaAmostra(await c.HojeAsync());
+        c.Db.Add(amo);
+        await c.Db.SaveChangesAsync();
+        var pedido1 = await GerarAsync(c);
+        var (proposta2, item2) = await OutraPropostaAsync(c);
+        var pedido2 = await GerarAsync(c, proposta2);
+        Assert.Equal(SituacaoPedido.EmExecucao, await SituacaoAsync(c, pedido1));
+        Assert.Equal(SituacaoPedido.Aberto, await SituacaoAsync(c, pedido2));
+
+        var vm = (await amostras.CarregarAsync(amo.IdLabHistAmostras))!;
+        (vm.IdLabPropostas, vm.IdLabPropostasProdutos) = (proposta2, item2);
+        var r = await amostras.GravarAsync(vm);
+        Assert.True(r.Sucesso, r.Mensagem);
+
+        Assert.Equal(pedido2, await c.Db.LabHistAmostras.Where(a => a.IdLabHistAmostras == amo.IdLabHistAmostras).Select(a => a.IdPedidosVenda).SingleAsync());
+        var nr2 = PedidoVendaService.Numero(await c.Db.PedidosVenda.Where(p => p.IdPedidosVenda == pedido2).Select(p => p.NrPedido).SingleAsync());
+        Assert.Equal(nr2, await c.Db.VwLabAmostras.Where(a => a.IdLabHistAmostras == amo.IdLabHistAmostras).Select(a => a.NrPedidoFmt).SingleAsync());
+        Assert.Equal(SituacaoPedido.EmExecucao, await SituacaoAsync(c, pedido2));
+        Assert.Empty((await Servico(c).CarregarAsync(pedido1))!.Amostras);
+    }
+
+    // 2ª proposta do mesmo cliente, com um item e uma análise do tipo da amostra do cenário
+    private static async Task<(int Proposta, int Item)> OutraPropostaAsync(Cenario c)
+    {
+        var p = new LabProposta
+        {
+            IdEntidades = c.Proposta.IdEntidades, IdEntidadesFunc = c.Proposta.IdEntidadesFunc, IdEntEndLaudo = c.Proposta.IdEntEndLaudo,
+            IdEntContatoResultado = c.Proposta.IdEntContatoResultado, IdEntCobranca = c.Proposta.IdEntCobranca,
+            IdLabPropostasStatus = c.Proposta.IdLabPropostasStatus, IdCondicoesPagtos = c.Proposta.IdCondicoesPagtos,
+        };
+        c.Db.Add(p);
+        await c.Db.SaveChangesAsync();
+        var item = new LabPropostaProduto { IdLabPropostas = p.IdLabPropostas, IdProdutos = c.Produto.IdProdutos, QtdeAmostras = 1 };
+        c.Db.Add(item);
+        await c.Db.SaveChangesAsync();
+        var modelo = await c.Db.LabPropostasProdanalises.AsNoTracking().FirstAsync(a => a.IdLabPropostasProdutos == c.Item.IdLabPropostasProdutos);
+        c.Db.Add(new LabPropostaProdAnalise { IdLabPropostas = p.IdLabPropostas, IdLabPropostasProdutos = item.IdLabPropostasProdutos,
+            IdLabParametrosAnalises = modelo.IdLabParametrosAnalises, IdAnalisesMetodos = modelo.IdAnalisesMetodos,
+            IdIdiomas = modelo.IdIdiomas, IdPrazos = modelo.IdPrazos, QtdeAmostras = 1, VrUnitario = 100 });
+        await c.Db.SaveChangesAsync();
+        return (p.IdLabPropostas, item.IdLabPropostasProdutos);
     }
 
     [Fact]

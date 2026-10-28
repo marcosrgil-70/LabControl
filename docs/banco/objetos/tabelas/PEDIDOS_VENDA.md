@@ -32,13 +32,14 @@ Comentário do script: _7. PEDIDOS DE VENDA (novo: no Firebird era só um númer
 | 14 | `NR_PEDIDO_CLIENTE` | VARCHAR(40) | sim |  | aplicação | Nº de PO/ordem de compra do cliente |
 | 15 | `VR_TOTAL` | DECIMAL(15,2) | não | 0 | aplicação |  |
 | 16 | `SITUACAO` | ENUM('ABERTO','EM_EXECUCAO','CONCLUIDO','CANCELADO') | não | 'ABERTO' | aplicação |  |
-| 17 | `DT_CANCELAMENTO` | DATETIME | sim |  | aplicação |  |
-| 18 | `MOTIVO_CANCELAMENTO` | VARCHAR(500) | sim |  | aplicação |  |
-| 19 | `OBSERVACAO` | TEXT | sim |  | aplicação |  |
-| 20 | `CRIADO_EM` | DATETIME | não | CURRENT_TIMESTAMP | banco |  |
-| 21 | `CRIADO_POR` | INT | sim |  | aplicação |  |
-| 22 | `ALTERADO_EM` | DATETIME | sim |  | banco |  |
-| 23 | `ALTERADO_POR` | INT | sim |  | aplicação |  |
+| 17 | `CONCLUSAO_MANUAL` | TINYINT(1) | não | 0 | aplicação | Concluído à mão: a conclusão automática dispensa recebido = contratado (6.3, decisão do usuário) |
+| 18 | `DT_CANCELAMENTO` | DATETIME | sim |  | aplicação |  |
+| 19 | `MOTIVO_CANCELAMENTO` | VARCHAR(500) | sim |  | aplicação |  |
+| 20 | `OBSERVACAO` | TEXT | sim |  | aplicação |  |
+| 21 | `CRIADO_EM` | DATETIME | não | CURRENT_TIMESTAMP | banco |  |
+| 22 | `CRIADO_POR` | INT | sim |  | aplicação |  |
+| 23 | `ALTERADO_EM` | DATETIME | sim |  | banco |  |
+| 24 | `ALTERADO_POR` | INT | sim |  | aplicação |  |
 
 ## Chaves, restrições e índices
 - **PK:** `ID_PEDIDOS_VENDA`
@@ -70,7 +71,7 @@ Comentário do script: _7. PEDIDOS DE VENDA (novo: no Firebird era só um númer
 - **Rotinas que alteram:** [`PR_ATUALIZAR_SITUACAO_PEDIDO`](../rotinas/PR_ATUALIZAR_SITUACAO_PEDIDO.md), [`SP_GERAR_PEDIDO_VENDA`](../rotinas/SP_GERAR_PEDIDO_VENDA.md), [`SP_ATUALIZAR_PEDIDO_REVISAO`](../rotinas/SP_ATUALIZAR_PEDIDO_REVISAO.md)
 - **Rotinas que leem:** —
 - **Triggers de outras tabelas que alteram:** —
-- **Triggers de outras tabelas que leem:** [`TG_AMOSTRAS_BI`](../triggers/TG_AMOSTRAS_BI.md)
+- **Triggers de outras tabelas que leem:** [`TG_AMOSTRAS_BI`](../triggers/TG_AMOSTRAS_BI.md), [`TG_AMOSTRAS_BU`](../triggers/TG_AMOSTRAS_BU.md)
 
 ## Telas e processos
 - **Telas:** [T21 Pedidos de venda](../../../telas/T21-pedidos-venda.md) · [T20 Propostas](../../../telas/T20-propostas.md)
@@ -86,6 +87,7 @@ Comentário do script: _7. PEDIDOS DE VENDA (novo: no Firebird era só um númer
 - **Multiempresa:** entra no Global Query Filter por `ID_EMPRESAS` (empresa ativa) e o `SaveChanges` preenche `ID_EMPRESAS` na inclusão.
 - **Preenchidas pelo banco (trigger):** `ID_EMPRESAS`, `NR_PEDIDO` — não depender do valor enviado; reler a linha após gravar.
 - Chave auto-incremento: `ID_PEDIDOS_VENDA`.
+- `TINYINT(1)` → `bool`: `CONCLUSAO_MANUAL`.
 - `ENUM` → enum C# com conversão para string: `SITUACAO` ('ABERTO','EM_EXECUCAO','CONCLUIDO','CANCELADO').
 - `DATE` → `DateOnly`: `DT_PEDIDO`, `DT_AUTORIZACAO`.
 - Datas mantidas pelo MySQL (`DEFAULT/ON UPDATE CURRENT_TIMESTAMP`): `CRIADO_EM`, `ALTERADO_EM` — mapear como gerado pelo banco.
@@ -111,6 +113,7 @@ CREATE TABLE PEDIDOS_VENDA (
   NR_PEDIDO_CLIENTE    VARCHAR(40)  NULL COMMENT 'Nº de PO/ordem de compra do cliente',
   VR_TOTAL             DECIMAL(15,2) NOT NULL DEFAULT 0,
   SITUACAO             ENUM('ABERTO','EM_EXECUCAO','CONCLUIDO','CANCELADO') NOT NULL DEFAULT 'ABERTO',
+  CONCLUSAO_MANUAL     TINYINT(1)   NOT NULL DEFAULT 0 COMMENT 'Concluído à mão: a conclusão automática dispensa recebido = contratado (6.3, decisão do usuário)',
   DT_CANCELAMENTO      DATETIME     NULL,
   MOTIVO_CANCELAMENTO  VARCHAR(500) NULL,
   OBSERVACAO           TEXT         NULL,

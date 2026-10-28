@@ -32,6 +32,7 @@ public partial class PedidoVendaConfiguration : IEntityTypeConfiguration<PedidoV
         b.Property(e => e.NrPedidoCliente).HasColumnName("NR_PEDIDO_CLIENTE").HasMaxLength(40);
         b.Property(e => e.VrTotal).HasColumnName("VR_TOTAL").HasPrecision(15, 2);
         b.Property(e => e.Situacao).HasColumnName("SITUACAO").HasConversion(EnumBanco<SituacaoPedido>.Conversor);
+        b.Property(e => e.ConclusaoManual).HasColumnName("CONCLUSAO_MANUAL");
         b.Property(e => e.DtCancelamento).HasColumnName("DT_CANCELAMENTO").HasColumnType("datetime");
         b.Property(e => e.MotivoCancelamento).HasColumnName("MOTIVO_CANCELAMENTO").HasMaxLength(500);
         b.Property(e => e.Observacao).HasColumnName("OBSERVACAO").HasColumnType("text");

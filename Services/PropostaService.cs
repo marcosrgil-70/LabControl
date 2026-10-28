@@ -171,7 +171,7 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
             .OrderBy(x => x.Descricao).Select(x => new OpcaoVM(x.IdIdiomas, x.Descricao)).ToListAsync();
         o.Prazos = await db.Prazos.AsNoTracking().Where(x => x.Ativo || prazos.Contains(x.IdPrazos))
             .OrderBy(x => x.QtdeDias).ThenBy(x => x.Descricao).Select(x => new OpcaoVM(x.IdPrazos, x.Descricao)).ToListAsync();
-        vm.TemContratoPadrao = await ContratoPadraoAsync() is not null;
+        vm.TemContratoPadrao = await db.EmpresasParametros.AnyAsync(p => p.TextoPadraoContrato != null && p.TextoPadraoContrato != "");
         o.Cliente = cliente is { } cl ? await EntidadeAsync(cl, vm.IdEntContato, vm.IdEntEndLaudo, vm.IdEntContatoResultado) : null;
         o.Cobranca = cobranca is { } cb ? await EntidadeAsync(cb, vm.IdEntEndCobranca, vm.IdEntContatoNf) : null;
     }
@@ -442,9 +442,12 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
         return r.Sucesso ? Resultado.Ok(r.Valor.IdNovo) : Resultado.Erro(r.Mensagem!);
     }
 
-    /// <summary>Contrato padrão da empresa (T05 › textos), para o botão "Usar contrato padrão".</summary>
+    /// <summary>
+    /// Contrato padrão da empresa (T05 › textos), para o botão "Usar contrato padrão". Digitado no &lt;textarea&gt; da T05
+    /// ele é texto puro: tratado como HTML perdia as quebras de linha e "&lt;5 dias" virava tag (6.3).
+    /// </summary>
     public async Task<string?> ContratoPadraoAsync() =>
-        HtmlSimples.Limpar(await db.EmpresasParametros.AsNoTracking().Select(p => p.TextoPadraoContrato).SingleOrDefaultAsync());
+        ImportadorTexto.DeTextoOuHtml(await db.EmpresasParametros.AsNoTracking().Select(p => p.TextoPadraoContrato).SingleOrDefaultAsync());
 
     /// <summary>
     /// Troca o produto de um item na revisão vigente e nas amostras recebidas por ela (<c>SP_TROCAR_PRODUTO_PROPOSTA</c>);

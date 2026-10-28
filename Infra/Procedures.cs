@@ -128,6 +128,13 @@ public sealed class Procedures(LabDbContext db, IEmpresaContexto empresa)
         return await ChamarSemSaidaAsync("SP_AMOSTRA_GERAR_TESTES", false, ("p_id_amostra", idAmostra));
     }
 
+    /// <summary>Situação automática do pedido (P08, com auditoria): chamar na mesma transação da gravação da amostra.</summary>
+    public async Task<Resultado> AtualizarSituacaoPedidoAsync(int idPedido)
+    {
+        if (!await db.PedidosVenda.AnyAsync(x => x.IdPedidosVenda == idPedido)) return Resultado.Erro("Pedido não encontrado.");
+        return await ChamarSemSaidaAsync("PR_ATUALIZAR_SITUACAO_PEDIDO", false, ("p_id_pedido", idPedido));
+    }
+
     public async Task<Resultado> RecalcularPropostaAsync(int idProposta)
     {
         if (!await db.LabPropostas.AnyAsync(x => x.IdLabPropostas == idProposta)) return Resultado.Erro("Proposta não encontrada.");

@@ -35,7 +35,7 @@ Notas do script: _Fabricação/Validade podem ser PARCIAIS (só mês/ano, só an
 | 15 | `NOME_CONTATO` | VARCHAR(100) | sim |  | aplicação |  |
 | 16 | `ID_LAB_PROPOSTAS` | INT | não |  | aplicação |  |
 | 17 | `ID_LAB_PROPOSTAS_PRODUTOS` | INT | não |  | aplicação |  |
-| 18 | `ID_PEDIDOS_VENDA` | INT | sim |  | trigger TG_AMOSTRAS_BI |  |
+| 18 | `ID_PEDIDOS_VENDA` | INT | sim |  | trigger TG_AMOSTRAS_BI, trigger TG_AMOSTRAS_BU |  |
 | 19 | `ID_PRODUTOS` | INT | não |  | trigger TG_AMOSTRAS_BI, trigger TG_AMOSTRAS_BU |  |
 | 20 | `DT_ENTREGA` | DATE | não |  | aplicação |  |
 | 21 | `HR_ENTREGA` | TIME | não |  | aplicação |  |

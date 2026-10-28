@@ -104,6 +104,28 @@ public class ConcorrenciaTests
         }
     }
 
+    /// <summary>
+    /// 6.3 (D-23): desfazer a revisão do boletim trava só o boletim. Antes o JOIN no FOR UPDATE travava também a
+    /// amostra, na ordem inversa da revisão de resultado (boletim → amostra × amostra → boletins): risco de deadlock.
+    /// </summary>
+    [Fact]
+    public async Task Desfazer_revisao_do_boletim_nao_trava_a_amostra()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var (amo, _, bol) = await c.AmostraComBoletimAsync(await c.HojeAsync());
+        var rev = await c.Procedures.GerarRevisaoBoletimAsync(bol.IdLabBoletimAnalises, "CORRIGIR UNIDADE");
+        Assert.True(rev.Sucesso, rev.Mensagem);
+
+        // outra transação segura a amostra (como a revisão de resultado, que trava a amostra raiz primeiro)
+        await using (await TransacaoAbertaAsync("SELECT 1 FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = @id FOR UPDATE",
+                         ("@id", amo.IdLabHistAmostras)))
+        {
+            await EsperaCurtaAsync(c);
+            var desfazer = await c.Procedures.ExcluirRevisaoBoletimAsync(rev.Valor.IdNovo);
+            Assert.True(desfazer.Sucesso, desfazer.Mensagem);
+        }
+    }
+
     private static async Task<int> GerarPedidoAsync(Cenario c)
     {
         var s = new PedidoVendaService(c.Db, c.Procedures, new PropostaService(c.Db, c.Ativa, c.Procedures), new ServicoAuditoria(c.Db, c.Ativa));

@@ -1,6 +1,6 @@
 # SP_EXCLUIR_REVISAO_BOLETIM
 
-Desfaz a última revisão do boletim (não emitida) e reativa a anterior.
+Desfaz a última revisão do boletim (não emitida) e reativa a anterior; trava só o boletim (D-23) e recalcula a situação do pedido.
 
 **Tipo:** Procedure pública (SP_) · **Criticidade:** 🟠 Importante · **Script:** `Scripts/v2/02_funcoes_procedures.sql`
 
@@ -62,10 +62,14 @@ BEGIN
   DECLARE v_emissao DATETIME;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_DESFAZENDO = NULL; ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
-  SELECT B.ID_BOLETIM_ORIGEM, B.ULTIMA_REVISAO, B.DH_EMISSAO, B.ID_EMPRESAS, A.ID_PEDIDOS_VENDA
-    INTO v_origem, v_ultima, v_emissao, v_emp, v_pedido
+  -- trava só o boletim; o pedido é lido sem trava (o JOIN no FOR UPDATE travava também a amostra, na ordem
+  -- inversa da revisão de resultado: risco de deadlock — 6.3, D-23)
+  SELECT ID_BOLETIM_ORIGEM, ULTIMA_REVISAO, DH_EMISSAO, ID_EMPRESAS
+    INTO v_origem, v_ultima, v_emissao, v_emp
+    FROM LAB_BOLETIM_ANALISES WHERE ID_LAB_BOLETIM_ANALISES = p_id_boletim FOR UPDATE;
+  SELECT A.ID_PEDIDOS_VENDA INTO v_pedido
     FROM LAB_BOLETIM_ANALISES B JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
-   WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_boletim FOR UPDATE;
+   WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_boletim;
   IF v_ultima IS NULL OR v_ultima = 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Só é possível excluir a última revisão do boletim.';
   END IF;

@@ -332,7 +332,7 @@ public static partial class PropostaPdf
             foreach (var p in paragrafos)
                 c.Item().Text(t =>
                 {
-                    if (p.Marcador) t.Span("•  ");
+                    if (p.Marcador is { } marcador) t.Span(marcador + "  ");
                     foreach (var s in p.Trechos)
                     {
                         var span = t.Span(s.Texto);
@@ -345,13 +345,14 @@ public static partial class PropostaPdf
     }
 
     private sealed record Trecho(string Texto, bool Negrito, bool Italico, bool Sublinhado);
-    private sealed record Paragrafo(bool Marcador, List<Trecho> Trechos);
+    private sealed record Paragrafo(string? Marcador, List<Trecho> Trechos);
 
     /// <summary>
     /// O HTML já limpo pelo <c>HtmlSimples</c> (p, br, div, strong/b, em/i, u, ul/ol/li) vira parágrafos com trechos
-    /// formatados (o teste confere por <see cref="TextoSimples"/>).
+    /// formatados (o teste confere por <see cref="TextoSimples"/>). Item de &lt;ul&gt; leva "•"; de &lt;ol&gt;, o número
+    /// ("2." e "2.1." na lista dentro de lista — cláusulas numeradas do contrato importado do Word, 6.3).
     /// </summary>
-    public static List<(bool Marcador, string Texto)> TextoSimples(string? html) =>
+    public static List<(string? Marcador, string Texto)> TextoSimples(string? html) =>
         Paragrafos(html).Select(p => (p.Marcador, string.Concat(p.Trechos.Select(t => t.Texto)))).ToList();
 
     private static List<Paragrafo> Paragrafos(string? html)
@@ -359,11 +360,19 @@ public static partial class PropostaPdf
         var lista = new List<Paragrafo>();
         if (string.IsNullOrWhiteSpace(html)) return lista;
         int negrito = 0, italico = 0, sublinhado = 0;
-        var atual = new Paragrafo(false, []);
+        var listas = new List<(bool Numerada, int Contador)>(); // listas abertas, da mais externa à mais interna
+        var atual = new Paragrafo(null, []);
         void Fechar()
         {
             if (atual.Trechos.Any(t => !string.IsNullOrWhiteSpace(t.Texto))) lista.Add(atual);
-            atual = new Paragrafo(false, []);
+            atual = new Paragrafo(null, []);
+        }
+        string Marcador()
+        {
+            if (listas.Count == 0 || !listas[^1].Numerada) return "•";
+            listas[^1] = (true, listas[^1].Contador + 1);
+            // numeração das listas numeradas abertas: 2. / 2.1.
+            return string.Concat(listas.Where(l => l.Numerada).Select(l => l.Contador + "."));
         }
         foreach (Match m in Token().Matches(html))
         {
@@ -382,9 +391,14 @@ public static partial class PropostaPdf
                 case "br": Fechar(); break;
                 case "li":
                     Fechar();
-                    if (!fecha) atual = new Paragrafo(true, []);
+                    if (!fecha) atual = new Paragrafo(Marcador(), []);
                     break;
-                case "p" or "div" or "ul" or "ol": Fechar(); break;
+                case "ul" or "ol":
+                    Fechar();
+                    if (!fecha) listas.Add((m.Groups["nome"].Value.Equals("ol", StringComparison.OrdinalIgnoreCase), 0));
+                    else if (listas.Count > 0) listas.RemoveAt(listas.Count - 1);
+                    break;
+                case "p" or "div": Fechar(); break;
             }
             (negrito, italico, sublinhado) = (Math.Max(0, negrito), Math.Max(0, italico), Math.Max(0, sublinhado));
         }

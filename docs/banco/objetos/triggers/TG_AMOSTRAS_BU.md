@@ -17,6 +17,7 @@ Travas de alteração da amostra (revisão antiga, boletim emitido, resultados, 
 - `NEW.FABRICACAO_MES`
 - `NEW.FABRICACAO_ANO`
 - `NEW.ID_PRODUTOS`
+- `NEW.ID_PEDIDOS_VENDA`
 - `NEW.DT_VALIDADE`
 - `NEW.DT_FABRICACAO`
 - `NEW.NR_AMOSTRA`
@@ -40,11 +41,11 @@ Travas de alteração da amostra (revisão antiga, boletim emitido, resultados, 
 
 ## O que acessa
 - **Altera outras tabelas:** —
-- **Lê outras tabelas:** [`LAB_PROPOSTAS_PRODUTOS`](../tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`LAB_MOV_AMOSTRAS`](../tabelas/LAB_MOV_AMOSTRAS.md), [`LAB_RESULTADOS_ANALISES`](../tabelas/LAB_RESULTADOS_ANALISES.md), [`LAB_BOLETIM_ANALISES`](../tabelas/LAB_BOLETIM_ANALISES.md)
+- **Lê outras tabelas:** [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md), [`LAB_PROPOSTAS_PRODUTOS`](../tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`PEDIDOS_VENDA`](../tabelas/PEDIDOS_VENDA.md), [`LAB_MOV_AMOSTRAS`](../tabelas/LAB_MOV_AMOSTRAS.md), [`LAB_RESULTADOS_ANALISES`](../tabelas/LAB_RESULTADOS_ANALISES.md), [`LAB_BOLETIM_ANALISES`](../tabelas/LAB_BOLETIM_ANALISES.md)
 - **Chama:** [`FN_NR_AMOSTRA_ID`](../rotinas/FN_NR_AMOSTRA_ID.md)
 
 ## Impacto na aplicação
-- A aplicação não precisa (e não deve depender de) enviar: `VALIDADE_DIA`, `VALIDADE_MES`, `VALIDADE_ANO`, `FABRICACAO_DIA`, `FABRICACAO_MES`, `FABRICACAO_ANO`, `ID_PRODUTOS`, `DT_VALIDADE`, `DT_FABRICACAO`, `NR_AMOSTRA`. Reler a linha depois de gravar.
+- A aplicação não precisa (e não deve depender de) enviar: `VALIDADE_DIA`, `VALIDADE_MES`, `VALIDADE_ANO`, `FABRICACAO_DIA`, `FABRICACAO_MES`, `FABRICACAO_ANO`, `ID_PRODUTOS`, `ID_PEDIDOS_VENDA`, `DT_VALIDADE`, `DT_FABRICACAO`, `NR_AMOSTRA`. Reler a linha depois de gravar.
 - Capturar `MySqlException` com `SqlState == "45000"` e mostrar a mensagem ao usuário (é regra de negócio, não erro técnico).
 - Com `@LC_MIGRACAO = 1` (só na migração) as validações/numeração ficam desligadas.
 
@@ -56,6 +57,7 @@ Travas de alteração da amostra (revisão antiga, boletim emitido, resultados, 
 ```sql
 CREATE TRIGGER TG_AMOSTRAS_BU BEFORE UPDATE ON LAB_HIST_AMOSTRAS FOR EACH ROW
 BEGIN
+  DECLARE v_pedido, v_ano_novo, v_cod_novo, v_ano_velho, v_cod_velho INT;
   IF NEW.VALIDADE_DIA = 0 THEN SET NEW.VALIDADE_DIA = NULL; END IF;
   IF NEW.VALIDADE_MES = 0 THEN SET NEW.VALIDADE_MES = NULL; END IF;
   IF NEW.VALIDADE_ANO = 0 THEN SET NEW.VALIDADE_ANO = NULL; END IF;
@@ -95,6 +97,22 @@ BEGIN
     END IF;
     IF NEW.ID_LAB_PROPOSTAS_PRODUTOS <> OLD.ID_LAB_PROPOSTAS_PRODUTOS THEN
       SET NEW.ID_PRODUTOS = (SELECT ID_PRODUTOS FROM LAB_PROPOSTAS_PRODUTOS WHERE ID_LAB_PROPOSTAS_PRODUTOS = NEW.ID_LAB_PROPOSTAS_PRODUTOS);
+    END IF;
+    -- trocou para OUTRA proposta (não só outra revisão da mesma): o pedido passa a ser o da proposta nova,
+    -- como na inclusão (TG_AMOSTRAS_BI); antes ficava o pedido antigo na etiqueta e no boletim (6.3)
+    IF NEW.ID_LAB_PROPOSTAS <> OLD.ID_LAB_PROPOSTAS THEN
+      SELECT P.ANO_PROPOSTA, P.COD_PROPOSTA INTO v_ano_novo, v_cod_novo
+        FROM LAB_PROPOSTAS P WHERE P.ID_LAB_PROPOSTAS = NEW.ID_LAB_PROPOSTAS;
+      SELECT P.ANO_PROPOSTA, P.COD_PROPOSTA INTO v_ano_velho, v_cod_velho
+        FROM LAB_PROPOSTAS P WHERE P.ID_LAB_PROPOSTAS = OLD.ID_LAB_PROPOSTAS;
+      IF NOT (v_ano_novo = v_ano_velho AND v_cod_novo = v_cod_velho) THEN
+        SET v_pedido = NULL;
+        SELECT PV.ID_PEDIDOS_VENDA INTO v_pedido FROM PEDIDOS_VENDA PV
+         WHERE PV.ID_EMPRESAS = NEW.ID_EMPRESAS AND PV.ANO_PROPOSTA = v_ano_novo AND PV.COD_PROPOSTA = v_cod_novo
+           AND PV.SITUACAO <> 'CANCELADO'
+         LIMIT 1;
+        SET NEW.ID_PEDIDOS_VENDA = v_pedido;
+      END IF;
     END IF;
 
     IF NEW.VALIDADE_DIA IS NOT NULL AND (NEW.VALIDADE_MES IS NULL OR NEW.VALIDADE_ANO IS NULL) THEN

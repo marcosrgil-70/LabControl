@@ -32,6 +32,8 @@ public partial class PedidoVenda : IPorEmpresa
     public string? NrPedidoCliente { get; set; }
     public decimal VrTotal { get; set; }
     public SituacaoPedido Situacao { get; set; } = SituacaoPedido.Aberto;
+    /// <summary><c>CONCLUSAO_MANUAL</c> — Concluído à mão: a conclusão automática dispensa recebido = contratado (6.3, decisão do usuário)</summary>
+    public bool ConclusaoManual { get; set; }
     public DateTime? DtCancelamento { get; set; }
     public string? MotivoCancelamento { get; set; }
     public string? Observacao { get; set; }

@@ -729,6 +729,7 @@ CREATE TABLE PEDIDOS_VENDA (
   NR_PEDIDO_CLIENTE    VARCHAR(40)  NULL COMMENT 'Nº de PO/ordem de compra do cliente',
   VR_TOTAL             DECIMAL(15,2) NOT NULL DEFAULT 0,
   SITUACAO             ENUM('ABERTO','EM_EXECUCAO','CONCLUIDO','CANCELADO') NOT NULL DEFAULT 'ABERTO',
+  CONCLUSAO_MANUAL     TINYINT(1)   NOT NULL DEFAULT 0 COMMENT 'Concluído à mão: a conclusão automática dispensa recebido = contratado (6.3, decisão do usuário)',
   DT_CANCELAMENTO      DATETIME     NULL,
   MOTIVO_CANCELAMENTO  VARCHAR(500) NULL,
   OBSERVACAO           TEXT         NULL,

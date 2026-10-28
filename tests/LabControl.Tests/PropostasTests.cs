@@ -1,4 +1,5 @@
 using System.Text.Json;
+using LabControl.Infra;
 using LabControl.Models;
 using LabControl.Services;
 using LabControl.ViewModels;
@@ -240,10 +241,46 @@ public class PropostasTests
         Assert.Equal(("QUEIJO PRATO", 2), (doc.Produtos.Single().Produto, doc.Produtos.Single().Analises.Count));
     }
 
+    /// <summary>6.3 — contrato padrão digitado como texto puro na T05 mantém parágrafos, quebras e "&lt;".</summary>
+    [Fact]
+    public async Task Contrato_padrao_em_texto_puro_mantem_as_linhas()
+    {
+        await using var c = await Cenario.CriarAsync();
+        await c.Db.EmpresasParametros.ExecuteUpdateAsync(u => u.SetProperty(p => p.TextoPadraoContrato, "CLÁUSULA 1\r\nprazo <5 dias\r\n\r\nCLÁUSULA 2"));
+        Assert.Equal("<p>CLÁUSULA 1<br>prazo &lt;5 dias</p><p>CLÁUSULA 2</p>", await Servico(c).ContratoPadraoAsync());
+    }
+
+    /// <summary>
+    /// 6.3 — trocar produto com amostra revisada: só a revisão vigente muda (a antiga é somente leitura e antes fazia
+    /// a troca inteira falhar) e o item do pedido acompanha (a T21 mostra o produto do item).
+    /// </summary>
+    [Fact]
+    public async Task Trocar_produto_com_amostra_revisada_e_pedido()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var s = Servico(c);
+        var (amostra, _, _) = await c.AmostraComBoletimAsync(await c.HojeAsync());
+        var rev = await c.Procedures.GerarRevisaoAmostraAsync(amostra.IdLabHistAmostras, "LOTE ERRADO");
+        Assert.True(rev.Sucesso, rev.Mensagem);
+        var pedido = await new PedidoVendaService(c.Db, c.Procedures, s, new ServicoAuditoria(c.Db, c.Ativa))
+            .GerarAsync(new PedidoVendaGerarVM { IdProposta = c.Proposta.IdLabPropostas, DtAutorizacao = await c.HojeAsync() });
+        Assert.True(pedido.Sucesso, pedido.Mensagem);
+        var outro = new Produto { Descricao = "QUEIJO PRATO", IdUnidades = c.Unidade.IdUnidades };
+        c.Db.Add(outro);
+        await c.Db.SaveChangesAsync();
+
+        var troca = await s.TrocarProdutoAsync(c.Proposta.IdLabPropostas, c.Produto.IdProdutos, outro.IdProdutos);
+        Assert.True(troca.Sucesso, troca.Mensagem);
+        var produtos = await c.Db.LabHistAmostras.AsNoTracking().OrderBy(a => a.Revisao).Select(a => a.IdProdutos).ToListAsync();
+        Assert.Equal([c.Produto.IdProdutos, outro.IdProdutos], produtos);   // revisão antiga intacta, vigente trocada
+        Assert.Equal(outro.IdProdutos, await c.Db.PedidosVendaItens.Where(i => i.IdPedidosVenda == pedido.Valor).Select(i => i.IdProdutos).SingleAsync());
+        Assert.Equal("QUEIJO PRATO", await c.Db.VwPedidosVendaSaldo.Where(i => i.IdPedidosVenda == pedido.Valor).Select(i => i.ProdutoDescricao).SingleAsync());
+    }
+
     [Fact]
     public void Html_dos_editores_vira_paragrafos_do_pdf()
     {
         var p = LabControl.Services.Propostas.PropostaPdf.TextoSimples("<p>Primeiro <strong>negrito</strong></p><ul><li>um</li><li>dois</li></ul>linha<br>quebrada");
-        Assert.Equal([(false, "Primeiro negrito"), (true, "um"), (true, "dois"), (false, "linha"), (false, "quebrada")], p);
+        Assert.Equal([(null, "Primeiro negrito"), ("•", "um"), ("•", "dois"), (null, "linha"), (null, "quebrada")], p);
     }
 }

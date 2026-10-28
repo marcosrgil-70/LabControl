@@ -87,11 +87,17 @@ public sealed partial class PedidoVendaService(LabDbContext db, Procedures proce
             .OrderBy(a => a.DtEntrega).ThenBy(a => a.IdLabHistAmostras)
             .Select(a => new { a.IdLabHistAmostras, a.NrAmostra, a.DtEntrega, Raiz = a.IdAmostraRaiz ?? a.IdLabHistAmostras, a.AmostraStatus.Descricao, a.AmostraStatus.Cor })
             .ToListAsync();
+        // revisões das amostras pelos índices (ID e ID_AMOSTRA_RAIZ), não por "raiz ?? id" (sem índice — D-23)
         var raizes = amostras.Select(a => a.Raiz).ToList();
+        var familia = (await db.LabHistAmostras.AsNoTracking()
+                .Where(a => raizes.Contains(a.IdLabHistAmostras) || (a.IdAmostraRaiz != null && raizes.Contains(a.IdAmostraRaiz.Value)))
+                .Select(a => new { a.IdLabHistAmostras, Raiz = a.IdAmostraRaiz ?? a.IdLabHistAmostras }).ToListAsync())
+            .ToDictionary(a => a.IdLabHistAmostras, a => a.Raiz);
+        var ids = familia.Keys.ToList();
         var boletins = (await db.LabBoletimAnalises.AsNoTracking()
-                .Where(b => b.UltimaRevisao && raizes.Contains(b.LabHistAmostra.IdAmostraRaiz ?? b.IdLabHistAmostras))
-                .Select(b => new { Raiz = b.LabHistAmostra.IdAmostraRaiz ?? b.IdLabHistAmostras, b.DhEmissao }).ToListAsync())
-            .ToLookup(b => b.Raiz);
+                .Where(b => b.UltimaRevisao && ids.Contains(b.IdLabHistAmostras))
+                .Select(b => new { b.IdLabHistAmostras, b.DhEmissao }).ToListAsync())
+            .ToLookup(b => familia[b.IdLabHistAmostras]);
 
         return new PedidoVendaVM
         {
@@ -157,7 +163,9 @@ public sealed partial class PedidoVendaService(LabDbContext db, Procedures proce
         if (p is null) return Resultado.Erro(MensagemNaoEncontrado);
         if (p.Situacao is not (SituacaoPedido.Aberto or SituacaoPedido.EmExecucao))
             return Resultado.Erro($"Pedido {SituacoesPedido.Nome(p.Situacao).ToLowerInvariant()} não pode ser concluído.");
-        p.Situacao = SituacaoPedido.Concluido;
+        // concluído à mão: se uma revisão reabrir o pedido, ele volta a concluir sozinho mesmo com item faltando
+        // (decisão do usuário, 28/10/2026 — PR_ATUALIZAR_SITUACAO_PEDIDO)
+        (p.Situacao, p.ConclusaoManual) = (SituacaoPedido.Concluido, true);
         return await GravarAsync();
     }
 
@@ -173,7 +181,8 @@ public sealed partial class PedidoVendaService(LabDbContext db, Procedures proce
             // a auditoria automática não guarda o motivo: UPDATE direto + evento com o motivo, na mesma transação
             await using var tx = await db.Database.BeginTransactionAsync();
             var alterados = await db.PedidosVenda.Where(x => x.IdPedidosVenda == id && x.Situacao == SituacaoPedido.Concluido)
-                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Situacao, SituacaoPedido.EmExecucao));
+                // reaberto pelo usuário: volta a regra normal (só conclui sozinho com tudo recebido)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Situacao, SituacaoPedido.EmExecucao).SetProperty(x => x.ConclusaoManual, false));
             if (alterados == 0) throw new ErroDeNegocioException("Só pedido concluído pode ser reaberto.");
             await auditoria.RegistrarAsync(AcoesAuditoria.Alteracao, "PEDIDOS_VENDA", id.ToString(),
                 new { SITUACAO = "CONCLUIDO" }, new { SITUACAO = "EM_EXECUCAO", MOTIVO = Corte(m, 500) });

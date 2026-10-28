@@ -130,13 +130,10 @@ BEGIN
      SET A.ID_PEDIDOS_VENDA = p_id_pedido
    WHERE P.ID_EMPRESAS = v_emp AND P.ANO_PROPOSTA = v_ano AND P.COD_PROPOSTA = v_cod
      AND A.ID_PEDIDOS_VENDA IS NULL AND A.ULTIMA_REVISAO = 1;
-  -- com amostra já recebida o pedido nasce em execução (e já concluído, se tudo foi recebido e emitido)
-  IF ROW_COUNT() > 0 THEN
-    UPDATE PEDIDOS_VENDA SET SITUACAO = 'EM_EXECUCAO' WHERE ID_PEDIDOS_VENDA = p_id_pedido;
-  END IF;
   CALL PR_AUDITAR(v_emp, 'PEDIDOS_VENDA', p_id_pedido, 'I', NULL,
                   JSON_OBJECT('NR_PEDIDO', p_nr_pedido, 'ID_LAB_PROPOSTAS', p_id_proposta, 'DT_AUTORIZACAO', p_dt_autorizacao,
                               'AUTORIZADO_POR', p_autorizado_por, 'NR_PEDIDO_CLIENTE', p_nr_pedido_cliente));
+  -- com amostra já recebida o pedido nasce em execução (e já concluído, se tudo foi recebido e emitido)
   CALL PR_ATUALIZAR_SITUACAO_PEDIDO(p_id_pedido);
   COMMIT;
 END

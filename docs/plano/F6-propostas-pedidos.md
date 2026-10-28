@@ -91,7 +91,10 @@
 ### 6.3 Revisão
 `/code-review high` de `98d43dd^..HEAD` (6.1 + 6.2); conferir números do pedido no boletim e nas etiquetas; olhar em especial a `PR_ATUALIZAR_SITUACAO_PEDIDO` (chamadas nas procedures de revisão) e o modal de geração.
 
+**Feita em 28/10/2026.** Suíte inteira (pendência 29) achou um deadlock emissão × revisão de resultado → D-23 (travas só nas linhas do documento). Revisão: 10 achados do `/code-review high` + 1 da conferência do nº do pedido, todos corrigidos — trocar produto com amostra revisada (só a vigente) e item do pedido; contrato padrão em texto puro; atualizar revisão do pedido recalcula a situação; amostra que troca de proposta muda de pedido (`TG_AMOSTRAS_BU`); desfazer revisão de boletim trava só o boletim; pedido concluído à mão volta a concluir sozinho (`CONCLUSAO_MANUAL`, opção a do usuário); reabertura pelo recebimento auditada (`PR_ATUALIZAR_SITUACAO_PEDIDO`); importador do Word com listas numeradas (`<ol>`, PDF numerado), controles de conteúdo e XML corrompido; TXT/HTML em ANSI. Menores registrados na pendência 30.
+
 ## Definição de pronto
 - [x] Proposta com revisão correta (sem copiar pedido/status) e PDF. — 6.1
 > Dúvida 5 do plano (em aberto): pedir ao usuário os **modelos atuais (PDF/papel) da proposta e do pedido** antes de montar os PDFs.
 - [x] Um pedido por proposta, recebido × contratado correto. — 6.2
+- [x] Revisão da fase: `/code-review high` + nº do pedido no boletim/etiquetas. — 6.3 (28/10/2026): deadlock corrigido (D-23), 11 achados corrigidos (D-24), suíte 262/262. **Fase 6 completa.**

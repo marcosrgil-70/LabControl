@@ -172,4 +172,9 @@ Grid: nº proposta, status (cor), CPF/CNPJ, cliente, nº pedido, valor total. Na
 - **Trocar produto** (`SP_TROCAR_PRODUTO_PROPOSTA`): modal na revisão vigente (produto atual da proposta → novo ativo), troca na proposta e nas amostras recebidas por ela; o banco recusa amostra com boletim emitido.
 - **Testes:** `PropostasTests` (+3: revisão, contrato/troca/PDF, HTML → PDF), `ImportadorTextoTests` (2) e navegador `Proposta_selecao_multipla_contrato_pdf_e_revisao`.
 
-**Status:** ✅ concluída na tarefa 6.1 (27/10/2026); layout fino do PDF com os modelos reais (dúvida 5). Pedido de venda na 6.2 (T21).
+## Revisão (tarefa 6.3 — 28/10/2026)
+- **Trocar produto** com amostra revisada nunca funcionava (a revisão antiga é somente leitura e o banco recusava a troca inteira): agora só a revisão vigente da amostra muda, e o item do pedido acompanha.
+- **Contrato padrão** digitado como texto puro na T05 mantém parágrafos e quebras (`ImportadorTexto.DeTextoOuHtml`); o formulário só confere se existe (não lê o texto).
+- **Importar contrato do Word:** listas numeradas viram `<ol>` (com subníveis) e o PDF numera "1.", "2.1."; texto dentro de controles de conteúdo (`SdtBlock`) entra; XML corrompido dá a mensagem amigável (não erro 500). **TXT/HTML em ANSI** (Windows-1252) mantém os acentos.
+
+**Status:** ✅ concluída na tarefa 6.1 (27/10/2026) e revisada na 6.3 (28/10/2026); layout fino do PDF com os modelos reais (dúvida 5). Pedido de venda na 6.2 (T21).

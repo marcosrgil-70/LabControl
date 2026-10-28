@@ -74,4 +74,12 @@ Levantamento feito antes de começar: [F6 › 6.2 › Como fazer](../plano/F6-pr
 - `PedidosVendaTests` (4): autorização e um pedido por proposta + revisão vigente; amostra anterior ao pedido + conclusão no último boletim + reabertura pela revisão de boletim e de amostra; item faltando + concluir/reabrir manuais + amostra nova reabre; cancelar + PDF + consulta.
 - Navegador `Pedido_gerado_pela_proposta_conclui_reabre_imprime_e_cancela`.
 
-**Status:** ✅ concluída na tarefa 6.2 (27/10/2026); falta rodar a suíte inteira (pendência 29). O layout fino do PDF depende dos modelos reais (dúvida 5).
+## Revisão (tarefa 6.3 — 28/10/2026)
+- **Concluído à mão** (`ConcluirAsync` grava `CONCLUSAO_MANUAL = 1`): reaberto por uma revisão, volta a concluir sozinho quando ela é emitida, mesmo com item faltando (decisão do usuário, opção a); "Reabrir" zera a marca (D-24).
+- **Atualizar para revisão vigente** recalcula a situação: contratado reduzido ao recebido, com tudo emitido, conclui.
+- **Itens:** trocar produto na T20 atualiza `PEDIDOS_VENDA_ITENS.ID_PRODUTOS` (antes a T21 mostrava o produto antigo).
+- **Amostras:** a que troca de proposta na T22 passa para o pedido da proposta nova (`TG_AMOSTRAS_BU`); o nº do pedido na etiqueta e no boletim vem da amostra (`VW_LAB_AMOSTRAS.NR_PEDIDO_FMT`) — conferido. Boletim emitido antes de o pedido existir continua sem o nº (PDF congelado; só uma revisão o mostra).
+- Boletins da tela pelos índices da amostra (sem `IdAmostraRaiz ?? Id` — D-23).
+- Testes: `PedidosVendaTests` (+3), `ConcorrenciaTests` (+2).
+
+**Status:** ✅ concluída na tarefa 6.2 (27/10/2026) e revisada na 6.3 (28/10/2026). O layout fino do PDF depende dos modelos reais (dúvida 5).
