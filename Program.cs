@@ -56,6 +56,7 @@ builder.Services.AddScoped<BoletimService>();
 builder.Services.AddSingleton(s => ArmazemBoletins.DaConfiguracao(s.GetRequiredService<IConfiguration>(), s.GetRequiredService<IWebHostEnvironment>()));
 builder.Services.AddScoped<EtiquetaService>();
 builder.Services.AddScoped<MovimentacaoService>();
+builder.Services.AddScoped<LocalizacaoService>();
 builder.Services.AddSingleton<LabControl.Infra.IImpressoraRaw, LabControl.Infra.ImpressoraRawWindows>();
 builder.Services.AddScoped<ParametroAnaliseService>();
 builder.Services.AddScoped<LabControl.Services.Migracao.MigracaoService>();

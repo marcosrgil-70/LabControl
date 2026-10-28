@@ -1,6 +1,6 @@
 # TG_MOV_BI
 
-Movimento vai sempre para a amostra raiz; saída sem saldo é recusada.
+Movimento vai sempre para a amostra raiz; saída sem saldo é recusada, com a linha do saldo travada até o fim da transação (duas saídas ao mesmo tempo não passam juntas — D-25).
 
 **Tabela:** [`LAB_MOV_AMOSTRAS`](../tabelas/LAB_MOV_AMOSTRAS.md) · **Momento:** BEFORE INSERT · **Criticidade:** 🟠 Importante · **Script:** `Scripts/v2/03_triggers.sql`
 
@@ -47,7 +47,8 @@ BEGIN
   CALL PR_CONFERIR_EMPRESA(NEW.ID_EMPRESAS, v_emp);
   SET NEW.ID_LAB_HIST_AMOSTRAS = v_raiz, NEW.ID_EMPRESAS = v_emp;
   IF COALESCE(@LC_MIGRACAO, 0) = 0 AND NEW.E_S = 'S' THEN
-    SELECT COALESCE(SALDO_ATUAL, 0) INTO v_saldo FROM LAB_HIST_AMOSTRAS_SALDO WHERE ID_LAB_HIST_AMOSTRAS = v_raiz;
+    -- trava a linha do saldo até o fim da transação: duas saídas ao mesmo tempo não passam juntas (pendência 31)
+    SELECT SALDO_ATUAL INTO v_saldo FROM LAB_HIST_AMOSTRAS_SALDO WHERE ID_LAB_HIST_AMOSTRAS = v_raiz FOR UPDATE;
     IF COALESCE(v_saldo, 0) < NEW.QTDE THEN
       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Saldo insuficiente da amostra para esta saída.';
     END IF;

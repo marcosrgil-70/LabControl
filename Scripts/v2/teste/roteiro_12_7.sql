@@ -107,6 +107,10 @@ CALL T_OK('1', 'perfis sugeridos (RECEPÇÃO, ANALISTA, RESPONSÁVEL TÉCNICO, C
                 WHERE P.ID_EMPRESAS = @EMP AND P.NOME = 'RESPONSÁVEL TÉCNICO' AND X.TELA = 'BOLETINS')
               = (SELECT COUNT(*) FROM PERMISSOES WHERE TELA = 'BOLETINS'),
           (SELECT GROUP_CONCAT(NOME) FROM PERFIS WHERE ID_EMPRESAS = @EMP));
+CALL T_OK('1', 'RECEPÇÃO arquiva e descarta (LOCALIZACAO.CONSULTAR/INCLUIR/ALTERAR, pendência 32)',
+          (SELECT COUNT(*) FROM PERFIS_PERMISSOES PP JOIN PERFIS P ON P.ID_PERFIS = PP.ID_PERFIS
+                 JOIN PERMISSOES X ON X.ID_PERMISSOES = PP.ID_PERMISSOES
+                WHERE P.ID_EMPRESAS = @EMP AND P.NOME = 'RECEPÇÃO' AND X.TELA = 'LOCALIZACAO') = 3, NULL);
 CALL T_OK('1', 'perfis sugeridos: toda tela com alguma ação tem também CONSULTAR',
           NOT EXISTS (SELECT 1 FROM PERFIS P JOIN PERFIS_PERMISSOES PP ON PP.ID_PERFIS = P.ID_PERFIS
                         JOIN PERMISSOES X ON X.ID_PERMISSOES = PP.ID_PERMISSOES
@@ -351,6 +355,19 @@ CALL T_ESPERA_ERRO('11', 'saída maior que o saldo',
      CONCAT('INSERT INTO LAB_MOV_AMOSTRAS (ID_EMPRESAS, ID_LAB_HIST_AMOSTRAS, QTDE, E_S, ID_ENTIDADES_FUNC) VALUES (',
             @EMP, ', ', @AMO2, ', 10, ''S'', ', @FUNC, ')'),
      'Saldo insuficiente da amostra para esta saída.');
+-- RN-06.15 (pendência 31): entrada que cobre uma saída não pode ser excluída; sem a saída, pode
+INSERT INTO LAB_MOV_AMOSTRAS (ID_EMPRESAS, ID_LAB_HIST_AMOSTRAS, QTDE, E_S, ID_ENTIDADES_FUNC) VALUES (@EMP, @AMO, 2, 'E', @FUNC);
+SET @MOV_E = LAST_INSERT_ID();
+INSERT INTO LAB_MOV_AMOSTRAS (ID_EMPRESAS, ID_LAB_HIST_AMOSTRAS, QTDE, E_S, ID_ENTIDADES_FUNC, JUSTIFICATIVA) VALUES (@EMP, @AMO, 4, 'S', @FUNC, 'TESTE');
+SET @MOV_S = LAST_INSERT_ID();
+CALL T_ESPERA_ERRO('11', 'excluir entrada que deixaria o saldo negativo',
+     CONCAT('DELETE FROM LAB_MOV_AMOSTRAS WHERE ID_LAB_MOV_AMOSTRAS = ', @MOV_E),
+     'Esta entrada não pode ser excluída: o saldo da amostra ficaria negativo.');
+DELETE FROM LAB_MOV_AMOSTRAS WHERE ID_LAB_MOV_AMOSTRAS = @MOV_S;
+DELETE FROM LAB_MOV_AMOSTRAS WHERE ID_LAB_MOV_AMOSTRAS = @MOV_E;
+CALL T_OK('11', 'sem a saída, a entrada complementar sai e o saldo volta a 3',
+          (SELECT SALDO_ATUAL FROM LAB_HIST_AMOSTRAS_SALDO WHERE ID_LAB_HIST_AMOSTRAS = @AMO) = 3,
+          (SELECT SALDO_ATUAL FROM LAB_HIST_AMOSTRAS_SALDO WHERE ID_LAB_HIST_AMOSTRAS = @AMO));
 CALL T_ESPERA_ERRO('11', 'segundo pedido para a mesma proposta',
      CONCAT('CALL SP_GERAR_PEDIDO_VENDA(', @PROP2, ', CURDATE(), NULL, NULL, NULL, @X1, @X2)'),
      'Já existe Pedido de Venda para esta proposta.');

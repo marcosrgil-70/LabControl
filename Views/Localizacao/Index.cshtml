@@ -1,0 +1,158 @@
+@model LocalizacaoListaVM
+@{
+    ViewData["Title"] = "Localização de amostras";
+    var f = Model.Filtro;
+    var lote = Model.Lote;
+    var podeIncluir = Usuario.TemPermissao("LOCALIZACAO.INCLUIR");
+    var semLocalizacao = Model.Itens.Count(i => i.Situacao is null);
+    // filtros atuais + página (sem os vazios) para os links da paginação
+    Dictionary<string, string> Rota(int pagina) => new Dictionary<string, string?>
+    {
+        ["Cliente"] = f.Cliente, ["Produto"] = f.Produto, ["Numero"] = f.Numero, ["Situacao"] = f.Situacao?.ToString(),
+        ["De"] = f.De?.ToString("yyyy-MM-dd"), ["Ate"] = f.Ate?.ToString("yyyy-MM-dd"),
+        ["Armario"] = f.Armario, ["Prateleira"] = f.Prateleira, ["Caixa"] = f.Caixa, ["Pagina"] = pagina.ToString(),
+    }.Where(kv => kv.Value is not null).ToDictionary(kv => kv.Key, kv => kv.Value!);
+    string Situacao(SituacaoArquivo? s) => s switch { SituacaoArquivo.Arquivada => "Arquivada", SituacaoArquivo.Descartada => "Descartada", _ => "Sem localização" };
+    string Classe(SituacaoArquivo? s) => s switch { SituacaoArquivo.Arquivada => "text-bg-primary", SituacaoArquivo.Descartada => "text-bg-danger", _ => "text-bg-light border" };
+}
+@inject IEmpresaContexto Usuario
+
+<div class="d-flex align-items-center mb-1">
+    <h5 class="mb-0"><i class="bi bi-geo-alt me-2 text-primary"></i>Localização de amostras</h5>
+    <button type="button" class="btn btn-primary btn-sm ms-auto" lc-permissao="LOCALIZACAO.INCLUIR" id="botaoLocalizarAmostra"
+            data-pesquisa-amostras data-url="/Localizacao/Pesquisa" data-filtros="ApenasSemLocalizacao=true" data-abrir="/Localizacao/Amostra/{id}">
+        <i class="bi bi-plus-lg me-1"></i>Arquivar amostra
+    </button>
+</div>
+<p class="small text-body-secondary mb-3">Onde cada amostra física está guardada (armário, prateleira, caixa) e quando foi descartada. A localização vale para todas as revisões da amostra.</p>
+
+<form method="get" class="row g-2 align-items-end mb-3" id="filtroLocalizacao">
+    <div class="col-sm-6 col-lg-3">
+        <label class="form-label small mb-0" for="Cliente">Cliente (nome ou CPF/CNPJ)</label>
+        <input name="Cliente" id="Cliente" value="@f.Cliente" class="form-control form-control-sm" />
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <label class="form-label small mb-0" for="Produto">Produto</label>
+        <input name="Produto" id="Produto" value="@f.Produto" class="form-control form-control-sm" />
+    </div>
+    <div class="col-6 col-lg-2">
+        <label class="form-label small mb-0" for="Numero">Nº da amostra</label>
+        <input name="Numero" id="Numero" value="@f.Numero" class="form-control form-control-sm font-monospace" placeholder="1382" />
+    </div>
+    <div class="col-6 col-lg-2">
+        <label class="form-label small mb-0" for="Situacao">Situação</label>
+        <select name="Situacao" id="Situacao" class="form-select form-select-sm">
+            <option value="">Todas</option>
+            <option value="Arquivada" selected="@(f.Situacao == SituacaoLocalizacao.Arquivada)">Arquivada</option>
+            <option value="Descartada" selected="@(f.Situacao == SituacaoLocalizacao.Descartada)">Descartada</option>
+            <option value="SemLocalizacao" selected="@(f.Situacao == SituacaoLocalizacao.SemLocalizacao)">Sem localização</option>
+        </select>
+    </div>
+    <div class="col-6 col-lg-2">
+        <label class="form-label small mb-0" for="De">Arquivada de</label>
+        <input name="De" id="De" type="date" value="@f.De?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+    </div>
+    <div class="col-6 col-lg-2">
+        <label class="form-label small mb-0" for="Ate">até</label>
+        <input name="Ate" id="Ate" type="date" value="@f.Ate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+    </div>
+    <div class="col-4 col-lg-2">
+        <label class="form-label small mb-0" for="Armario">Armário</label>
+        <input name="Armario" id="Armario" value="@f.Armario" class="form-control form-control-sm" />
+    </div>
+    <div class="col-4 col-lg-2">
+        <label class="form-label small mb-0" for="Prateleira">Prateleira</label>
+        <input name="Prateleira" id="Prateleira" value="@f.Prateleira" class="form-control form-control-sm" />
+    </div>
+    <div class="col-4 col-lg-2">
+        <label class="form-label small mb-0" for="Caixa">Caixa</label>
+        <input name="Caixa" id="Caixa" value="@f.Caixa" class="form-control form-control-sm" />
+    </div>
+    <div class="col-auto"><button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Pesquisar</button></div>
+</form>
+
+@if (!f.Informado)
+{
+    <div class="alert alert-light border small py-2" id="avisoFiltro"><i class="bi bi-info-circle me-1"></i>Informe ao menos um filtro (cliente, produto, número, situação, data ou caixa) para pesquisar.</div>
+}
+else
+{
+    <form method="post" asp-action="ArquivarLote" id="formLote"
+          data-confirmar="Arquivar as amostras marcadas no mesmo local? As que já têm localização não são alteradas.">
+        @* filtros atuais: a lista volta igual depois do lote *@
+        <input type="hidden" name="Cliente" value="@f.Cliente" /><input type="hidden" name="Produto" value="@f.Produto" />
+        <input type="hidden" name="Numero" value="@f.Numero" /><input type="hidden" name="Situacao" value="@f.Situacao" />
+        <input type="hidden" name="Armario" value="@f.Armario" /><input type="hidden" name="Prateleira" value="@f.Prateleira" />
+        <input type="hidden" name="Caixa" value="@f.Caixa" />
+
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle mb-0" id="tabelaLocalizacao">
+                    <thead><tr><th style="width: 2rem" title="Marcar para arquivar em lote"></th><th>Amostra</th><th>Cliente</th><th>CPF/CNPJ</th><th>Produto</th><th>Situação</th><th>Arquivo</th><th>Armário</th><th>Prateleira</th><th>Caixa</th><th>Descarte</th><th>Descartada por</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var a in Model.Itens)
+                        {
+                            <tr>
+                                <td>@if (podeIncluir && a.Situacao is null) { <input type="checkbox" class="form-check-input" name="Lote.Amostras" value="@a.Id" aria-label="Marcar @a.NrAmostra" /> }</td>
+                                <td class="font-monospace small text-nowrap"><a asp-action="Amostra" asp-route-id="@a.Id" class="text-decoration-none fw-semibold">@a.NrAmostra</a></td>
+                                <td class="small">@a.Cliente</td>
+                                <td class="small text-nowrap">@a.CpfCnpj</td>
+                                <td class="small">@a.Produto</td>
+                                <td><span class="badge @Classe(a.Situacao)">@Situacao(a.Situacao)</span></td>
+                                <td class="small text-nowrap">@a.DtHrArquivo?.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="small">@a.Armario</td>
+                                <td class="small">@a.Prateleira</td>
+                                <td class="small">@a.Caixa</td>
+                                <td class="small text-nowrap">@a.DtHrDescarte?.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="small">@a.ProfissionalDescarte</td>
+                                <td class="text-end"><a asp-action="Amostra" asp-route-id="@a.Id" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-in-right me-1"></i>Abrir</a></td>
+                            </tr>
+                        }
+                        @if (Model.Itens.Count == 0)
+                        {
+                            <tr><td colspan="13" class="text-center text-body-secondary small py-3">Nenhuma amostra encontrada.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer d-flex align-items-center small py-2">
+                <span class="text-body-secondary">@Model.Total registro(s) — só a última revisão de cada amostra</span>
+                @if (Model.Paginas > 1)
+                {
+                    <nav class="ms-auto" aria-label="Páginas">
+                        <ul class="pagination pagination-sm mb-0">
+                            @foreach (var n in Enumerable.Range(1, Model.Paginas).Where(n => n <= 3 || n > Model.Paginas - 3 || Math.Abs(n - f.Pagina) <= 2))
+                            {
+                                <li class="page-item @(n == f.Pagina ? "active" : "")"><a class="page-link" asp-action="Index" asp-all-route-data="@Rota(n)">@n</a></li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            </div>
+        </div>
+
+        @if (podeIncluir && semLocalizacao > 0)
+        {
+            <div class="card mt-3" id="painelLote">
+                <div class="card-header py-2 small fw-semibold"><i class="bi bi-boxes me-1"></i>Arquivar em lote — marque as amostras sem localização na lista</div>
+                <div class="card-body py-2">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-sm-4 col-lg-3">
+                            <label class="form-label small mb-0" for="loteData">Data/hora do arquivo</label>
+                            <input type="datetime-local" name="Lote.DtHrArquivo" id="loteData" value="@lote.DtHrArquivo?.ToString("yyyy-MM-ddTHH:mm")" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-4 col-lg-2"><label class="form-label small mb-0" for="loteArmario">Armário</label><input name="Lote.Armario" id="loteArmario" maxlength="15" class="form-control form-control-sm" /></div>
+                        <div class="col-4 col-lg-2"><label class="form-label small mb-0" for="lotePrateleira">Prateleira</label><input name="Lote.Prateleira" id="lotePrateleira" maxlength="15" class="form-control form-control-sm" /></div>
+                        <div class="col-4 col-lg-2"><label class="form-label small mb-0" for="loteCaixa">Caixa</label><input name="Lote.Caixa" id="loteCaixa" maxlength="15" class="form-control form-control-sm" /></div>
+                        <div class="col-sm-8 col-lg-3"><label class="form-label small mb-0" for="loteObservacao">Observação</label><input name="Lote.Observacao" id="loteObservacao" maxlength="250" class="form-control form-control-sm" /></div>
+                        <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm" id="botaoArquivarLote"><i class="bi bi-archive me-1"></i>Arquivar marcadas</button></div>
+                    </div>
+                </div>
+            </div>
+        }
+    </form>
+}
+
+@section Scripts {
+    <script src="~/js/pesquisa-amostras.js" asp-append-version="true"></script>
+}

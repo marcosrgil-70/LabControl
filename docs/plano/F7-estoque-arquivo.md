@@ -13,10 +13,11 @@
 - **Esforço:** M
 - **Feito em 28/10/2026** — ver [T23 › Implementação](../telas/T23-movimentacao-amostras.md#implementação-tarefa-71-28102026).
 
-### 7.2 T24 — Localização (próxima)
+### 7.2 T24 — Localização ✅
 - **Passos:** consulta com um filtro só; formulário arquivo/descarte; desfazer descarte (volta para ARQUIVADA); arquivar em lote; pesquisa (T29).
 - **Aceite:** [aceite da T24](../telas/T24-localizacao-amostras.md#critérios-de-aceite).
 - **Esforço:** M
+- **Feito em 28/10/2026** — ver [T24 › Implementação](../telas/T24-localizacao-amostras.md#implementação-tarefa-72-28102026). Antes, com aprovação do usuário: pendências 31 (trava do saldo no `TG_MOV_BI`/`TG_MOV_BD`) e 32 (RECEPÇÃO com `LOCALIZACAO.*`) — D-25, roteiro 74/74.
 - **Antes de começar:** commit + push do pendente; decidir com o usuário a pendência 32 (perfil RECEPÇÃO) e, se ainda não decidida, a 31.
 - **Como fazer** (mesmo desenho da T23 — `MovimentacaoController`/`MovimentacaoService` servem de modelo):
   1. **Serviço `LocalizacaoService`:**
@@ -34,13 +35,13 @@
   5. **Docs:** T24 (Implementação + Status), P13, RN-06 (06.11 a 06.14), matriz, plano (checklist, ponto de retorno, Diário).
 - **Dados reais para conferir:** o `labcontrol_migracao` tem as localizações migradas do legado (M-15); pesquisar com "Entrega de" 01/01/2013.
 
-### 7.3 Revisão
+### 7.3 Revisão (próxima)
 - `/code-review` nível high (como nas Fases 5 e 6) de `3e7e3ba..HEAD` (7.1 + 7.2); corrigir os achados ou registrá-los como pendência.
 - Suíte inteira (`dotnet test tests/LabControl.Tests`, ~8 min) com o sistema fechado.
 - Conferir a definição de pronto abaixo e marcar a Fase 7 como completa no plano.
 
 ## Definição de pronto
-- [x] Saldo nunca negativo pela aplicação (7.1: trava no serviço + RN-06.15); no banco também, depois da pendência 31.
+- [x] Saldo nunca negativo — pela aplicação (7.1) e pelo próprio banco (pendência 31, D-25).
 - [x] Movimentos sempre na raiz (`TG_MOV_BI`, 7.1).
-- [ ] Localização sempre na raiz (7.2).
+- [x] Localização sempre na raiz (7.2, no serviço).
 - [ ] `/code-review` da Fase 7 sem achado aberto (7.3).

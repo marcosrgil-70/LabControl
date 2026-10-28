@@ -1,0 +1,128 @@
+@model LocalizacaoVM
+@inject IEmpresaContexto Usuario
+@{
+    ViewData["Title"] = $"Localização — amostra {Model.NrAmostra}";
+    var nova = Model.Id == 0;
+    var podeGravar = Usuario.TemPermissao(nova ? "LOCALIZACAO.INCLUIR" : "LOCALIZACAO.ALTERAR");
+    var podeExcluir = !nova && Usuario.TemPermissao("LOCALIZACAO.EXCLUIR");
+    var descartada = Model.Status == SituacaoArquivo.Descartada;
+    var Data = (DateTime? d) => d?.ToString("yyyy-MM-ddTHH:mm");
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-2">
+        <li class="breadcrumb-item"><a asp-action="Index">Localização de amostras</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.NrAmostra</li>
+    </ol>
+</nav>
+
+<div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+    <h5 class="mb-0 font-monospace">Amostra @Model.NrAmostra</h5>
+    <span class="badge @(nova ? "text-bg-light border" : descartada ? "text-bg-danger" : "text-bg-primary")" id="situacaoLocalizacao">
+        @(nova ? "Sem localização" : descartada ? "Descartada" : "Arquivada")
+    </span>
+</div>
+
+@if (!Model.UltimaRevisao)
+{
+    <div class="alert alert-info py-2 small"><i class="bi bi-info-circle me-1"></i>Esta é uma revisão antiga. A localização é da amostra física: vale para todas as revisões.</div>
+}
+
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <div class="row g-2 small">
+            <div class="col-md-4"><span class="text-body-secondary">Cliente</span><div>@Model.Cliente</div></div>
+            <div class="col-md-2"><span class="text-body-secondary">CPF/CNPJ</span><div>@(Model.CpfCnpj ?? "—")</div></div>
+            <div class="col-md-4"><span class="text-body-secondary">Produto</span><div>@Model.Produto</div></div>
+            <div class="col-md-2"><span class="text-body-secondary">Status da amostra</span><div id="statusAmostra">@Model.StatusAmostra</div></div>
+        </div>
+    </div>
+</div>
+
+<form method="post" asp-action="@(nova ? "Incluir" : "Alterar")" id="formLocalizacao">
+    <input type="hidden" name="Id" value="@Model.Id" />
+    <input type="hidden" name="IdAmostra" value="@Model.IdAmostra" />
+    <div asp-validation-summary="All" class="text-danger small mb-2" id="errosLocalizacao"></div>
+    <fieldset disabled="@(!podeGravar)">
+        <div class="row g-3">
+            <div class="col-lg-7">
+                <div class="card h-100">
+                    <div class="card-header py-2 small fw-semibold"><i class="bi bi-archive me-1"></i>Arquivo</div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <span class="form-label small mb-0 d-block">Situação <span class="text-danger">*</span></span>
+                                <div class="btn-group btn-group-sm w-100" role="group" aria-label="Situação">
+                                    <input type="radio" class="btn-check" name="Status" id="stArquivada" value="Arquivada" checked="@(!descartada)" />
+                                    <label class="btn btn-outline-primary" for="stArquivada">Arquivada</label>
+                                    <input type="radio" class="btn-check" name="Status" id="stDescartada" value="Descartada" checked="@descartada" />
+                                    <label class="btn btn-outline-danger" for="stDescartada">Descartada</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label small mb-0" for="DtHrArquivo">Data/hora do arquivo <span class="text-danger">*</span></label>
+                                <input type="datetime-local" name="DtHrArquivo" id="DtHrArquivo" value="@Data(Model.DtHrArquivo)" class="form-control form-control-sm" required />
+                            </div>
+                            <div class="col-4"><label class="form-label small mb-0" for="Armario">Armário</label><input name="Armario" id="Armario" value="@Model.Armario" maxlength="15" class="form-control form-control-sm" /></div>
+                            <div class="col-4"><label class="form-label small mb-0" for="Prateleira">Prateleira</label><input name="Prateleira" id="Prateleira" value="@Model.Prateleira" maxlength="15" class="form-control form-control-sm" /></div>
+                            <div class="col-4"><label class="form-label small mb-0" for="Caixa">Caixa</label><input name="Caixa" id="Caixa" value="@Model.Caixa" maxlength="15" class="form-control form-control-sm" /></div>
+                            <div class="col-12"><label class="form-label small mb-0" for="Observacao">Observação</label><input name="Observacao" id="Observacao" value="@Model.Observacao" maxlength="250" class="form-control form-control-sm" /></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card h-100" id="grupoDescarte">
+                    <div class="card-header py-2 small fw-semibold"><i class="bi bi-trash3 me-1"></i>Descarte</div>
+                    <div class="card-body">
+                        <p class="small text-body-secondary mb-2" data-so-arquivada>Escolha a situação <b>Descartada</b> para registrar o descarte.</p>
+                        <div data-so-descartada>
+                            <label class="form-label small mb-0" for="DtHrDescarte">Data/hora do descarte <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="DtHrDescarte" id="DtHrDescarte" value="@Data(Model.DtHrDescarte)" class="form-control form-control-sm" />
+                            <div class="small mt-2"><span class="text-body-secondary">Descartada por:</span> <span id="profissionalDescarte">@(descartada && Model.ProfissionalDescarte is not null ? Model.ProfissionalDescarte : "você (profissional do seu usuário)")</span></div>
+                            @if (Model.TemStatusReprovada)
+                            {
+                                <div class="form-check small mt-2">
+                                    <input type="checkbox" class="form-check-input" name="MarcarReprovada" id="MarcarReprovada" value="true" checked="@Model.MarcarReprovada" />
+                                    <label class="form-check-label" for="MarcarReprovada">Descarte por reprovação: mudar o status da amostra para <b>@LabControl.Services.LocalizacaoService.StatusReprovadaDescartada</b></label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+        <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+        @if (podeGravar)
+        {
+            <button type="submit" class="btn btn-primary" id="botaoGravarLocalizacao"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+        }
+    </div>
+</form>
+
+<div class="d-flex flex-wrap gap-2 mt-2">
+    @if (descartada && !nova && Usuario.TemPermissao("LOCALIZACAO.ALTERAR"))
+    {
+        @* desfazer descarte: volta para arquivada e limpa data e profissional, mantendo o resto *@
+        <form method="post" asp-action="Alterar" data-confirmar="Desfazer o descarte da amostra @Model.NrAmostra? Ela volta para arquivada e a data e o profissional do descarte são apagados.">
+            <input type="hidden" name="Id" value="@Model.Id" /><input type="hidden" name="IdAmostra" value="@Model.IdAmostra" />
+            <input type="hidden" name="Status" value="Arquivada" /><input type="hidden" name="DtHrArquivo" value="@Data(Model.DtHrArquivo)" />
+            <input type="hidden" name="Armario" value="@Model.Armario" /><input type="hidden" name="Prateleira" value="@Model.Prateleira" />
+            <input type="hidden" name="Caixa" value="@Model.Caixa" /><input type="hidden" name="Observacao" value="@Model.Observacao" />
+            <button type="submit" class="btn btn-outline-warning" id="botaoDesfazerDescarte"><i class="bi bi-arrow-counterclockwise me-1"></i>Desfazer descarte</button>
+        </form>
+    }
+    @if (podeExcluir)
+    {
+        <form method="post" asp-action="Excluir" asp-route-id="@Model.Id" asp-route-idAmostra="@Model.IdAmostra" class="ms-auto"
+              data-confirmar="Excluir a localização da amostra @Model.NrAmostra? Ela volta a ficar sem localização.">
+            <button type="submit" class="btn btn-outline-danger" id="botaoExcluirLocalizacao"><i class="bi bi-trash me-1"></i>Excluir localização</button>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/localizacao.js" asp-append-version="true"></script>
+}

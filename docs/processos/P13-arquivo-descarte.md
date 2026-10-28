@@ -17,6 +17,13 @@
 - Migração (M-15): `STATUS 0 → ARQUIVADA, 1 → DESCARTADA`; aponta para a raiz; se houver 2 registros para a mesma raiz, fica o mais recente (listar no relatório).
 
 ## Cenários de teste
-- Descartar sem data → recusado pelo banco.
+- Descartar sem data → recusado (serviço; o banco também, `CK_LOCAL_DESC`).
 - Localização de uma revisão grava/mostra a da raiz.
 - Desfazer descarte → ARQUIVADA.
+
+## Implementação (tarefa 7.2, 28/10/2026)
+- T24 em `/Localizacao` (`LocalizacaoService`); detalhes em [T24 › Implementação](../telas/T24-localizacao-amostras.md#implementação-tarefa-72-28102026).
+- **Raiz no serviço:** a `LAB_LOCAL_AMOSTRAS` não tem trigger; o serviço usa `ID_AMOSTRA_RAIZ ?? ID` antes de gravar.
+- Datas não futuras; descarte não antes do arquivo; profissional do descarte = o do usuário (mantido quando a amostra já estava descartada); descarte por reprovação muda o status da última revisão para "REPROVADA - DESCARTADA" na mesma gravação.
+- Lote numa transação; as amostras que já têm localização não são sobrescritas (listadas na mensagem).
+- Testes: `LocalizacaoTests` + navegador.

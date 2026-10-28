@@ -42,7 +42,7 @@ Comentário do script: _Saldo mantido por trigger de LAB_MOV_AMOSTRAS (tabela se
 - **Rotinas que alteram:** [`PR_ATUALIZA_SALDO`](../rotinas/PR_ATUALIZA_SALDO.md)
 - **Rotinas que leem:** —
 - **Triggers de outras tabelas que alteram:** —
-- **Triggers de outras tabelas que leem:** [`TG_MOV_BI`](../triggers/TG_MOV_BI.md)
+- **Triggers de outras tabelas que leem:** [`TG_MOV_BI`](../triggers/TG_MOV_BI.md), [`TG_MOV_BD`](../triggers/TG_MOV_BD.md)
 
 ## Telas e processos
 - **Telas:** [T23 Movimentação de amostras](../../../telas/T23-movimentacao-amostras.md) · [T22 Recebimento de amostras](../../../telas/T22-recebimento-amostras.md)

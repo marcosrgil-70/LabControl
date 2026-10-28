@@ -1027,4 +1027,51 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         await Assertions.Expect(p.Locator("#saldoAtual")).ToHaveTextAsync("3");
         Assert.Empty(s.ErrosJs);
     }
+
+    /// <summary>T24 (7.2): arquivar em lote pela consulta, descartar (recusa sem data), desfazer o descarte e excluir.</summary>
+    [Fact]
+    public async Task Localizacao_lote_descarte_desfazer_e_exclusao()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var hoje = await c.HojeAsync();
+        var a1 = c.NovaAmostra(hoje);
+        var a2 = c.NovaAmostra(hoje);
+        c.Db.AddRange(a1, a2);
+        await c.Db.SaveChangesAsync();
+        await using var s = await app.EntrarAsync(c, comProfissional: true);
+        var p = s.Pagina;
+
+        await s.IrAsync("/Localizacao");
+        await Assertions.Expect(p.Locator("#avisoFiltro")).ToBeVisibleAsync();
+        await p.SelectOptionAsync("#Situacao", "SemLocalizacao");
+        await p.ClickAsync("#filtroLocalizacao button[type=submit]");
+        await Assertions.Expect(p.Locator("#tabelaLocalizacao tbody tr")).ToHaveCountAsync(2);
+        await p.CheckAsync("#tabelaLocalizacao tbody input[type=checkbox] >> nth=0");
+        await p.CheckAsync("#tabelaLocalizacao tbody input[type=checkbox] >> nth=1");
+        await p.FillAsync("#loteCaixa", "CX-07");
+        await p.ClickAsync("#botaoArquivarLote");
+        Assert.Equal("2 amostra(s) arquivada(s).", await s.AlertaAsync());
+        Assert.Equal(2, await c.Db.LabLocalAmostras.CountAsync(l => l.NrCaixa == "CX-07"));
+
+        await s.IrAsync($"/Localizacao/Amostra/{a1.IdLabHistAmostras}");
+        await Assertions.Expect(p.Locator("#situacaoLocalizacao")).ToHaveTextAsync("Arquivada");
+        await Assertions.Expect(p.Locator("#Caixa")).ToHaveValueAsync("CX-07");
+        await Assertions.Expect(p.Locator("#DtHrDescarte")).ToBeHiddenAsync();
+        await p.ClickAsync("label[for=stDescartada]");   // btn-check: o rádio fica escondido atrás do rótulo
+        await Assertions.Expect(p.Locator("#DtHrDescarte")).Not.ToHaveValueAsync("");   // preenchida com agora
+        await p.ClickAsync("#botaoGravarLocalizacao");
+        Assert.Equal("Localização gravada.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#situacaoLocalizacao")).ToHaveTextAsync("Descartada");
+        await Assertions.Expect(p.Locator("#profissionalDescarte")).Not.ToContainTextAsync("você");
+
+        await p.ClickAsync("#botaoDesfazerDescarte");
+        Assert.Equal("Localização gravada.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#situacaoLocalizacao")).ToHaveTextAsync("Arquivada");
+        Assert.Null(await c.Db.LabLocalAmostras.Where(l => l.IdLabHistAmostras == a1.IdLabHistAmostras).Select(l => l.DtHrDescarte).SingleAsync());
+
+        await p.ClickAsync("#botaoExcluirLocalizacao");
+        Assert.Equal("Localização excluída.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#situacaoLocalizacao")).ToHaveTextAsync("Sem localização");
+        Assert.Empty(s.ErrosJs);
+    }
 }

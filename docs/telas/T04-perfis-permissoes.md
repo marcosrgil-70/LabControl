@@ -32,7 +32,7 @@ Substituir milhares de linhas de direito por componente por **perfis por empresa
 | Perfil | Permissões principais |
 |---|---|
 | ADMINISTRADOR | todas (criado automaticamente) |
-| RECEPÇÃO | Clientes, Propostas (consulta), Amostras (incluir/alterar/imprimir), Etiquetas, Movimentação |
+| RECEPÇÃO | Clientes, Propostas (consulta), Amostras (incluir/alterar/imprimir), Etiquetas, Movimentação (sem excluir), Localização (consultar/incluir/alterar — desde 28/10/2026, D-25) |
 | ANALISTA | Amostras (consulta), Resultados (incluir/alterar), fila de análises |
 | RESPONSÁVEL TÉCNICO | Resultados (revisar), Boletins (todas, inclusive EMITIR/REVISAR) |
 | COMERCIAL | Clientes, Produtos, Propostas (todas), Pedidos de venda (todas), Relatórios |

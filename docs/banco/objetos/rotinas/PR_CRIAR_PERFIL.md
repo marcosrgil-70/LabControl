@@ -24,7 +24,7 @@ CREATE PROCEDURE PR_CRIAR_PERFIL(IN p_id_empresa INT, IN p_nome VARCHAR(60), IN 
 | IN | `p_permissoes` | TEXT |
 
 ## Quem chama
-- **Uso previsto:** `SP_INICIALIZAR_EMPRESA` (RECEPÇÃO, ANALISTA, RESPONSÁVEL TÉCNICO, COMERCIAL — T04).
+- **Uso previsto:** `SP_INICIALIZAR_EMPRESA` (RECEPÇÃO — com movimentação e localização —, ANALISTA, RESPONSÁVEL TÉCNICO, COMERCIAL — T04).
 - **Chamada por rotinas:** [`SP_INICIALIZAR_EMPRESA`](../rotinas/SP_INICIALIZAR_EMPRESA.md)
 - **Chamada por triggers:** —
 - **Usada em views:** —

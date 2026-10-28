@@ -132,4 +132,33 @@ public class MovimentacaoTests
         Assert.All(resultados.Where(r => !r.Sucesso), r => Assert.StartsWith("Saldo insuficiente", r.Mensagem));
         Assert.Equal(1m, await c.Db.LabHistAmostrasSaldo.Where(x => x.IdLabHistAmostras == amo.IdLabHistAmostras).Select(x => x.SaldoAtual).SingleAsync());
     }
+
+    /// <summary>Pendência 31 (D-25): o próprio banco trava o saldo — gravações por fora do serviço também não deixam negativo.</summary>
+    [Fact]
+    public async Task Banco_tambem_protege_o_saldo_sem_o_servico()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var (amo, _, _, _) = await c.AmostraComResultadoAsync(await c.HojeAsync());   // saldo 3
+
+        // saídas direto pelo EF, ao mesmo tempo, sem a trava do serviço
+        var resultados = await Task.WhenAll(Enumerable.Range(0, 4).Select(async _ =>
+        {
+            var ativa = new EmpresaFixa { EmpresaId = c.Ativa.EmpresaId, UsuarioId = c.Ativa.UsuarioId, ProfissionalId = c.Ativa.ProfissionalId };
+            await using var db = await BancoTeste.NovoContextoAsync(ativa);
+            db.Add(new LabMovAmostra { IdLabHistAmostras = amo.IdLabHistAmostras, Qtde = 2, ES = EntradaSaida.Saida, IdEntidadesFunc = ativa.ProfissionalId!.Value });
+            return await LabControl.Infra.ErrosMySql.CapturarAsync(() => db.SaveChangesAsync());
+        }));
+        Assert.Single(resultados, r => r.Sucesso);
+        Assert.All(resultados.Where(r => !r.Sucesso), r => Assert.Equal("Saldo insuficiente da amostra para esta saída.", r.Mensagem));
+
+        // excluir pelo EF a entrada que cobre a saída: o banco recusa (RN-06.15)
+        var entrada = new LabMovAmostra { IdLabHistAmostras = amo.IdLabHistAmostras, Qtde = 2, ES = EntradaSaida.Entrada, IdEntidadesFunc = c.Ativa.ProfissionalId!.Value };
+        c.Db.Add(entrada);
+        await c.Db.SaveChangesAsync();
+        c.Db.Add(new LabMovAmostra { IdLabHistAmostras = amo.IdLabHistAmostras, Qtde = 3, ES = EntradaSaida.Saida, IdEntidadesFunc = c.Ativa.ProfissionalId!.Value });
+        await c.Db.SaveChangesAsync();   // saldo 0
+        c.Db.Remove(entrada);
+        var r = await LabControl.Infra.ErrosMySql.CapturarAsync(() => c.Db.SaveChangesAsync());
+        Assert.Equal("Esta entrada não pode ser excluída: o saldo da amostra ficaria negativo.", r.Mensagem);
+    }
 }

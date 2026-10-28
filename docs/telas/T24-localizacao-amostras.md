@@ -39,17 +39,31 @@ Filtros: cliente, produto, nº da amostra, status (Arquivada/Descartada/sem loca
 | Excluir | remove a localização (confirmação) |
 
 ## Critérios de aceite
-- [ ] Descartar sem data é recusado.
-- [ ] Localização de uma revisão grava na raiz (uma só por amostra física).
-- [ ] Desfazer descarte volta para ARQUIVADA.
-- [ ] Arquivar em lote.
+- [x] Descartar sem data é recusado.
+- [x] Localização de uma revisão grava na raiz (uma só por amostra física).
+- [x] Desfazer descarte volta para ARQUIVADA.
+- [x] Arquivar em lote.
 
 ## Observações para a implementação (levantadas em 28/10/2026, depois da 7.1)
 - **Sem trigger na `LAB_LOCAL_AMOSTRAS`:** ao contrário do movimento (`TG_MOV_BI`), o banco **não** redireciona para a raiz nem herda a empresa. A gravação na raiz fica no serviço (`IdAmostraRaiz ?? Id`), ou numa trigger nova com aprovação do usuário (mudança no banco).
-- **Permissões:** `LOCALIZACAO.CONSULTAR/INCLUIR/ALTERAR/EXCLUIR` existem (seed), mas o perfil sugerido RECEPÇÃO não tem nenhuma delas — pendência 32.
+- **Permissões:** `LOCALIZACAO.CONSULTAR/INCLUIR/ALTERAR/EXCLUIR` existem (seed); o perfil sugerido RECEPÇÃO não tinha nenhuma — **pendência 32 feita** (D-25: `CONSULTAR/INCLUIR/ALTERAR`).
 - **Status "REPROVADA - DESCARTADA"** existe em toda empresa (`SP_INICIALIZAR_EMPRESA`): usar na pergunta opcional do descarte.
 - **Profissional do descarte** = o do usuário; sem vínculo, recusar com a mesma mensagem da T23.
 - **Modelo de código:** `MovimentacaoController`/`MovimentacaoService` (busca com filtro obrigatório, tela da amostra, modal, `ErrosMySql.CapturarAsync` + transação).
-- Passo a passo em [F7 › 7.2](../plano/F7-estoque-arquivo.md#72-t24--localização-próxima).
+- Passo a passo em [F7 › 7.2](../plano/F7-estoque-arquivo.md#72-t24--localização-).
 
-**Status:** ⬜ — tarefa 7.2 (próxima) (a v1 parcial foi descartada; as 2.494 localizações do legado já estão migradas, M-15). Usar a pesquisa de amostras (T29) com `ApenasSemLocalizacao`.
+## Implementação (tarefa 7.2, 28/10/2026)
+- **Arquivos:** `LocalizacaoController`, `LocalizacaoService`, `ViewModels/LocalizacaoVM.cs`, `Views/Localizacao/Index` e `Amostra`, `wwwroot/js/localizacao.js`.
+- **Consulta** (`/Localizacao`): cliente (nome/CPF/CNPJ), produto, nº, situação (Arquivada / Descartada / Sem localização), data do arquivo de/até, armário, prateleira, caixa — **basta um** (sem nenhum, a lista não aparece); só a última revisão; 25 por página.
+- **"Arquivar amostra"**: abre a pesquisa de amostras (T29, `/Localizacao/Pesquisa`) só com as **sem localização** e leva à tela da amostra.
+- **Tela da amostra** (`/Localizacao/Amostra/{id}`): grupos **Arquivo** (situação, data/hora, armário, prateleira, caixa, observação) e **Descarte** (só aparece com a situação "Descartada"; a data/hora vem com agora). A localização é sempre da **amostra física**: aberta por uma revisão antiga, avisa; a raiz é calculada **no serviço** (não há trigger na `LAB_LOCAL_AMOSTRAS`).
+- **Regras do serviço:** data do arquivo e do descarte nunca futuras; descarte nunca antes do arquivo; **profissional do descarte** = o do usuário (sem vínculo → recusa); já descartada e gravada de novo → mantém quem descartou; "Incluir" de uma amostra que outro usuário acabou de localizar → recusa ("abra de novo para alterar"); quem só tem `INCLUIR` não altera a existente (`Incluir` zera o ID).
+- **Descarte por reprovação** (pergunta opcional): marca o status da **última revisão** da amostra como "REPROVADA - DESCARTADA", na mesma gravação. Só aparece se o status existir na empresa.
+- **Desfazer descarte**: botão próprio → volta para ARQUIVADA e **limpa data e profissional**, mantendo armário/prateleira/caixa (corrige o legado). Voltar a situação para "Arquivada" no formulário faz o mesmo.
+- **Arquivar em lote** (novo): na consulta, marcar as amostras **sem localização** e informar data, armário/prateleira/caixa (ao menos um) e observação; numa transação; amostras repetidas ou revisões da mesma amostra contam uma vez; as que já têm localização **não são alteradas** e aparecem na mensagem; até 200 por vez.
+- **Excluir**: com confirmação; a amostra volta a ficar sem localização.
+- **Auditoria:** automática pelo EF (`LAB_LOCAL_AMOSTRAS` é tabela crítica).
+- **Permissões:** `LOCALIZACAO.CONSULTAR` (consulta, tela, pesquisa), `INCLUIR` (incluir, lote), `ALTERAR` (alterar, descartar, desfazer), `EXCLUIR`. O perfil sugerido RECEPÇÃO passou a ter `CONSULTAR/INCLUIR/ALTERAR` (pendência 32, D-25).
+- **Testes:** `LocalizacaoTests` (4) e navegador `Localizacao_lote_descarte_desfazer_e_exclusao`.
+
+**Status:** ✅ — tarefa 7.2 concluída em 28/10/2026 (as 2.494 localizações do legado já estavam migradas, M-15).

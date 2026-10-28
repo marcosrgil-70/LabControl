@@ -5,7 +5,7 @@ Legenda: Camada **B** banco · **S** serviço · **T** tela | Origem **L** legad
 | ID | Regra | Camada | Origem | Crit. | Onde |
 |---|---|---|---|---|---|
 | RN-06.01 | Movimento sempre na amostra raiz (o banco redireciona) | B | C | 🔴 | [`TG_MOV_BI`](../banco/objetos/triggers/TG_MOV_BI.md) |
-| RN-06.02 | Saída maior que o saldo é recusada (o serviço trava a linha do saldo: saídas simultâneas não passam juntas) | B S T | C | 🔴 | [P12](../processos/P12-estoque-amostras.md) |
+| RN-06.02 | Saída maior que o saldo é recusada (banco e serviço travam a linha do saldo: saídas simultâneas não passam juntas — D-25) | B S T | C | 🔴 | [P12](../processos/P12-estoque-amostras.md) |
 | RN-06.03 | Quantidade > 0 | B | L | ⚪ | [`LAB_MOV_AMOSTRAS`](../banco/objetos/tabelas/LAB_MOV_AMOSTRAS.md) |
 | RN-06.04 | Entrada automática não pode ser excluída; sua quantidade acompanha o recebimento enquanto não houver movimento manual | B | L | 🟠 | [`TG_MOV_BD`](../banco/objetos/triggers/TG_MOV_BD.md), [`TG_AMOSTRAS_AU`](../banco/objetos/triggers/TG_AMOSTRAS_AU.md) |
 | RN-06.05 | Com movimento manual, a quantidade entregue no recebimento não pode mudar (as demais alterações são permitidas) | B | C | 🟠 | [`TG_AMOSTRAS_BU`](../banco/objetos/triggers/TG_AMOSTRAS_BU.md) |
@@ -14,8 +14,10 @@ Legenda: Camada **B** banco · **S** serviço · **T** tela | Origem **L** legad
 | RN-06.08 | Saída pode indicar os parâmetros atendidos (um teste uma vez por movimento) | B T | L | ⚪ | [`LAB_MOV_AMOSTRAS_PARAM`](../banco/objetos/tabelas/LAB_MOV_AMOSTRAS_PARAM.md) |
 | RN-06.09 | Profissional do movimento = profissional do usuário | S | L | 🟠 | [T23](../telas/T23-movimentacao-amostras.md) |
 | RN-06.10 | Justificativa obrigatória na saída | S T | N | ⚪ | [T23](../telas/T23-movimentacao-amostras.md) |
-| RN-06.11 | Uma localização por amostra física (raiz) | B | C | 🟠 | [`LAB_LOCAL_AMOSTRAS`](../banco/objetos/tabelas/LAB_LOCAL_AMOSTRAS.md) |
+| RN-06.11 | Uma localização por amostra física (raiz); a raiz é calculada no serviço (a tabela não tem trigger) | B S | C | 🟠 | [`LAB_LOCAL_AMOSTRAS`](../banco/objetos/tabelas/LAB_LOCAL_AMOSTRAS.md) |
 | RN-06.12 | Descartada exige data/hora do descarte; profissional do descarte = do usuário | B S | L | 🟠 | [P13](../processos/P13-arquivo-descarte.md) |
 | RN-06.13 | Desfazer descarte volta para Arquivada e limpa data/profissional | S | C | ⚪ | [P13](../processos/P13-arquivo-descarte.md) |
 | RN-06.14 | Arquivar em lote (várias amostras na mesma caixa) | S T | N | ⚪ | [T24](../telas/T24-localizacao-amostras.md) |
-| RN-06.15 | Excluir entrada complementar que deixaria o saldo negativo é recusado | S | C | 🟠 | [T23](../telas/T23-movimentacao-amostras.md) |
+| RN-06.15 | Excluir entrada complementar que deixaria o saldo negativo é recusado | B S | C | 🟠 | [`TG_MOV_BD`](../banco/objetos/triggers/TG_MOV_BD.md), [T23](../telas/T23-movimentacao-amostras.md) |
+| RN-06.16 | Datas do arquivo e do descarte nunca futuras; descarte nunca antes do arquivo | S | N | ⚪ | [T24](../telas/T24-localizacao-amostras.md) |
+| RN-06.17 | Arquivar em lote não sobrescreve a localização de amostra já localizada (lista na mensagem) | S | N | ⚪ | [T24](../telas/T24-localizacao-amostras.md) |

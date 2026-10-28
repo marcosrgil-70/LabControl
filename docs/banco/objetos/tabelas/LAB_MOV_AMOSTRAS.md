@@ -47,8 +47,8 @@ Comentário do script: _Movimentação física (estoque) — sempre na amostra R
 | [`LAB_MOV_AMOSTRAS_PARAM`](../tabelas/LAB_MOV_AMOSTRAS_PARAM.md) | ID_LAB_MOV_AMOSTRAS | CASCADE |
 
 ## Triggers
-- [`TG_MOV_BI`](../triggers/TG_MOV_BI.md) — BEFORE INSERT: Movimento vai sempre para a amostra raiz; saída sem saldo é recusada.
-- [`TG_MOV_BD`](../triggers/TG_MOV_BD.md) — BEFORE DELETE: A entrada automática do recebimento não pode ser excluída.
+- [`TG_MOV_BI`](../triggers/TG_MOV_BI.md) — BEFORE INSERT: Movimento vai sempre para a amostra raiz; saída sem saldo é recusada, com a linha do saldo travada até o fim da transação (duas saídas ao mesmo tempo não passam juntas — D-25).
+- [`TG_MOV_BD`](../triggers/TG_MOV_BD.md) — BEFORE DELETE: A entrada automática do recebimento não pode ser excluída; a entrada complementar também não, se o saldo ficaria negativo sem ela (RN-06.15, linha do saldo travada — D-25).
 - [`TG_MOV_AI`](../triggers/TG_MOV_AI.md) — AFTER INSERT: Recalcula o saldo após incluir movimento.
 - [`TG_MOV_AU`](../triggers/TG_MOV_AU.md) — AFTER UPDATE: Recalcula o saldo após alterar movimento.
 - [`TG_MOV_AD`](../triggers/TG_MOV_AD.md) — AFTER DELETE: Recalcula o saldo após excluir movimento.
