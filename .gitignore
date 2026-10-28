@@ -24,3 +24,6 @@ Thumbs.db
 
 # PDFs emitidos dos boletins (Boletins:Pasta) — dados do laboratório, nunca no git
 storage/
+
+## Claude Code — permissões locais de cada máquina
+.claude/settings.local.json
