@@ -44,4 +44,12 @@ Filtros: cliente, produto, nº da amostra, status (Arquivada/Descartada/sem loca
 - [ ] Desfazer descarte volta para ARQUIVADA.
 - [ ] Arquivar em lote.
 
-**Status:** ⬜ — tarefa 7.2 (a v1 parcial foi descartada; as 2.494 localizações do legado já estão migradas, M-15). Usar a pesquisa de amostras (T29) com `ApenasSemLocalizacao`.
+## Observações para a implementação (levantadas em 28/10/2026, depois da 7.1)
+- **Sem trigger na `LAB_LOCAL_AMOSTRAS`:** ao contrário do movimento (`TG_MOV_BI`), o banco **não** redireciona para a raiz nem herda a empresa. A gravação na raiz fica no serviço (`IdAmostraRaiz ?? Id`), ou numa trigger nova com aprovação do usuário (mudança no banco).
+- **Permissões:** `LOCALIZACAO.CONSULTAR/INCLUIR/ALTERAR/EXCLUIR` existem (seed), mas o perfil sugerido RECEPÇÃO não tem nenhuma delas — pendência 32.
+- **Status "REPROVADA - DESCARTADA"** existe em toda empresa (`SP_INICIALIZAR_EMPRESA`): usar na pergunta opcional do descarte.
+- **Profissional do descarte** = o do usuário; sem vínculo, recusar com a mesma mensagem da T23.
+- **Modelo de código:** `MovimentacaoController`/`MovimentacaoService` (busca com filtro obrigatório, tela da amostra, modal, `ErrosMySql.CapturarAsync` + transação).
+- Passo a passo em [F7 › 7.2](../plano/F7-estoque-arquivo.md#72-t24--localização-próxima).
+
+**Status:** ⬜ — tarefa 7.2 (próxima) (a v1 parcial foi descartada; as 2.494 localizações do legado já estão migradas, M-15). Usar a pesquisa de amostras (T29) com `ApenasSemLocalizacao`.
