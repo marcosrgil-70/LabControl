@@ -2,7 +2,7 @@
 
 > Scripts: `Scripts/v2/01_schema.sql` → `02_funcoes_procedures.sql` → `03_triggers.sql` → `04_views.sql` → `05_seed.sql` → `06_cidades.sql`
 > Banco: **`labcontrol_v2`** (convive com o `labcontrol` antigo até a virada). MySQL 8.0+, `utf8mb4_0900_ai_ci`.
-> **Validado em 16/10/2026** no MySQL 8.0.46 local (banco temporário, depois removido): 69 tabelas/views, 8 funções, 19 procedures (22 desde 19/10/2026: `PR_AUDITAR`, `PR_CONFERIR_EMPRESA` na revisão da Fase 0 e `PR_CRIAR_PERFIL` na T04), 42 triggers (48 desde 20/10/2026: empresa usuária como entidade e regras dos contatos — D-19/D-20; procedures 26), 109 permissões, 5.571 cidades IBGE (D-21); fluxo completo proposta → pedido → amostra → resultado → boletim → emissão → revisões (amostra/resultado/proposta) e travas negativas testados.
+> **Validado em 16/10/2026** no MySQL 8.0.46 local (banco temporário, depois removido): 69 tabelas/views, 8 funções, 19 procedures (22 desde 19/10/2026: `PR_AUDITAR`, `PR_CONFERIR_EMPRESA` na revisão da Fase 0 e `PR_CRIAR_PERFIL` na T04), 42 triggers (48 desde 20/10/2026: empresa usuária como entidade e regras dos contatos — D-19/D-20; procedures 26; 27 desde 27/10/2026 com a `PR_ATUALIZAR_SITUACAO_PEDIDO`, pendência 24), 109 permissões, 5.571 cidades IBGE (D-21); fluxo completo proposta → pedido → amostra → resultado → boletim → emissão → revisões (amostra/resultado/proposta) e travas negativas testados.
 
 ## 1. Decisões de modelagem
 

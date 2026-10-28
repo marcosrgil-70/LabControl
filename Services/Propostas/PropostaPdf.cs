@@ -12,6 +12,10 @@ public sealed record LinhaAnaliseProposta(string Parametro, string TipoAnalise, 
 
 public sealed record ProdutoProposta(int Item, string Produto, int Amostras, IReadOnlyList<LinhaAnaliseProposta> Analises);
 
+/// <summary>Dados do pedido de venda impresso sobre a revisão da proposta (<c>frx_PedVenda</c> do legado, 6.2).</summary>
+public sealed record PedidoImpresso(string NrPedido, DateOnly DtPedido, DateOnly DtAutorizacao, string? AutorizadoPor,
+    string? NrPedidoCliente, bool Cancelado);
+
 /// <summary>Tudo o que a proposta impressa mostra (<c>Layout_ImpProposta.fr3</c> do legado), já reunido pelo serviço.</summary>
 public sealed class PropostaDocumento
 {
@@ -55,6 +59,8 @@ public sealed class PropostaDocumento
     public string? ItensAdquiridos { get; init; }
     public string? Observacao { get; init; }
     public string? Contrato { get; init; }
+    // pedido de venda (só no PDF do pedido)
+    public PedidoImpresso? Pedido { get; init; }
 }
 
 /// <summary>
@@ -68,6 +74,22 @@ public static partial class PropostaPdf
 
     // licença Community (dúvida 10, 27/10/2026): gratuita só para faturamento anual < US$ 1 mi
     static PropostaPdf() => QuestPDF.Settings.License = LicenseType.Community;
+
+    /// <summary>
+    /// Pedido de venda (6.2): o <c>frx_PedVenda</c> do legado é a proposta sem o contrato e sem a Autorização de Serviço,
+    /// com o nº do pedido e a data de autorização no cabeçalho. Pedido cancelado sai marcado.
+    /// </summary>
+    public static byte[] GerarPedido(PropostaDocumento d)
+    {
+        var p = d.Pedido ?? throw new ArgumentException("Documento sem os dados do pedido.", nameof(d));
+        return Document.Create(doc => doc.Page(page =>
+            {
+                Pagina(page, d);
+                page.Content().PaddingVertical(8).Element(c => Proposta(c, d));
+            }))
+            .WithMetadata(new DocumentMetadata { Title = $"Pedido de venda {p.NrPedido}", Author = d.EmpresaNome, Creator = "LabControl" })
+            .GeneratePdf();
+    }
 
     public static byte[] Gerar(PropostaDocumento d) => Document.Create(doc =>
     {
@@ -91,8 +113,11 @@ public static partial class PropostaPdf
         page.DefaultTextStyle(t => t.FontSize(8.5f));
         page.Header().Element(c => Cabecalho(c, d));
         page.Footer().Element(c => Rodape(c, d));
-        if (d.RevisaoSubstituida)
-            page.Foreground().AlignCenter().AlignMiddle().Rotate(-40).Text("REVISÃO SUBSTITUÍDA").FontSize(48).Bold().FontColor("#D9D9D9");
+        // no fundo da página: a marca não cobre o texto
+        if (d.Pedido is { Cancelado: true })
+            page.Background().AlignCenter().AlignMiddle().Rotate(-40).Text("PEDIDO CANCELADO").FontSize(48).Bold().FontColor("#F2C4C4");
+        else if (d.RevisaoSubstituida && d.Pedido is null)
+            page.Background().AlignCenter().AlignMiddle().Rotate(-40).Text("REVISÃO SUBSTITUÍDA").FontSize(48).Bold().FontColor("#D9D9D9");
     }
 
     private static void Cabecalho(IContainer c, PropostaDocumento d) => c.Column(col =>
@@ -110,6 +135,13 @@ public static partial class PropostaPdf
             });
             row.ConstantItem(170).AlignRight().Column(e =>
             {
+                if (d.Pedido is { } p)
+                {
+                    e.Item().AlignRight().Text(t => { t.Span("P.V. nº ").FontColor(Cinza); t.Span(p.NrPedido).Bold().FontSize(10); });
+                    e.Item().AlignRight().Text($"Ref. proposta nº {d.NrProposta}");
+                    e.Item().AlignRight().Text($"Autorizado em: {p.DtAutorizacao:dd/MM/yyyy}");
+                    return;
+                }
                 e.Item().AlignRight().Text(t => { t.Span("Proposta nº ").FontColor(Cinza); t.Span(d.NrProposta).Bold().FontSize(10); });
                 e.Item().AlignRight().Text($"Solicitação: {d.DtSolicitacao:dd/MM/yyyy}");
                 if (d.DtValidade is { } v) e.Item().AlignRight().Text($"Validade: {v:dd/MM/yyyy}");
@@ -121,7 +153,8 @@ public static partial class PropostaPdf
     private static void Proposta(IContainer c, PropostaDocumento d) => c.Column(col =>
     {
         col.Spacing(7);
-        col.Item().AlignCenter().Text("Proposta Técnica e Comercial para Execução de Serviços Analíticos").FontSize(11).Bold();
+        col.Item().AlignCenter().Text(d.Pedido is null ? "Proposta Técnica e Comercial para Execução de Serviços Analíticos" : "Pedido de Venda")
+            .FontSize(11).Bold();
         col.Item().Element(x => Bloco(x, "Dados comerciais", t =>
         {
             Campo(t, "Comercial", d.Comercial);
@@ -131,6 +164,13 @@ public static partial class PropostaPdf
             Campo(t, "Departamento", d.Departamento);
             Campo(t, "E-mail", d.ContatoEmail);
             Campo(t, "Fone", d.ClienteFone);
+            if (d.Pedido is { } p)
+            {
+                Campo(t, "Solicitação", d.DtSolicitacao.ToString("dd/MM/yyyy"));
+                Campo(t, "Validade", d.DtValidade?.ToString("dd/MM/yyyy"));
+                Campo(t, "Autorizado por", p.AutorizadoPor);
+                Campo(t, "Pedido do cliente", p.NrPedidoCliente);
+            }
         }));
         col.Item().Row(r =>
         {
@@ -168,7 +208,7 @@ public static partial class PropostaPdf
         Texto(col, "Itens solicitados", d.ItensSolicitados);
         Texto(col, "Itens adquiridos", d.ItensAdquiridos);
         Texto(col, "Observação", d.Observacao);
-        Texto(col, "Contrato", d.Contrato);
+        if (d.Pedido is null) Texto(col, "Contrato", d.Contrato);
     });
 
     private static void Produto(IContainer c, ProdutoProposta p) => c.Column(col =>
@@ -362,7 +402,7 @@ public static partial class PropostaPdf
         col.Item().AlignRight().Text(t =>
         {
             t.DefaultTextStyle(s => s.FontSize(7).FontColor(Cinza));
-            t.Span($"Proposta {d.NrProposta} — página ");
+            t.Span(d.Pedido is { } p ? $"Pedido de venda {p.NrPedido} — página " : $"Proposta {d.NrProposta} — página ");
             t.CurrentPageNumber();
             t.Span(" de ");
             t.TotalPages();

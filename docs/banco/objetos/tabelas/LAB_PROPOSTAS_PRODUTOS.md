@@ -50,7 +50,7 @@ Produtos (itens) da proposta, com quantidade de amostras.
 ## Usada por
 - **Views:** [`VW_LAB_PROPOSTAS_ANALISES`](../views/VW_LAB_PROPOSTAS_ANALISES.md), [`VW_LAB_AMOSTRAS`](../views/VW_LAB_AMOSTRAS.md), [`VW_PEDIDOS_VENDA_SALDO`](../views/VW_PEDIDOS_VENDA_SALDO.md)
 - **Rotinas que alteram:** [`PR_REVISAO_PROPOSTA`](../rotinas/PR_REVISAO_PROPOSTA.md), [`SP_TROCAR_PRODUTO_PROPOSTA`](../rotinas/SP_TROCAR_PRODUTO_PROPOSTA.md)
-- **Rotinas que leem:** [`SP_GERAR_PEDIDO_VENDA`](../rotinas/SP_GERAR_PEDIDO_VENDA.md), [`SP_ATUALIZAR_PEDIDO_REVISAO`](../rotinas/SP_ATUALIZAR_PEDIDO_REVISAO.md)
+- **Rotinas que leem:** [`PR_ATUALIZAR_SITUACAO_PEDIDO`](../rotinas/PR_ATUALIZAR_SITUACAO_PEDIDO.md), [`SP_GERAR_PEDIDO_VENDA`](../rotinas/SP_GERAR_PEDIDO_VENDA.md), [`SP_ATUALIZAR_PEDIDO_REVISAO`](../rotinas/SP_ATUALIZAR_PEDIDO_REVISAO.md)
 - **Triggers de outras tabelas que alteram:** —
 - **Triggers de outras tabelas que leem:** [`TG_PRODAN_BI`](../triggers/TG_PRODAN_BI.md), [`TG_AMOSTRAS_BI`](../triggers/TG_AMOSTRAS_BI.md), [`TG_AMOSTRAS_BU`](../triggers/TG_AMOSTRAS_BU.md)
 

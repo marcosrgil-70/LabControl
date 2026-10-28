@@ -6,6 +6,7 @@
     var podeGravar = Usuario.TemPermissao(inclusao ? "PROPOSTAS.INCLUIR" : "PROPOSTAS.ALTERAR") && Model.Bloqueio is null;
     var podeRevisar = !inclusao && Model.UltimaRevisao && Usuario.TemPermissao("PROPOSTAS.REVISAR");
     var podeTrocar = !inclusao && Model.UltimaRevisao && Usuario.TemPermissao("PROPOSTAS.ALTERAR");
+    var podeGerarPedido = !inclusao && Model.UltimaRevisao && Model.IdPedido is null && Usuario.TemPermissao("PEDIDOS_VENDA.GERAR");
     var o = Model.Opcoes;
     var produtosDaProposta = (LabControl.Services.PropostaService.LerItens(Model.ItensJson) ?? []).Where(i => i.Id != 0).Select(i => i.IdProdutos).Distinct()
         .Select(id => o.Produtos.FirstOrDefault(p => p.Id == id)).OfType<OpcaoExtraVM>().ToList();
@@ -99,7 +100,13 @@
                             </div>
                             <div class="col-6 col-md-1">
                                 <label class="form-label small mb-0">Pedido</label>
-                                <div class="form-control-plaintext small font-monospace">@Model.NrPedido</div>
+                                <div class="form-control-plaintext small font-monospace">
+                                    @if (Model.IdPedido is { } idPedido && Usuario.TemPermissao("PEDIDOS_VENDA.CONSULTAR"))
+                                    {
+                                        <a asp-controller="PedidosVenda" asp-action="Editar" asp-route-id="@idPedido" id="linkPedido">@Model.NrPedido</a>
+                                    }
+                                    else { @Model.NrPedido }
+                                </div>
                             </div>
                             @if (Model.Revisao > 0)
                             {
@@ -328,6 +335,11 @@
         {
             <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalRevisao" id="botaoRevisao"><i class="bi bi-files me-1"></i>Gerar revisão</button>
         }
+        @if (podeGerarPedido)
+        {
+            <button type="button" class="btn btn-outline-success" id="botaoGerarPedido"
+                    data-url="@Url.Action("Gerar", "PedidosVenda", new { idProposta = Model.Id })"><i class="bi bi-cart-check me-1"></i>Gerar pedido</button>
+        }
         @if (podeTrocar && produtosDaProposta.Count > 0)
         {
             <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalTrocarProduto" id="botaoTrocarProduto"><i class="bi bi-arrow-left-right me-1"></i>Trocar produto</button>
@@ -488,6 +500,12 @@
     </div>
 </div>
 
+@if (podeGerarPedido)
+{
+    <div class="modal fade" id="modalGerarPedido" tabindex="-1" aria-labelledby="tituloGerarPedido"><div class="modal-dialog"></div></div>
+}
+
 @section Scripts {
     <script src="~/js/propostas.js" asp-append-version="true"></script>
+    <script src="~/js/pedidos-venda.js" asp-append-version="true"></script>
 }

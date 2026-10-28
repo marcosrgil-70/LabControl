@@ -31,8 +31,8 @@ CREATE PROCEDURE SP_EXCLUIR_REVISAO_BOLETIM(IN p_id_boletim INT)
 
 ## O que acessa
 - **Altera:** [`LAB_BOLETIM_ANALISES`](../tabelas/LAB_BOLETIM_ANALISES.md)
-- **Lê:** —
-- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md)
+- **Lê:** [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md)
+- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md), [`PR_ATUALIZAR_SITUACAO_PEDIDO`](../rotinas/PR_ATUALIZAR_SITUACAO_PEDIDO.md)
 - **Variáveis de sessão:** `@LC_DESFAZENDO` (uso interno de `SP_EXCLUIR_REVISAO_*` para permitir excluir a revisão)
 
 ## Mensagens de negócio (SQLSTATE 45000)
@@ -58,12 +58,14 @@ catch (MySqlException ex) when (ex.SqlState == "45000") { return Resultado.Erro(
 ```sql
 CREATE PROCEDURE SP_EXCLUIR_REVISAO_BOLETIM(IN p_id_boletim INT)
 BEGIN
-  DECLARE v_origem, v_ultima, v_emp INT;
+  DECLARE v_origem, v_ultima, v_emp, v_pedido INT;
   DECLARE v_emissao DATETIME;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_DESFAZENDO = NULL; ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
-  SELECT ID_BOLETIM_ORIGEM, ULTIMA_REVISAO, DH_EMISSAO, ID_EMPRESAS INTO v_origem, v_ultima, v_emissao, v_emp
-    FROM LAB_BOLETIM_ANALISES WHERE ID_LAB_BOLETIM_ANALISES = p_id_boletim FOR UPDATE;
+  SELECT B.ID_BOLETIM_ORIGEM, B.ULTIMA_REVISAO, B.DH_EMISSAO, B.ID_EMPRESAS, A.ID_PEDIDOS_VENDA
+    INTO v_origem, v_ultima, v_emissao, v_emp, v_pedido
+    FROM LAB_BOLETIM_ANALISES B JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
+   WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_boletim FOR UPDATE;
   IF v_ultima IS NULL OR v_ultima = 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Só é possível excluir a última revisão do boletim.';
   END IF;
@@ -77,6 +79,7 @@ BEGIN
   END IF;
   SET @LC_DESFAZENDO = NULL;
   CALL PR_AUDITAR(v_emp, 'LAB_BOLETIM_ANALISES', p_id_boletim, 'D', NULL, JSON_OBJECT('ID_REATIVADO', v_origem));
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO(v_pedido);
   COMMIT;
 END
 ```

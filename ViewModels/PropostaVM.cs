@@ -43,6 +43,7 @@ public sealed class PropostaVM
 
     // só leitura (vindos do banco)
     public string? NrProposta { get; set; }
+    public int? IdPedido { get; set; }
     public string? NrPedido { get; set; }
     public DateOnly? DtEnvioCliente { get; set; }
     /// <summary>Por que a proposta não pode ser alterada aqui (revisão antiga, enviada, com pedido ou com amostra); null = editável.</summary>

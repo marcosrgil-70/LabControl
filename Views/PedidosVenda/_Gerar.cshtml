@@ -1,0 +1,33 @@
+@model PedidoVendaGerarVM
+@* Conteúdo do modal "Gerar pedido" (T20 e T21), carregado pelo pedidos-venda.js *@
+<form method="post" asp-controller="PedidosVenda" asp-action="Gerar" class="modal-content" id="formGerarPedido">
+    <input type="hidden" asp-for="IdProposta" />
+    <div class="modal-header py-2">
+        <h6 class="modal-title" id="tituloGerarPedido">Gerar pedido de venda — proposta @Model.NrProposta</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+    </div>
+    <div class="modal-body">
+        <p class="small text-body-secondary mb-2">
+            Cliente: <b>@Model.Cliente</b>. O pedido recebe o número do sistema, os produtos da proposta como itens (quantidade e valor contratados)
+            e as amostras já recebidas desta proposta. Um pedido por proposta, em todas as revisões.
+        </p>
+        <div class="row g-2">
+            <div class="col-sm-5">
+                <label class="form-label small mb-0" for="gerarDtAutorizacao">Data de autorização <span class="text-danger">*</span></label>
+                <input asp-for="DtAutorizacao" id="gerarDtAutorizacao" type="date" class="form-control form-control-sm" required />
+            </div>
+            <div class="col-sm-7">
+                <label class="form-label small mb-0" for="gerarNrPedidoCliente">Nº do pedido do cliente (PO)</label>
+                <input asp-for="NrPedidoCliente" id="gerarNrPedidoCliente" class="form-control form-control-sm" maxlength="40" />
+            </div>
+            <div class="col-12">
+                <label class="form-label small mb-0" for="gerarAutorizadoPor">Autorizado por (pessoa do cliente)</label>
+                <input asp-for="AutorizadoPor" id="gerarAutorizadoPor" class="form-control form-control-sm" maxlength="100" />
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer py-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-success"><i class="bi bi-cart-check me-1"></i>Gerar pedido</button>
+    </div>
+</form>

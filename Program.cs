@@ -49,6 +49,7 @@ builder.Services.AddScoped<LabControl.Services.Geografia.ConsultaCepService>();
 builder.Services.AddScoped<LabControl.Services.Geografia.GeografiaService>();
 builder.Services.AddScoped<ProdutoService>();
 builder.Services.AddScoped<PropostaService>();
+builder.Services.AddScoped<PedidoVendaService>();
 builder.Services.AddScoped<AmostraService>();
 builder.Services.AddScoped<ResultadoService>();
 builder.Services.AddScoped<BoletimService>();

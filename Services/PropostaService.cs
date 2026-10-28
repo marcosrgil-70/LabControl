@@ -92,6 +92,8 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
                 PorcDesconto = a.PorcDesconto, VrDesconto = a.VrDesconto, StRevAnterior = a.StRevAnterior,
             }).ToList(),
         }).ToList();
+        var pedido = await db.VwLabPropostas.AsNoTracking().Where(v => v.IdLabPropostas == id)
+            .Select(v => new { v.IdPedidosVenda, v.NrPedidoFmt }).SingleOrDefaultAsync();
         var vm = new PropostaVM
         {
             Id = p.IdLabPropostas, NrProposta = p.NrProposta, DtEnvioCliente = p.DtEnvioCliente, Bloqueio = await BloqueioAsync(p),
@@ -100,7 +102,7 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
                 .OrderByDescending(v => v.RevProposta)
                 .Select(v => new PropostaRevisaoVM(v.IdLabPropostas, v.NrProposta, v.RevProposta, v.Status, v.DtValidade, v.VrTotalProposta, v.MotivoRevisao, v.UltimaRevisao))
                 .ToListAsync(),
-            NrPedido = await db.VwLabPropostas.AsNoTracking().Where(v => v.IdLabPropostas == id).Select(v => v.NrPedidoFmt).SingleOrDefaultAsync(),
+            IdPedido = pedido?.IdPedidosVenda, NrPedido = pedido?.NrPedidoFmt,
             DtSolicitacao = p.DtSolicitacao, DtValidade = p.DtValidade, IdLabPropostasStatus = p.IdLabPropostasStatus, DtAutorizacao = p.DtAutorizacao,
             IdEntidadesComerc = p.IdEntidadesComerc, IdEntidades = p.IdEntidades, IdEntContato = p.IdEntContato,
             IdEntEndLaudo = p.IdEntEndLaudo, IdEntContatoResultado = p.IdEntContatoResultado,
@@ -471,7 +473,8 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
         return Resultado.Ok(new ArquivoPdf(Propostas.PropostaPdf.Gerar(d), $"Proposta {d.NrProposta.Replace('/', '-')}.pdf"));
     }
 
-    public async Task<Propostas.PropostaDocumento?> DocumentoAsync(int id)
+    /// <param name="pedido">Preenchido no PDF do pedido de venda (T21), que imprime a revisão da proposta do pedido.</param>
+    public async Task<Propostas.PropostaDocumento?> DocumentoAsync(int id, Propostas.PedidoImpresso? pedido = null)
     {
         var v = await db.VwLabPropostas.AsNoTracking().SingleOrDefaultAsync(x => x.IdLabPropostas == id);
         if (v is null) return null;
@@ -508,7 +511,7 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
             TotalAnalises = v.VrSomaVrTotAnalis, DescontoGeral = v.VrDesconto, ValorTotal = v.VrTotalProposta,
             CondicaoPagamento = v.CondicaoPagamento, Moeda = v.Moeda,
             ItensSolicitados = HtmlSimples.Limpar(t?.TxItensSolicitados), ItensAdquiridos = HtmlSimples.Limpar(t?.TxItensAdquiridos),
-            Observacao = HtmlSimples.Limpar(t?.TxObservacao), Contrato = HtmlSimples.Limpar(t?.TxContrato),
+            Observacao = HtmlSimples.Limpar(t?.TxObservacao), Contrato = HtmlSimples.Limpar(t?.TxContrato), Pedido = pedido,
         };
     }
 

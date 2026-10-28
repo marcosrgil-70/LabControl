@@ -14,6 +14,7 @@
 - **Esforço:** G
 
 ### 6.2 T21 — Pedidos de venda
+> ✅ **Concluída em 27/10/2026** — ver [T21 › Implementação](../telas/T21-pedidos-venda.md#implementação-tarefa-62--27102026); aceite em `PedidosVendaTests` e no navegador `Pedido_gerado_pela_proposta_conclui_reabre_imprime_e_cancela`; pendência 24 no banco (roteiro SQL passo 15, 71/71). Decisões: revisão reabre o pedido concluído; "Reabrir" com motivo; PDF no modelo do `frx_PedVenda`.
 - **Passos:** gerar (modal a partir da proposta ou da T21; `SP_GERAR_PEDIDO_VENDA`); tela do pedido (cabeçalho, situação, itens contratado × recebido, amostras do pedido, observação); atualizar para revisão vigente; concluir (manual/automático após emissão de boletins); cancelar com motivo; **PDF do pedido**; consulta.
 - **Aceite:** [aceite da T21](../telas/T21-pedidos-venda.md#aceite).
 - **Esforço:** G · **Depende de:** 6.1
@@ -82,15 +83,15 @@
 
 **Já decidido no [P08](../processos/P08-pedido-venda.md):** conclusão manual (`PEDIDOS_VENDA.ALTERAR`) além da automática; cancelamento com motivo obrigatório e **bloqueado se houver amostra**; mensagens "Data de Autorização não pode ser futura." e "Já existe Pedido de Venda para esta proposta.".
 
-**Perguntas ainda abertas, para o plan mode:**
+**Perguntas que estavam abertas (respondidas em 27/10/2026, todas com a recomendação):**
 - a revisão de um boletim ou de uma amostra **reabre** o pedido concluído? Recomendação: sim, volta para em execução;
 - haverá o botão "Reabrir" para o pedido concluído manualmente?
 - o PDF do pedido segue o `frx_PedVenda` agora, com validação depois pelo modelo real (dúvida 5)?
 
 ### 6.3 Revisão
-`/code-review`; conferir números do pedido no boletim e nas etiquetas.
+`/code-review high` de `98d43dd^..HEAD` (6.1 + 6.2); conferir números do pedido no boletim e nas etiquetas; olhar em especial a `PR_ATUALIZAR_SITUACAO_PEDIDO` (chamadas nas procedures de revisão) e o modal de geração.
 
 ## Definição de pronto
 - [x] Proposta com revisão correta (sem copiar pedido/status) e PDF. — 6.1
 > Dúvida 5 do plano (em aberto): pedir ao usuário os **modelos atuais (PDF/papel) da proposta e do pedido** antes de montar os PDFs.
-- [ ] Um pedido por proposta, recebido × contratado correto.
+- [x] Um pedido por proposta, recebido × contratado correto. — 6.2

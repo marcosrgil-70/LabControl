@@ -67,7 +67,7 @@ Comentário do script: _7. PEDIDOS DE VENDA (novo: no Firebird era só um númer
 
 ## Usada por
 - **Views:** [`VW_LAB_PROPOSTAS`](../views/VW_LAB_PROPOSTAS.md), [`VW_LAB_AMOSTRAS`](../views/VW_LAB_AMOSTRAS.md), [`VW_PEDIDOS_VENDA_SALDO`](../views/VW_PEDIDOS_VENDA_SALDO.md)
-- **Rotinas que alteram:** [`SP_GERAR_PEDIDO_VENDA`](../rotinas/SP_GERAR_PEDIDO_VENDA.md), [`SP_ATUALIZAR_PEDIDO_REVISAO`](../rotinas/SP_ATUALIZAR_PEDIDO_REVISAO.md)
+- **Rotinas que alteram:** [`PR_ATUALIZAR_SITUACAO_PEDIDO`](../rotinas/PR_ATUALIZAR_SITUACAO_PEDIDO.md), [`SP_GERAR_PEDIDO_VENDA`](../rotinas/SP_GERAR_PEDIDO_VENDA.md), [`SP_ATUALIZAR_PEDIDO_REVISAO`](../rotinas/SP_ATUALIZAR_PEDIDO_REVISAO.md)
 - **Rotinas que leem:** —
 - **Triggers de outras tabelas que alteram:** —
 - **Triggers de outras tabelas que leem:** [`TG_AMOSTRAS_BI`](../triggers/TG_AMOSTRAS_BI.md)

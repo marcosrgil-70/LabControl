@@ -891,6 +891,66 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         Assert.Empty(s.ErrosJs);
     }
 
+    /// <summary>T21 (6.2): gera o pedido pelo modal da proposta, abre o pedido (contratado × recebido), conclui, reabre, imprime e cancela.</summary>
+    [Fact]
+    public async Task Pedido_gerado_pela_proposta_conclui_reabre_imprime_e_cancela()
+    {
+        await using var c = await Cenario.CriarAsync();
+        await using var s = await app.EntrarAsync(c, comProfissional: true);
+        var p = s.Pagina;
+
+        await s.IrAsync($"/Propostas/Editar/{c.Proposta.IdLabPropostas}");
+        await p.ClickAsync("#botaoGerarPedido");
+        await Assertions.Expect(p.Locator("#modalGerarPedido")).ToBeVisibleAsync();
+        await p.FillAsync("#gerarAutorizadoPor", "MARIA DO CLIENTE");
+        await p.FillAsync("#gerarNrPedidoCliente", "PO-123");
+        // sem a data (o navegador já impede pelo "required"; aqui o servidor é que recusa)
+        await p.EvaluateAsync("{ const d = document.getElementById('gerarDtAutorizacao'); d.removeAttribute('required'); d.value = ''; }");
+        await p.ClickAsync("#formGerarPedido button[type=submit]");
+        Assert.Equal("É obrigatório o preenchimento da Data Autorização para gerar o Pedido de Venda.", await s.AlertaAsync());
+
+        await p.ClickAsync("#botaoGerarPedido");
+        await Assertions.Expect(p.Locator("#modalGerarPedido")).ToBeVisibleAsync();
+        await p.FillAsync("#gerarAutorizadoPor", "MARIA DO CLIENTE");
+        await p.ClickAsync("#formGerarPedido button[type=submit]");
+        Assert.Matches(@"^Pedido de venda \d{9} gerado\.$", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#situacaoPedido")).ToHaveTextAsync("Aberto");
+        await Assertions.Expect(p.Locator("#tabelaItens tbody tr")).ToContainTextAsync("QUEIJO MINAS");
+        await Assertions.Expect(p.Locator("#tabelaItens tbody td").Nth(4)).ToHaveTextAsync("2"); // saldo a receber
+        var id = await c.Db.PedidosVenda.Select(x => x.IdPedidosVenda).SingleAsync();
+
+        // a proposta mostra o link do pedido e não oferece outro
+        await p.ClickAsync("#linkProposta");
+        await Assertions.Expect(p.Locator("#linkPedido")).ToBeVisibleAsync();
+        await Assertions.Expect(p.Locator("#botaoGerarPedido")).ToHaveCountAsync(0);
+        await p.ClickAsync("#linkPedido");
+
+        await p.ClickAsync("#botaoConcluir");
+        Assert.Equal("Pedido concluído.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#situacaoPedido")).ToHaveTextAsync("Concluído");
+        await p.ClickAsync("#botaoReabrir");
+        await p.FillAsync("#motivoReabrir", "Concluído por engano");
+        await p.ClickAsync("#modalReabrir button[type=submit]");
+        Assert.Equal("Pedido reaberto: voltou para em execução.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#situacaoPedido")).ToHaveTextAsync("Em execução");
+
+        Assert.Equal("_blank", await p.GetAttributeAsync("#botaoImprimir", "target"));
+        var pdf = await p.APIRequest.GetAsync(app.Url + await p.GetAttributeAsync("#botaoImprimir", "href"));
+        Assert.Equal("application/pdf", pdf.Headers["content-type"]);
+
+        await p.ClickAsync("#botaoCancelar");
+        await p.FillAsync("#motivoCancelar", "Cliente desistiu");
+        await p.ClickAsync("#modalCancelar button[type=submit]");
+        Assert.Equal("Pedido cancelado.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#situacaoPedido")).ToHaveTextAsync("Cancelado");
+        Assert.Equal(Models.SituacaoPedido.Cancelado, await c.Db.PedidosVenda.Where(x => x.IdPedidosVenda == id).Select(x => x.Situacao).SingleAsync());
+
+        // consulta pela situação
+        await s.IrAsync("/PedidosVenda?Situacao=Cancelado");
+        await Assertions.Expect(p.Locator("table tbody")).ToContainTextAsync("CLIENTE TESTE");
+        Assert.Empty(s.ErrosJs);
+    }
+
     /// <summary>T25 (4.5): do recebimento para as etiquetas com a amostra marcada; impressora escolhida; quantidade; sigilo do produto.</summary>
     [Fact]
     public async Task Etiquetas_a_partir_do_recebimento_imprimem_na_escolhida()

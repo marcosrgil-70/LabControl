@@ -42,7 +42,7 @@ public sealed class PropostasController(PropostaService propostas) : Controller
         // número/pedido/bloqueio vêm do banco, não do formulário
         if (await propostas.CarregarAsync(id) is { } gravada)
         {
-            (vm.NrProposta, vm.NrPedido, vm.DtEnvioCliente, vm.Bloqueio) = (gravada.NrProposta, gravada.NrPedido, gravada.DtEnvioCliente, gravada.Bloqueio);
+            (vm.NrProposta, vm.IdPedido, vm.NrPedido, vm.DtEnvioCliente, vm.Bloqueio) = (gravada.NrProposta, gravada.IdPedido, gravada.NrPedido, gravada.DtEnvioCliente, gravada.Bloqueio);
             (vm.Revisao, vm.MotivoRevisao, vm.UltimaRevisao, vm.Revisoes) = (gravada.Revisao, gravada.MotivoRevisao, gravada.UltimaRevisao, gravada.Revisoes);
         }
         await propostas.PrepararAsync(vm);

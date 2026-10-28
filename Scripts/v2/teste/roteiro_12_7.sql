@@ -506,6 +506,43 @@ CALL T_ESPERA_ERRO('14', 'mover contato para o cadastro de outra entidade',
      'Não é permitido mover o e-mail para outro cadastro.');
 
 -- ---------------------------------------------------------------------
+-- 15. Situação automática do pedido (pendência 24, 6.2): o último boletim emitido conclui;
+--     revisão reabre; desfazer a revisão conclui de novo. O recebimento (serviço) é que põe EM_EXECUCAO.
+--     Neste ponto o pedido @PED tem a amostra @AMO (revisada até o boletim rev 2 @BOL3, não emitido) e a @AMO3 sem boletim.
+-- ---------------------------------------------------------------------
+UPDATE PEDIDOS_VENDA SET SITUACAO = 'EM_EXECUCAO' WHERE ID_PEDIDOS_VENDA = @PED;
+CALL SP_EMITIR_BOLETIM(@BOL3, @FUNC, 'boletins/teste-r2.pdf', REPEAT('b', 64));
+CALL T_OK('15', 'amostra do pedido sem boletim emitido → pedido continua em execução',
+          (SELECT SITUACAO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED) = 'EM_EXECUCAO',
+          (SELECT SITUACAO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED));
+UPDATE LAB_HIST_AMOSTRAS SET ID_PEDIDOS_VENDA = NULL WHERE ID_LAB_HIST_AMOSTRAS = @AMO3;
+UPDATE PEDIDOS_VENDA_ITENS SET QTDE_CONTRATADA = 3 WHERE ID_PEDIDOS_VENDA = @PED;
+CALL PR_ATUALIZAR_SITUACAO_PEDIDO(@PED);
+CALL T_OK('15', 'boletins emitidos mas item recebido abaixo do contratado → continua em execução',
+          (SELECT SITUACAO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED) = 'EM_EXECUCAO',
+          (SELECT SITUACAO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED));
+UPDATE PEDIDOS_VENDA_ITENS SET QTDE_CONTRATADA = 2 WHERE ID_PEDIDOS_VENDA = @PED;
+CALL PR_ATUALIZAR_SITUACAO_PEDIDO(@PED);
+CALL T_OK('15', 'itens recebidos e boletins emitidos → pedido concluído, com auditoria',
+          (SELECT SITUACAO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED) = 'CONCLUIDO'
+          AND (SELECT COUNT(*) FROM AUDITORIA WHERE TABELA = 'PEDIDOS_VENDA' AND ID_REGISTRO = @PED AND ACAO = 'A'
+                 AND JSON_UNQUOTE(JSON_EXTRACT(DADOS_DEPOIS, '$.SITUACAO')) = 'CONCLUIDO') = 1,
+          (SELECT SITUACAO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED));
+CALL SP_GERAR_REVISAO_BOLETIM(@BOL3, 'TESTE DE REABERTURA DO PEDIDO', @FUNC, NULL, @BOL4, @REVBOL4);
+CALL T_OK('15', 'revisão do boletim reabre o pedido concluído',
+          (SELECT SITUACAO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED) = 'EM_EXECUCAO',
+          (SELECT SITUACAO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED));
+CALL SP_EXCLUIR_REVISAO_BOLETIM(@BOL4);
+CALL T_OK('15', 'desfazer a revisão (volta o boletim emitido) conclui de novo',
+          (SELECT SITUACAO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED) = 'CONCLUIDO',
+          (SELECT SITUACAO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED));
+UPDATE PEDIDOS_VENDA SET SITUACAO = 'CANCELADO' WHERE ID_PEDIDOS_VENDA = @PED;
+CALL PR_ATUALIZAR_SITUACAO_PEDIDO(@PED);
+CALL T_OK('15', 'pedido cancelado não muda de situação',
+          (SELECT SITUACAO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED) = 'CANCELADO',
+          (SELECT SITUACAO FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = @PED));
+
+-- ---------------------------------------------------------------------
 -- Resultado
 -- ---------------------------------------------------------------------
 SELECT PASSO, IF(OK = 1, 'OK', 'FALHA') AS SITUACAO, ITEM, OBTIDO FROM T_RESULTADO ORDER BY ID;

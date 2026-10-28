@@ -44,7 +44,7 @@ Itens contratados do pedido (produto × quantidade × valor).
 ## Usada por
 - **Views:** [`VW_PEDIDOS_VENDA_SALDO`](../views/VW_PEDIDOS_VENDA_SALDO.md)
 - **Rotinas que alteram:** [`SP_GERAR_PEDIDO_VENDA`](../rotinas/SP_GERAR_PEDIDO_VENDA.md), [`SP_ATUALIZAR_PEDIDO_REVISAO`](../rotinas/SP_ATUALIZAR_PEDIDO_REVISAO.md)
-- **Rotinas que leem:** —
+- **Rotinas que leem:** [`PR_ATUALIZAR_SITUACAO_PEDIDO`](../rotinas/PR_ATUALIZAR_SITUACAO_PEDIDO.md)
 - **Triggers de outras tabelas que alteram:** —
 - **Triggers de outras tabelas que leem:** —
 

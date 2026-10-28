@@ -50,6 +50,7 @@ DROP PROCEDURE IF EXISTS SP_GERAR_REVISAO_BOLETIM;
 DROP PROCEDURE IF EXISTS SP_EXCLUIR_REVISAO_RESULTADO;
 DROP PROCEDURE IF EXISTS SP_EXCLUIR_REVISAO_BOLETIM;
 DROP PROCEDURE IF EXISTS SP_EMITIR_BOLETIM;
+DROP PROCEDURE IF EXISTS PR_ATUALIZAR_SITUACAO_PEDIDO;
 DROP PROCEDURE IF EXISTS SP_GERAR_PEDIDO_VENDA;
 DROP PROCEDURE IF EXISTS SP_ATUALIZAR_PEDIDO_REVISAO;
 DROP PROCEDURE IF EXISTS SP_TROCAR_PRODUTO_PROPOSTA;
@@ -749,6 +750,7 @@ BEGIN
                   JSON_OBJECT('ID_ORIGEM', p_id_origem),
                   JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo, 'ID_RESULTADO_NOVO', p_id_resultado_novo,
                               'ID_BOLETIM_NOVO', p_id_boletim_novo));
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT ID_PEDIDOS_VENDA FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = p_id_nova));
   COMMIT;
 END$$
 
@@ -768,6 +770,9 @@ BEGIN
   CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_RESULTADOS_ANALISES WHERE ID_LAB_RESULTADOS_ANALISES = p_id_novo),
                   'LAB_RESULTADOS_ANALISES', p_id_novo, 'R', JSON_OBJECT('ID_ORIGEM', p_id_origem),
                   JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo, 'ID_BOLETIM_NOVO', p_id_boletim_novo));
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT A.ID_PEDIDOS_VENDA FROM LAB_RESULTADOS_ANALISES R
+                                       JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = R.ID_LAB_HIST_AMOSTRAS
+                                      WHERE R.ID_LAB_RESULTADOS_ANALISES = p_id_novo));
   COMMIT;
 END$$
 
@@ -795,6 +800,9 @@ BEGIN
   CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_BOLETIM_ANALISES WHERE ID_LAB_BOLETIM_ANALISES = p_id_novo),
                   'LAB_BOLETIM_ANALISES', p_id_novo, 'R', JSON_OBJECT('ID_ORIGEM', p_id_origem),
                   JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo));
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT A.ID_PEDIDOS_VENDA FROM LAB_BOLETIM_ANALISES B
+                                       JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
+                                      WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_novo));
   COMMIT;
 END$$
 
@@ -825,12 +833,14 @@ END$$
 -- Desfaz (exclui) a última revisão de um boletim NÃO emitido, reativando a anterior.
 CREATE PROCEDURE SP_EXCLUIR_REVISAO_BOLETIM(IN p_id_boletim INT)
 BEGIN
-  DECLARE v_origem, v_ultima, v_emp INT;
+  DECLARE v_origem, v_ultima, v_emp, v_pedido INT;
   DECLARE v_emissao DATETIME;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SET @LC_DESFAZENDO = NULL; ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
-  SELECT ID_BOLETIM_ORIGEM, ULTIMA_REVISAO, DH_EMISSAO, ID_EMPRESAS INTO v_origem, v_ultima, v_emissao, v_emp
-    FROM LAB_BOLETIM_ANALISES WHERE ID_LAB_BOLETIM_ANALISES = p_id_boletim FOR UPDATE;
+  SELECT B.ID_BOLETIM_ORIGEM, B.ULTIMA_REVISAO, B.DH_EMISSAO, B.ID_EMPRESAS, A.ID_PEDIDOS_VENDA
+    INTO v_origem, v_ultima, v_emissao, v_emp, v_pedido
+    FROM LAB_BOLETIM_ANALISES B JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
+   WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_boletim FOR UPDATE;
   IF v_ultima IS NULL OR v_ultima = 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Só é possível excluir a última revisão do boletim.';
   END IF;
@@ -844,6 +854,7 @@ BEGIN
   END IF;
   SET @LC_DESFAZENDO = NULL;
   CALL PR_AUDITAR(v_emp, 'LAB_BOLETIM_ANALISES', p_id_boletim, 'D', NULL, JSON_OBJECT('ID_REATIVADO', v_origem));
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO(v_pedido);
   COMMIT;
 END$$
 
@@ -884,7 +895,69 @@ BEGIN
    WHERE ID_LAB_BOLETIM_ANALISES = p_id_boletim;
   CALL PR_AUDITAR(v_emp, 'LAB_BOLETIM_ANALISES', p_id_boletim, 'M', NULL,
                   JSON_OBJECT('ARQUIVO_PDF', p_arquivo, 'HASH_PDF', p_hash, 'ID_ENTIDADES_FUNC_EMI', p_id_func));
+  -- pendência 24: o último boletim emitido conclui o pedido (itens recebidos + boletins emitidos)
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT A.ID_PEDIDOS_VENDA FROM LAB_BOLETIM_ANALISES B
+                                       JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
+                                      WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_boletim));
   COMMIT;
+END$$
+
+-- ---------------------------------------------------------------------
+-- PR_ATUALIZAR_SITUACAO_PEDIDO — pendência 24 (P08): situação automática do pedido.
+--   EM_EXECUCAO → CONCLUIDO: cada item recebeu ao menos o contratado (amostras revisão 0 do item, como a
+--     VW_PEDIDOS_VENDA_SALDO) e nada está pendente;
+--   CONCLUIDO → EM_EXECUCAO: algo ficou pendente (decisão do usuário, 27/10/2026: revisão de boletim/resultado/
+--     amostra reabre o pedido).
+-- Pendente = amostra vigente do pedido sem boletim vigente emitido (pela amostra raiz) ou boletim vigente não
+-- emitido. Mesmo critério da M-17 (M17Boletins.ConcluirPedidosAsync). Chamada dentro da transação de quem chama
+-- (emissão, revisões e desfazer revisão de boletim); ABERTO e CANCELADO não mudam aqui.
+-- ---------------------------------------------------------------------
+CREATE PROCEDURE PR_ATUALIZAR_SITUACAO_PEDIDO(IN p_id_pedido INT)
+corpo: BEGIN
+  DECLARE v_emp, v_cod, v_ano INT;
+  DECLARE v_sit VARCHAR(20);
+  DECLARE v_pendente, v_faltando TINYINT;
+  IF p_id_pedido IS NULL THEN LEAVE corpo; END IF;
+  SELECT ID_EMPRESAS, COD_PROPOSTA, ANO_PROPOSTA, SITUACAO INTO v_emp, v_cod, v_ano, v_sit
+    FROM PEDIDOS_VENDA WHERE ID_PEDIDOS_VENDA = p_id_pedido FOR UPDATE;
+  IF v_sit IS NULL OR v_sit NOT IN ('EM_EXECUCAO', 'CONCLUIDO') THEN LEAVE corpo; END IF;
+
+  SET v_pendente = EXISTS (
+        SELECT 1 FROM LAB_HIST_AMOSTRAS A
+         WHERE A.ID_PEDIDOS_VENDA = p_id_pedido AND A.ULTIMA_REVISAO = 1
+           AND NOT EXISTS (SELECT 1 FROM LAB_BOLETIM_ANALISES B
+                             JOIN LAB_HIST_AMOSTRAS BA ON BA.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
+                            WHERE COALESCE(BA.ID_AMOSTRA_RAIZ, BA.ID_LAB_HIST_AMOSTRAS) = COALESCE(A.ID_AMOSTRA_RAIZ, A.ID_LAB_HIST_AMOSTRAS)
+                              AND B.ULTIMA_REVISAO = 1 AND B.DH_EMISSAO IS NOT NULL))
+     OR EXISTS (
+        SELECT 1 FROM LAB_BOLETIM_ANALISES B
+          JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
+         WHERE A.ID_PEDIDOS_VENDA = p_id_pedido AND B.ULTIMA_REVISAO = 1 AND B.DH_EMISSAO IS NULL);
+
+  IF v_sit = 'CONCLUIDO' THEN
+    IF v_pendente THEN
+      UPDATE PEDIDOS_VENDA SET SITUACAO = 'EM_EXECUCAO' WHERE ID_PEDIDOS_VENDA = p_id_pedido;
+      CALL PR_AUDITAR(v_emp, 'PEDIDOS_VENDA', p_id_pedido, 'A', JSON_OBJECT('SITUACAO', 'CONCLUIDO'),
+                      JSON_OBJECT('SITUACAO', 'EM_EXECUCAO', 'MOTIVO', 'Reaberto automaticamente: revisão pendente de emissão.'));
+    END IF;
+    LEAVE corpo;
+  END IF;
+
+  IF v_pendente THEN LEAVE corpo; END IF;
+  SET v_faltando = EXISTS (
+        SELECT 1 FROM PEDIDOS_VENDA_ITENS PI
+          JOIN LAB_PROPOSTAS_PRODUTOS PP ON PP.ID_LAB_PROPOSTAS_PRODUTOS = PI.ID_LAB_PROPOSTAS_PRODUTOS
+         WHERE PI.ID_PEDIDOS_VENDA = p_id_pedido
+           AND PI.QTDE_CONTRATADA > (SELECT COUNT(*) FROM LAB_HIST_AMOSTRAS A
+                                       JOIN LAB_PROPOSTAS PA ON PA.ID_LAB_PROPOSTAS = A.ID_LAB_PROPOSTAS
+                                       JOIN LAB_PROPOSTAS_PRODUTOS PPA ON PPA.ID_LAB_PROPOSTAS_PRODUTOS = A.ID_LAB_PROPOSTAS_PRODUTOS
+                                      WHERE PA.ID_EMPRESAS = v_emp AND PA.ANO_PROPOSTA = v_ano AND PA.COD_PROPOSTA = v_cod
+                                        AND PPA.ITEM = PP.ITEM AND A.REVISAO = 0));
+  IF NOT v_faltando THEN
+    UPDATE PEDIDOS_VENDA SET SITUACAO = 'CONCLUIDO' WHERE ID_PEDIDOS_VENDA = p_id_pedido;
+    CALL PR_AUDITAR(v_emp, 'PEDIDOS_VENDA', p_id_pedido, 'A', JSON_OBJECT('SITUACAO', 'EM_EXECUCAO'),
+                    JSON_OBJECT('SITUACAO', 'CONCLUIDO', 'MOTIVO', 'Concluído automaticamente: itens recebidos e boletins emitidos.'));
+  END IF;
 END$$
 
 -- ---------------------------------------------------------------------
@@ -945,9 +1018,14 @@ BEGIN
      SET A.ID_PEDIDOS_VENDA = p_id_pedido
    WHERE P.ID_EMPRESAS = v_emp AND P.ANO_PROPOSTA = v_ano AND P.COD_PROPOSTA = v_cod
      AND A.ID_PEDIDOS_VENDA IS NULL AND A.ULTIMA_REVISAO = 1;
+  -- com amostra já recebida o pedido nasce em execução (e já concluído, se tudo foi recebido e emitido)
+  IF ROW_COUNT() > 0 THEN
+    UPDATE PEDIDOS_VENDA SET SITUACAO = 'EM_EXECUCAO' WHERE ID_PEDIDOS_VENDA = p_id_pedido;
+  END IF;
   CALL PR_AUDITAR(v_emp, 'PEDIDOS_VENDA', p_id_pedido, 'I', NULL,
                   JSON_OBJECT('NR_PEDIDO', p_nr_pedido, 'ID_LAB_PROPOSTAS', p_id_proposta, 'DT_AUTORIZACAO', p_dt_autorizacao,
                               'AUTORIZADO_POR', p_autorizado_por, 'NR_PEDIDO_CLIENTE', p_nr_pedido_cliente));
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO(p_id_pedido);
   COMMIT;
 END$$
 

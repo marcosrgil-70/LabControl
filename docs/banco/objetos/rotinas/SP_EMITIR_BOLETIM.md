@@ -1,6 +1,6 @@
 # SP_EMITIR_BOLETIM
 
-Emite (congela) o boletim: grava data de emissão, emissor, status emitido, caminho e hash do PDF.
+Emite (congela) o boletim: grava data de emissão, emissor, status emitido, caminho e hash do PDF; o último boletim do pedido o conclui (`PR_ATUALIZAR_SITUACAO_PEDIDO`).
 
 **Tipo:** Procedure pública (SP_) · **Criticidade:** 🔴 Crítico · **Script:** `Scripts/v2/02_funcoes_procedures.sql`
 
@@ -34,8 +34,8 @@ CREATE PROCEDURE SP_EMITIR_BOLETIM(IN p_id_boletim INT, IN p_id_func INT, IN p_a
 
 ## O que acessa
 - **Altera:** [`LAB_BOLETIM_ANALISES`](../tabelas/LAB_BOLETIM_ANALISES.md)
-- **Lê:** [`EMPRESAS_PARAMETROS`](../tabelas/EMPRESAS_PARAMETROS.md), [`LAB_BOLETIM_PARAMETROS`](../tabelas/LAB_BOLETIM_PARAMETROS.md)
-- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md)
+- **Lê:** [`EMPRESAS_PARAMETROS`](../tabelas/EMPRESAS_PARAMETROS.md), [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md), [`LAB_BOLETIM_PARAMETROS`](../tabelas/LAB_BOLETIM_PARAMETROS.md)
+- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md), [`PR_ATUALIZAR_SITUACAO_PEDIDO`](../rotinas/PR_ATUALIZAR_SITUACAO_PEDIDO.md)
 - **Variáveis de sessão:** —
 
 ## Mensagens de negócio (SQLSTATE 45000)
@@ -98,6 +98,10 @@ BEGIN
    WHERE ID_LAB_BOLETIM_ANALISES = p_id_boletim;
   CALL PR_AUDITAR(v_emp, 'LAB_BOLETIM_ANALISES', p_id_boletim, 'M', NULL,
                   JSON_OBJECT('ARQUIVO_PDF', p_arquivo, 'HASH_PDF', p_hash, 'ID_ENTIDADES_FUNC_EMI', p_id_func));
+  -- pendência 24: o último boletim emitido conclui o pedido (itens recebidos + boletins emitidos)
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT A.ID_PEDIDOS_VENDA FROM LAB_BOLETIM_ANALISES B
+                                       JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = B.ID_LAB_HIST_AMOSTRAS
+                                      WHERE B.ID_LAB_BOLETIM_ANALISES = p_id_boletim));
   COMMIT;
 END
 ```

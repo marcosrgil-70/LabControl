@@ -298,8 +298,10 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
                 if (!t.Sucesso) throw new ErroDeNegocioException(t.Mensagem!);
             }
             await db.Entry(a).ReloadAsync();
+            // 1ª amostra põe o pedido em execução; amostra nova num pedido concluído o reabre (pendência 24, 6.2)
             if (a.IdPedidosVenda is { } pedido)
-                await db.PedidosVenda.Where(p => p.IdPedidosVenda == pedido && p.Situacao == SituacaoPedido.Aberto)
+                await db.PedidosVenda.Where(p => p.IdPedidosVenda == pedido
+                        && (p.Situacao == SituacaoPedido.Aberto || (atual == null && p.Situacao == SituacaoPedido.Concluido)))
                     .ExecuteUpdateAsync(s => s.SetProperty(p => p.Situacao, SituacaoPedido.EmExecucao));
             if (retroativa) await procedures.DefinirPermiteRetroativoAsync(false);
             await tx.CommitAsync();

@@ -40,7 +40,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $pasta = $PSScriptRoot
 $scripts = '01_schema', '02_funcoes_procedures', '03_triggers', '04_views', '05_seed', '06_cidades'
-$esperado = [ordered]@{ TABELAS = 59; VIEWS = 10; FUNCOES = 8; PROCEDURES = 26; TRIGGERS = 48; PERMISSOES = 109; CIDADES = 5571 }
+$esperado = [ordered]@{ TABELAS = 59; VIEWS = 10; FUNCOES = 8; PROCEDURES = 27; TRIGGERS = 48; PERMISSOES = 109; CIDADES = 5571 }
 
 function Falhar([string]$msg) { Write-Host "ERRO: $msg" -ForegroundColor Red; exit 1 }
 

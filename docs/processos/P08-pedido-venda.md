@@ -27,7 +27,7 @@ ABERTO ──(1ª amostra recebida)──► EM_EXECUCAO ──(itens recebidos 
 Cliente aprovou a R+1 → T21 "Atualizar" → `SP_ATUALIZAR_PEDIDO_REVISAO` (valor, cobrança, condição, moeda e itens da revisão atual); recusado se CONCLUIDO/CANCELADO.
 
 ## Fluxo: concluir / cancelar
-- Concluir: manual (`PEDIDOS_VENDA.ALTERAR`) ou automático (serviço, após emissão de boletim) quando todos os itens estiverem recebidos e todas as amostras com boletim emitido.
+- Concluir: manual (`PEDIDOS_VENDA.ALTERAR`) ou automático (banco, `PR_ATUALIZAR_SITUACAO_PEDIDO` na emissão do boletim) quando todos os itens estiverem recebidos e todas as amostras com boletim emitido. Revisão pendente reabre; "Reabrir" manual com motivo.
 - Cancelar (`PEDIDOS_VENDA.CANCELAR`): motivo obrigatório; bloqueado se houver amostra; grava `DT_CANCELAMENTO`, `MOTIVO_CANCELAMENTO`, `AUDITORIA`.
 
 ## Cenários de teste
@@ -36,11 +36,8 @@ Cliente aprovou a R+1 → T21 "Atualizar" → `SP_ATUALIZAR_PEDIDO_REVISAO` (val
 - Amostra recebida antes do pedido passa a mostrar o nº do pedido depois da geração (roteiro doc 12 §7 item 4).
 - Recebida × contratada correta com amostras em revisões diferentes da proposta.
 
-## Situação da implementação (27/10/2026)
+## Implementação (6.2 — 27/10/2026)
 - **Feito:** banco completo (tabelas, `TG_PEDVEN_BI`, `VW_PEDIDOS_VENDA_SALDO`, `SP_GERAR_PEDIDO_VENDA`, `SP_ATUALIZAR_PEDIDO_REVISAO`); ligação da amostra ao pedido e passagem ABERTO → EM_EXECUCAO no recebimento (4.3); conclusão dos pedidos migrados na M-17 (pendência 23, 5.5).
-- **Falta (6.2):**
-  - a tela T21;
-  - a geração pela proposta;
-  - o PDF;
-  - a **conclusão automática na emissão do boletim** (pendência 24): procedure `PR_ATUALIZAR_SITUACAO_PEDIDO` chamada pelo `SP_EMITIR_BOLETIM`.
-  - Passo a passo em [F6 › 6.2 › Como fazer](../plano/F6-propostas-pedidos.md#como-fazer-levantado-em-27102026-antes-de-começar).
+- **Feito na 6.2:** tela T21 (`PedidoVendaService`, `/PedidosVenda`), geração pelo modal da proposta, PDF (`PropostaPdf.GerarPedido`), conclusão e reabertura manuais (reabrir com motivo na auditoria), cancelamento.
+- **Conclusão automática (pendência 24):** `PR_ATUALIZAR_SITUACAO_PEDIDO`, chamada pelo `SP_EMITIR_BOLETIM`, pelas revisões de amostra/resultado/boletim, pelo desfazer revisão de boletim e pelo `SP_GERAR_PEDIDO_VENDA`. O último boletim emitido conclui; uma revisão pendente reabre (decisão do usuário, 27/10/2026); desfazer a revisão conclui de novo. Amostra nova num pedido concluído também o reabre (`AmostraService`).
+- Detalhes e testes: [T21 › Implementação](../telas/T21-pedidos-venda.md#implementação-tarefa-62--27102026).

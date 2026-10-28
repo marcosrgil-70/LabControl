@@ -1,0 +1,186 @@
+@model PedidoVendaVM
+@using LabControl.Models
+@inject IEmpresaContexto Usuario
+@{
+    ViewData["Title"] = $"Pedido de venda {Model.NrPedido}";
+    var br = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    var podeAlterar = Usuario.TemPermissao("PEDIDOS_VENDA.ALTERAR");
+    var podeCancelar = Usuario.TemPermissao("PEDIDOS_VENDA.CANCELAR") && Model.Situacao != SituacaoPedido.Cancelado;
+    var verAmostras = Usuario.TemPermissao("AMOSTRAS.CONSULTAR");
+    var moeda = Model.Moeda ?? "R$";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-2">
+        <li class="breadcrumb-item"><a asp-action="Index">Pedidos de venda</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.NrPedido</li>
+    </ol>
+</nav>
+
+<div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+    <h5 class="mb-0 font-monospace">Pedido @Model.NrPedido</h5>
+    <span class="badge @SituacoesPedido.Classe(Model.Situacao)" id="situacaoPedido">@SituacoesPedido.Nome(Model.Situacao)</span>
+</div>
+
+@if (Model.Cancelado)
+{
+    <div class="alert alert-danger py-2"><i class="bi bi-x-octagon me-1"></i>Cancelado em @Model.DtCancelamento?.ToString("dd/MM/yyyy HH:mm") — motivo: @Model.MotivoCancelamento</div>
+}
+@if (Model.IdPropostaVigente is not null)
+{
+    <div class="alert alert-info py-2 d-flex align-items-center flex-wrap gap-2" id="avisoRevisao">
+        <span><i class="bi bi-info-circle me-1"></i>O pedido está na proposta <b>@Model.NrProposta</b>; a revisão vigente é a <b>@Model.NrPropostaVigente</b>.</span>
+        @if (Model.PodeAtualizar && podeAlterar)
+        {
+            <form method="post" asp-action="AtualizarRevisao" asp-route-id="@Model.Id" class="ms-auto"
+                  data-confirmar="Atualizar o pedido para a revisão @Model.NrPropostaVigente? Valor, cobrança, condição de pagamento e itens passam a ser os da revisão vigente.">
+                <button type="submit" class="btn btn-info btn-sm" id="botaoAtualizarRevisao"><i class="bi bi-arrow-repeat me-1"></i>Atualizar para a revisão vigente</button>
+            </form>
+        }
+    </div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-7">
+        <div class="card h-100"><div class="card-header py-1 small fw-semibold">Pedido</div>
+            <div class="card-body small">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 fw-normal text-body-secondary">Data do pedido</dt><dd class="col-sm-8">@Model.DtPedido.ToString("dd/MM/yyyy")</dd>
+                    <dt class="col-sm-4 fw-normal text-body-secondary">Proposta</dt>
+                    <dd class="col-sm-8 font-monospace"><a asp-controller="Propostas" asp-action="Editar" asp-route-id="@Model.IdProposta" id="linkProposta">@Model.NrProposta</a></dd>
+                    <dt class="col-sm-4 fw-normal text-body-secondary">Cliente</dt><dd class="col-sm-8">@Model.Cliente <span class="font-monospace text-body-secondary">@Model.CpfCnpj</span></dd>
+                    <dt class="col-sm-4 fw-normal text-body-secondary">Cobrança</dt><dd class="col-sm-8">@Model.Cobranca</dd>
+                    <dt class="col-sm-4 fw-normal text-body-secondary">Condição de pagamento</dt><dd class="col-sm-8">@Model.CondicaoPagamento</dd>
+                    <dt class="col-sm-4 fw-normal text-body-secondary">Valor total</dt><dd class="col-sm-8 fw-semibold">@moeda @Model.VrTotal.ToString("N2", br)</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100"><div class="card-header py-1 small fw-semibold">Autorização do cliente</div>
+            <div class="card-body small">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 fw-normal text-body-secondary">Autorizado em</dt><dd class="col-sm-7">@Model.DtAutorizacao.ToString("dd/MM/yyyy")</dd>
+                    <dt class="col-sm-5 fw-normal text-body-secondary">Autorizado por</dt><dd class="col-sm-7">@Model.AutorizadoPor</dd>
+                    <dt class="col-sm-5 fw-normal text-body-secondary">Pedido do cliente (PO)</dt><dd class="col-sm-7">@Model.NrPedidoCliente</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header py-1 small fw-semibold">Itens — contratado × recebido</div>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0" id="tabelaItens">
+            <thead><tr><th>Item</th><th>Produto</th><th class="text-end">Contratada</th><th class="text-end">Recebida</th><th class="text-end">Saldo a receber</th></tr></thead>
+            <tbody>
+                @foreach (var i in Model.Itens)
+                {
+                    <tr>
+                        <td class="small">@i.Item</td>
+                        <td class="small">@i.Produto</td>
+                        <td class="small text-end">@i.Contratada</td>
+                        <td class="small text-end">@i.Recebida</td>
+                        <td class="small text-end @(i.Saldo < 0 ? "text-danger fw-semibold" : i.Saldo == 0 ? "text-success" : "")"
+                            title="@(i.Saldo < 0 ? "Recebidas além do contratado" : null)">@i.Saldo</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header py-1 small fw-semibold">Amostras do pedido <span class="badge text-bg-secondary ms-1">@Model.Amostras.Count</span></div>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0" id="tabelaAmostras">
+            <thead><tr><th>Nº da amostra</th><th>Entrega</th><th>Status</th><th>Boletim</th></tr></thead>
+            <tbody>
+                @foreach (var a in Model.Amostras)
+                {
+                    <tr>
+                        <td class="small font-monospace">
+                            @if (verAmostras) { <a asp-controller="Amostras" asp-action="Editar" asp-route-id="@a.Id">@a.NrAmostra</a> } else { @a.NrAmostra }
+                        </td>
+                        <td class="small">@a.DtEntrega.ToString("dd/MM/yyyy")</td>
+                        <td><span class="badge border text-body" style="@(a.CorStatus is null ? "" : $"border-color: {a.CorStatus} !important; box-shadow: inset 4px 0 0 {a.CorStatus}")">@a.Status</span></td>
+                        <td class="small @(a.Emitido ? "text-success" : "text-body-secondary")">@a.Boletim</td>
+                    </tr>
+                }
+                @if (Model.Amostras.Count == 0)
+                {
+                    <tr><td colspan="4" class="text-center text-body-secondary small py-2">Nenhuma amostra recebida para este pedido.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<form method="post" asp-action="Observacao" asp-route-id="@Model.Id" class="card mb-3" id="formObservacao">
+    <div class="card-header py-1 small fw-semibold">Observação</div>
+    <div class="card-body">
+        <fieldset disabled="@(!podeAlterar || Model.Cancelado)">
+            <textarea name="observacao" id="observacao" class="form-control form-control-sm" rows="3">@Model.Observacao</textarea>
+            @if (podeAlterar && !Model.Cancelado)
+            {
+                <button type="submit" class="btn btn-outline-primary btn-sm mt-2"><i class="bi bi-check-lg me-1"></i>Gravar observação</button>
+            }
+        </fieldset>
+    </div>
+</form>
+
+<div class="d-flex flex-wrap gap-2">
+    <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+    <a asp-action="Imprimir" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-secondary" lc-permissao="PEDIDOS_VENDA.IMPRIMIR" id="botaoImprimir"><i class="bi bi-printer me-1"></i>Imprimir</a>
+    @if (podeAlterar && Model.PodeConcluir)
+    {
+        <form method="post" asp-action="Concluir" asp-route-id="@Model.Id"
+              data-confirmar="Concluir o pedido @Model.NrPedido? Use quando o serviço terminou mesmo sem receber tudo o que foi contratado. O sistema conclui sozinho quando todos os itens foram recebidos e os boletins emitidos.">
+            <button type="submit" class="btn btn-outline-success" id="botaoConcluir"><i class="bi bi-check2-circle me-1"></i>Concluir</button>
+        </form>
+    }
+    @if (podeAlterar && Model.Situacao == SituacaoPedido.Concluido)
+    {
+        <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalReabrir" id="botaoReabrir"><i class="bi bi-arrow-counterclockwise me-1"></i>Reabrir</button>
+    }
+    @if (podeCancelar)
+    {
+        @if (Model.PodeCancelar)
+        {
+            <button type="button" class="btn btn-outline-danger ms-auto" data-bs-toggle="modal" data-bs-target="#modalCancelar" id="botaoCancelar"><i class="bi bi-x-octagon me-1"></i>Cancelar pedido</button>
+        }
+        else
+        {
+            <span class="small text-body-secondary ms-auto align-self-center">Pedido com amostra recebida não pode ser cancelado.</span>
+        }
+    }
+</div>
+
+<div class="modal fade" id="modalReabrir" tabindex="-1" aria-labelledby="tituloReabrir">
+    <div class="modal-dialog">
+        <form method="post" asp-action="Reabrir" asp-route-id="@Model.Id" class="modal-content">
+            <div class="modal-header py-2"><h6 class="modal-title" id="tituloReabrir">Reabrir o pedido @Model.NrPedido</h6><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+            <div class="modal-body">
+                <p class="small text-body-secondary mb-2">O pedido volta para <b>em execução</b>. O motivo fica registrado na auditoria.</p>
+                <label class="form-label small" for="motivoReabrir">Motivo <span class="text-danger">*</span></label>
+                <textarea name="motivo" id="motivoReabrir" class="form-control" rows="3" maxlength="500" required></textarea>
+            </div>
+            <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Voltar</button><button type="submit" class="btn btn-warning">Reabrir</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCancelar" tabindex="-1" aria-labelledby="tituloCancelar">
+    <div class="modal-dialog">
+        <form method="post" asp-action="Cancelar" asp-route-id="@Model.Id" class="modal-content">
+            <div class="modal-header py-2"><h6 class="modal-title" id="tituloCancelar">Cancelar o pedido @Model.NrPedido</h6><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+            <div class="modal-body">
+                <p class="small text-body-secondary mb-2">O pedido cancelado não recebe amostras nem pode ser alterado. A proposta continua existindo, mas não pode ganhar outro pedido.</p>
+                <label class="form-label small" for="motivoCancelar">Motivo <span class="text-danger">*</span></label>
+                <textarea name="motivo" id="motivoCancelar" class="form-control" rows="3" maxlength="500" required></textarea>
+            </div>
+            <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Voltar</button><button type="submit" class="btn btn-danger">Cancelar pedido</button></div>
+        </form>
+    </div>
+</div>

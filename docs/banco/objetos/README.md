@@ -4,7 +4,7 @@
 > Cada arquivo traz: finalidade, origem no legado, colunas, chaves, relacionamentos, triggers, quem usa, telas, processos, regras de negócio, cuidados no C# e o código SQL.
 > Legenda: 🔴 crítico · 🟠 importante · ⚪ normal.
 
-**Totais:** 59 tabelas · 10 views · 8 funções · 26 procedures · 48 triggers.
+**Totais:** 59 tabelas · 10 views · 8 funções · 27 procedures · 48 triggers.
 
 ## Tabelas
 
@@ -137,8 +137,9 @@
 | [`SP_GERAR_REVISAO_BOLETIM`](rotinas/SP_GERAR_REVISAO_BOLETIM.md) | Pública | 🔴 | Gera revisão do boletim apontando para o resultado vigente. |
 | [`SP_EXCLUIR_REVISAO_RESULTADO`](rotinas/SP_EXCLUIR_REVISAO_RESULTADO.md) | Pública | 🟠 | Desfaz a última revisão do resultado (sem boletim) e reativa a anterior. |
 | [`SP_EXCLUIR_REVISAO_BOLETIM`](rotinas/SP_EXCLUIR_REVISAO_BOLETIM.md) | Pública | 🟠 | Desfaz a última revisão do boletim (não emitida) e reativa a anterior. |
-| [`SP_EMITIR_BOLETIM`](rotinas/SP_EMITIR_BOLETIM.md) | Pública | 🔴 | Emite (congela) o boletim: grava data de emissão, emissor, status emitido, caminho e hash do PDF. |
-| [`SP_GERAR_PEDIDO_VENDA`](rotinas/SP_GERAR_PEDIDO_VENDA.md) | Pública | 🔴 | Gera o pedido de venda da proposta (um por proposta), com itens, e liga as amostras já recebidas. |
+| [`SP_EMITIR_BOLETIM`](rotinas/SP_EMITIR_BOLETIM.md) | Pública | 🔴 | Emite (congela) o boletim: grava data de emissão, emissor, status emitido, caminho e hash do PDF; o último boletim do pedido o conclui (`PR_ATUALIZAR_SITUACAO_PEDIDO`). |
+| [`PR_ATUALIZAR_SITUACAO_PEDIDO`](rotinas/PR_ATUALIZAR_SITUACAO_PEDIDO.md) | Interna | 🟠 | Situação automática do pedido (pendência 24): EM_EXECUCAO → CONCLUIDO quando cada item recebeu o contratado e toda amostra vigente tem o boletim vigente emitido; CONCLUIDO → EM_EXECUCAO quando algo ficou pendente (revisão de boletim/resultado/amostra). ABERTO e CANCELADO não mudam. Grava `AUDITORIA` com o motivo. |
+| [`SP_GERAR_PEDIDO_VENDA`](rotinas/SP_GERAR_PEDIDO_VENDA.md) | Pública | 🔴 | Gera o pedido de venda da proposta (um por proposta), com itens, e liga as amostras já recebidas (com amostra, o pedido nasce em execução). |
 | [`SP_ATUALIZAR_PEDIDO_REVISAO`](rotinas/SP_ATUALIZAR_PEDIDO_REVISAO.md) | Pública | 🟠 | Atualiza o pedido para a revisão vigente da proposta (valores, cobrança, condição, itens). |
 | [`SP_TROCAR_PRODUTO_PROPOSTA`](rotinas/SP_TROCAR_PRODUTO_PROPOSTA.md) | Pública | 🟠 | Troca um produto por outro na proposta e nas amostras **dessa** proposta. |
 | [`SP_INICIALIZAR_EMPRESA`](rotinas/SP_INICIALIZAR_EMPRESA.md) | Pública | 🟠 | Cria os cadastros padrão de uma empresa (status, idiomas, moedas, tipos de endereço/logradouro/telefone/e-mail/registro, parâmetros, perfis) e a **entidade da empresa** (`EMPRESAS.ID_ENTIDADES`, onde ficam endereços/telefones/e-mails). Idempotente. |

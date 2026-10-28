@@ -16,11 +16,12 @@ Migração do sistema **Delphi 7 + Firebird 2.5** (`C:\Project\Laboratorio`) par
     - **T27 Boletim** (montagem, prévia, **emissão em PDF com SHA-256** numa pasta do servidor, reimpressão conferida, 2ª via do migrado, revisão/desfazer);
     - **5.5:** pedidos de venda concluídos na migração, testes de aceite da fase e `/code-review high` com 10 achados corrigidos.
   - Fase 6, tarefa 6.1: **T20 proposta completa** (seleção múltipla, revisão, contrato com importação de Word, PDF com a Autorização de Serviço, trocar produto).
-  - Suíte de testes: 248/248.
+  - Fase 6, tarefa 6.2: **T21 pedidos de venda** (gerar pela proposta, contratado × recebido, concluir/reabrir/cancelar, PDF) e a **conclusão automática do pedido na emissão do último boletim** (pendência 24, no banco).
+  - Suíte de testes: testes da tarefa OK (4 de serviço + 1 no navegador, mais propostas, amostras, permissões e roteiro); suíte inteira interrompida aos 7 min por falta de memória da máquina (2 timeouts de 30 s em AuditoriaTests/ProdutosTests, sem relação com pedido) — reexecutar (pendência 29); roteiro SQL 71/71.
 - **Decisões recentes do usuário (27/10/2026):** QuestPDF; PDFs numa pasta do servidor (`Boletins:Pasta`); layout do boletim a partir do Delphi, validado com 3 boletins reais na 5.4; dados inconsistentes do legado corrigidos na migração (datas invertidas → início = resultado; boletim na amostra vizinha → amostra do resultado).
 - **A fazer:**
   - Fase 5: só a 5.4, layout do PDF com os boletins reais (aguarda os modelos do laboratório) — passo a passo em [F5](plano/F5-resultados-boletim.md); sem os modelos, dá para seguir a Fase 6 ou 7;
-  - Fase 6: 6.1 proposta completa ✅ (27/10/2026); 6.2 pedido de venda (com a pendência 24, conclusão automática do pedido na emissão);
+  - Fase 6: 6.1 proposta completa ✅ e 6.2 pedidos de venda ✅ (27/10/2026); falta a 6.3 (revisão com `/code-review high`);
   - Fase 7: movimentação e localização;
   - Fase 8: relatórios, auditoria, e-mail;
   - Fase 9: homologação e virada (pendência 27: pasta dos boletins no backup).
@@ -65,7 +66,7 @@ Legenda: ⚠️ particularidades · ⚠️⚠️ crítica.
 | 3 | [T14 Produtos](telas/T14-produtos.md) | `un_Produtos` | ✅ |
 | 3 | [T15 Parâmetros de análise](telas/T15-parametros-analise.md) | `un_ParametrosAnalises` | ✅ |
 | 4/6 | [T20 **Propostas** ⚠️](telas/T20-propostas.md) | `un_Propostas` | ✅ completa (4.2 + 6.1) |
-| 6 | [T21 **Pedidos de venda** ⚠️](telas/T21-pedidos-venda.md) | botão Ped.Venda da proposta | ⬜ 6.2 |
+| 6 | [T21 **Pedidos de venda** ⚠️](telas/T21-pedidos-venda.md) | botão Ped.Venda da proposta | ✅ 6.2 |
 | 4 | [T22 **Recebimento de amostras** ⚠️⚠️](telas/T22-recebimento-amostras.md) | `un_MovHistAmostras` | ✅ 4.3 |
 | 7 | [T23 Movimentação de amostras](telas/T23-movimentacao-amostras.md) | `un_MovimentacaoAmostras` | ⬜ 7.1 |
 | 7 | [T24 Localização das amostras](telas/T24-localizacao-amostras.md) | `un_LocalAmostra` | ⬜ 7.2 |

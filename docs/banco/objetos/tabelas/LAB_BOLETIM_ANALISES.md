@@ -79,7 +79,7 @@ Comentário do script: _10. BOLETINS (LAB_BOLETIM_OBS incorporada ao cabeçalho)
 ## Usada por
 - **Views:** [`VW_LAB_AMOSTRAS`](../views/VW_LAB_AMOSTRAS.md), [`VW_LAB_BOLETINS`](../views/VW_LAB_BOLETINS.md)
 - **Rotinas que alteram:** [`PR_REVISAO_BOLETIM`](../rotinas/PR_REVISAO_BOLETIM.md), [`SP_EXCLUIR_REVISAO_BOLETIM`](../rotinas/SP_EXCLUIR_REVISAO_BOLETIM.md), [`SP_EMITIR_BOLETIM`](../rotinas/SP_EMITIR_BOLETIM.md)
-- **Rotinas que leem:** [`PR_REVISAO_RESULTADO`](../rotinas/PR_REVISAO_RESULTADO.md), [`SP_GERAR_REVISAO_BOLETIM`](../rotinas/SP_GERAR_REVISAO_BOLETIM.md), [`SP_EXCLUIR_REVISAO_RESULTADO`](../rotinas/SP_EXCLUIR_REVISAO_RESULTADO.md)
+- **Rotinas que leem:** [`PR_REVISAO_RESULTADO`](../rotinas/PR_REVISAO_RESULTADO.md), [`SP_GERAR_REVISAO_BOLETIM`](../rotinas/SP_GERAR_REVISAO_BOLETIM.md), [`SP_EXCLUIR_REVISAO_RESULTADO`](../rotinas/SP_EXCLUIR_REVISAO_RESULTADO.md), [`PR_ATUALIZAR_SITUACAO_PEDIDO`](../rotinas/PR_ATUALIZAR_SITUACAO_PEDIDO.md)
 - **Triggers de outras tabelas que alteram:** —
 - **Triggers de outras tabelas que leem:** [`TG_AMOSTRAS_BU`](../triggers/TG_AMOSTRAS_BU.md), [`TG_RESULT_BD`](../triggers/TG_RESULT_BD.md), [`TG_RESPAR_BU`](../triggers/TG_RESPAR_BU.md), [`TG_BOLPAR_BI`](../triggers/TG_BOLPAR_BI.md), [`TG_BOLPAR_BU`](../triggers/TG_BOLPAR_BU.md), [`TG_BOLPAR_BD`](../triggers/TG_BOLPAR_BD.md)
 

@@ -38,8 +38,8 @@ CREATE PROCEDURE SP_GERAR_REVISAO_RESULTADO(IN p_id_origem INT, IN p_motivo VARC
 
 ## O que acessa
 - **Altera:** —
-- **Lê:** [`LAB_RESULTADOS_ANALISES`](../tabelas/LAB_RESULTADOS_ANALISES.md)
-- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md), [`PR_REVISAO_RESULTADO`](../rotinas/PR_REVISAO_RESULTADO.md)
+- **Lê:** [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md), [`LAB_RESULTADOS_ANALISES`](../tabelas/LAB_RESULTADOS_ANALISES.md)
+- **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md), [`PR_REVISAO_RESULTADO`](../rotinas/PR_REVISAO_RESULTADO.md), [`PR_ATUALIZAR_SITUACAO_PEDIDO`](../rotinas/PR_ATUALIZAR_SITUACAO_PEDIDO.md)
 - **Variáveis de sessão:** `@LC_REVISAO` ()
 
 ## Mensagens de negócio (SQLSTATE 45000)
@@ -88,6 +88,9 @@ BEGIN
   CALL PR_AUDITAR((SELECT ID_EMPRESAS FROM LAB_RESULTADOS_ANALISES WHERE ID_LAB_RESULTADOS_ANALISES = p_id_novo),
                   'LAB_RESULTADOS_ANALISES', p_id_novo, 'R', JSON_OBJECT('ID_ORIGEM', p_id_origem),
                   JSON_OBJECT('REVISAO', p_revisao, 'MOTIVO', p_motivo, 'ID_BOLETIM_NOVO', p_id_boletim_novo));
+  CALL PR_ATUALIZAR_SITUACAO_PEDIDO((SELECT A.ID_PEDIDOS_VENDA FROM LAB_RESULTADOS_ANALISES R
+                                       JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = R.ID_LAB_HIST_AMOSTRAS
+                                      WHERE R.ID_LAB_RESULTADOS_ANALISES = p_id_novo));
   COMMIT;
 END
 ```

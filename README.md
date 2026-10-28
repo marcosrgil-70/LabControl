@@ -16,7 +16,7 @@ Sistema de gestão do laboratório (propostas, recebimento de amostras, resultad
 | 3 | Clientes, profissionais, produtos, parâmetros de análise, migração parte 1 | ✅ |
 | 4 | Migração parte 2, proposta essencial, **recebimento de amostras**, pesquisa, etiquetas | ✅ (faltam com o laboratório: impressão de teste na Argox e teste manual guiado) |
 | 5 | Migração parte 3, **resultados**, **boletim** (PDF com hash) | 🟨 5.1, 5.2, 5.3 e 5.5 prontas (migração completa, resultados, boletim, aceite e revisão de código); falta a 5.4 (layout do PDF com 3 boletins reais do laboratório) |
-| 6 | Proposta completa (revisão, PDF, contrato) e pedido de venda | 🟨 6.1 proposta completa pronta; 6.2 pedido de venda a seguir |
+| 6 | Proposta completa (revisão, PDF, contrato) e pedido de venda | 🟨 6.1 proposta completa e 6.2 pedidos de venda prontas; falta a 6.3 (revisão) |
 | 7 | Movimentação e localização de amostras | ⬜ |
 | 8 | Relatórios gerenciais, auditoria, e-mail | ⬜ |
 | 9 | Migração completa, homologação e virada | ⬜ |
@@ -47,7 +47,7 @@ Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md)
 3. Aponte o user-secret para `Database=labcontrol_migracao` e entre com `ADMINISTRADOR` / `Admin123` (ou um usuário migrado com a senha provisória digitada na T07).
 
 ## Testes
-`dotnet test tests/LabControl.Tests` — suíte inteira (~25–30 min; 248 testes em 27/10/2026), inclusive a migração real contra o `DBMAIS.FDB` quando ele existe na máquina. Só as telas no navegador: `--filter "FullyQualifiedName~Navegador"`. Não rodar com o `dotnet run` aberto (trava o build). Ver [P26](docs/processos/P26-testes-ponta-a-ponta.md).
+`dotnet test tests/LabControl.Tests` — suíte inteira (~25–30 min; 253 testes (suíte inteira a reexecutar — pendência 29) em 27/10/2026), inclusive a migração real contra o `DBMAIS.FDB` quando ele existe na máquina. Só as telas no navegador: `--filter "FullyQualifiedName~Navegador"`. Não rodar com o `dotnet run` aberto (trava o build). Ver [P26](docs/processos/P26-testes-ponta-a-ponta.md).
 
 ## Documentação
 - [docs/README.md](docs/README.md) — índice: arquitetura, banco (um MD por objeto), telas, processos, regras, migração.
