@@ -7,10 +7,11 @@
 
 ---
 
-### 7.1 T23 — Movimentação
+### 7.1 T23 — Movimentação ✅
 - **Passos:** busca por cliente/número (última revisão); painel da amostra com saldo; nova movimentação (entrada complementar/saída, justificativa, parâmetros atendidos com indicação dos já atendidos); histórico; excluir só manual.
 - **Aceite:** [aceite da T23](../telas/T23-movimentacao-amostras.md#critérios-de-aceite).
 - **Esforço:** M
+- **Feito em 28/10/2026** — ver [T23 › Implementação](../telas/T23-movimentacao-amostras.md#implementação-tarefa-71-28102026).
 
 ### 7.2 T24 — Localização
 - **Passos:** consulta com um filtro só; formulário arquivo/descarte; desfazer descarte (volta para ARQUIVADA); arquivar em lote; pesquisa (T29).

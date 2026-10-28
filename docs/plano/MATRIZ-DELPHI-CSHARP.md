@@ -49,7 +49,7 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 | (botão Ped.Venda da proposta) | `un_Propostas.Btn_PedVendaClick` | [T21](../telas/T21-pedidos-venda.md) | `/PedidosVenda` | 6 | ✅ (tela nova, 6.2), revisada na 6.3 |
 | Histórico de Amostras | `un_MovHistAmostras` + `undm_HistAmostras` | [T22](../telas/T22-recebimento-amostras.md) | `/Amostras` | 4 | ✅ (4.3) |
 | (pesquisa de amostras) | `un_Lab_Hist_Amostras_Pesq` | [T29](../telas/T29-pesquisa-amostras.md) | componente `/Amostras/Pesquisa` | 4 | ✅ (4.4) |
-| Movimentação de Amostras | `un_MovimentacaoAmostras` | [T23](../telas/T23-movimentacao-amostras.md) | `/Movimentacao` | 7 | ⬜ |
+| Movimentação de Amostras | `un_MovimentacaoAmostras` | [T23](../telas/T23-movimentacao-amostras.md) | `/Movimentacao` | 7 | ✅ |
 | Localização das Amostras | `un_LocalAmostra` + `unDM_LocalAmostra` | [T24](../telas/T24-localizacao-amostras.md) | `/Localizacao` | 7 | ⬜ |
 | Resultados | `un_Resultados` + `unDM_Resultados` | [T26](../telas/T26-resultados.md) | `/Resultados` | 5 | ✅ |
 | Boletim | `un_CadBoletim` + `undm_Boletim` (`un_Boletim` antigo) | [T27](../telas/T27-boletim.md) | `/Boletins` | 5 | 🟨 5.3 pronta; layout com boletins reais na 5.4 |

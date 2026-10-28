@@ -47,9 +47,22 @@ Data, tipo (badge E/S), quantidade, justificativa, profissional, parâmetros, au
 - Filtro de amostras dependia de digitar códigos com zeros manualmente.
 
 ## Critérios de aceite
-- [ ] Saída maior que o saldo recusada com mensagem.
-- [ ] Movimento numa revisão (`… R01`) aparece na raiz e o saldo é único.
-- [ ] Entrada automática não pode ser excluída.
-- [ ] Parâmetros atendidos gravados e exibidos no histórico.
+- [x] Saída maior que o saldo recusada com mensagem.
+- [x] Movimento numa revisão (`… R01`) aparece na raiz e o saldo é único.
+- [x] Entrada automática não pode ser excluída.
+- [x] Parâmetros atendidos gravados e exibidos no histórico.
 
-**Status:** ⬜ — tarefa 7.1 (a v1 parcial foi descartada; o estoque já funciona no banco: entrada automática do recebimento e saldo, 4.3).
+## Implementação (tarefa 7.1, 28/10/2026)
+- **Arquivos:** `MovimentacaoController`, `MovimentacaoService`, `ViewModels/MovimentacaoVM.cs`, `Views/Movimentacao/Index` e `Amostra`, `wwwroot/js/movimentacao.js`.
+- **Busca:** cliente (nome, fantasia ou CPF/CNPJ), proposta ou nº da amostra — sem nenhum, a lista não aparece (RN-06.07); só a última revisão, com o saldo da amostra física.
+- **Tela da amostra** (`/Movimentacao/Amostra/{id}`): cabeçalho, saldo, histórico da amostra física (aberta por uma revisão antiga, avisa que o movimento vale para todas), "Nova movimentação" em modal e "Excluir" nos manuais.
+- **Data/hora:** informada (padrão agora, do servidor), pode ser retroativa, nunca futura — `DATA_MOV` passou a ser enviada pelo EF (gerador: `LAB_MOV_AMOSTRAS: { DATA_MOV: 'add' }`).
+- **Saldo protegido no serviço também:** a gravação trava a linha do `LAB_HIST_AMOSTRAS_SALDO` (`FOR UPDATE`) antes de conferir. Sem a trava, duas saídas ao mesmo tempo passavam pela conferência do `TG_MOV_BI` e o saldo ficava negativo (teste `Duas_saidas_ao_mesmo_tempo_nao_deixam_o_saldo_negativo` falha sem ela). Pendência 31: a mesma trava no próprio trigger.
+- **Regra nova (RN-06.15):** excluir uma entrada complementar que deixaria o saldo negativo é recusado ("Esta entrada não pode ser excluída: o saldo da amostra ficaria negativo…") — antes a exclusão passava e o saldo ficava negativo.
+- **Parâmetros atendidos:** só na saída (na entrada o serviço recusa e a tela esconde); só testes da própria amostra (qualquer revisão); "já atendido" pelo parâmetro, para valer entre revisões; excluir a saída apaga os parâmetros (`ON DELETE CASCADE`).
+- **Justificativa** obrigatória na saída (RN-06.10); **profissional** = o do usuário (sem vínculo, a gravação é recusada com a mensagem).
+- **Auditoria:** inclusão/exclusão auditadas pelo EF (`LAB_MOV_AMOSTRAS` é tabela crítica).
+- **Sem "alterar":** o movimento errado se exclui e se lança de novo (como no legado, que só excluía).
+- **Testes:** `MovimentacaoTests` (5) e navegador `Movimentacao_saida_com_parametro_saldo_e_exclusao`.
+
+**Status:** ✅ — tarefa 7.1 concluída em 28/10/2026.

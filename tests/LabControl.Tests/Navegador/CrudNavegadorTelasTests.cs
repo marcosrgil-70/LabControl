@@ -984,4 +984,47 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         await Assertions.Expect(p.Locator("#Impressora")).ToHaveValueAsync(ImpressoraDoTeste.Argox);
         Assert.Empty(s.ErrosJs);
     }
+
+    /// <summary>T23 (7.1): busca pelo número, saída recusada por saldo (modal reaberto), saída com parâmetro, histórico e exclusão.</summary>
+    [Fact]
+    public async Task Movimentacao_saida_com_parametro_saldo_e_exclusao()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var (amostra, _, _, _) = await c.AmostraComResultadoAsync(await c.HojeAsync());   // saldo 3
+        await using var s = await app.EntrarAsync(c, comProfissional: true);
+        var p = s.Pagina;
+
+        await s.IrAsync("/Movimentacao");
+        await Assertions.Expect(p.Locator("#avisoFiltro")).ToBeVisibleAsync();
+        await p.FillAsync("#Numero", amostra.NrAmostra);
+        await p.ClickAsync("#filtroMovimentacao button[type=submit]");
+        await p.ClickAsync($"a[href='/Movimentacao/Amostra/{amostra.IdLabHistAmostras}'] >> nth=0");
+        await Assertions.Expect(p.Locator("#saldoAtual")).ToHaveTextAsync("3");
+
+        await p.ClickAsync("#botaoNovoMovimento");
+        await p.FillAsync("#movQtde", "5");
+        await Assertions.Expect(p.Locator("#avisoSaldo")).ToBeVisibleAsync();
+        await p.FillAsync("#movJustificativa", "Consumo para análise");
+        await p.CheckAsync("#parametrosSaida input[type=checkbox] >> nth=0");
+        await p.ClickAsync("#botaoGravarMovimento");
+        // recusa: o modal volta aberto com a mensagem e o que foi digitado
+        await Assertions.Expect(p.Locator("#errosMovimento")).ToContainTextAsync("Saldo insuficiente da amostra para esta saída (saldo atual: 3).");
+        await Assertions.Expect(p.Locator("#modalMovimento")).ToBeVisibleAsync();
+        await Assertions.Expect(p.Locator("#movJustificativa")).ToHaveValueAsync("Consumo para análise");
+        await Assertions.Expect(p.Locator("#parametrosSaida input[type=checkbox] >> nth=0")).ToBeCheckedAsync();
+
+        await p.FillAsync("#movQtde", "1");
+        await p.ClickAsync("#botaoGravarMovimento");
+        Assert.Equal("Saída registrada.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#saldoAtual")).ToHaveTextAsync("2");
+        await Assertions.Expect(p.Locator("#historicoMovimentos tbody tr")).ToHaveCountAsync(2);
+        await Assertions.Expect(p.Locator("#historicoMovimentos tbody")).ToContainTextAsync("Consumo para análise");
+
+        // a entrada do recebimento não tem botão de excluir; a saída tem
+        await Assertions.Expect(p.Locator("#historicoMovimentos tbody button[type=submit]")).ToHaveCountAsync(1);
+        await p.ClickAsync("#historicoMovimentos tbody button[type=submit]");
+        Assert.Equal("Movimentação excluída.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#saldoAtual")).ToHaveTextAsync("3");
+        Assert.Empty(s.ErrosJs);
+    }
 }

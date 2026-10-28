@@ -1,0 +1,159 @@
+@model MovimentacaoAmostraVM
+@using LabControl.Services
+@inject IEmpresaContexto Usuario
+@{
+    ViewData["Title"] = $"Movimentação — amostra {Model.NrAmostra}";
+    var novo = Model.Novo;
+    var podeIncluir = Usuario.TemPermissao("MOVIMENTACAO.INCLUIR");
+    var podeExcluir = Usuario.TemPermissao("MOVIMENTACAO.EXCLUIR");
+    var reabrir = !ViewData.ModelState.IsValid; // recusa da gravação: o modal volta aberto com o que foi digitado
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-2">
+        <li class="breadcrumb-item"><a asp-action="Index">Movimentação de amostras</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.NrAmostra</li>
+    </ol>
+</nav>
+
+<div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+    <h5 class="mb-0 font-monospace">Amostra @Model.NrAmostra</h5>
+    @if (podeIncluir)
+    {
+        <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalMovimento" id="botaoNovoMovimento">
+            <i class="bi bi-plus-lg me-1"></i>Nova movimentação
+        </button>
+    }
+</div>
+
+@if (!Model.UltimaRevisao)
+{
+    <div class="alert alert-info py-2 small"><i class="bi bi-info-circle me-1"></i>Esta é uma revisão antiga. A movimentação é da amostra física: vale para todas as revisões.</div>
+}
+
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <div class="row g-2 small">
+            <div class="col-md-4"><span class="text-body-secondary">Cliente</span><div>@Model.Cliente</div></div>
+            <div class="col-md-4"><span class="text-body-secondary">Produto</span><div>@Model.Produto</div></div>
+            <div class="col-6 col-md-2"><span class="text-body-secondary">Lote</span><div>@(Model.Lote ?? "—")</div></div>
+            <div class="col-6 col-md-2"><span class="text-body-secondary">Embalagem</span><div>@Model.Embalagem</div></div>
+            <div class="col-6 col-md-2"><span class="text-body-secondary">Fabricação</span><div>@(Model.Fabricacao ?? "—")</div></div>
+            <div class="col-6 col-md-2"><span class="text-body-secondary">Validade</span><div>@(Model.Validade ?? "—")</div></div>
+            <div class="col-md-2 ms-md-auto text-md-end">
+                <span class="text-body-secondary">Saldo atual</span>
+                <div class="fs-5 fw-semibold @(Model.Saldo == 0 ? "text-danger" : "")" id="saldoAtual" data-saldo="@Model.Saldo.ToString(System.Globalization.CultureInfo.InvariantCulture)">@MovimentacaoService.Qtde(Model.Saldo)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h6 class="mb-2">Histórico</h6>
+<div class="table-responsive border rounded">
+    <table class="table table-sm align-middle mb-0" id="historicoMovimentos">
+        <thead><tr><th>Data/hora</th><th>Tipo</th><th class="text-end">Quantidade</th><th>Justificativa</th><th>Parâmetros atendidos</th><th>Profissional</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var m in Model.Movimentos)
+            {
+                var saida = m.Tipo == EntradaSaida.Saida;
+                <tr>
+                    <td class="small text-nowrap">@m.DataMov.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td class="small text-nowrap">
+                        <span class="badge @(saida ? "text-bg-warning" : "text-bg-success")">@(saida ? "Saída" : "Entrada")</span>
+                        @if (m.Automatica) { <span class="badge text-bg-light border ms-1" title="Gerada no recebimento da amostra">recebimento</span> }
+                    </td>
+                    <td class="small text-end">@(saida ? "−" : "+")@MovimentacaoService.Qtde(m.Qtde)</td>
+                    <td class="small">@m.Justificativa</td>
+                    <td class="small">@string.Join(", ", m.Parametros)</td>
+                    <td class="small">@m.Profissional</td>
+                    <td class="text-end">
+                        @if (podeExcluir && !m.Automatica)
+                        {
+                            <form method="post" asp-action="Excluir" asp-route-id="@m.Id" asp-route-idAmostra="@Model.Id"
+                                  data-confirmar="Excluir esta movimentação (@(saida ? "saída" : "entrada") de @MovimentacaoService.Qtde(m.Qtde))? O saldo será recalculado.">
+                                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash me-1"></i>Excluir</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (Model.Movimentos.Count == 0)
+            {
+                <tr><td colspan="7" class="text-center text-body-secondary small py-3">Nenhuma movimentação.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (podeIncluir)
+{
+    <div class="modal fade" id="modalMovimento" tabindex="-1" aria-labelledby="tituloMovimento" data-abrir="@(reabrir ? "true" : "false")">
+        <div class="modal-dialog modal-lg">
+            <form method="post" asp-action="Incluir" class="modal-content" id="formMovimento">
+                <input type="hidden" name="IdAmostra" value="@Model.Id" />
+                <div class="modal-header py-2"><h6 class="modal-title" id="tituloMovimento">Nova movimentação — amostra @Model.NrAmostra</h6><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+                <div class="modal-body">
+                    @if (reabrir)
+                    {
+                        <div asp-validation-summary="All" class="alert alert-danger py-2 small mb-2" id="errosMovimento"></div>
+                    }
+                    <div class="row g-2">
+                        <div class="col-sm-4">
+                            <label class="form-label small mb-0" for="movData">Data/hora <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="DataMov" id="movData" value="@novo.DataMov?.ToString("yyyy-MM-ddTHH:mm")" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-sm-4">
+                            <span class="form-label small mb-0 d-block">Tipo <span class="text-danger">*</span></span>
+                            <div class="btn-group btn-group-sm w-100" role="group" aria-label="Tipo">
+                                <input type="radio" class="btn-check" name="Tipo" id="movSaida" value="Saida" checked="@(novo.Tipo == EntradaSaida.Saida)" />
+                                <label class="btn btn-outline-warning" for="movSaida">Saída</label>
+                                <input type="radio" class="btn-check" name="Tipo" id="movEntrada" value="Entrada" checked="@(novo.Tipo == EntradaSaida.Entrada)" />
+                                <label class="btn btn-outline-success" for="movEntrada">Entrada complementar</label>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label small mb-0" for="movQtde">Quantidade <span class="text-danger">*</span></label>
+                            <input name="Qtde" id="movQtde" value="@novo.Qtde" class="form-control form-control-sm" inputmode="decimal" required />
+                            <div class="form-text text-warning d-none" id="avisoSaldo">Maior que o saldo atual (@MovimentacaoService.Qtde(Model.Saldo)).</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small mb-0" for="movJustificativa">Justificativa <span class="text-danger" data-so-saida>*</span></label>
+                            <input name="Justificativa" id="movJustificativa" value="@novo.Justificativa" class="form-control form-control-sm" maxlength="250"
+                                   placeholder="Ex.: consumo para análise, envio a outro laboratório, devolução ao cliente" />
+                        </div>
+                    </div>
+                    <div class="mt-3" id="parametrosSaida">
+                        <div class="small fw-semibold mb-1">Parâmetros atendidos por esta saída</div>
+                        @if (Model.Parametros.Count == 0)
+                        {
+                            <div class="small text-body-secondary">A amostra não tem testes.</div>
+                        }
+                        else
+                        {
+                            <div class="border rounded p-2" style="max-height: 35vh; overflow-y: auto">
+                                @foreach (var p in Model.Parametros)
+                                {
+                                    <div class="form-check small">
+                                        <input type="checkbox" class="form-check-input" name="Testes" value="@p.IdTeste" id="teste@(p.IdTeste)" checked="@novo.Testes.Contains(p.IdTeste)" />
+                                        <label class="form-check-label" for="teste@(p.IdTeste)">
+                                            @p.Parametro <span class="text-body-secondary">— @p.TipoAnalise</span>
+                                            @if (p.JaAtendido) { <span class="badge text-bg-light border ms-1" title="Indicado em movimentação anterior">já atendido</span> }
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="botaoGravarMovimento"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/movimentacao.js" asp-append-version="true"></script>
+}

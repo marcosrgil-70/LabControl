@@ -42,4 +42,4 @@ Movimentos de revisões > 0 são **descartados** (eram entradas duplicadas); dep
   - as entradas automáticas duplicadas das revisões são descartadas;
   - movimento manual de revisão vai para a raiz (code-review 4.6);
   - saldos iguais aos do legado.
-- **A fazer (7.1, T23):** tela de movimentação (saídas, saldo insuficiente, entrada automática não excluível).
+- **Feito na 7.1 (28/10/2026, T23):** tela de movimentação (entrada complementar, saída com parâmetros, exclusão dos manuais); o serviço trava a linha do saldo antes de conferir (duas saídas simultâneas não deixam o saldo negativo) e recusa excluir a entrada que deixaria o saldo negativo (RN-06.15). Pendência 31: a trava no próprio `TG_MOV_BI`.

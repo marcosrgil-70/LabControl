@@ -14,7 +14,7 @@ public partial class LabMovAmostra : IPorEmpresa
     public int IdLabMovAmostras { get; set; }
     public int IdEmpresas { get; set; }
     public int IdLabHistAmostras { get; set; }
-    /// <summary><c>DATA_MOV</c> — Preenchida pelo banco na inclusão.</summary>
+    /// <summary><c>DATA_MOV</c> — Preenchida pelo banco quando vazia: relida após incluir.</summary>
     public DateTime DataMov { get; set; }
     public decimal Qtde { get; set; }
     public EntradaSaida ES { get; set; }

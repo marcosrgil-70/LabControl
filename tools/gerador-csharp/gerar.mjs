@@ -84,6 +84,7 @@ const GERADAS = {
   LAB_HIST_AMOSTRAS: { ANO_AMOSTRA: 'fixo', COD_AMOSTRA: 'fixo', NR_AMOSTRA: 'calc', ID_PRODUTOS: 'add',
     ID_PEDIDOS_VENDA: 'add', DT_VALIDADE: 'calc', DT_FABRICACAO: 'calc' },
   LAB_HIST_AMOSTRAS_TESTES: { DT_PREVISTA: 'add' },
+  LAB_MOV_AMOSTRAS: { DATA_MOV: 'add' },   // T23: data/hora informada (padrão agora)
   LAB_RESULTADOS_PARAM: { RESULTADO_FORMATADO: 'calc', ESPECIF_FORMATADA: 'calc' },
   LAB_BOLETIM_ANALISES: { COD_BOLETIM: 'add', DT_BOLETIM: 'add' },
   LAB_RELATORIO_ENSAIO: { NR_RELATORIO: 'fixo', ANO_RELATORIO: 'fixo' },

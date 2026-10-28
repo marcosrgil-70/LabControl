@@ -19,7 +19,7 @@ public partial class LabMovAmostraConfiguration : IEntityTypeConfiguration<LabMo
         b.Property(e => e.IdLabMovAmostras).HasColumnName("ID_LAB_MOV_AMOSTRAS");
         b.Property(e => e.IdEmpresas).HasColumnName("ID_EMPRESAS");
         b.Property(e => e.IdLabHistAmostras).HasColumnName("ID_LAB_HIST_AMOSTRAS");
-        b.Property(e => e.DataMov).HasColumnName("DATA_MOV").HasColumnType("datetime").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
+        b.Property(e => e.DataMov).HasColumnName("DATA_MOV").HasColumnType("datetime").PreenchidaPeloBancoNaInclusao();
         b.Property(e => e.Qtde).HasColumnName("QTDE").HasPrecision(15, 4);
         b.Property(e => e.ES).HasColumnName("E_S").HasConversion(EnumBanco<EntradaSaida>.Conversor);
         b.Property(e => e.Justificativa).HasColumnName("JUSTIFICATIVA").HasMaxLength(250);
