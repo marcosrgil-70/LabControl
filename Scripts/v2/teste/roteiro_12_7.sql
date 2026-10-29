@@ -289,6 +289,16 @@ CALL T_OK('7', 'metodologia acreditada = "CONT. TOTAL: ISO 4833"',
 CALL SP_EMITIR_BOLETIM(@BOL, @FUNC, 'boletins/teste.pdf', REPEAT('a', 64));
 CALL T_OK('7', 'boletim emitido (DH_EMISSAO preenchido)',
           (SELECT DH_EMISSAO IS NOT NULL FROM LAB_BOLETIM_ANALISES WHERE ID_LAB_BOLETIM_ANALISES = @BOL), NULL);
+-- pendência 34 (decisão do usuário, 29/10/2026): com boletim emitido só a troca do status passa (descarte por reprovação)
+SELECT ID_AMOSTRAS_STATUS INTO @ST_ORIG FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = @AMO;
+SELECT ID_AMOSTRAS_STATUS INTO @ST_OUTRO FROM AMOSTRAS_STATUS WHERE ID_EMPRESAS = @EMP AND ID_AMOSTRAS_STATUS <> @ST_ORIG ORDER BY ID_AMOSTRAS_STATUS LIMIT 1;
+UPDATE LAB_HIST_AMOSTRAS SET ID_AMOSTRAS_STATUS = @ST_OUTRO WHERE ID_LAB_HIST_AMOSTRAS = @AMO;
+CALL T_OK('7', 'amostra com boletim emitido aceita a troca só do status',
+          (SELECT ID_AMOSTRAS_STATUS FROM LAB_HIST_AMOSTRAS WHERE ID_LAB_HIST_AMOSTRAS = @AMO) = @ST_OUTRO, NULL);
+CALL T_ESPERA_ERRO('7', 'amostra com boletim emitido: status junto com outra coluna',
+     CONCAT('UPDATE LAB_HIST_AMOSTRAS SET ID_AMOSTRAS_STATUS = ', @ST_ORIG, ', NR_LOTE = ''X'' WHERE ID_LAB_HIST_AMOSTRAS = ', @AMO),
+     'Amostra com boletim emitido: gere uma revisão da amostra.');
+UPDATE LAB_HIST_AMOSTRAS SET ID_AMOSTRAS_STATUS = @ST_ORIG WHERE ID_LAB_HIST_AMOSTRAS = @AMO;
 
 -- ---------------------------------------------------------------------
 -- 8. Revisão da amostra → amostra R01 + resultado rev 1 + boletim rev 1

@@ -22,8 +22,6 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
     public const string MensagemNaoEncontrado = "O boletim não foi encontrado (pode ter sido excluído).";
     public const string MensagemEmitido = "Este boletim foi emitido. Não é permitido alterar ou excluir.";
     public const string MensagemRevisaoAntiga = "Revisão antiga do boletim é somente leitura.";
-    /// <summary>Amostras oferecidas para um boletim novo: entregues nos últimos 400 dias, como o legado (ajustável na pesquisa).</summary>
-    public const int DiasAmostras = 400;
 
     // ------------------------------------------------------------------ consulta
 
@@ -51,7 +49,8 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
     /// <summary>Pesquisa de amostras (T29) restrita às que podem ter boletim: última revisão, com resultado.</summary>
     public async Task<AmostraListaVM> PesquisarAmostrasAsync(AmostraFiltroVM f, bool inicial)
     {
-        if (inicial) f.APartirDe = (await db.HojeAsync()).AddDays(-DiasAmostras);
+        // período padrão da empresa (Parâmetros da Empresa), como as outras listas — pendência 33 (era 400 dias fixos)
+        if (inicial) f.APartirDe = await amostras.APartirDePadraoAsync();
         (f.SoUltima, f.ApenasComResultado, f.OrdenarPorNumero) = (true, true, true);
         return await amostras.ListarAsync(f);
     }

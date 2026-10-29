@@ -88,5 +88,4 @@ public sealed class LocalizacaoVM
     /// <summary>Status "REPROVADA - DESCARTADA" existe na empresa (a pergunta só aparece se existir).</summary>
     public bool TemStatusReprovada { get; set; }
     /// <summary>A última revisão tem boletim emitido: o status não muda por aqui (o banco recusa; gere revisão da amostra).</summary>
-    public bool UltimaTemBoletimEmitido { get; set; }
 }

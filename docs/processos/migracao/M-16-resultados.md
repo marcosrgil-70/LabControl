@@ -36,4 +36,7 @@
 - **63** datas iniciais corrigidas; **60** parâmetros com teste de outra amostra (**51** religados ao equivalente, **9** mantidos sem equivalente único); **31** testes repetidos no mesmo resultado fundidos (**6** com valores diferentes — o descartado está na anomalia).
 - ~60 s.
 
-**Status:** ✅ implementada na tarefa 5.1 (27/10/2026); conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`).
+## Ano digitado errado (29/10/2026, pendência 36 — decisão do usuário)
+`Conversoes.AnoDigitadoErrado`, antes da regra das datas invertidas: se uma das datas do parâmetro tem ano impossível (antes de 2010 — o legado começa em 2013 — ou depois de hoje) e a outra não, troca pelo ano da outra (ou o vizinho, na virada do ano) quando o intervalo fica coerente (início ≤ resultado, até 60 dias); cada correção vira anomalia. Ano impossível sem como corrigir também vira anomalia ("corrigir pela T26"). Na migração da 9.1: **16** anos corrigidos (0171, 0201, 0207, 0217, 0218, 1971, 2007, 2107, 2201, 2917…) e **57** datas invertidas (eram 63: 6 eram ano errado); sobrou 1 caso com as duas datas em 0320. Testes: `MigracaoConversoesTests.Ano_digitado_errado_no_resultado`.
+
+**Status:** ✅ implementada na tarefa 5.1 (27/10/2026); conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`); ano digitado errado na 9.1 (29/10/2026).

@@ -111,6 +111,26 @@ public static class Conversoes
     /// itálico e sublinhado; <c>\'hh</c> em cp1252 e <c>\uN</c>. Sem texto (só parágrafos vazios) → null. Texto que não
     /// começa com <c>{\rtf</c> vira um parágrafo por linha. Lança <see cref="FormatException"/> se o RTF estiver truncado.
     /// </summary>
+    /// <summary>
+    /// Ano digitado errado no resultado do legado (pendência 36, decisão do usuário em 29/10/2026 — ex.: 0171-10-04,
+    /// 1971-10-09, 2107-…): uma das datas tem ano impossível (antes de 2010 — o legado começa em 2013 — ou depois de hoje)
+    /// e a outra não; o ano da outra (ou o vizinho, na virada do ano) dá um intervalo coerente — início ≤ resultado,
+    /// até 60 dias → corrige. Sem candidato coerente, fica como está (a migração lista).
+    /// </summary>
+    public static (DateOnly Inicio, DateOnly Resultado, bool Corrigiu) AnoDigitadoErrado(DateOnly inicio, DateOnly resultado, DateOnly hoje)
+    {
+        bool Impossivel(DateOnly d) => d.Year < 2010 || d > hoje;
+        static bool Coerente(DateOnly i, DateOnly r) => i <= r && r.DayNumber - i.DayNumber <= 60;
+        static DateOnly? NoAno(DateOnly d, int ano) => DateOnly.TryParseExact($"{ano:0000}-{d.Month:00}-{d.Day:00}", "yyyy-MM-dd", out var x) ? x : null;
+        if (Impossivel(inicio) && !Impossivel(resultado))
+            foreach (var ano in new[] { resultado.Year, resultado.Year - 1 })
+                if (NoAno(inicio, ano) is { } i && Coerente(i, resultado)) return (i, resultado, true);
+        if (Impossivel(resultado) && !Impossivel(inicio))
+            foreach (var ano in new[] { inicio.Year, inicio.Year + 1 })
+                if (NoAno(resultado, ano) is { } r && Coerente(inicio, r) && r <= hoje) return (inicio, r, true);
+        return (inicio, resultado, false);
+    }
+
     public static string? RtfParaHtml(string? rtf)
     {
         if (string.IsNullOrWhiteSpace(rtf)) return null;

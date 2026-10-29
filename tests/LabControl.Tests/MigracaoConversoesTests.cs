@@ -76,4 +76,18 @@ public class MigracaoConversoesTests
     [InlineData(null, "BOLETIM")]
     public void Tipo_de_documento_do_legado(string? legado, string esperado) =>
         Assert.Equal(esperado, LabControl.Services.Migracao.Etapas.M12ProdutosAnalisesProposta.TipoDocumento(legado));
+
+    // pendência 36: os casos reais do legado (2017) e os que não podem ser corrigidos
+    [Theory]
+    [InlineData("0171-10-04", "2017-10-09", "2017-10-04", "2017-10-09", true)]
+    [InlineData("0201-10-02", "2017-10-06", "2017-10-02", "2017-10-06", true)]
+    [InlineData("1971-10-09", "2017-10-11", "2017-10-09", "2017-10-11", true)]
+    [InlineData("2017-10-03", "2107-10-05", "2017-10-03", "2017-10-05", true)]
+    [InlineData("0171-12-30", "2018-01-02", "2017-12-30", "2018-01-02", true)]    // virada do ano
+    [InlineData("2017-10-09", "2017-10-11", "2017-10-09", "2017-10-11", false)]   // datas boas
+    [InlineData("1971-03-09", "2017-10-11", "1971-03-09", "2017-10-11", false)]   // ano trocado daria 7 meses: fica
+    [InlineData("0171-10-04", "0201-10-09", "0171-10-04", "0201-10-09", false)]   // as duas impossíveis: fica
+    public void Ano_digitado_errado_no_resultado(string inicio, string resultado, string inicioOk, string resultadoOk, bool corrigiu) =>
+        Assert.Equal((DateOnly.Parse(inicioOk), DateOnly.Parse(resultadoOk), corrigiu),
+            Conversoes.AnoDigitadoErrado(DateOnly.Parse(inicio), DateOnly.Parse(resultado), new DateOnly(2026, 10, 29)));
 }

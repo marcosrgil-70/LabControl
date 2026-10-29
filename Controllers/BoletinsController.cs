@@ -128,7 +128,7 @@ public sealed class BoletinsController(BoletimService boletins, EnvioBoletimServ
         return RedirectToAction(nameof(Editar), new { id = r.Valor });
     }
 
-    /// <summary>T29 para a T27: só amostras que podem ter boletim (última revisão, com resultado, 400 dias).</summary>
+    /// <summary>T29 para a T27: só amostras que podem ter boletim (última revisão, com resultado, período padrão da empresa).</summary>
     [HttpGet, Permissao("BOLETINS.CONSULTAR")]
     public async Task<IActionResult> Pesquisa(AmostraFiltroVM filtro, bool inicial = false) =>
         PartialView("~/Views/Amostras/_Pesquisa.cshtml", await boletins.PesquisarAmostrasAsync(filtro, inicial));

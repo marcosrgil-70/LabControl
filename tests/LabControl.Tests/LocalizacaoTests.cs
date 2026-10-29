@@ -120,21 +120,27 @@ public class LocalizacaoTests
 
     /// <summary>Code-review 7.3: amostra com boletim emitido não muda de status pelo descarte (o banco recusaria e o descarte se perderia).</summary>
     [Fact]
-    public async Task Descarte_por_reprovacao_de_amostra_com_boletim_emitido_e_recusado_com_mensagem()
+    public async Task Descarte_por_reprovacao_de_amostra_com_boletim_emitido_muda_so_o_status()
     {
+        // pendência 34 (decisão do usuário, 29/10/2026): o banco aceita a troca só do status; o boletim emitido não muda
         await using var c = await Cenario.CriarAsync();
         var s = Servico(c);
         var (amo, _, bol) = await c.AmostraComBoletimAsync(await c.HojeAsync());
         Assert.True((await c.Procedures.EmitirBoletimAsync(bol.IdLabBoletimAnalises, "boletins/x.pdf", new string('a', 64))).Sucesso);
         var agora = await AgoraAsync(c);
-        Assert.True((await s.CarregarAsync(amo.IdLabHistAmostras))!.UltimaTemBoletimEmitido);
 
         var vm = Arquivo(amo.IdLabHistAmostras, agora.AddHours(-1));
         (vm.Status, vm.DtHrDescarte, vm.MarcarReprovada) = (SituacaoArquivo.Descartada, agora, true);
         var r = await s.GravarAsync(vm);
-        Assert.StartsWith("A amostra tem boletim emitido: o status não pode ser mudado aqui", r.Mensagem);
-        vm.MarcarReprovada = false;
-        Assert.True((await s.GravarAsync(vm)).Sucesso);   // só o descarte passa
+        Assert.True(r.Sucesso, r.Mensagem);
+        Assert.Equal(LocalizacaoService.StatusReprovadaDescartada,
+            await c.Db.VwLabAmostras.AsNoTracking().Where(a => a.IdLabHistAmostras == amo.IdLabHistAmostras).Select(a => a.StatusAmostra).SingleAsync());
+        var b = await c.Db.LabBoletimAnalises.AsNoTracking().SingleAsync(x => x.IdLabBoletimAnalises == bol.IdLabBoletimAnalises);
+        Assert.Equal(("boletins/x.pdf", new string('a', 64)), (b.ArquivoPdf, b.HashPdf));
+        Assert.NotNull(b.DhEmissao);
+        // outra alteração da amostra emitida continua exigindo revisão
+        await Assert.ThrowsAnyAsync<MySqlConnector.MySqlException>(() =>
+            c.Db.LabHistAmostras.Where(a => a.IdLabHistAmostras == amo.IdLabHistAmostras).ExecuteUpdateAsync(x => x.SetProperty(a => a.NrLote, "OUTRO")));
     }
 
     [Fact]

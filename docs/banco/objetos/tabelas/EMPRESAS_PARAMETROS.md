@@ -81,6 +81,7 @@ Notas do script: _envio do boletim por e-mail (8.3, configurado pelo usuário na
 - `ID_LAB_PROPOSTAS_STATUS_ENVCLI`: ao mudar a proposta para esse status a trigger grava `DT_ENVIO_CLIENTE`.
 - `ID_AMOSTRAS_STATUS_RESULTADOS`: legado do filtro da tela de Resultados/Etiquetas (no v2 vale `AMOSTRAS_STATUS.PERMITE_RESULTADO`).
 - `EXIGE_RESP2_BOLETIM` é verificado por `SP_EMITIR_BOLETIM`.
+- `DIAS_PESQUISA_PADRAO` também vale para a pesquisa de amostras de Resultados e Boletins (pendência 33, 29/10/2026).
 - Envio de e-mail (8.3, D-26): `SMTP_*` e `EMAIL_*` editados na T05 › E-mail; `SMTP_SERVIDOR` vazio desliga o envio; `SMTP_SENHA` cifrada pela aplicação (Data Protection) — nunca gravar em texto puro; modelos nulos = padrão do `ConfiguracaoEmailService` (marcadores {boletim} {amostra} {cliente} {empresa}).
 - `DIAS_PESQUISA_PADRAO` (365) é o período inicial dos filtros de consulta (Delphi: `Data_Servidor - 365`).
 

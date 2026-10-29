@@ -89,7 +89,6 @@ public sealed class LocalizacaoService(LabDbContext db, IEmpresaContexto ctx, Am
             (a.NrAmostra, a.ClienteNome, a.ClienteCpfCnpj, a.ProdutoDescricao, a.StatusAmostra, a.UltimaRevisao);
         vm.ProfissionalDescarte = l?.Profissional;
         vm.TemStatusReprovada = await StatusReprovadaAsync() is not null;
-        vm.UltimaTemBoletimEmitido = await UltimaRevisao(raiz).Select(x => x.TemBoletimEmitido).SingleAsync() > 0;
         return vm;
     }
 
@@ -125,12 +124,10 @@ public sealed class LocalizacaoService(LabDbContext db, IEmpresaContexto ctx, Am
                 return Resultado.Erro("Seu usuário não está vinculado a um profissional nesta empresa (cadastro de usuários): o descarte registra quem fez.");
         }
         int? statusReprovada = null;
-        var ultima = await UltimaRevisao(raiz.Value).Select(x => new { x.StatusAmostra, x.TemBoletimEmitido }).SingleAsync();
+        var ultima = await UltimaRevisao(raiz.Value).Select(x => new { x.StatusAmostra }).SingleAsync();
         if (vm.MarcarReprovada && vm.Status == SituacaoArquivo.Descartada)
         {
-            // o TG_AMOSTRAS_BU não deixa mudar amostra com boletim emitido (code-review 7.3): avisa antes, sem perder o descarte
-            if (ultima.TemBoletimEmitido > 0)
-                return Resultado.Erro("A amostra tem boletim emitido: o status não pode ser mudado aqui (gere uma revisão da amostra). Desmarque a opção para registrar só o descarte.", nameof(vm.MarcarReprovada));
+            // com boletim emitido o TG_AMOSTRAS_BU aceita a troca só do status (pendência 34): o boletim não muda
             statusReprovada = await StatusReprovadaAsync() ?? throw new InvalidOperationException("Status REPROVADA - DESCARTADA não existe na empresa.");
         }
         // desfazer o descarte não devolve o status anterior da amostra (não é guardado): avisa

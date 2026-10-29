@@ -19,7 +19,8 @@ Migração do sistema **Delphi 7 + Firebird 2.5** (`C:\Project\Laboratorio`) par
     - **T06 Auditoria** (eventos, diferença campo a campo, logins, CSV, histórico da amostra);
     - revisão da fase (`/simplify` + `/code-review high`);
     - a T28 (Relatório de Ensaio) foi **dispensada** pelo usuário.
-  - **Testes:** suíte inteira **296/296** (~3 min); roteiro SQL do banco **74/74**.
+  - **Fase 9, 9.1 (29/10/2026):** decisões 33, 34 e 36 aplicadas, `MySqlConnector` atualizado (37) e **migração completa em banco limpo** (74/74 conferências; relatório de anomalias para revisar com o laboratório).
+  - **Testes:** suíte inteira **304/304** (~3 min); roteiro SQL do banco **76/76**.
 - **Dúvidas respondidas em 29/10/2026:**
   - 1: T28 dispensada;
   - 2: e-mail configurado pelo usuário em Parâmetros da Empresa;
@@ -28,7 +29,6 @@ Migração do sistema **Delphi 7 + Firebird 2.5** (`C:\Project\Laboratorio`) par
 - **A fazer:**
   - **5.4:** layout do PDF do boletim com os 3 boletins reais (numérico com expoente, descritivo, com revisão ou dois responsáveis) — aguarda o laboratório;
   - **Fase 9:**
-    - 9.1: migração completa em banco limpo; antes, decidir as pendências 33, 34 e 36 e atualizar o `MySqlConnector` (37);
     - 9.2: homologação guiada;
     - 9.3: `/security-review`, backup e virada.
 - **Pendências abertas:** [00-PLANO-EXECUCAO.md › Pendências registradas](00-PLANO-EXECUCAO.md#pendências-registradas-a-executar).
@@ -38,7 +38,7 @@ Migração do sistema **Delphi 7 + Firebird 2.5** (`C:\Project\Laboratorio`) par
     - 25: os 3 boletins reais;
     - 38: teste real do e-mail;
     - 12: trocar a senha `root` do MySQL.
-  - Dependem de decisão: 33, 34 e 36.
+    - 39: revisar o relatório de anomalias da migração.
 ## Organização
 | Pasta | Conteúdo | Quantidade |
 |---|---|---|
@@ -54,7 +54,7 @@ Migração do sistema **Delphi 7 + Firebird 2.5** (`C:\Project\Laboratorio`) par
 | Doc | Conteúdo |
 |---|---|
 | [banco/10-ANALISE-FIREBIRD.md](banco/10-ANALISE-FIREBIRD.md) | O que existe no legado: tabelas, volumes, relações, procedures, triggers, views, anomalias |
-| [banco/11-MODELO-MYSQL.md](banco/11-MODELO-MYSQL.md) | Modelo v2, decisões D-01…D-26, mapeamento Firebird → MySQL |
+| [banco/11-MODELO-MYSQL.md](banco/11-MODELO-MYSQL.md) | Modelo v2, decisões D-01…D-27, mapeamento Firebird → MySQL |
 | [banco/12-PROCEDURES-REVISOES.md](banco/12-PROCEDURES-REVISOES.md) | Erros das procedures de revisão/numeração e a correção, com roteiro de teste |
 | [banco/13-MIGRACAO-DADOS.md](banco/13-MIGRACAO-DADOS.md) | Etapas M-01…M-18 e conferências da migração |
 | [banco/objetos/README.md](banco/objetos/README.md) | Índice dos 152 objetos com criticidade e finalidade |

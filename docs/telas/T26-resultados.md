@@ -14,7 +14,7 @@
 ## 1. Cabeçalho (grupo "Amostra")
 | Campo | Regra |
 |---|---|
-| Nº da amostra* | só amostras da empresa, **última revisão**, com status que **permite resultado** (`AMOSTRAS_STATUS.PERMITE_RESULTADO`; legado: `EMPRESAS_PARAMETROS.ID_AMOSTRAS_STATUS_RESULTADOS`) e entregues nos últimos 400 dias (como o legado; filtro ajustável). Colunas: amostra (com R), produto, tipo de análise. **O legado não filtrava a empresa aqui.** |
+| Nº da amostra* | só amostras da empresa, **última revisão**, com status que **permite resultado** (`AMOSTRAS_STATUS.PERMITE_RESULTADO`; legado: `EMPRESAS_PARAMETROS.ID_AMOSTRAS_STATUS_RESULTADOS`) e entregues no período padrão de pesquisa da empresa (`DIAS_PESQUISA_PADRAO`; o legado usava 400 dias fixos — pendência 33, 29/10/2026; filtro ajustável). Colunas: amostra (com R), produto, tipo de análise. **O legado não filtrava a empresa aqui.** |
 | Nome da amostra, Tipo da amostra, Tipo de análise | só leitura |
 | Revisão | só leitura |
 
@@ -77,7 +77,7 @@ Atalho novo: **Fila de análises** (`VW_LAB_TESTES_PENDENTES`) — testes sem re
 ## Implementação (tarefa 5.2, 27/10/2026)
 - **Arquivos:** `Controllers/ResultadosController.cs`, `Services/ResultadoService.cs`, `ViewModels/ResultadoVM.cs`, `Views/Resultados/Index.cshtml` e `Form.cshtml`, `wwwroot/js/resultados.js`, `Infra/ResultadoTexto.cs` (texto do banco → impresso, `1,0e2` → `1,0 × 10²`; reaproveitado no PDF da 5.4).
 - **Consulta** (resultados × `VW_LAB_AMOSTRAS`, filtros cliente/proposta/amostra/entrega a partir de/só última revisão) e **Fila de análises** (`VW_LAB_TESTES_PENDENTES`, por data prevista, vencidos em vermelho, "Lançar").
-- **Novo resultado:** componente T29 com `data-url="/Resultados/Pesquisa"` (permissão `RESULTADOS.CONSULTAR`; só última revisão e status que permite resultado; 400 dias na 1ª abertura). `/Resultados/Amostra/{id}` abre o resultado vigente se já existe; recusa revisão antiga ou status que não permite.
+- **Novo resultado:** componente T29 com `data-url="/Resultados/Pesquisa"` (permissão `RESULTADOS.CONSULTAR`; só última revisão e status que permite resultado; período padrão da empresa na 1ª abertura — pendência 33). `/Resultados/Amostra/{id}` abre o resultado vigente se já existe; recusa revisão antiga ou status que não permite.
 - **Formulário:** um cartão por teste da amostra; pendentes com "Lançar" e **"Lançar todos"** (início = entrega, resultado = hoje, analista = profissional do usuário se executa análise). Numérico × descritivo esconde o outro grupo; trocar o tipo do resultado troca o da especificação. Prévia ao digitar no formato do boletim; depois de gravar, o texto relido do banco com o expoente sobrescrito.
 - **Regras no serviço:** digitador = profissional do usuário; datas (início ≥ entrega, resultado ≥ início e ≤ hoje do servidor); valor com vírgula (`^-?\d+(,\d+)?$`) obrigatório no numérico; tipo obrigatório no descritivo; símbolos `<` `>` `≤` `≥` `~`; analista que executa análise; teste da amostra. Mensagens no campo (`Linhas[i].Campo`).
 - **Travas:** revisão antiga e boletim emitido deixam só consulta; excluir parâmetro recusado se estiver num boletim; "Excluir todos" só na revisão 0 sem boletim; `UQ_RESPAR_TESTE`/`UQ_RES_REV` com mensagem amigável (`ErrosMySql`).

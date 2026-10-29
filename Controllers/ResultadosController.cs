@@ -87,7 +87,7 @@ public sealed class ResultadosController(ResultadoService resultados) : Controll
         return RedirectToAction(nameof(Editar), new { id = r.Valor });
     }
 
-    /// <summary>T29 para a T26: só amostras que podem receber resultado (última revisão, status que permite, 400 dias).</summary>
+    /// <summary>T29 para a T26: só amostras que podem receber resultado (última revisão, status que permite, período padrão da empresa).</summary>
     [HttpGet, Permissao("RESULTADOS.CONSULTAR")]
     public async Task<IActionResult> Pesquisa(AmostraFiltroVM filtro, bool inicial = false) =>
         PartialView("~/Views/Amostras/_Pesquisa.cshtml", await resultados.PesquisarAmostrasAsync(filtro, inicial));

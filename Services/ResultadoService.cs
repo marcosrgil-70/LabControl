@@ -18,8 +18,6 @@ public sealed partial class ResultadoService(LabDbContext db, IEmpresaContexto c
     public const string MensagemNaoEncontrado = "O resultado não foi encontrado (pode ter sido excluído).";
     public const string MensagemBoletimEmitido = "Resultado com boletim emitido: para alterar, gere uma revisão do resultado.";
     public const string MensagemRevisaoAntiga = "Revisão antiga do resultado é somente leitura.";
-    /// <summary>Amostras oferecidas para lançar: entregues nos últimos 400 dias, como o legado (filtro ajustável na pesquisa).</summary>
-    public const int DiasAmostras = 400;
     private static readonly System.Globalization.CultureInfo PtBr = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
 
     // ------------------------------------------------------------------ consulta
@@ -59,7 +57,8 @@ public sealed partial class ResultadoService(LabDbContext db, IEmpresaContexto c
     /// <summary>Pesquisa de amostras (T29) restrita às que podem receber resultado: última revisão, status que permite.</summary>
     public async Task<AmostraListaVM> PesquisarAmostrasAsync(AmostraFiltroVM f, bool inicial)
     {
-        if (inicial) f.APartirDe = (await db.HojeAsync()).AddDays(-DiasAmostras);
+        // período padrão da empresa (Parâmetros da Empresa), como as outras listas — pendência 33 (era 400 dias fixos)
+        if (inicial) f.APartirDe = await amostras.APartirDePadraoAsync();
         (f.SoUltima, f.ApenasPermiteResultado, f.OrdenarPorNumero) = (true, true, true);
         return await amostras.ListarAsync(f);
     }

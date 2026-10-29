@@ -19,7 +19,7 @@ Sistema de gestão do laboratório (propostas, recebimento de amostras, resultad
 | 6 | Proposta completa (revisão, PDF, contrato) e pedido de venda | ✅ |
 | 7 | Movimentação e localização de amostras | ✅ |
 | 8 | 6 relatórios gerenciais (tela, PDF, CSV), envio do boletim por e-mail, consulta de auditoria | ✅ (Relatório de Ensaio dispensado pelo usuário) |
-| 9 | Migração completa, homologação e virada | ⬜ próxima: 9.1 |
+| 9 | Migração completa, homologação e virada | 🟨 9.1 migração em banco limpo ✅ (74/74 conferências); próxima: 9.2 homologação com o laboratório |
 
 Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md).
 
@@ -49,7 +49,7 @@ Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md)
 3. Aponte o user-secret para `Database=labcontrol_migracao` e entre com `ADMINISTRADOR` / `Admin123` (ou um usuário migrado com a senha provisória digitada na T07).
 
 ## Testes
-`dotnet test tests/LabControl.Tests` — suíte inteira (**296 testes, ~3 min**, 29/10/2026), inclusive a migração real contra o `DBMAIS.FDB` quando ele existe na máquina e o serviço do Firebird está iniciado. Só as telas no navegador: `--filter "FullyQualifiedName~Navegador"`. Não rodar com o `dotnet run` aberto (trava o build). Ver [P26](docs/processos/P26-testes-ponta-a-ponta.md).
+`dotnet test tests/LabControl.Tests` — suíte inteira (**304 testes, ~3 min**, 29/10/2026), inclusive a migração real contra o `DBMAIS.FDB` quando ele existe na máquina e o serviço do Firebird está iniciado. Só as telas no navegador: `--filter "FullyQualifiedName~Navegador"`. Não rodar com o `dotnet run` aberto (trava o build). Ver [P26](docs/processos/P26-testes-ponta-a-ponta.md).
 
 ## Documentação
 - [docs/README.md](docs/README.md) — índice: arquitetura, banco (um MD por objeto), telas, processos, regras, migração.

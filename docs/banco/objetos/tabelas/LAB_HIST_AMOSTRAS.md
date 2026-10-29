@@ -124,7 +124,7 @@ Notas do script: _Fabricação/Validade podem ser PARCIAIS (só mês/ano, só an
 
 ## Triggers
 - [`TG_AMOSTRAS_BI`](../triggers/TG_AMOSTRAS_BI.md) — BEFORE INSERT: **Regra central do recebimento**: consistência com a proposta (empresa, cliente, item, última revisão, status), proteção da data de entrega, número com ano do servidor, pedido de venda, datas parciais e `NR_AMOSTRA`.
-- [`TG_AMOSTRAS_BU`](../triggers/TG_AMOSTRAS_BU.md) — BEFORE UPDATE: Travas de alteração da amostra (revisão antiga, boletim emitido, resultados, movimentação), datas parciais e `NR_AMOSTRA`.
+- [`TG_AMOSTRAS_BU`](../triggers/TG_AMOSTRAS_BU.md) — BEFORE UPDATE: Travas de alteração da amostra (revisão antiga, boletim emitido — exceto a troca só do status, D-27 —, resultados, movimentação), datas parciais e `NR_AMOSTRA`.
 - [`TG_AMOSTRAS_BD`](../triggers/TG_AMOSTRAS_BD.md) — BEFORE DELETE: Exclusão só da revisão 0, sem resultados e sem movimentação manual.
 - [`TG_AMOSTRAS_AI`](../triggers/TG_AMOSTRAS_AI.md) — AFTER INSERT: Entrada automática no estoque (só revisão 0) + log de inclusão.
 - [`TG_AMOSTRAS_AU`](../triggers/TG_AMOSTRAS_AU.md) — AFTER UPDATE: Atualiza a quantidade da entrada automática + log de alteração.

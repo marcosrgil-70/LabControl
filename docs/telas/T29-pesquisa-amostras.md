@@ -33,7 +33,7 @@ Nº da amostra (com revisão) · data de entrega · cliente · produto · status
   - `data-abrir="/Amostras/Editar/{id}"`: navegar depois de escolher;
   - `data-url="/Resultados/Pesquisa"`: action da tela que abre (5.2), com a permissão de consulta dela; padrão `/Amostras/Pesquisa`.
 - **Escolha** (duplo clique ou "Selecionar"): dispara `amostra-selecionada` `{ id, nrAmostra }` no botão. A tela decide se usa a raiz ou a última revisão.
-- **Permissão:** `AMOSTRAS.CONSULTAR`, a da T22. Cada tela que adota o componente tem a própria action de pesquisa com a permissão dela, devolvendo a mesma partial: T26 → `ResultadosController.Pesquisa` (`RESULTADOS.CONSULTAR`; sempre última revisão + status que permite resultado; 400 dias na 1ª abertura).
+- **Permissão:** `AMOSTRAS.CONSULTAR`, a da T22. Cada tela que adota o componente tem a própria action de pesquisa com a permissão dela, devolvendo a mesma partial: T26 → `ResultadosController.Pesquisa` (`RESULTADOS.CONSULTAR`; sempre última revisão + status que permite resultado; período padrão da empresa na 1ª abertura, pendência 33).
 - **T22:** botão "Pesquisa avançada" na consulta.
 
 **Status:** ✅ concluída na tarefa 4.4 (23/10/2026); usada pela T26 desde a 5.2; entra nas T24/T27 quando elas forem feitas.

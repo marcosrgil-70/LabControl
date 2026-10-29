@@ -14,7 +14,7 @@
 ## 1. Cabeçalho (grupo "Amostra")
 | Campo | Coluna | Regra |
 |---|---|---|
-| Amostra* | `ID_LAB_HIST_AMOSTRAS` | amostras da empresa, **última revisão**, **com resultado** (última revisão do resultado), dos últimos 400 dias; colunas Nº amostra, Produto, Lote |
+| Amostra* | `ID_LAB_HIST_AMOSTRAS` | amostras da empresa, **última revisão**, **com resultado** (última revisão do resultado), do período padrão de pesquisa da empresa (o legado usava 400 dias — pendência 33); colunas Nº amostra, Produto, Lote |
 | Nome da amostra / Lote | só leitura | — |
 | Boletim nº | `COD_BOLETIM` | = número base da amostra (sem " Rnn"), gerado pelo banco; só leitura |
 | Revisão | `REVISAO` | só leitura |
@@ -74,7 +74,7 @@ Filtros: cliente (filtra as amostras), amostra, "exibir a partir de" (−365 dia
 ## Implementação (tarefa 5.3, 27/10/2026)
 - **Decisões do usuário (27/10/2026):** QuestPDF (dúvida 10); PDFs numa pasta do servidor por empresa/ano (dúvida 6); layout a partir do `frxRboletin`, validado com boletins reais na 5.4 (dúvida 5).
 - **Arquivos:** `Controllers/BoletinsController.cs`, `Services/BoletimService.cs`, `Services/Boletins/BoletimPdf.cs` (`BoletimDocumento` + layout QuestPDF; licença Community definida aqui), `Infra/ArmazemBoletins.cs`, `ViewModels/BoletimVM.cs`, `Views/Boletins/Index.cshtml`, `Form.cshtml`, `_Disponiveis.cshtml`, `wwwroot/js/boletins.js`. Pacote `QuestPDF 2026.9.1`.
-- **Consulta** (`VW_LAB_BOLETINS`: cliente, amostra/boletim, a partir de, emitido sim/não, só última revisão). **Novo boletim** pelo componente T29 (`data-url="/Boletins/Pesquisa"`, permissão `BOLETINS.CONSULTAR`, só última revisão com resultado, 400 dias); `/Boletins/Amostra/{id}` abre o boletim vigente da amostra física, se existe.
+- **Consulta** (`VW_LAB_BOLETINS`: cliente, amostra/boletim, a partir de, emitido sim/não, só última revisão). **Novo boletim** pelo componente T29 (`data-url="/Boletins/Pesquisa"`, permissão `BOLETINS.CONSULTAR`, só última revisão com resultado, período padrão da empresa — pendência 33); `/Boletins/Amostra/{id}` abre o boletim vigente da amostra física, se existe.
 - **Montagem:** na inclusão, cabeçalho + parâmetros marcados numa transação (gerador = profissional do usuário; código pela trigger). Depois: "Concluir seleção" (grid da esquerda = `VW_LAB_RESULTADOS` do resultado vinculado, fora do boletim), ▲/▼ (ordem renumerada 1..n; novos no fim, acreditados primeiro), "Retirar", "Atualizar textos". Texto congelado com a mesma regra do `PR_REVISAO_BOLETIM`. Textos sugeridos: observação da verificação, `FN_OBS_METODOS(amostra, 1/0)`, `TEXTO_PADRAO_LEGENDA`.
 - **Responsáveis:** profissionais com `ASSINA_BOLETIM`; diferentes entre si; 2º exigido para emitir se `EXIGE_RESP2_BOLETIM`.
 - **PDF:** cabeçalho da empresa (logo, CNPJ, endereço, `CABECALHO_LAUDO`, nº de acreditação se `FN_ACREDITADO ≥ 1`), boletim nº + revisão, cliente, endereço do laudo, contato, proposta, pedido, amostra (lote, fabricação/validade parciais, recebimento, coletor/coleta, observação), período de análise, tabela na ordem (expoente sobrescrito; a unidade sai da coluna do resultado para a própria; especificação só se houver; acreditados com "(*)"), metodologias, observações, legenda, cidade e data, responsáveis com assinatura (**só no emitido**), rodapé (`RODAPE_LAUDO`, código e página). Imagem inválida (logo/assinatura) não derruba a emissão: sai sem ela e vai para o log.

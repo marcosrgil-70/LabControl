@@ -86,7 +86,7 @@ export const G = {
   TG_PRODAN_AD: { desc: 'Recalcula os totais da proposta após excluir análise.', legado: '`TotalizarAnalises`' },
   TG_PEDVEN_BI: { desc: 'Número sequencial do pedido de venda (por empresa, não anual) quando não informado.', legado: '`SP_GET_ULT_PED_VENDA`' },
   TG_AMOSTRAS_BI: { desc: '**Regra central do recebimento**: consistência com a proposta (empresa, cliente, item, última revisão, status), proteção da data de entrega, número com ano do servidor, pedido de venda, datas parciais e `NR_AMOSTRA`.', legado: '`LAB_HIST_AMOSTRAS_BI0` + `SP_GET_COD_AMOSTRA` + validações de `act_GravarExecute` (Delphi)', critico: 2 },
-  TG_AMOSTRAS_BU: { desc: 'Travas de alteração da amostra (revisão antiga, boletim emitido, resultados, movimentação), datas parciais e `NR_AMOSTRA`.', legado: '`LAB_HIST_AMOSTRAS_BU0/AU0`', critico: 2 },
+  TG_AMOSTRAS_BU: { desc: 'Travas de alteração da amostra (revisão antiga, boletim emitido — exceto a troca só do status, D-27 —, resultados, movimentação), datas parciais e `NR_AMOSTRA`.', legado: '`LAB_HIST_AMOSTRAS_BU0/AU0`', critico: 2 },
   TG_AMOSTRAS_BD: { desc: 'Exclusão só da revisão 0, sem resultados e sem movimentação manual.', legado: '`LAB_HIST_AMOSTRAS_AD0/AD1`', critico: 1 },
   TG_AMOSTRAS_AI: { desc: 'Entrada automática no estoque (só revisão 0) + log de inclusão.', legado: '`LAB_HIST_AMOSTRAS_AI0` (criava entrada em toda revisão) + `AI1`', critico: 2 },
   TG_AMOSTRAS_AU: { desc: 'Atualiza a quantidade da entrada automática + log de alteração.', legado: '`LAB_HIST_AMOSTRAS_AU0/AU1`', critico: 1 },

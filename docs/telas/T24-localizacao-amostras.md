@@ -78,4 +78,7 @@ Filtros: cliente, produto, nº da amostra, status (Arquivada/Descartada/sem loca
 9. Parâmetros por movimento com busca quadrática → `ToLookup`; a T24 sem filtro não consulta mais o relógio do banco.
 10. "Arquivar em lote" voltava para a página 1 sem as datas do filtro → página e datas mantidas.
 
-**Status:** ✅ — tarefa 7.2 concluída em 28/10/2026; revisada na 7.3 (as 2.494 localizações do legado já estavam migradas, M-15).
+## Descarte por reprovação com boletim emitido (29/10/2026, pendência 34)
+Decisão do usuário: o banco aceita, em amostra com boletim emitido, a troca **só do status** (D-27). A opção "mudar o status para REPROVADA - DESCARTADA" voltou a valer também nesse caso (antes ficava desabilitada); o boletim emitido não muda. Teste: `LocalizacaoTests.Descarte_por_reprovacao_de_amostra_com_boletim_emitido_muda_so_o_status`.
+
+**Status:** ✅ — tarefa 7.2 concluída em 28/10/2026; revisada na 7.3 (as 2.494 localizações do legado já estavam migradas, M-15); descarte com boletim emitido liberado em 29/10/2026.

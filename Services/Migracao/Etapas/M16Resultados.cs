@@ -84,7 +84,8 @@ public sealed class M16Resultados : IEtapaMigracao
 
         // resultado novo → (parâmetro, método) do legado → parâmetros novos, na ordem (origem da revisão seguinte)
         var porResultado = new Dictionary<int, Dictionary<(int, int), List<int>>>();
-        int datas = 0, outraAmostra = 0, repetidos = 0, totalPar = 0;
+        int datas = 0, anos = 0, outraAmostra = 0, repetidos = 0, totalPar = 0;
+        var hoje = DateOnly.FromDateTime(DateTime.Today);
         for (var camada = 0; camada < (cadeias.Count == 0 ? 0 : cadeias.Max(cd => cd.Count)); camada++)
         {
             var linhas = cadeias.Where(cd => cd.Count > camada).Select(cd => (Cadeia: cd, R: cd[camada])).ToList();
@@ -159,6 +160,14 @@ public sealed class M16Resultados : IEtapaMigracao
                     var k = ocorrencia[par] = ocorrencia.GetValueOrDefault(par) + 1;
                     int? origem = daOrigem is not null && daOrigem.TryGetValue(par, out var os) && os.Count >= k ? os[k - 1] : null;
                     var (inicio, fim) = (p.Data("DT_INICIAL")!.Value, p.Data("DT_RESULTADO")!.Value);
+                    if (Conversoes.AnoDigitadoErrado(inicio, fim, hoje) is { Corrigiu: true } certo)
+                    {
+                        anos++;
+                        c.Anomalia($"{onde}: ano digitado errado — início {inicio:dd/MM/yyyy} e resultado {fim:dd/MM/yyyy} gravados como {certo.Inicio:dd/MM/yyyy} e {certo.Resultado:dd/MM/yyyy}.");
+                        (inicio, fim) = (certo.Inicio, certo.Resultado);
+                    }
+                    else if (inicio.Year < 2010 || fim.Year < 2010 || inicio > hoje || fim > hoje)
+                        c.Anomalia($"{onde}: data com ano impossível ({inicio:dd/MM/yyyy} a {fim:dd/MM/yyyy}) sem como corrigir — migrada como está; corrigir pela T26 (revisão do resultado).");
                     if (fim < inicio)
                     {
                         datas++;
@@ -207,7 +216,7 @@ public sealed class M16Resultados : IEtapaMigracao
         c.Conferir("parâmetros com valor e sem texto formatado", 0,
             await c.Db.LabResultadosParam.CountAsync(p => p.ResultadoFormatado == null
                 && (p.TipoResultado ? p.VrResultado != null && p.VrResultado != "" : p.IdLabTiposResultados != null), ct));
-        c.Log($"{mapaRes.Count} resultados, {totalPar} parâmetros; {datas} data(s) inicial(is) corrigida(s), {repetidos} teste(s) repetido(s) no mesmo resultado.");
+        c.Log($"{mapaRes.Count} resultados, {totalPar} parâmetros; {datas} data(s) inicial(is) corrigida(s), {anos} ano(s) digitado(s) errado(s) corrigido(s), {repetidos} teste(s) repetido(s) no mesmo resultado.");
         return mapaRes.Count + totalPar;
     }
 
