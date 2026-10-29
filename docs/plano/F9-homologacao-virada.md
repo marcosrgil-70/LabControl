@@ -7,6 +7,15 @@
 
 ---
 
+### Antes de começar (situação em 29/10/2026)
+Fases 0–8 concluídas, menos a 5.4 (layout do boletim, aguarda os 3 boletins reais). Decidir/fazer antes da 9.1, porque mudam o que a migração grava ou o ambiente:
+- **Pendência 36:** 9 resultados do legado com o ano digitado errado (0171, 0201, 1971, 2107, 2201) — corrigir na M-16, como as 63 datas invertidas, ou depois pela T26.
+- **Pendência 34:** descarte por reprovação de amostra com boletim emitido (liberar no banco só a troca do status?).
+- **Pendência 33:** período padrão das pesquisas com os dados migrados (2013–2018).
+- **Pendência 37:** atualizar o `MySqlConnector` (aviso de vulnerabilidade NU1902) e rodar a suíte inteira e a migração.
+- **Pendência 27:** pasta dos boletins (`Boletins:Pasta`) e **chaves do Data Protection** guardadas no servidor e no backup.
+- Na 9.2, junto com o roteiro: pendências 21 (Argox), 22 e 28 (testes guiados), 38 (teste real do e-mail) e a 5.4 (boletins reais).
+
 ### 9.1 Migração completa em banco limpo
 - **Passos:** recriar `labcontrol_v2`; congelar o Firebird (cópia do `DBMAIS.FDB` da data); executar M-01 … M-18; todas as conferências do doc 13 §3; relatório de anomalias revisado com o usuário.
 - **Aceite:** 100% das conferências verdes ou justificadas por escrito.

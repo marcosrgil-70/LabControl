@@ -7,7 +7,7 @@ Sistema de gestão do laboratório (propostas, recebimento de amostras, resultad
 > **Onde estamos e o que vem a seguir:** [docs/00-PLANO-EXECUCAO.md](docs/00-PLANO-EXECUCAO.md) (bloco "Ponto de retorno",
 > checklist por fase, pendências e diário). Regras de trabalho: [CLAUDE.md](CLAUDE.md).
 
-## Situação (27/10/2026)
+## Situação (29/10/2026)
 | Fase | Entrega | Situação |
 |---|---|---|
 | 0 | Fundação: banco v2 pelos scripts, multiempresa, erros, auditoria, testes | ✅ |
@@ -15,11 +15,11 @@ Sistema de gestão do laboratório (propostas, recebimento de amostras, resultad
 | 2 | 20 cadastros auxiliares, geografia (IBGE + CEP), cadastro rápido "+" | ✅ |
 | 3 | Clientes, profissionais, produtos, parâmetros de análise, migração parte 1 | ✅ |
 | 4 | Migração parte 2, proposta essencial, **recebimento de amostras**, pesquisa, etiquetas | ✅ (faltam com o laboratório: impressão de teste na Argox e teste manual guiado) |
-| 5 | Migração parte 3, **resultados**, **boletim** (PDF com hash) | 🟨 5.1, 5.2, 5.3 e 5.5 prontas (migração completa, resultados, boletim, aceite e revisão de código); falta a 5.4 (layout do PDF com 3 boletins reais do laboratório) |
-| 6 | Proposta completa (revisão, PDF, contrato) e pedido de venda | 🟨 6.1 proposta completa e 6.2 pedidos de venda prontas; falta a 6.3 (revisão) |
-| 7 | Movimentação e localização de amostras | ⬜ |
-| 8 | Relatórios gerenciais, auditoria, e-mail | ⬜ |
-| 9 | Migração completa, homologação e virada | ⬜ |
+| 5 | Migração parte 3, **resultados**, **boletim** (PDF com hash) | 🟨 só falta a 5.4: layout do PDF com 3 boletins reais do laboratório |
+| 6 | Proposta completa (revisão, PDF, contrato) e pedido de venda | ✅ |
+| 7 | Movimentação e localização de amostras | ✅ |
+| 8 | 6 relatórios gerenciais (tela, PDF, CSV), envio do boletim por e-mail, consulta de auditoria | ✅ (Relatório de Ensaio dispensado pelo usuário) |
+| 9 | Migração completa, homologação e virada | ⬜ próxima: 9.1 |
 
 Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md).
 
@@ -30,7 +30,8 @@ Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md)
 | Dados | EF Core 9 + Pomelo MySQL, **sem migrations**: o schema é `Scripts/v2/*.sql` (entidades geradas por `tools/gerador-csharp`) |
 | Banco | MySQL 8.0 — regras críticas no banco (triggers e procedures: numeração, revisões, estoque, valores) |
 | Autenticação | Cookie + senha PBKDF2, bloqueio após 5 tentativas, troca obrigatória no 1º acesso |
-| Impressão | comprovante como página de impressão; etiquetas PPLB em RAW na térmica (Argox); **boletim em PDF (QuestPDF)**, emitido gravado numa pasta do servidor com SHA-256 |
+| Impressão | comprovante como página de impressão; etiquetas PPLB em RAW na térmica (Argox); **boletim, proposta, pedido e relatórios em PDF (QuestPDF)**; o boletim emitido fica numa pasta do servidor com SHA-256 |
+| E-mail | envio do boletim emitido por SMTP (MailKit), configurado por empresa em Parâmetros da Empresa › E-mail (senha cifrada pelo ASP.NET Data Protection) |
 | Testes | xUnit (serviços + banco `labcontrol_teste`) e Playwright (Edge sem janela) para as telas |
 
 ## Como rodar (desenvolvimento)
@@ -40,6 +41,7 @@ Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md)
 3. **Executar:** `dotnet run` (ou `rodar.bat`) → http://localhost:5180.
 4. **Login de desenvolvimento/testes:** `ADMINISTRADOR` / `Admin123` (acesso a tudo, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA"). Nunca em produção.
 5. **PDFs dos boletins emitidos:** pasta `Boletins:Pasta` do `appsettings.json` (padrão `storage/boletins`, fora do git). Em produção, uma pasta do servidor que **entra no backup** junto com o banco (o banco guarda só o caminho e o SHA-256).
+6. **E-mail:** cada empresa configura o servidor em *Parâmetros da Empresa › E-mail* (com "Enviar e-mail de teste"). Em produção, as chaves do Data Protection precisam ficar guardadas (pendência 27), senão a senha do e-mail tem de ser digitada de novo.
 
 ### Com os dados reais do legado
 1. `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`
@@ -47,7 +49,7 @@ Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md)
 3. Aponte o user-secret para `Database=labcontrol_migracao` e entre com `ADMINISTRADOR` / `Admin123` (ou um usuário migrado com a senha provisória digitada na T07).
 
 ## Testes
-`dotnet test tests/LabControl.Tests` — suíte inteira (~25–30 min; 253 testes (suíte inteira a reexecutar — pendência 29) em 27/10/2026), inclusive a migração real contra o `DBMAIS.FDB` quando ele existe na máquina. Só as telas no navegador: `--filter "FullyQualifiedName~Navegador"`. Não rodar com o `dotnet run` aberto (trava o build). Ver [P26](docs/processos/P26-testes-ponta-a-ponta.md).
+`dotnet test tests/LabControl.Tests` — suíte inteira (**296 testes, ~3 min**, 29/10/2026), inclusive a migração real contra o `DBMAIS.FDB` quando ele existe na máquina e o serviço do Firebird está iniciado. Só as telas no navegador: `--filter "FullyQualifiedName~Navegador"`. Não rodar com o `dotnet run` aberto (trava o build). Ver [P26](docs/processos/P26-testes-ponta-a-ponta.md).
 
 ## Documentação
 - [docs/README.md](docs/README.md) — índice: arquitetura, banco (um MD por objeto), telas, processos, regras, migração.

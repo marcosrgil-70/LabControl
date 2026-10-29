@@ -5,26 +5,83 @@
 
 ## ▶ PONTO DE RETORNO (29/10/2026)
 > **Resumo:**
-> - **Situação geral:** Fases 0 a 4, 6 e 7 **concluídas**; **Fase 8: 8.1 concluída em 29/10/2026** (os 6 relatórios gerenciais; suíte 281/282 de uma vez + o teste do recebimento isolado, que estourou 5 s com a máquina carregada); Fase 5 pronta **menos a 5.4** (layout do boletim com os boletins reais); **Fase 7 concluída em 28/10/2026** (7.1, 7.2 e a revisão 7.3). Última suíte inteira: **275/276** (3 min) — o único que não passou foi o `MigracaoTests`, porque o serviço do Firebird estava parado; com o Firebird de 32 bits iniciado, **`MigracaoTests` 2/2** (pendência 35 feita) → **276/276**.
-> - **O que foi feito em 28/10/2026:**
->   - **6.3 (revisão da Fase 6):** deadlock emissão × revisão de resultado corrigido (D-23: as rotinas travam só as linhas do próprio documento); `/code-review high` + conferência do nº do pedido = 11 achados, todos corrigidos (D-24: pedido concluído à mão, reaberto por revisão, volta a concluir sozinho na emissão; coluna `PEDIDOS_VENDA.CONCLUSAO_MANUAL`). Aplicado sem apagar dados no `labcontrol_v2` e no `labcontrol_migracao`.
->   - **7.1 (T23 Movimentação, `/Movimentacao`):** busca por cliente/proposta/número (sem filtro não lista); tela da amostra com o saldo da amostra física, histórico, "Nova movimentação" (entrada complementar ou saída; data retroativa, nunca futura; justificativa obrigatória na saída; parâmetros atendidos só na saída, com selo "já atendido") e exclusão só dos manuais. **Achados corrigidos:** duas saídas simultâneas deixavam o saldo negativo (o serviço agora trava a linha do saldo — o teste falha sem a trava) e excluir uma entrada complementar podia deixar o saldo negativo (recusado, RN-06.15). Detalhes em [T23 › Implementação](telas/T23-movimentacao-amostras.md#implementação-tarefa-71-28102026).
->   - **Pendências 31 e 32 (aprovadas pelo usuário, D-25):** o próprio banco trava a linha do saldo (`TG_MOV_BI`) e recusa excluir a entrada que deixaria o saldo negativo (`TG_MOV_BD`); o perfil sugerido RECEPÇÃO ganhou `LOCALIZACAO.CONSULTAR/INCLUIR/ALTERAR`. Roteiro SQL **74/74**; aplicado sem apagar dados no `labcontrol_v2` e no `labcontrol_migracao` (inclusive a permissão nas RECEPÇÕES existentes).
->   - **7.2 (T24 Localização, `/Localizacao`):** consulta com um filtro só (situação, caixa, datas…), "Arquivar amostra" pela pesquisa T29 (só sem localização), tela da amostra com Arquivo e Descarte (data não futura, descarte não antes do arquivo, profissional do usuário, descarte por reprovação muda o status da amostra), desfazer descarte (limpa data e profissional), arquivar em lote (não sobrescreve as já localizadas), excluir. A raiz é calculada no serviço (a tabela não tem trigger). Detalhes em [T24 › Implementação](telas/T24-localizacao-amostras.md#implementação-tarefa-72-28102026).
->   - **7.3 (revisão da Fase 7):** `/code-review high` de `3e7e3ba..HEAD` — 10 achados, 9 corrigidos, 1 sem mudança. Os dois mais graves: descarte por reprovação de amostra com boletim emitido falhava inteiro, e saída com parâmetros atendidos travava a edição da amostra no recebimento (1451). Lista em [T23 › Revisão](telas/T23-movimentacao-amostras.md#revisão-tarefa-73-28102026).
->   - **Teste manual do usuário (dados reais):** "não há amostras para testar revisão e resultado" era só o **filtro de data**: as amostras migradas vão de 01/02/2013 a 04/07/2018 e as listas mostram os últimos 365 dias (`DIAS_PESQUISA_PADRAO`) ou 400 dias fixos (pesquisa da T26/T27). Os dados estão todos no `labcontrol_migracao` (5.770 amostras, 5.345 resultados, 5.312 boletins, 2.359 propostas, 1.434 pedidos). Ver pendência 33.
+> - **Situação geral:**
+>   - **Fases 0 a 4, 6, 7 e 8 concluídas.**
+>   - Fase 5 pronta **menos a 5.4** (layout do boletim com os boletins reais).
+>   - Próxima: **Fase 9**.
+>   - Última suíte inteira: **296/296** (~3 min, com o Firebird de 32 bits iniciado para o `MigracaoTests`); roteiro SQL **74/74**.
+> - **O que foi feito em 29/10/2026 (Fase 8):**
+>   - **Dúvidas respondidas:**
+>     - 9: "somente amostras com pedido de venda" vem marcado;
+>     - 1: Relatório de Ensaio (T28) dispensado;
+>     - 2: o servidor de e-mail é configurado pelo usuário numa aba de Parâmetros da Empresa.
+>   - **8.1 relatórios T30-01…06** (tela, PDF e CSV do mesmo conjunto), comparados com o legado em 2017:
+>     - faturamento: 555 pedidos iguais; o legado inflava R$ 27.993,32 com linhas repetidas pela view e R$ 71,20 com revisões antigas;
+>     - o relatório de parâmetros do legado devolvia 0 linhas;
+>     - achado: 9 resultados com o ano digitado errado (pendência 36).
+>     - Detalhes em [T30-00](telas/T30-00-relatorios-padrao.md#comparação-com-o-legado--ano-de-2017-dbmaisfdb--labcontrol_migracao).
+>   - **8.2 dispensada.**
+>   - **8.3 e-mail do boletim:**
+>     - aba E-mail na T05 (servidor, porta, segurança, usuário, senha cifrada, remetente, cópia oculta, modelos com marcadores, e-mail de teste) — banco D-26;
+>     - "Enviar por e-mail" no boletim emitido (contato do resultado da proposta, PDF da emissão conferido pelo hash, evento `N` na auditoria e histórico).
+>   - **8.4 T06 Auditoria:**
+>     - eventos com filtros, resumo (motivo, login, destinatários) e link para a tela;
+>     - diferença campo a campo;
+>     - logins visíveis para os usuários da empresa (o ADMIN_GLOBAL vê todos);
+>     - CSV e histórico da amostra.
+>   - **8.5 revisão:**
+>     - `/simplify` (auxiliares únicos de CSV/PDF/e-mail/busca de cliente; login grava o usuário; menos consultas; pendência 30);
+>     - `/code-review high`: 9 achados, 6 corrigidos — o principal: o CSV neutraliza fórmulas do Excel.
+>     - Os detalhes de cada tarefa estão no [Diário](#9-diário-de-execução).
 > - **A fazer, em ordem:**
->   1. **Fase 9 → 9.1** migração completa em banco limpo + todas as conferências — **próxima tarefa** (ver [F9](plano/F9-homologacao-virada.md)); antes, decidir as pendências 33, 34 e 36 (mexem no que a migração grava) e fazer a 37 (`MySqlConnector`). **Fase 8 concluída em 29/10/2026** (8.1, 8.3, 8.4, 8.5; 8.2 dispensada).
->   2. **5.4** layout do PDF do boletim com os **3 boletins reais**, quando o laboratório enviar (dúvida 5 / pendência 25) — fecha a Fase 5. Os mesmos modelos servem para conferir os PDFs da proposta e do pedido.
->   4. **Fase 9:** migração completa em banco limpo, homologação guiada (pendências 22 e 28), `/security-review`, backup (pendência 27), virada.
+>   1. **Fase 9 → 9.1** migração completa em banco limpo — **próxima tarefa** (ver [F9](plano/F9-homologacao-virada.md#antes-de-começar-situação-em-29102026)). Antes, decidir as pendências **36**, **34** e **33** (mudam o que a migração grava) e fazer a **37** (`MySqlConnector`).
+>   2. **5.4** layout do PDF do boletim com os **3 boletins reais**, quando o laboratório enviar (pendência 25): um numérico com expoente, um descritivo, um com revisão ou dois responsáveis; PDF ou foto, numa pasta fora do repositório (ex.: `C:\Project\Modelos\`). Os mesmos modelos servem para os PDFs da proposta e do pedido.
+>   3. **9.2** homologação guiada (pendências 21, 22, 28 e 38) e **9.3** `/security-review`, backup (pendência 27: pasta dos boletins e chaves do Data Protection) e virada.
 > - **Pendências abertas** (detalhes na [tabela](#pendências-registradas-a-executar)):
->   - **decisão do usuário:** 33 (período padrão das pesquisas com os dados migrados), 34 (descarte por reprovação de amostra com boletim emitido) e **36** (9 resultados do legado com o ano digitado errado, achados na 8.1); **37** (atualizar o `MySqlConnector`, aviso de vulnerabilidade) e **38** (teste real do e-mail com a conta do laboratório). As 31 e 32 foram decididas e feitas em 28/10/2026;
->   - **usuário/laboratório:** 12 (trocar a senha `root` do MySQL), 21 (impressão de teste na Argox), 22 e 28 (testes manuais guiados das Fases 4 e 5), 25 (3 boletins reais); dúvida 8 do §7 (1, 2 e 9 respondidas em 29/10/2026);
->   - **técnicas a agendar:** 10 (carimbo de segurança da sessão, mudança no banco), 11 e 20 (só se necessário), 27 (pasta dos boletins na virada), 30 (melhorias menores no `/simplify` da 8.5).
-> - **Testes com dados reais:** banco `labcontrol_migracao` (migrado em 27/10/2026, com as rotinas da 6.3 aplicadas em 28/10/2026). Para subir o sistema nele sem mexer no user-secret: variável `ConnectionStrings__LabControl` = a connection string do user-secret trocando para `Database=labcontrol_migracao`, depois `dotnet run --launch-profile http` (http://localhost:5180). Login `ADMINISTRADOR` / `Admin123`; os outros usuários migrados entram com a senha provisória `Mudar@2026` e trocam no 1º acesso. **Nas pesquisas, ponha "Entrega de" 01/01/2013** (ou `DIAS_PESQUISA_PADRAO` = 5000 em `/Empresa/Parametros`). **Não rodar os testes com o sistema aberto** (o build fica travado).
-> - **Computador novo (27/10/2026):** user-secrets gravados (`ConnectionStrings:LabControl` → `labcontrol_v2`, `Firebird:Password`); Firebird **2.5 de 32 bits** em `C:\Program Files (x86)\Firebird\Firebird_2_5` (desde 28/10/2026; o de 64 bits foi desinstalado — a migração conecta por `localhost:3050`, a arquitetura não importa); serviços `FirebirdGuardianDefaultInstance` (automático) e `FirebirdServerDefaultInstance`, iniciar como administrador; Git e Node.js no PATH; cliente do MySQL em `C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe` (fora do PATH); **Python não instalado** (usar `node` nos scripts). Pouca memória: o Claude Code já encerrou o sistema em segundo plano por falta de memória — fechar programas pesados antes da suíte inteira.
-> - **Decisões do usuário em 27/10/2026:** 63 resultados do legado com data invertida → início = data do resultado; 7 boletins na amostra vizinha → amostra do resultado (5.1); **QuestPDF**, PDFs numa **pasta do servidor** (`Boletins:Pasta`, padrão `storage/boletins`, fora do git, entra no backup), layout do `frxRboletin` validado com boletins reais na 5.4 (dúvidas 5, 6 e 10); **6.1:** importar o contrato de **Word (.docx), HTML e TXT** (exige `PROPOSTAS.ALTERAR`) e PDF da proposta **com a página "Autorização de Serviço"** do legado (layout fino com os modelos reais, dúvida 5); **6.2:** revisão de boletim/resultado/amostra **reabre** o pedido concluído, botão **"Reabrir"** com motivo, PDF do pedido no modelo do `frx_PedVenda` (layout fino com os modelos reais); **regra nova:** todas as mensagens ao usuário em português do Brasil (CLAUDE.md, "Idioma das mensagens"). **28/10/2026 (6.3):** travas das rotinas só nas linhas do próprio documento (D-23); pedido concluído à mão, reaberto por revisão, volta a concluir sozinho na emissão (opção a, D-24).
-> - **Decisões tomadas na 7.1 (sem mudar o banco):** data/hora do movimento informada na tela (`DATA_MOV` enviada pelo EF — gerador `LAB_MOV_AMOSTRAS: { DATA_MOV: 'add' }`), retroativa permitida e futura recusada; sem "alterar" movimento (exclui e lança de novo, como o legado); parâmetros atendidos só na saída; "já atendido" comparado pelo parâmetro (vale entre revisões).
+>   - **decisão do usuário:**
+>     - 33: período padrão das pesquisas com os dados migrados;
+>     - 34: descarte por reprovação de amostra com boletim emitido;
+>     - 36: 9 resultados do legado com o ano errado.
+>   - **usuário/laboratório:**
+>     - 12: trocar a senha `root` do MySQL;
+>     - 21: impressão de teste na Argox;
+>     - 22 e 28: testes manuais guiados;
+>     - 25: 3 boletins reais;
+>     - 38: teste real do e-mail com a conta do laboratório;
+>     - dúvida 8 do §7 (dias úteis).
+>   - **técnicas:**
+>     - 37: `MySqlConnector`;
+>     - 27: pasta dos boletins e chaves do Data Protection na virada;
+>     - 10: carimbo de segurança da sessão, mudança no banco;
+>     - 11 e 20: só se necessário.
+> - **Testes com dados reais:**
+>   - Banco `labcontrol_migracao` (migrado em 27/10/2026; rotinas da 6.3, colunas de e-mail da 8.3 e logins acertados na 8.5 aplicados sem apagar dados).
+>   - Para subir o sistema nele sem mexer no user-secret: variável `ConnectionStrings__LabControl` = a connection string do user-secret trocando para `Database=labcontrol_migracao`, depois `dotnet run --launch-profile http` (http://localhost:5180).
+>   - Login `ADMINISTRADOR` / `Admin123`; os outros usuários migrados entram com a senha provisória `Mudar@2026` e trocam no 1º acesso.
+>   - **Nas pesquisas, ponha "Entrega de" 01/01/2013** (ou `DIAS_PESQUISA_PADRAO` = 5000 em `/Empresa/Parametros`). **Não rodar os testes com o sistema aberto** (o build fica travado).
+> - **Computador (desde 27/10/2026):**
+>   - user-secrets gravados (`ConnectionStrings:LabControl` → `labcontrol_v2`, `Firebird:Password`);
+>   - Firebird **2.5 de 32 bits** em `C:\Program Files (x86)\Firebird\Firebird_2_5` (serviços `FirebirdGuardianDefaultInstance` e `FirebirdServerDefaultInstance`, iniciar como administrador);
+>   - Git e Node.js no PATH;
+>   - cliente do MySQL em `C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe` (fora do PATH);
+>   - **Python não instalado** (usar `node` nos scripts);
+>   - pouca memória: fechar programas pesados antes da suíte inteira.
+> - **Decisões do usuário:**
+>   - **27/10/2026:**
+>     - 63 datas invertidas → início = data do resultado;
+>     - 7 boletins na amostra vizinha → amostra do resultado;
+>     - **QuestPDF** e PDFs numa **pasta do servidor** (`Boletins:Pasta`);
+>     - contrato importado de Word/HTML/TXT;
+>     - PDF da proposta com a Autorização de Serviço;
+>     - a revisão reabre o pedido concluído; botão "Reabrir" com motivo;
+>     - mensagens sempre em português do Brasil.
+>   - **28/10/2026:**
+>     - travas só nas linhas do próprio documento (D-23);
+>     - pedido concluído à mão volta a concluir sozinho (D-24);
+>     - saldo protegido no banco e RECEPÇÃO com localização (D-25).
+>   - **29/10/2026:**
+>     - dúvidas 1, 2 e 9 (acima);
+>     - e-mail por empresa na T05 (D-26).
 >
 > Histórico das tarefas, da mais antiga para a mais nova:
 - **Concluído:** **Fase 0 completa** (0.1 a 0.9, revisão com 9 achados corrigidos) — `labcontrol_v2` recriável (`.\Scripts\v2\recriar.ps1`); `LabDbContext` com 69 entidades geradas de `Scripts/v2` (`node tools/gerador-csharp/gerar.mjs`); filtro da empresa ativa + trava no `SaveChanges`; interceptor `@LC_*` + READ COMMITTED, `Resultado<T>`, `ErrosMySql`, `Procedures`, `ErroNegocioFilter`; auditoria na mesma transação; **deadlock da numeração corrigido** (`SP_PROXIMO_NUMERO`); código v1 em `Legacy/`; connection string em user-secrets; `Services/` e `ViewModels/` com as convenções; layout v2 limpo (sem sessão e sem links para telas v1); auditoria das procedures gravada pelo banco (`PR_AUDITAR`), número/revisão/empresa dos filhos garantidos pelas triggers; roteiro SQL 46/46; `dotnet test tests/LabControl.Tests` 36/36 no banco persistente **`labcontrol_teste`** (recriado sozinho quando os scripts mudam), incluindo os 12 passos do roteiro 12 §7 pela aplicação (`RoteiroTests`).

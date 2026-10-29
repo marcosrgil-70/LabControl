@@ -8,7 +8,9 @@
 | Dados | EF Core 9 + Pomelo MySQL; **sem migrations EF**: o schema é dos scripts `Scripts/v2/*.sql` (fonte da verdade) |
 | Banco | MySQL 8.0, banco `labcontrol_v2` |
 | Autenticação | Cookie Authentication (não mais sessão "manual"); senha PBKDF2 (`PasswordHasher<Usuario>`) |
-| Impressão | **Comprovante de recebimento:** página de impressão (decisão do usuário, 4.3). **Etiquetas:** comandos PPLB em RAW para a térmica Argox pelo spooler do servidor (`Infra/ImpressoraRaw.cs`, 4.5). **Boletim, proposta, pedido:** PDF gerado no servidor com **QuestPDF** (decisão do usuário, 27/10/2026; licença Community só abaixo de US$ 1 mi/ano, definida em `Services/Boletins/BoletimPdf.cs`). O boletim **emitido** é gravado numa pasta do servidor (`Boletins:Pasta`, `Infra/ArmazemBoletins.cs`) com o SHA-256 no banco; a reimpressão confere o hash (5.3) |
+| Impressão | **Comprovante de recebimento:** página de impressão (decisão do usuário, 4.3). **Etiquetas:** comandos PPLB em RAW para a térmica Argox pelo spooler do servidor (`Infra/ImpressoraRaw.cs`, 4.5). **Boletim, proposta, pedido e relatórios gerenciais:** PDF gerado no servidor com **QuestPDF** (decisão do usuário, 27/10/2026; licença Community só abaixo de US$ 1 mi/ano, definida uma vez na inicialização por `Infra/Pdf.Configurar`). O boletim **emitido** é gravado numa pasta do servidor (`Boletins:Pasta`, `Infra/ArmazemBoletins.cs`) com o SHA-256 no banco; a reimpressão confere o hash (5.3) |
+| E-mail e segredos | Envio do boletim emitido por SMTP (**MailKit**, `Infra/EnvioEmail.cs` atrás de `IEnvioEmail`, trocado por um falso nos testes). Servidor e remetente por empresa em `EMPRESAS_PARAMETROS` (T05 › E-mail, D-26); a senha é cifrada pelo **ASP.NET Data Protection** (`SetApplicationName("LabControl")` no Program.cs; onde guardar as chaves em produção: pendência 27) |
+| CSV | `Infra/Csv`: `;`, aspas, UTF-8 com BOM; célula que o Excel leria como fórmula (`= + - @`) sai com `'` na frente (relatórios, auditoria, migração) |
 | Testes | xUnit + banco MySQL de teste recriado pelos scripts (`labcontrol_teste`) + Playwright (Edge sem janela) para as telas ([P26](processos/P26-testes-ponta-a-ponta.md)) |
 
 ## 2. Estrutura de pastas (alvo)
@@ -23,7 +25,8 @@ LabControl/
 │   └── Migracao/    MigracaoService (Firebird → MySQL)
 ├── Infra/           EmpresaContexto (empresa/usuário/profissional do request), Permissao, Procedures, ErrosMySql,
 │                    Resultado, Textos (normalização e números pt-BR), HtmlSimples (limpeza do texto rico),
-│                    RelogioBanco (data/hora do MySQL), ImpressoraRaw (spooler do Windows), Menu
+│                    RelogioBanco (data/hora do MySQL), ImpressoraRaw (spooler do Windows), Menu,
+│                    Pdf (licença QuestPDF, imagem válida), Csv (CSV para o Excel, sem fórmula), EnvioEmail (SMTP/MailKit)
 ├── Controllers/     finos: validam, chamam Service, devolvem View/JSON
 ├── Views/           por controller + Shared/_Layout, Shared/Components (CRUD genérico)
 ├── Scripts/v2/      DDL + rotinas + triggers + views + seed  ← FONTE DA VERDADE DO SCHEMA

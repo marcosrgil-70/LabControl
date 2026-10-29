@@ -35,11 +35,13 @@ Os testes de serviço e os testes HTTP (`WebApplicationFactory`) provam regras, 
 | T29 Pesquisa de amostras (4.4) | `Pesquisa_de_amostras_seleciona_e_abre` | modal da T22, filtros, seleção abre a amostra |
 | T25 Etiquetas (4.5) | `Etiquetas_a_partir_do_recebimento_imprimem_na_escolhida` | do recebimento com a amostra marcada; impressora escolhida (impressora falsa `ImpressoraDoTeste` guarda os comandos); quantidade; sigilo; última impressora lembrada |
 | T30 Relatórios (8.1) | `Relatorios_visualizam_filtram_e_exportam` | período padrão, "somente com pedido" marcado e desmarcado (totais mudam), período invertido com a mensagem do legado, tabelas de resumo, PDF e CSV por requisição |
+| T05 E-mail + T27 envio (8.3) | `Email_configurado_na_empresa_envia_o_boletim_emitido` | sem configuração o envio avisa; aba E-mail recusa sem remetente (volta com o digitado), grava, a senha não volta para a tela, e-mail de teste; envio do boletim emitido com cópia (e-mail falso `EmailDoTeste` guarda as mensagens) e histórico de envios |
+| T06 Auditoria (8.4) | `Auditoria_filtra_mostra_a_diferenca_o_historico_da_amostra_e_exporta` | últimos 7 dias, filtro por ação e assunto, motivo da revisão no resumo, "Ver diferença" com o campo alterado destacado, CSV, aba Histórico da amostra com as duas revisões |
 
 ## 4. Como rodar
 ```powershell
 dotnet test tests/LabControl.Tests --filter "FullyQualifiedName~Navegador"   # só os de navegador (~6 min)
-dotnet test tests/LabControl.Tests                                            # suíte inteira (~17 min)
+dotnet test tests/LabControl.Tests                                            # suíte inteira (296 testes, ~3 min em 29/10/2026)
 ```
 > **Pendência 18 resolvida na 3.6 (23/10/2026):** o `MigracaoTests` (migração real, ~5 min de carga) rodava em paralelo com os outros e 16 testes estouravam 30 s esperando lock ao criar a empresa de teste. Agora ele está na coleção `ColecaoMigracao` (`DisableParallelization = true`): o xUnit o roda sozinho, depois das demais. Suíte inteira de uma vez: 186/186 em 17 min.
 > Com 8 GB de RAM, feche o Chrome antes: com pouca memória livre o Claude Code chegou a interromper a suíte.
