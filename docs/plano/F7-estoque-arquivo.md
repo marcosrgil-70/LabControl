@@ -35,13 +35,14 @@
   5. **Docs:** T24 (Implementação + Status), P13, RN-06 (06.11 a 06.14), matriz, plano (checklist, ponto de retorno, Diário).
 - **Dados reais para conferir:** o `labcontrol_migracao` tem as localizações migradas do legado (M-15); pesquisar com "Entrega de" 01/01/2013.
 
-### 7.3 Revisão (próxima)
+### 7.3 Revisão ✅
 - `/code-review` nível high (como nas Fases 5 e 6) de `3e7e3ba..HEAD` (7.1 + 7.2); corrigir os achados ou registrá-los como pendência.
 - Suíte inteira (`dotnet test tests/LabControl.Tests`, ~8 min) com o sistema fechado.
 - Conferir a definição de pronto abaixo e marcar a Fase 7 como completa no plano.
+- **Feito em 28/10/2026:** 10 achados, 9 corrigidos e 1 sem mudança — lista em [T23 › Revisão](../telas/T23-movimentacao-amostras.md#revisão-tarefa-73-28102026); suíte 275/276 (o teste da migração não rodou: serviço do Firebird parado — pendência 35); pendência 34 nova (status da amostra com boletim emitido no descarte).
 
 ## Definição de pronto
 - [x] Saldo nunca negativo — pela aplicação (7.1) e pelo próprio banco (pendência 31, D-25).
 - [x] Movimentos sempre na raiz (`TG_MOV_BI`, 7.1).
 - [x] Localização sempre na raiz (7.2, no serviço).
-- [ ] `/code-review` da Fase 7 sem achado aberto (7.3).
+- [x] `/code-review` da Fase 7 sem achado aberto (7.3).

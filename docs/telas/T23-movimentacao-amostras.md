@@ -65,4 +65,16 @@ Data, tipo (badge E/S), quantidade, justificativa, profissional, parâmetros, au
 - **Sem "alterar":** o movimento errado se exclui e se lança de novo (como no legado, que só excluía).
 - **Testes:** `MovimentacaoTests` (5) e navegador `Movimentacao_saida_com_parametro_saldo_e_exclusao`.
 
-**Status:** ✅ — tarefa 7.1 concluída em 28/10/2026.
+## Revisão (tarefa 7.3, 28/10/2026)
+`/code-review high` de `3e7e3ba..HEAD` — 10 achados, 9 corrigidos e 1 sem mudança (detalhes no Diário do plano):
+1. **Descarte por reprovação de amostra com boletim emitido** falhava inteiro (o `TG_AMOSTRAS_BU` não deixa mudar amostra com boletim emitido) → a opção fica desabilitada na tela e o serviço recusa antes, com mensagem; o descarte sozinho passa. Permitir mudar o status nesse caso é mudança no banco → pendência 34.
+2. **Saída com parâmetros atendidos travava a amostra no recebimento:** o `SP_AMOSTRA_GERAR_TESTES` apaga e regera os testes a cada gravação e a FK do `LAB_MOV_AMOSTRAS_PARAM` recusava (1451) → com saída que indicou parâmetros os testes não são regerados, e trocar proposta/produto/tipo de análise é recusado com mensagem ("exclua essas saídas antes…").
+3. **Desfazer descarte** não devolve o status anterior da amostra (não é guardado) → a mensagem avisa que o status continua "REPROVADA - DESCARTADA".
+4. **Localização simultânea** da mesma amostra dava "Já existe um registro… (UQ_LOCAL_AMO)" → mensagem própria no `ErrosMySql`.
+5. Perfil RECEPÇÃO nas empresas já existentes — **sem mudança**: a permissão foi dada direto no `labcontrol_v2` e no `labcontrol_migracao` (7.2); bancos novos e a migração da virada passam pelo `SP_INICIALIZAR_EMPRESA` novo.
+6–7. **Trava do saldo duplicada** (serviço + trigger) e SQL cru sem filtro de empresa → o serviço deixou a trava e a transação para o banco (D-25); só confere o saldo antes, pela entidade (filtro da empresa), para dar a mensagem com o saldo atual.
+8. `Minuto`/`RaizAsync` copiados nos dois serviços → `NoMinuto()` e `AmostraFisicaAsync()` em `Infra/RelogioBanco.cs`.
+9. Parâmetros por movimento com busca quadrática → `ToLookup`; a T24 sem filtro não consulta mais o relógio do banco.
+10. "Arquivar em lote" voltava para a página 1 sem as datas do filtro → página e datas mantidas.
+
+**Status:** ✅ — tarefa 7.1 concluída em 28/10/2026; revisada na 7.3.

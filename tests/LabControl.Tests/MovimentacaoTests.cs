@@ -161,4 +161,34 @@ public class MovimentacaoTests
         var r = await LabControl.Infra.ErrosMySql.CapturarAsync(() => c.Db.SaveChangesAsync());
         Assert.Equal("Esta entrada não pode ser excluída: o saldo da amostra ficaria negativo.", r.Mensagem);
     }
+
+    /// <summary>
+    /// Code-review 7.3: a saída com parâmetros atendidos aponta para os testes da amostra; regravar a amostra no recebimento
+    /// apagava e regerava os testes (FK 1451). Agora os testes ficam e só a troca de proposta/produto/tipo é recusada.
+    /// </summary>
+    [Fact]
+    public async Task Amostra_com_saida_de_parametro_continua_editavel_no_recebimento()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var amostras = new AmostraService(c.Db, c.Ativa, c.Procedures);
+        var nova = c.NovaAmostra(await c.HojeAsync());
+        c.Db.Add(nova);
+        await c.Db.SaveChangesAsync();
+        Assert.True((await c.Procedures.AmostraGerarTestesAsync(nova.IdLabHistAmostras)).Sucesso);
+        var testes = await c.Db.LabHistAmostrasTestes.Where(t => t.IdLabHistAmostras == nova.IdLabHistAmostras).Select(t => t.IdLabHistAmostrasTestes).OrderBy(x => x).ToListAsync();
+        Assert.True((await Servico(c).IncluirAsync(Saida(nova.IdLabHistAmostras, "1", testes[0]))).Sucesso);
+        c.Db.ChangeTracker.Clear();
+
+        var vm = (await amostras.CarregarAsync(nova.IdLabHistAmostras))!;
+        vm.NrLote = "LOTE NOVO";
+        var r = await amostras.GravarAsync(vm);
+        Assert.True(r.Sucesso, r.Mensagem);
+        Assert.Equal(testes, await c.Db.LabHistAmostrasTestes.Where(t => t.IdLabHistAmostras == nova.IdLabHistAmostras).Select(t => t.IdLabHistAmostrasTestes).OrderBy(x => x).ToListAsync());
+
+        var (proposta2, item2) = await PedidosVendaTests.OutraPropostaAsync(c);
+        vm = (await amostras.CarregarAsync(nova.IdLabHistAmostras))!;
+        (vm.IdLabPropostas, vm.IdLabPropostasProdutos) = (proposta2, item2);
+        Assert.Equal("A amostra tem saídas com parâmetros atendidos (Movimentação): exclua essas saídas antes de trocar a proposta, o produto ou o tipo de análise.",
+            (await amostras.GravarAsync(vm)).Mensagem);
+    }
 }

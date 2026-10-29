@@ -78,6 +78,7 @@ public static partial class ErrosMySql
     private static readonly Dictionary<string, string> Unicos = new(StringComparer.OrdinalIgnoreCase)
     {
         ["UQ_PAISES_NOME"] = "Já existe um país com este nome.",
+        ["UQ_LOCAL_AMO"] = "Esta amostra já foi localizada por outro usuário. Abra a amostra de novo para alterar.",
         ["UQ_ESTADOS_SIGLA"] = "Já existe um estado com esta sigla neste país.",
         ["UQ_CIDADES_IBGE"] = "Já existe uma cidade com este código IBGE.",
         ["UQ_EMPRESAS_COD"] = "Já existe uma empresa com este código.",

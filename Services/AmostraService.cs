@@ -228,6 +228,8 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
         if (atual is { UltimaRevisao: false }) return Resultado.Erro("Revisão antiga da amostra é somente leitura.");
         if (flags?.TemBoletimEmitido is > 0) return Resultado.Erro("Amostra com boletim emitido: para alterar, gere uma revisão da amostra.");
         var temResultado = flags?.TemResultado is > 0;
+        // saída da T23 com parâmetros atendidos aponta para os testes: eles não podem ser apagados e regerados (code-review 7.3)
+        var testesEmSaida = atual is not null && await db.LabMovAmostrasParam.AnyAsync(p => p.LabHistAmostraTeste.IdLabHistAmostras == atual.IdLabHistAmostras);
 
         // obrigatórios na ordem do Delphi (P09 › 7)
         if (vm.IdEntidades is not { } cliente) return Resultado.Erro("Cliente é obrigatório.", nameof(vm.IdEntidades));
@@ -265,6 +267,8 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
             return Resultado.Erro("O tipo de análise precisa ser um dos tipos das análises do produto na proposta.", nameof(vm.IdAnalisesTipo));
         if (temResultado && (atual!.IdLabPropostas != proposta || atual.IdLabPropostasProdutos != item || atual.IdAmostrasTipo != tipoAmostra || atual.IdAnalisesTipo != tipoAnalise))
             return Resultado.Erro("Existem resultados: tipo, proposta e produto da amostra não podem ser alterados (gere revisão).");
+        if (testesEmSaida && (atual!.IdLabPropostas != proposta || atual.IdLabPropostasProdutos != item || atual.IdAnalisesTipo != tipoAnalise))
+            return Resultado.Erro("A amostra tem saídas com parâmetros atendidos (Movimentação): exclua essas saídas antes de trocar a proposta, o produto ou o tipo de análise.");
         var digitador = atual?.IdEntidadesFuncDig ?? ctx.ProfissionalId;
         if (digitador is null)
             return Resultado.Erro("Seu usuário não está vinculado a um profissional (Usuários › profissional): o recebimento registra quem digitou.");
@@ -292,8 +296,8 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
             a.TxObservacao = HtmlSimples.Limpar(vm.TxObservacao);
             await db.SaveChangesAsync(); // inclusão: o banco numera (ano do servidor), entra no estoque e loga
 
-            // testes = análises do item da proposta; com resultado nunca são regerados (P09)
-            if (!temResultado)
+            // testes = análises do item da proposta; com resultado (P09) ou com saída que os indicou (T23) nunca são regerados
+            if (!temResultado && !testesEmSaida)
             {
                 var t = await procedures.AmostraGerarTestesAsync(a.IdLabHistAmostras);
                 if (!t.Sucesso) throw new ErroDeNegocioException(t.Mensagem!);

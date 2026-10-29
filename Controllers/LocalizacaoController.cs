@@ -44,7 +44,8 @@ public sealed class LocalizacaoController(LocalizacaoService localizacao) : Cont
         if (this.AplicarNoTempData(r))
             TempData[Mensagens.Sucesso] = $"{r.Valor.Arquivadas} amostra(s) arquivada(s)."
                 + (r.Valor.JaLocalizadas.Count == 0 ? "" : $" Já tinham localização (não alteradas): {string.Join(", ", r.Valor.JaLocalizadas)}.");
-        return RedirectToAction(nameof(Index), new { filtro.Cliente, filtro.Produto, filtro.Numero, filtro.Situacao, filtro.Caixa, filtro.Armario, filtro.Prateleira });
+        return RedirectToAction(nameof(Index), new { filtro.Cliente, filtro.Produto, filtro.Numero, filtro.Situacao, De = filtro.De?.ToString("yyyy-MM-dd"),
+            Ate = filtro.Ate?.ToString("yyyy-MM-dd"), filtro.Armario, filtro.Prateleira, filtro.Caixa, filtro.Pagina });
     }
 
     [HttpPost, Permissao("LOCALIZACAO.EXCLUIR")]
@@ -58,7 +59,11 @@ public sealed class LocalizacaoController(LocalizacaoService localizacao) : Cont
     private async Task<IActionResult> GravarAsync(LocalizacaoVM vm, string sucesso)
     {
         var r = await localizacao.GravarAsync(vm);
-        if (this.AplicarNoFormulario(r, sucesso)) return RedirectToAction(nameof(Amostra), new { id = vm.IdAmostra });
+        if (this.AplicarNoFormulario(r, sucesso))
+        {
+            if (r.Valor.Aviso is { } aviso) TempData[Mensagens.Sucesso] = $"{sucesso} {aviso}";
+            return RedirectToAction(nameof(Amostra), new { id = vm.IdAmostra });
+        }
         return await localizacao.CarregarAsync(vm.IdAmostra, vm) is { } tela ? View(nameof(Amostra), tela) : NotFound();
     }
 }

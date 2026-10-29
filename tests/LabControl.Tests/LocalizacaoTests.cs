@@ -50,7 +50,7 @@ public class LocalizacaoTests
 
         var ok = await s.GravarAsync(semData);
         Assert.True(ok.Sucesso, ok.Mensagem);
-        var l = await c.Db.LabLocalAmostras.AsNoTracking().SingleAsync(x => x.IdLabLocalAmostras == ok.Valor);
+        var l = await c.Db.LabLocalAmostras.AsNoTracking().SingleAsync(x => x.IdLabLocalAmostras == ok.Valor.Id);
         Assert.Equal(SituacaoArquivo.Descartada, l.Status);
         Assert.Equal(c.Ativa.ProfissionalId, l.IdEntidadesFuncDescarte);
         Assert.Equal(0, l.DtHrDescarte!.Value.Second);   // grava no minuto, como a tela mostra
@@ -68,9 +68,9 @@ public class LocalizacaoTests
 
         var r = await s.GravarAsync(Arquivo(rev.Valor.IdNova, agora.AddHours(-1)));
         Assert.True(r.Sucesso, r.Mensagem);
-        Assert.Equal(amo.IdLabHistAmostras, (await c.Db.LabLocalAmostras.AsNoTracking().SingleAsync(x => x.IdLabLocalAmostras == r.Valor)).IdLabHistAmostras);
+        Assert.Equal(amo.IdLabHistAmostras, (await c.Db.LabLocalAmostras.AsNoTracking().SingleAsync(x => x.IdLabLocalAmostras == r.Valor.Id)).IdLabHistAmostras);
         var pelaRaiz = await s.CarregarAsync(amo.IdLabHistAmostras);
-        Assert.Equal(r.Valor, pelaRaiz!.Id);
+        Assert.Equal(r.Valor.Id, pelaRaiz!.Id);
         Assert.Equal("CX-01", pelaRaiz.Caixa);
         Assert.False(pelaRaiz.UltimaRevisao);
         // a mesma amostra física não ganha outra localização
@@ -84,13 +84,13 @@ public class LocalizacaoTests
         Assert.NotNull(vm.ProfissionalDescarte);
         vm.Status = SituacaoArquivo.Arquivada;
         Assert.True((await s.GravarAsync(vm)).Sucesso);
-        var l = await c.Db.LabLocalAmostras.AsNoTracking().SingleAsync(x => x.IdLabLocalAmostras == r.Valor);
+        var l = await c.Db.LabLocalAmostras.AsNoTracking().SingleAsync(x => x.IdLabLocalAmostras == r.Valor.Id);
         Assert.Equal((SituacaoArquivo.Arquivada, (DateTime?)null, (int?)null, "CX-01"), (l.Status, l.DtHrDescarte, l.IdEntidadesFuncDescarte, l.NrCaixa));
-        Assert.True(await c.Db.Auditoria.AnyAsync(a => a.Tabela == "LAB_LOCAL_AMOSTRAS" && a.IdRegistro == r.Valor.ToString()
+        Assert.True(await c.Db.Auditoria.AnyAsync(a => a.Tabela == "LAB_LOCAL_AMOSTRAS" && a.IdRegistro == r.Valor.Id.ToString()
             && a.Acao == LabControl.Data.AcoesAuditoria.Alteracao));
 
         // excluir: a amostra volta a ficar sem localização
-        Assert.True((await s.ExcluirAsync(r.Valor)).Sucesso);
+        Assert.True((await s.ExcluirAsync(r.Valor.Id)).Sucesso);
         Assert.Equal(0, (await s.CarregarAsync(amo.IdLabHistAmostras))!.Id);
     }
 
@@ -109,6 +109,32 @@ public class LocalizacaoTests
         Assert.True(r.Sucesso, r.Mensagem);
         Assert.Equal(LocalizacaoService.StatusReprovadaDescartada,
             await c.Db.VwLabAmostras.Where(a => a.IdLabHistAmostras == amo.IdLabHistAmostras).Select(a => a.StatusAmostra).SingleAsync());
+
+        // desfazer o descarte não devolve o status anterior: avisa (code-review 7.3)
+        var desfazer = (await s.CarregarAsync(amo.IdLabHistAmostras))!;
+        desfazer.Status = SituacaoArquivo.Arquivada;
+        var d = await s.GravarAsync(desfazer);
+        Assert.True(d.Sucesso, d.Mensagem);
+        Assert.Equal($"O status da amostra continua “{LocalizacaoService.StatusReprovadaDescartada}”: se precisar, altere no recebimento.", d.Valor.Aviso);
+    }
+
+    /// <summary>Code-review 7.3: amostra com boletim emitido não muda de status pelo descarte (o banco recusaria e o descarte se perderia).</summary>
+    [Fact]
+    public async Task Descarte_por_reprovacao_de_amostra_com_boletim_emitido_e_recusado_com_mensagem()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var s = Servico(c);
+        var (amo, _, bol) = await c.AmostraComBoletimAsync(await c.HojeAsync());
+        Assert.True((await c.Procedures.EmitirBoletimAsync(bol.IdLabBoletimAnalises, "boletins/x.pdf", new string('a', 64))).Sucesso);
+        var agora = await AgoraAsync(c);
+        Assert.True((await s.CarregarAsync(amo.IdLabHistAmostras))!.UltimaTemBoletimEmitido);
+
+        var vm = Arquivo(amo.IdLabHistAmostras, agora.AddHours(-1));
+        (vm.Status, vm.DtHrDescarte, vm.MarcarReprovada) = (SituacaoArquivo.Descartada, agora, true);
+        var r = await s.GravarAsync(vm);
+        Assert.StartsWith("A amostra tem boletim emitido: o status não pode ser mudado aqui", r.Mensagem);
+        vm.MarcarReprovada = false;
+        Assert.True((await s.GravarAsync(vm)).Sucesso);   // só o descarte passa
     }
 
     [Fact]

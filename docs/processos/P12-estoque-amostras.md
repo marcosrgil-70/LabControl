@@ -29,6 +29,9 @@
 ## Migração (M-15)
 Movimentos de revisões > 0 são **descartados** (eram entradas duplicadas); depois `CALL PR_ATUALIZA_SALDO` para cada raiz; conferir com `LAB_HIST_AMOSTRAS_SALDO` do legado.
 
+## Parâmetros atendidos × testes da amostra (7.3)
+- A saída aponta para os testes da amostra (`LAB_MOV_AMOSTRAS_PARAM` → `LAB_HIST_AMOSTRAS_TESTES`, FK sem cascata). Por isso, depois de uma saída com parâmetros, o recebimento **não regera** os testes e recusa trocar proposta, produto ou tipo de análise ("A amostra tem saídas com parâmetros atendidos (Movimentação): exclua essas saídas antes…").
+
 ## Cenários de teste
 - Roteiro doc 12 §7 item 5: saldo 3 após receber 3.
 - Saída de 5 com saldo 3 → recusada; saída de 2 → saldo 1.

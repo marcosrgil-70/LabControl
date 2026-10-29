@@ -9,9 +9,10 @@ namespace LabControl.Services;
 
 /// <summary>
 /// T23 — Movimentação de amostras (tarefa 7.1; P12, RN-06). Os movimentos são sempre da amostra física (raiz, revisão 0):
-/// o <c>TG_MOV_BI</c> redireciona e recusa saída sem saldo, e o <c>PR_ATUALIZA_SALDO</c> recalcula o saldo. Aqui ficam o
-/// que o banco não faz: justificativa na saída, data não futura, testes da própria amostra, profissional do usuário e a
-/// trava da linha do saldo (duas saídas ao mesmo tempo não passam juntas pela conferência do saldo).
+/// o <c>TG_MOV_BI</c> redireciona e recusa saída sem saldo e o <c>TG_MOV_BD</c> a exclusão da entrada que deixaria o saldo
+/// negativo — ambos com a linha do saldo travada (D-25) — e o <c>PR_ATUALIZA_SALDO</c> recalcula o saldo. Aqui ficam o que
+/// o banco não faz: justificativa na saída, data não futura, testes da própria amostra, profissional do usuário; a conferência
+/// prévia do saldo só dá a mensagem com o saldo atual (a garantia é do banco).
 /// </summary>
 public sealed class MovimentacaoService(LabDbContext db, IEmpresaContexto ctx)
 {
@@ -64,15 +65,16 @@ public sealed class MovimentacaoService(LabDbContext db, IEmpresaContexto ctx)
             .Select(t => new { t.IdLabHistAmostrasTestes, t.IdLabParametrosAnalises, t.LabParametroAnalise.Descricao, Tipo = t.AnaliseTipo.Descricao })
             .ToListAsync();
         var jaAtendidos = atendidos.Select(p => p.IdLabParametrosAnalises).ToHashSet();
+        var porMovimento = atendidos.ToLookup(p => p.IdLabMovAmostras, p => p.Descricao);
 
         return new MovimentacaoAmostraVM
         {
             Id = id, NrAmostra = a.NrAmostra, Cliente = a.ClienteNome, Produto = a.ProdutoDescricao, Lote = a.NrLote, Fabricacao = a.Fabricacao,
             Validade = a.Validade, Embalagem = a.Embalagem, Saldo = a.SaldoAtual ?? 0, UltimaRevisao = a.UltimaRevisao,
             Movimentos = movimentos.Select(m => new MovimentoVM(m.IdLabMovAmostras, m.DataMov, m.ES, m.Qtde, m.Justificativa, m.Profissional, m.Automatica,
-                atendidos.Where(p => p.IdLabMovAmostras == m.IdLabMovAmostras).Select(p => p.Descricao).Order().ToList())).ToList(),
+                porMovimento[m.IdLabMovAmostras].Order().ToList())).ToList(),
             Parametros = parametros.Select(t => new MovimentacaoParametroVM(t.IdLabHistAmostrasTestes, t.Descricao, t.Tipo, jaAtendidos.Contains(t.IdLabParametrosAnalises))).ToList(),
-            Novo = novo ?? new MovimentoNovoVM { IdAmostra = id, DataMov = Minuto(await db.AgoraAsync()) },
+            Novo = novo ?? new MovimentoNovoVM { IdAmostra = id, DataMov = (await db.AgoraAsync()).NoMinuto() },
         };
     }
 
@@ -81,7 +83,7 @@ public sealed class MovimentacaoService(LabDbContext db, IEmpresaContexto ctx)
     {
         if (ctx.ProfissionalId is not { } profissional)
             return Resultado.Erro("Seu usuário não está vinculado a um profissional nesta empresa (cadastro de usuários): a movimentação registra quem fez.");
-        var raiz = await RaizAsync(vm.IdAmostra);
+        var raiz = await db.AmostraFisicaAsync(vm.IdAmostra);
         if (raiz is null) return Resultado.Erro(AmostraService.MensagemNaoEncontrada);
         if (vm.Tipo is not (EntradaSaida.Entrada or EntradaSaida.Saida)) return Resultado.Erro("Escolha entrada ou saída.", nameof(vm.Tipo));
         if (!Textos.Decimal(Textos.Limpo(vm.Qtde) ?? "", out var qtde) || qtde <= 0 || decimal.Round(qtde, 4) != qtde || qtde >= 100_000_000_000m)
@@ -102,21 +104,19 @@ public sealed class MovimentacaoService(LabDbContext db, IEmpresaContexto ctx)
             if (daAmostra != testes.Count) return Resultado.Erro("Parâmetro que não é desta amostra.");
         }
 
+        if (vm.Tipo == EntradaSaida.Saida && await SaldoAsync(raiz.Value) is var saldo && saldo < qtde)
+            return Resultado.Erro($"Saldo insuficiente da amostra para esta saída (saldo atual: {Qtde(saldo)}).", nameof(vm.Qtde));
+
         var r = await ErrosMySql.CapturarAsync(async () =>
         {
-            await using var tx = await db.Database.BeginTransactionAsync();
-            var saldo = await TravarSaldoAsync(raiz.Value);
-            if (vm.Tipo == EntradaSaida.Saida && saldo < qtde)
-                throw new ErroDeNegocioException($"Saldo insuficiente da amostra para esta saída (saldo atual: {Qtde(saldo)}).");
             var mov = new LabMovAmostra
             {
-                IdLabHistAmostras = raiz.Value, DataMov = Minuto(data), Qtde = qtde, ES = vm.Tipo, Justificativa = justificativa,
+                IdLabHistAmostras = raiz.Value, DataMov = data.NoMinuto(), Qtde = qtde, ES = vm.Tipo, Justificativa = justificativa,
                 IdEntidadesFunc = profissional,
             };
             db.LabMovAmostras.Add(mov);
             foreach (var t in testes) db.LabMovAmostrasParam.Add(new LabMovAmostraParam { LabMovAmostra = mov, IdLabHistAmostrasTestes = t });
-            await db.SaveChangesAsync();
-            await tx.CommitAsync();
+            await db.SaveChangesAsync();   // movimento + parâmetros numa transação; o TG_MOV_BI confere o saldo com a linha travada
             return mov.IdLabMovAmostras;
         });
         if (!r.Sucesso) db.ChangeTracker.Clear();
@@ -130,30 +130,20 @@ public sealed class MovimentacaoService(LabDbContext db, IEmpresaContexto ctx)
         if (mov is null) return Resultado.Erro("Movimentação não encontrada (pode ter sido excluída).");
         if (mov.Automatica) return Resultado.Erro("A entrada automática do recebimento não pode ser excluída.");
 
+        // sem a entrada, a saída que ela cobria deixaria o saldo negativo (o TG_MOV_BD garante; aqui só a mensagem com o saldo)
+        if (mov.ES == EntradaSaida.Entrada && await SaldoAsync(mov.IdLabHistAmostras) is var saldo && saldo < mov.Qtde)
+            return Resultado.Erro($"Esta entrada não pode ser excluída: o saldo da amostra ficaria negativo (saldo atual: {Qtde(saldo)}).");
+
         var r = await ErrosMySql.CapturarAsync(async () =>
         {
-            await using var tx = await db.Database.BeginTransactionAsync();
-            var saldo = await TravarSaldoAsync(mov.IdLabHistAmostras);
-            // sem entrada, a saída que ela cobria deixaria o saldo negativo
-            if (mov.ES == EntradaSaida.Entrada && saldo < mov.Qtde)
-                throw new ErroDeNegocioException($"Esta entrada não pode ser excluída: o saldo da amostra ficaria negativo (saldo atual: {Qtde(saldo)}).");
             db.LabMovAmostras.Remove(mov);   // os parâmetros atendidos saem junto (ON DELETE CASCADE)
             await db.SaveChangesAsync();
-            await tx.CommitAsync();
         });
         if (!r.Sucesso) db.ChangeTracker.Clear();
         return r;
     }
 
-    // amostra física da amostra (ou revisão) da empresa ativa
-    private async Task<int?> RaizAsync(int idAmostra) =>
-        await db.LabHistAmostras.Where(a => a.IdLabHistAmostras == idAmostra).Select(a => (int?)(a.IdAmostraRaiz ?? a.IdLabHistAmostras)).SingleOrDefaultAsync();
-
-    /// <summary>Trava a linha do saldo até o fim da transação: a conferência e a gravação ficam juntas.</summary>
-    private async Task<decimal> TravarSaldoAsync(int raiz) =>
-        (await db.Database.SqlQueryRaw<decimal>(
-            "SELECT SALDO_ATUAL AS Value FROM LAB_HIST_AMOSTRAS_SALDO WHERE ID_LAB_HIST_AMOSTRAS = {0} FOR UPDATE", raiz).ToListAsync())
-        .SingleOrDefault();
-
-    private static DateTime Minuto(DateTime d) => new(d.Year, d.Month, d.Day, d.Hour, d.Minute, 0, d.Kind);
+    // saldo da amostra física, pela entidade (filtro da empresa ativa)
+    private async Task<decimal> SaldoAsync(int raiz) =>
+        await db.LabHistAmostrasSaldo.Where(x => x.IdLabHistAmostras == raiz).Select(x => (decimal?)x.SaldoAtual).SingleOrDefaultAsync() ?? 0;
 }

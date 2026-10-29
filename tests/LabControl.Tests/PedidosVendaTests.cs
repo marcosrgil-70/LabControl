@@ -231,7 +231,7 @@ public class PedidosVendaTests
     }
 
     // 2ª proposta do mesmo cliente, com um item e uma análise do tipo da amostra do cenário
-    private static async Task<(int Proposta, int Item)> OutraPropostaAsync(Cenario c)
+    internal static async Task<(int Proposta, int Item)> OutraPropostaAsync(Cenario c)
     {
         var p = new LabProposta
         {

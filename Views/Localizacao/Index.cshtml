@@ -83,7 +83,8 @@ else
         <input type="hidden" name="Cliente" value="@f.Cliente" /><input type="hidden" name="Produto" value="@f.Produto" />
         <input type="hidden" name="Numero" value="@f.Numero" /><input type="hidden" name="Situacao" value="@f.Situacao" />
         <input type="hidden" name="Armario" value="@f.Armario" /><input type="hidden" name="Prateleira" value="@f.Prateleira" />
-        <input type="hidden" name="Caixa" value="@f.Caixa" />
+        <input type="hidden" name="Caixa" value="@f.Caixa" /><input type="hidden" name="De" value="@f.De?.ToString("yyyy-MM-dd")" />
+        <input type="hidden" name="Ate" value="@f.Ate?.ToString("yyyy-MM-dd")" /><input type="hidden" name="Pagina" value="@f.Pagina" />
 
         <div class="card">
             <div class="table-responsive">

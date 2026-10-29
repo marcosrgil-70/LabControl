@@ -19,8 +19,8 @@ public sealed class LocalizacaoService(LabDbContext db, IEmpresaContexto ctx, Am
 
     public async Task<LocalizacaoListaVM> ListarAsync(LocalizacaoFiltroVM f)
     {
-        var lote = new LocalizacaoLoteVM { DtHrArquivo = Minuto(await db.AgoraAsync()) };
-        if (!f.Informado) return new LocalizacaoListaVM { Filtro = f, Itens = [], Lote = lote };
+        if (!f.Informado) return new LocalizacaoListaVM { Filtro = f, Itens = [], Lote = new LocalizacaoLoteVM() };
+        var lote = new LocalizacaoLoteVM { DtHrArquivo = (await db.AgoraAsync()).NoMinuto() };
 
         var q = from a in db.VwLabAmostras.AsNoTracking().Where(a => a.UltimaRevisao)
                 join l in db.LabLocalAmostras.AsNoTracking() on a.IdAmostraRaiz equals (long)l.IdLabHistAmostras into ls
@@ -78,7 +78,7 @@ public sealed class LocalizacaoService(LabDbContext db, IEmpresaContexto ctx, Am
             .SingleOrDefaultAsync();
 
         var vm = digitado ?? (l is null
-            ? new LocalizacaoVM { DtHrArquivo = Minuto(await db.AgoraAsync()) }
+            ? new LocalizacaoVM { DtHrArquivo = (await db.AgoraAsync()).NoMinuto() }
             : new LocalizacaoVM
             {
                 Id = l.IdLabLocalAmostras, Status = l.Status, DtHrArquivo = l.DtHrArquivo, Armario = l.NrArmario, Prateleira = l.NrPrateleira,
@@ -89,13 +89,14 @@ public sealed class LocalizacaoService(LabDbContext db, IEmpresaContexto ctx, Am
             (a.NrAmostra, a.ClienteNome, a.ClienteCpfCnpj, a.ProdutoDescricao, a.StatusAmostra, a.UltimaRevisao);
         vm.ProfissionalDescarte = l?.Profissional;
         vm.TemStatusReprovada = await StatusReprovadaAsync() is not null;
+        vm.UltimaTemBoletimEmitido = await UltimaRevisao(raiz).Select(x => x.TemBoletimEmitido).SingleAsync() > 0;
         return vm;
     }
 
     /// <summary>Inclui ou altera a localização (arquivo e descarte). Voltar de descartada para arquivada desfaz o descarte.</summary>
-    public async Task<Resultado<int>> GravarAsync(LocalizacaoVM vm)
+    public async Task<Resultado<LocalizacaoGravada>> GravarAsync(LocalizacaoVM vm)
     {
-        var raiz = await RaizAsync(vm.IdAmostra);
+        var raiz = await db.AmostraFisicaAsync(vm.IdAmostra);
         if (raiz is null) return Resultado.Erro(AmostraService.MensagemNaoEncontrada);
         var atual = await db.LabLocalAmostras.SingleOrDefaultAsync(l => l.IdLabHistAmostras == raiz);
         if (vm.Id == 0 && atual is not null)
@@ -116,30 +117,39 @@ public sealed class LocalizacaoService(LabDbContext db, IEmpresaContexto ctx, Am
         {
             if (vm.DtHrDescarte is not { } d) return Resultado.Erro("Informe a data e a hora do descarte.", nameof(vm.DtHrDescarte));
             if (d > agora.AddMinutes(1)) return Resultado.Erro("A data do descarte não pode ser futura.", nameof(vm.DtHrDescarte));
-            if (Minuto(d) < Minuto(arquivo)) return Resultado.Erro("A data do descarte não pode ser anterior à do arquivo.", nameof(vm.DtHrDescarte));
-            descarte = Minuto(d);
+            if (d.NoMinuto() < arquivo.NoMinuto()) return Resultado.Erro("A data do descarte não pode ser anterior à do arquivo.", nameof(vm.DtHrDescarte));
+            descarte = d.NoMinuto();
             // quem descartou: o profissional do usuário; se já estava descartada, fica o de antes
             profissional = atual is { Status: SituacaoArquivo.Descartada, IdEntidadesFuncDescarte: { } antes } ? antes : ctx.ProfissionalId;
             if (profissional is null)
                 return Resultado.Erro("Seu usuário não está vinculado a um profissional nesta empresa (cadastro de usuários): o descarte registra quem fez.");
         }
         int? statusReprovada = null;
+        var ultima = await UltimaRevisao(raiz.Value).Select(x => new { x.StatusAmostra, x.TemBoletimEmitido }).SingleAsync();
         if (vm.MarcarReprovada && vm.Status == SituacaoArquivo.Descartada)
+        {
+            // o TG_AMOSTRAS_BU não deixa mudar amostra com boletim emitido (code-review 7.3): avisa antes, sem perder o descarte
+            if (ultima.TemBoletimEmitido > 0)
+                return Resultado.Erro("A amostra tem boletim emitido: o status não pode ser mudado aqui (gere uma revisão da amostra). Desmarque a opção para registrar só o descarte.", nameof(vm.MarcarReprovada));
             statusReprovada = await StatusReprovadaAsync() ?? throw new InvalidOperationException("Status REPROVADA - DESCARTADA não existe na empresa.");
+        }
+        // desfazer o descarte não devolve o status anterior da amostra (não é guardado): avisa
+        var aviso = atual is { Status: SituacaoArquivo.Descartada } && vm.Status == SituacaoArquivo.Arquivada && ultima.StatusAmostra == StatusReprovadaDescartada
+            ? $"O status da amostra continua “{StatusReprovadaDescartada}”: se precisar, altere no recebimento." : null;
 
         var r = await ErrosMySql.CapturarAsync(async () =>
         {
             var l = atual ?? db.LabLocalAmostras.Add(new LabLocalAmostra { IdLabHistAmostras = raiz.Value }).Entity;
-            (l.Status, l.DtHrArquivo, l.NrArmario, l.NrPrateleira, l.NrCaixa, l.Observacao) = (vm.Status, Minuto(arquivo), armario, prateleira, caixa, obs);
+            (l.Status, l.DtHrArquivo, l.NrArmario, l.NrPrateleira, l.NrCaixa, l.Observacao) = (vm.Status, arquivo.NoMinuto(), armario, prateleira, caixa, obs);
             // arquivada: sem data nem profissional do descarte (desfazer descarte — o legado deixava o status "descartada")
             (l.DtHrDescarte, l.IdEntidadesFuncDescarte) = (descarte, profissional);
             if (statusReprovada is { } st)
             {
-                var ultima = await db.LabHistAmostras.SingleAsync(x => (x.IdLabHistAmostras == raiz || x.IdAmostraRaiz == raiz) && x.UltimaRevisao);
-                ultima.IdAmostrasStatus = st;
+                var amostra = await db.LabHistAmostras.SingleAsync(x => (x.IdLabHistAmostras == raiz || x.IdAmostraRaiz == raiz) && x.UltimaRevisao);
+                amostra.IdAmostrasStatus = st;
             }
             await db.SaveChangesAsync();   // uma transação: localização + status da amostra
-            return l.IdLabLocalAmostras;
+            return new LocalizacaoGravada(l.IdLabLocalAmostras, aviso);
         });
         if (!r.Sucesso) db.ChangeTracker.Clear();
         return r;
@@ -173,7 +183,7 @@ public sealed class LocalizacaoService(LabDbContext db, IEmpresaContexto ctx, Am
             foreach (var raiz in novas)
                 db.LabLocalAmostras.Add(new LabLocalAmostra
                 {
-                    IdLabHistAmostras = raiz, Status = SituacaoArquivo.Arquivada, DtHrArquivo = Minuto(arquivo),
+                    IdLabHistAmostras = raiz, Status = SituacaoArquivo.Arquivada, DtHrArquivo = arquivo.NoMinuto(),
                     NrArmario = armario, NrPrateleira = prateleira, NrCaixa = caixa, Observacao = obs,
                 });
             await db.SaveChangesAsync();   // todas ou nenhuma
@@ -196,12 +206,10 @@ public sealed class LocalizacaoService(LabDbContext db, IEmpresaContexto ctx, Am
         return r;
     }
 
-    // amostra física da amostra (ou revisão) da empresa ativa
-    private async Task<int?> RaizAsync(int idAmostra) =>
-        await db.LabHistAmostras.Where(a => a.IdLabHistAmostras == idAmostra).Select(a => (int?)(a.IdAmostraRaiz ?? a.IdLabHistAmostras)).SingleOrDefaultAsync();
+    // última revisão da amostra física (status e boletim emitido valem para ela)
+    private IQueryable<Models.VwLabAmostra> UltimaRevisao(int raiz) =>
+        db.VwLabAmostras.AsNoTracking().Where(x => x.IdAmostraRaiz == raiz && x.UltimaRevisao);
 
     private async Task<int?> StatusReprovadaAsync() =>
         await db.AmostrasStatus.Where(s => s.Descricao == StatusReprovadaDescartada).Select(s => (int?)s.IdAmostrasStatus).FirstOrDefaultAsync();
-
-    private static DateTime Minuto(DateTime d) => new(d.Year, d.Month, d.Day, d.Hour, d.Minute, 0, d.Kind);
 }

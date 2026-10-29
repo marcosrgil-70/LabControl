@@ -58,6 +58,9 @@ public sealed class LocalizacaoLoteVM
 /// <summary>Resultado do lote: quantas foram arquivadas e as que já tinham localização (não são sobrescritas).</summary>
 public sealed record LoteArquivado(int Arquivadas, IReadOnlyList<string> JaLocalizadas);
 
+/// <summary>Localização gravada; <c>Aviso</c> = o que o usuário precisa saber (ex.: status da amostra que continua reprovado).</summary>
+public sealed record LocalizacaoGravada(int Id, string? Aviso);
+
 /// <summary>Localização de uma amostra (T24): grupos Arquivo e Descarte. <c>Id</c> = 0 → ainda sem localização.</summary>
 public sealed class LocalizacaoVM
 {
@@ -84,4 +87,6 @@ public sealed class LocalizacaoVM
     public string? ProfissionalDescarte { get; set; }
     /// <summary>Status "REPROVADA - DESCARTADA" existe na empresa (a pergunta só aparece se existir).</summary>
     public bool TemStatusReprovada { get; set; }
+    /// <summary>A última revisão tem boletim emitido: o status não muda por aqui (o banco recusa; gere revisão da amostra).</summary>
+    public bool UltimaTemBoletimEmitido { get; set; }
 }

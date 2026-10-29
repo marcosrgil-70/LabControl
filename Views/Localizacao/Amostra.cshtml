@@ -83,8 +83,12 @@
                             @if (Model.TemStatusReprovada)
                             {
                                 <div class="form-check small mt-2">
-                                    <input type="checkbox" class="form-check-input" name="MarcarReprovada" id="MarcarReprovada" value="true" checked="@Model.MarcarReprovada" />
+                                    <input type="checkbox" class="form-check-input" name="MarcarReprovada" id="MarcarReprovada" value="true" checked="@Model.MarcarReprovada" disabled="@Model.UltimaTemBoletimEmitido" />
                                     <label class="form-check-label" for="MarcarReprovada">Descarte por reprovação: mudar o status da amostra para <b>@LabControl.Services.LocalizacaoService.StatusReprovadaDescartada</b></label>
+                                    @if (Model.UltimaTemBoletimEmitido)
+                                    {
+                                        <div class="form-text">A amostra tem boletim emitido: o status só muda por uma revisão da amostra.</div>
+                                    }
                                 </div>
                             }
                         </div>
