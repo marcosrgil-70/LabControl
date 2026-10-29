@@ -24,6 +24,8 @@ Fases 0–8 concluídas, menos a 5.4 (layout do boletim, aguarda os 3 boletins r
 - **Esforço:** M
 
 ### 9.2 Homologação com os usuários do laboratório
+> 📋 **Roteiro pronto (29/10/2026):** [ROTEIRO-HOMOLOGACAO.md](ROTEIRO-HOMOLOGACAO.md) — preparação, 13 blocos com o resultado esperado de cada passo (inclui as pendências 21, 22, 28, 38, 39 e os modelos da 5.4) e a tabela de ocorrências. Aguarda o laboratório.
+
 - **Roteiro guiado** (um dia de uso paralelo): login/troca de senha → proposta nova → pedido de venda → receber 3 amostras (uma com data retroativa autorizada) → etiquetas → movimentação/arquivo → lançar resultados → montar e emitir boletim → revisar amostra (cascata) → reemitir → relatórios do mês.
 - Comparar 10 boletins migrados (2ª via) com os impressos do legado.
 - Registrar ajustes; corrigir; repetir o roteiro.
