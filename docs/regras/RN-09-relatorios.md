@@ -11,6 +11,6 @@ Legenda: Camada **B** banco · **S** serviço · **T** tela | Origem **L** legad
 | RN-09.05 | Parâmetro analisado = linha da última revisão do resultado (corrige o JOIN errado do legado) | S | C | 🔴 | [T30-04](../telas/T30-04-rel-parametros-analisados.md) |
 | RN-09.06 | Tempo de análise = dias entre início e resultado, inclusivo (+1) | S | L | ⚪ | [T30-05](../telas/T30-05-rel-tempo-analises.md) |
 | RN-09.07 | Faturamento = 1 linha por pedido não cancelado autorizado no período (sem repetir revisões) | S | C | 🔴 | [T30-01](../telas/T30-01-rel-faturamento.md) |
-| RN-09.08 | Relatórios de amostras por padrão consideram só amostras com pedido de venda (como o legado), com opção de incluir todas | S T | L | ⚪ | [T30-02](../telas/T30-02-rel-amostras-periodo.md) |
+| RN-09.08 | Relatórios de amostras por padrão consideram só amostras com pedido de venda (como o legado), com opção de incluir todas — confirmado pelo usuário em 29/10/2026 (dúvida 9); no v2 vale por amostra (o legado filtrava por cliente) | S T | L | ⚪ | [T30-02](../telas/T30-02-rel-amostras-periodo.md) |
 | RN-09.09 | Saída em tela, PDF e CSV a partir do mesmo conjunto de dados | S | L | ⚪ | [T30-00](../telas/T30-00-relatorios-padrao.md) |
 | RN-09.10 | Diferenças em relação ao legado documentadas no MD do relatório após a homologação | — | N | 🟠 | [P20](../processos/P20-relatorios-gerenciais.md) |

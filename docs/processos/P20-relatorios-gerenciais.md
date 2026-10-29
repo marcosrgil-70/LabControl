@@ -23,3 +23,6 @@
 
 ## Validação na homologação
 Para cada relatório, rodar um período fechado (ex.: 2017) no legado e no v2; diferenças devem ser explicadas pelas correções acima (anotar no MD da tela).
+
+## Implementação (tarefa 8.1, 29/10/2026)
+`Services/Relatorios/RelatoriosService.cs` aplica as regras acima; a tela corta em 1.000 linhas (PDF/CSV com tudo) em vez de paginar, porque os relatórios totalizam o período inteiro. Comparação de 2017 com o legado e as diferenças explicadas em [T30-00](../telas/T30-00-relatorios-padrao.md#comparação-com-o-legado--ano-de-2017-dbmaisfdb--labcontrol_migracao). "Somente com pedido" (RN-09.08) vale por amostra — no legado era por cliente.

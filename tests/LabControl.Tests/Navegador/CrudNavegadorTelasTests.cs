@@ -1074,4 +1074,52 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         await Assertions.Expect(p.Locator("#situacaoLocalizacao")).ToHaveTextAsync("Sem localização");
         Assert.Empty(s.ErrosJs);
     }
+
+    [Fact]
+    public async Task Relatorios_visualizam_filtram_e_exportam()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var hoje = await c.HojeAsync();
+        await c.AmostraComResultadoAsync(hoje);
+        Assert.True((await c.Procedures.GerarPedidoVendaAsync(c.Proposta.IdLabPropostas, hoje, "MARIA", null)).Sucesso);
+        var semPedido = c.NovaAmostra(hoje);   // recebida depois do pedido e sem ligação com ele
+        c.Db.Add(semPedido);
+        await c.Db.SaveChangesAsync();
+        await c.Db.LabHistAmostras.Where(a => a.IdLabHistAmostras == semPedido.IdLabHistAmostras)
+            .ExecuteUpdateAsync(x => x.SetProperty(a => a.IdPedidosVenda, (int?)null));
+        await using var s = await app.EntrarAsync(c);
+        var p = s.Pagina;
+
+        await s.IrAsync("/Relatorios/AmostrasPeriodo");
+        await Assertions.Expect(p.Locator("#De")).Not.ToHaveValueAsync("");      // mês corrente
+        await Assertions.Expect(p.Locator("#SomenteComPedido")).ToBeCheckedAsync();   // dúvida 9: padrão marcado
+        await Assertions.Expect(p.Locator("#resultadoRelatorio")).ToHaveCountAsync(0);
+        await p.ClickAsync("#botaoVisualizar");
+        var total = p.Locator(".tabela-relatorio tr.table-secondary td");
+        await Assertions.Expect(total.Nth(2)).ToHaveTextAsync("1");
+        await p.UncheckAsync("#SomenteComPedido");
+        await p.ClickAsync("#botaoVisualizar");
+        await Assertions.Expect(p.Locator("#SomenteComPedido")).Not.ToBeCheckedAsync();
+        await Assertions.Expect(total.Nth(2)).ToHaveTextAsync("2");
+        await Assertions.Expect(p.Locator("#subtituloRelatorio")).ToContainTextAsync("Todas as amostras");
+
+        // CSV pela requisição (baixar arquivo no Edge sem janela derrubava o navegador dos testes seguintes)
+        Assert.Equal("/Relatorios/Csv/AmostrasPeriodo", await p.GetAttributeAsync("#botaoCsv", "formaction"));
+        var csv = await p.APIRequest.GetAsync($"{app.Url}/Relatorios/Csv/AmostrasPeriodo?De={hoje:yyyy-MM-dd}&Ate={hoje:yyyy-MM-dd}&SomenteComPedido=false");
+        Assert.StartsWith("attachment; filename=AmostrasPeriodo-", csv.Headers["content-disposition"]);
+        Assert.Contains("\"Total geral (1 cliente)\";;\"2\"", await csv.TextAsync());
+
+        // período invertido: mensagem do legado
+        await p.FillAsync("#Ate", hoje.AddDays(-40).ToString("yyyy-MM-dd"));
+        await p.ClickAsync("#botaoVisualizar");
+        await Assertions.Expect(p.Locator("#errosRelatorio")).ToContainTextAsync("Período de datas inválido. Por favor, verificar.");
+
+        await s.IrAsync("/Relatorios/Producao");
+        await p.ClickAsync("#botaoVisualizar");
+        await Assertions.Expect(p.Locator(".card-header", new() { HasText = "Análises por parâmetro" })).ToBeVisibleAsync();
+        Assert.Equal("_blank", await p.GetAttributeAsync("#botaoPdf", "formtarget"));
+        var pdf = await p.APIRequest.GetAsync($"{app.Url}/Relatorios/Pdf/Producao?De={hoje:yyyy-MM-dd}&Ate={hoje:yyyy-MM-dd}");
+        Assert.Equal("application/pdf", pdf.Headers["content-type"]);
+        Assert.Empty(s.ErrosJs);
+    }
 }

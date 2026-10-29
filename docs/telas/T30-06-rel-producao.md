@@ -13,4 +13,8 @@ Para cada resultado com `DT_RESULTADO` no período (empresa ativa): data do resu
 - **Filtros:** período*, parâmetro, produto, analista.
 - Só a última revisão do resultado.
 
-**Status:** ⬜
+## Implementação (tarefa 8.1)
+`RelatoriosService.ProducaoAsync`: data do resultado, parâmetro, produto, quantidade de amostra com unidade (`QT_AMOSTRA_TXT` da `VW_LAB_RESULTADOS`), analista e nº da amostra; tabelas "Análises por dia" e "Análises por parâmetro" com total. Filtros: parâmetro, produto, analista. Só a última revisão do resultado. Em 2017: legado 10.072 linhas (todas as revisões), v2 9.816. Testes: `RelatoriosTests.Parametros_tempo_e_producao_so_da_ultima_revisao_do_resultado` + navegador.
+
+
+**Status:** ✅ concluída na tarefa 8.1 (29/10/2026).

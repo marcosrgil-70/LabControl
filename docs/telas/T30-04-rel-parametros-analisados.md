@@ -21,4 +21,11 @@ O último JOIN compara o **ID do parâmetro** com o **ID do teste** (colunas de 
 - **Totais:** por parâmetro (quantidade analisada) e geral; opção de agrupar por cliente.
 - **Filtros:** período*, cliente, parâmetro, tipo de análise, acreditado (sim/não).
 
-**Status:** ⬜
+## Implementação (tarefa 8.1)
+`RelatoriosService.ParametrosAnalisadosAsync` sobre a `VW_LAB_RESULTADOS` (só `ULTIMA_REVISAO`), com o parâmetro vindo do **teste** do resultado (corrige o JOIN do legado, RN-09.05) ⨝ amostra ⨝ cliente. Colunas: data do resultado, parâmetro, nº da amostra, cliente, CPF/CNPJ. Padrão: agrupado por parâmetro com o total de cada um; "Agrupar por cliente" troca para subtotal por cliente e acrescenta a tabela "Total por parâmetro". Filtros: cliente, parâmetro, tipo de análise (do parâmetro), acreditado. O "código" do parâmetro não existe no cadastro (só a descrição). Teste: `RelatoriosTests.Parametros_tempo_e_producao_so_da_ultima_revisao_do_resultado`.
+
+### Comparação com o legado (2017)
+O SQL do legado devolve **0 linhas** em 2017 (o JOIN compara o ID do parâmetro com o ID do teste e quase nunca casa); o v2 lista **9.816** parâmetros analisados. Não há o que comparar: o relatório do legado não funcionava.
+
+
+**Status:** ✅ concluída na tarefa 8.1 (29/10/2026).

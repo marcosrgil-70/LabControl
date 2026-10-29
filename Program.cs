@@ -57,6 +57,7 @@ builder.Services.AddSingleton(s => ArmazemBoletins.DaConfiguracao(s.GetRequiredS
 builder.Services.AddScoped<EtiquetaService>();
 builder.Services.AddScoped<MovimentacaoService>();
 builder.Services.AddScoped<LocalizacaoService>();
+builder.Services.AddScoped<LabControl.Services.Relatorios.RelatoriosService>();
 builder.Services.AddSingleton<LabControl.Infra.IImpressoraRaw, LabControl.Infra.ImpressoraRawWindows>();
 builder.Services.AddScoped<ParametroAnaliseService>();
 builder.Services.AddScoped<LabControl.Services.Migracao.MigracaoService>();

@@ -13,4 +13,11 @@
 - **Filtros:** período* (data do resultado), parâmetro, tipo de análise.
 - Só a última revisão do resultado.
 
-**Status:** ⬜
+## Implementação (tarefa 8.1)
+`RelatoriosService.TempoAnalisesAsync`: dias = resultado − início + 1 (RN-09.06), prazo previsto = `DT_PREVISTA` do teste, atraso = dias do resultado além do prazo (0 no prazo; vazio sem prazo). Ordem pela data inicial. Total: média geral; tabela "Por parâmetro (dias)" com análises, média, mínimo, máximo e quantas em atraso. Filtros: parâmetro e tipo de análise. Teste: `RelatoriosTests.Parametros_tempo_e_producao_so_da_ultima_revisao_do_resultado`.
+
+### Comparação com o legado (2017)
+Legado: 10.072 linhas, média 174,6 dias; v2: 9.816 (só a última revisão do resultado), média 212,3 dias. As duas médias são distorcidas por **datas digitadas erradas no legado**: em 2017, 5 resultados vigentes têm a data inicial 0171-10-04, 0201-10-02 (2) e 1971-10-09 (2) — sem eles a média de 2017 é **5,0 dias**. No banco todo são 9 parâmetros em 8 amostras (também resultados em 2107 e 2201). Correção a decidir: **pendência 36**.
+
+
+**Status:** ✅ concluída na tarefa 8.1 (29/10/2026).

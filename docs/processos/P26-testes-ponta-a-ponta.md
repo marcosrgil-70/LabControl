@@ -34,6 +34,7 @@ Os testes de serviço e os testes HTTP (`WebApplicationFactory`) provam regras, 
 | T22 Recebimento (4.3) | `Amostra_recebimento_testes_comprovante_e_exclusao` | cascata cliente → proposta → item → tipo; número do banco; testes; histórico; data retroativa confirmada; comprovante; pesquisar; excluir |
 | T29 Pesquisa de amostras (4.4) | `Pesquisa_de_amostras_seleciona_e_abre` | modal da T22, filtros, seleção abre a amostra |
 | T25 Etiquetas (4.5) | `Etiquetas_a_partir_do_recebimento_imprimem_na_escolhida` | do recebimento com a amostra marcada; impressora escolhida (impressora falsa `ImpressoraDoTeste` guarda os comandos); quantidade; sigilo; última impressora lembrada |
+| T30 Relatórios (8.1) | `Relatorios_visualizam_filtram_e_exportam` | período padrão, "somente com pedido" marcado e desmarcado (totais mudam), período invertido com a mensagem do legado, tabelas de resumo, PDF e CSV por requisição |
 
 ## 4. Como rodar
 ```powershell
@@ -47,4 +48,5 @@ Requisitos: Microsoft Edge instalado; MySQL local com o user-secret da connectio
 ## 5. Regra para as próximas telas (a executar)
 - Toda tela nova (Fases 2 a 8) ganha **um teste de navegador** com o CRUD completo (ou o fluxo principal, nas telas de processo: recebimento, resultados, emissão do boletim), além dos testes de serviço/HTTP. Item incluído na skill `/concluir-tarefa` e na "Definição de pronto" das fases.
 - Botões de ação das listas: **ícone + texto** (Abrir/Alterar, Inativar/Reativar, Excluir); **Inativar pede confirmação** explicando que o registro sai da lista; a lista avisa quando a pesquisa encontrou **inativos ocultos** (link para mostrá-los). Padrão aplicado em 20/10/2026 a Auxiliares, Clientes, Profissionais, Usuários, Perfis, Empresas e abas de contatos.
+- **Não baixar arquivos pelo navegador** (`RunAndWaitForDownloadAsync`): no Edge sem janela isso derrubou o navegador compartilhado e os testes de navegador seguintes caíram com `TargetClosedException: Process exited` (8.1, 29/10/2026). Confira PDF/CSV com `p.APIRequest.GetAsync(...)` (mesmos cookies da sessão) e o botão pelo `href`/`formaction`.
 - Seletores dos testes por `id`/`name`/`title`/`data-*` (não por posição ou classe de layout), para o teste não quebrar com ajuste visual.

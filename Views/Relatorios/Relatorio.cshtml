@@ -1,0 +1,179 @@
+@using LabControl.Services.Relatorios
+@model RelatorioTelaVM
+@{
+    var d = Model.Definicao;
+    var f = Model.Filtro;
+    ViewData["Title"] = d.Titulo;
+    bool Tem(FiltrosRelatorio filtro) => d.Filtros.HasFlag(filtro);
+    const int MaxLinhasTela = 1000;   // a tela corta tabelas grandes; o PDF e o CSV levam tudo
+    string Classe(TipoLinha t) => t switch { TipoLinha.Subtotal => "table-light fw-semibold", TipoLinha.Total => "table-secondary fw-bold", _ => "" };
+}
+@inject IEmpresaContexto Usuario
+
+<div class="d-flex align-items-center mb-1">
+    <h5 class="mb-0"><i class="bi @d.Icone me-2 text-primary"></i>@d.Titulo</h5>
+</div>
+<p class="small text-body-secondary mb-3">@d.Descricao</p>
+
+<form method="get" asp-action="@d.Nome" class="row g-2 align-items-end mb-3" id="filtroRelatorio">
+    <div class="col-6 col-lg-2">
+        <label class="form-label small mb-0" for="De">@d.Periodo — de</label>
+        <input name="De" id="De" type="date" value="@f.De?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" required />
+    </div>
+    <div class="col-6 col-lg-2">
+        <label class="form-label small mb-0" for="Ate">até</label>
+        <input name="Ate" id="Ate" type="date" value="@f.Ate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" required />
+    </div>
+    @if (Tem(FiltrosRelatorio.Cliente))
+    {
+        <div class="col-sm-6 col-lg-3">
+            <label class="form-label small mb-0" for="Cliente">Cliente (nome ou CPF/CNPJ)</label>
+            <input name="Cliente" id="Cliente" value="@f.Cliente" class="form-control form-control-sm" />
+        </div>
+    }
+    @if (Tem(FiltrosRelatorio.Cobranca))
+    {
+        <div class="col-sm-6 col-lg-3">
+            <label class="form-label small mb-0" for="Cobranca">Cobrança (nome ou CPF/CNPJ)</label>
+            <input name="Cobranca" id="Cobranca" value="@f.Cobranca" class="form-control form-control-sm" />
+        </div>
+    }
+    @if (Tem(FiltrosRelatorio.Situacao))
+    {
+        <div class="col-6 col-lg-2">
+            <label class="form-label small mb-0" for="Situacao">Situação do pedido</label>
+            <select name="Situacao" id="Situacao" class="form-select form-select-sm">
+                <option value="">Todas (menos canceladas)</option>
+                @foreach (var s in new[] { SituacaoPedido.Aberto, SituacaoPedido.EmExecucao, SituacaoPedido.Concluido })
+                {
+                    <option value="@s" selected="@(f.Situacao == s)">@RelatorioFiltroVM.NomeSituacao(s)</option>
+                }
+            </select>
+        </div>
+    }
+    @if (Tem(FiltrosRelatorio.Produto))
+    {
+        <div class="col-sm-6 col-lg-3">
+            <label class="form-label small mb-0" for="Produto">Produto (código ou descrição)</label>
+            <input name="Produto" id="Produto" value="@f.Produto" class="form-control form-control-sm" />
+        </div>
+    }
+    @if (Tem(FiltrosRelatorio.Parametro))
+    {
+        <div class="col-sm-6 col-lg-3">
+            <label class="form-label small mb-0" for="Parametro">Parâmetro</label>
+            <input name="Parametro" id="Parametro" value="@f.Parametro" class="form-control form-control-sm" />
+        </div>
+    }
+    @if (Tem(FiltrosRelatorio.TipoAnalise))
+    {
+        <div class="col-sm-6 col-lg-2">
+            <label class="form-label small mb-0" for="TipoAnalise">Tipo de análise</label>
+            <input name="TipoAnalise" id="TipoAnalise" value="@f.TipoAnalise" class="form-control form-control-sm" />
+        </div>
+    }
+    @if (Tem(FiltrosRelatorio.Acreditado))
+    {
+        <div class="col-6 col-lg-2">
+            <label class="form-label small mb-0" for="Acreditado">Acreditado</label>
+            <select name="Acreditado" id="Acreditado" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                <option value="true" selected="@(f.Acreditado == true)">Sim</option>
+                <option value="false" selected="@(f.Acreditado == false)">Não</option>
+            </select>
+        </div>
+    }
+    @if (Tem(FiltrosRelatorio.Analista))
+    {
+        <div class="col-sm-6 col-lg-3">
+            <label class="form-label small mb-0" for="Analista">Analista</label>
+            <input name="Analista" id="Analista" value="@f.Analista" class="form-control form-control-sm" />
+        </div>
+    }
+    @if (Tem(FiltrosRelatorio.SomenteComPedido))
+    {
+        <div class="col-auto">
+            <div class="form-check mb-1">
+                <input type="checkbox" name="SomenteComPedido" id="SomenteComPedido" value="true" checked="@f.SomenteComPedido" class="form-check-input" />
+                <input type="hidden" name="SomenteComPedido" value="false" />
+                <label class="form-check-label small" for="SomenteComPedido">Somente amostras com pedido de venda</label>
+            </div>
+        </div>
+    }
+    @if (Tem(FiltrosRelatorio.AgruparPorCliente))
+    {
+        <div class="col-auto">
+            <div class="form-check mb-1">
+                <input type="checkbox" name="AgruparPorCliente" id="AgruparPorCliente" value="true" checked="@f.AgruparPorCliente" class="form-check-input" />
+                <input type="hidden" name="AgruparPorCliente" value="false" />
+                <label class="form-check-label small" for="AgruparPorCliente">Agrupar por cliente</label>
+            </div>
+        </div>
+    }
+    <div class="col-auto d-flex gap-1">
+        <button type="submit" name="Visualizar" value="true" class="btn btn-primary btn-sm" id="botaoVisualizar"><i class="bi bi-eye me-1"></i>Visualizar</button>
+        @if (Usuario.TemPermissao("RELATORIOS.IMPRIMIR"))
+        {
+            @* mesmos filtros do formulário, mesmo sem visualizar antes *@
+            <button type="submit" formaction="/Relatorios/Pdf/@d.Nome" formtarget="_blank" class="btn btn-outline-secondary btn-sm" id="botaoPdf"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</button>
+            <button type="submit" formaction="/Relatorios/Csv/@d.Nome" class="btn btn-outline-secondary btn-sm" id="botaoCsv"><i class="bi bi-filetype-csv me-1"></i>CSV (Excel)</button>
+        }
+    </div>
+</form>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div asp-validation-summary="All" class="alert alert-danger small py-2" id="errosRelatorio"></div>
+}
+
+@if (Model.Dados is { } r)
+{
+    <div id="resultadoRelatorio">
+        <p class="small text-body-secondary mb-2" id="subtituloRelatorio">@r.Subtitulo</p>
+        @foreach (var t in r.Tabelas)
+        {
+            var cortada = t.Linhas.Count > MaxLinhasTela;
+            // tabela cortada: as primeiras linhas e o total geral
+            var linhas = cortada ? t.Linhas.Take(MaxLinhasTela).Concat(t.Linhas.Where(l => l.Tipo == TipoLinha.Total)) : t.Linhas;
+            <div class="card mb-3">
+                @if (t.Titulo is not null)
+                {
+                    <div class="card-header py-2 small fw-semibold">@t.Titulo</div>
+                }
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0 small tabela-relatorio">
+                        <thead><tr>@foreach (var c in t.Colunas) { <th class="@(c.Numero ? "text-end" : "")">@c.Titulo</th> }</tr></thead>
+                        <tbody>
+                            @foreach (var l in linhas)
+                            {
+                                if (l.Tipo == TipoLinha.Grupo)
+                                {
+                                    <tr class="table-primary"><td colspan="@t.Colunas.Count" class="fw-semibold">@l.Celulas[0]</td></tr>
+                                    continue;
+                                }
+                                <tr class="@Classe(l.Tipo)">
+                                    @for (var i = 0; i < t.Colunas.Count; i++)
+                                    {
+                                        <td class="@(t.Colunas[i].Numero ? "text-end text-nowrap" : "")">@(i < l.Celulas.Count ? l.Celulas[i] : null)</td>
+                                    }
+                                </tr>
+                            }
+                            @if (t.Dados == 0)
+                            {
+                                <tr><td colspan="@t.Colunas.Count" class="text-center text-body-secondary py-3">Nenhum registro no período.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @if (cortada)
+                {
+                    <div class="card-footer small text-body-secondary py-2"><i class="bi bi-info-circle me-1"></i>A tela mostra as primeiras @MaxLinhasTela.ToString("N0") linhas de @t.Linhas.Count.ToString("N0") e o total geral; o PDF e o CSV trazem todas.</div>
+                }
+            </div>
+        }
+        @foreach (var n in r.Notas)
+        {
+            <p class="small text-body-secondary mb-1"><i class="bi bi-info-circle me-1"></i>@n</p>
+        }
+    </div>
+}

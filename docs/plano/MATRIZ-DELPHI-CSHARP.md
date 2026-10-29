@@ -58,12 +58,12 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 ## Relatórios
 | Menu Delphi | Unit Delphi | MD v2 | Rota v2 | Fase | Situação |
 |---|---|---|---|---|---|
-| Faturamento | `un_RelFaturamento` | [T30-01](../telas/T30-01-rel-faturamento.md) | `/Relatorios/Faturamento` | 8 | ⬜ |
-| Nr. de Amostras por período | `un_RelAmostrasPeriodo` | [T30-02](../telas/T30-02-rel-amostras-periodo.md) | `/Relatorios/AmostrasPeriodo` | 8 | ⬜ |
-| Nr. Amostras por cliente | `un_RelAmostrasCliente` | [T30-03](../telas/T30-03-rel-amostras-cliente.md) | `/Relatorios/AmostrasCliente` | 8 | ⬜ |
-| Nr. Parâmetros analisados | `un_RelParamAnalisados` | [T30-04](../telas/T30-04-rel-parametros-analisados.md) | `/Relatorios/ParametrosAnalisados` | 8 | ⬜ |
-| Tempo de duração das Análises | `un_RelTempoAnalises` | [T30-05](../telas/T30-05-rel-tempo-analises.md) | `/Relatorios/TempoAnalises` | 8 | ⬜ |
-| Produção por período | `un_RelProducao` | [T30-06](../telas/T30-06-rel-producao.md) | `/Relatorios/Producao` | 8 | ⬜ |
+| Faturamento | `un_RelFaturamento` | [T30-01](../telas/T30-01-rel-faturamento.md) | `/Relatorios/Faturamento` | 8 | ✅ |
+| Nr. de Amostras por período | `un_RelAmostrasPeriodo` | [T30-02](../telas/T30-02-rel-amostras-periodo.md) | `/Relatorios/AmostrasPeriodo` | 8 | ✅ |
+| Nr. Amostras por cliente | `un_RelAmostrasCliente` | [T30-03](../telas/T30-03-rel-amostras-cliente.md) | `/Relatorios/AmostrasCliente` | 8 | ✅ |
+| Nr. Parâmetros analisados | `un_RelParamAnalisados` | [T30-04](../telas/T30-04-rel-parametros-analisados.md) | `/Relatorios/ParametrosAnalisados` | 8 | ✅ |
+| Tempo de duração das Análises | `un_RelTempoAnalises` | [T30-05](../telas/T30-05-rel-tempo-analises.md) | `/Relatorios/TempoAnalises` | 8 | ✅ |
+| Produção por período | `un_RelProducao` | [T30-06](../telas/T30-06-rel-producao.md) | `/Relatorios/Producao` | 8 | ✅ |
 | Etiqueta de Amostras | `un_EtqAmostra` + `un_EtqAmostraQtde` | [T25](../telas/T25-etiquetas-amostras.md) | `/Etiquetas` | 4 | 🟨 pronta (4.5); falta a impressão de teste na Argox |
 
 ## Utilitários e sistema

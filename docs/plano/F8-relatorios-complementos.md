@@ -8,6 +8,8 @@
 ---
 
 ### 8.1 Seis relatórios gerenciais (T30-01 a T30-06)
+> ✅ **Concluída em 29/10/2026** — ver [T30-00 › Implementação](../telas/T30-00-relatorios-padrao.md#implementação-tarefa-81) e a comparação com o legado em 2017; aceite em `RelatoriosTests` e no navegador `Relatorios_visualizam_filtram_e_exportam`. Dúvida 9: "somente com pedido" marcado por padrão (decisão do usuário).
+
 - **Passos:** infraestrutura do [T30-00](../telas/T30-00-relatorios-padrao.md) (filtros, tela, PDF, CSV); um serviço por relatório com as regras de contagem do [P20](../processos/P20-relatorios-gerenciais.md); comparar com o legado num ano fechado e registrar as diferenças esperadas no MD de cada relatório.
 - **Aceite:** totais conferidos; diferenças explicadas.
 - **Esforço:** G
@@ -28,5 +30,5 @@
 `/simplify` + `/code-review`.
 
 ## Definição de pronto
-- [ ] Relatórios com números corretos (sem duplicar revisões).
+- [x] Relatórios com números corretos (sem duplicar revisões). — 8.1, comparados com o legado em 2017.
 - [ ] Auditoria consultável; e-mail de boletim funcionando.

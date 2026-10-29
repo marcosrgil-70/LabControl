@@ -12,4 +12,8 @@ Igual ao T30-02, mas agrupado por **cliente + produto** (código e descrição),
 - **Colunas:** cliente, código do produto, descrição, qtde de entrada, qtde analisada; subtotal por cliente; total geral.
 - Mesmas correções do [T30-02](T30-02-rel-amostras-periodo.md) (amostra física, última revisão).
 
-**Status:** ⬜
+## Implementação (tarefa 8.1)
+Mesma consulta da [T30-02](T30-02-rel-amostras-periodo.md#implementação-tarefa-81), agrupada por cliente + produto (da última revisão), com filtros de cliente (nome ou CPF/CNPJ) e produto (código ou descrição); subtotal por cliente e total geral. Em 2017: 2.455 entradas / 2.347 analisadas com pedido (as mesmas diferenças da T30-02). Teste: `RelatoriosTests.Amostra_revisada_conta_uma_vez_e_somente_com_pedido_e_o_padrao`.
+
+
+**Status:** ✅ concluída na tarefa 8.1 (29/10/2026).
