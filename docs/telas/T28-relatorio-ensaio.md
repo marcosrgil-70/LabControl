@@ -30,4 +30,4 @@ Incluir · Alterar (só não emitido) · Excluir (só não emitido) · Visualiza
 - Confirmar necessidade com o usuário (nunca usado).
 - Se mantido: adicionar `ARQUIVO_PDF`/`HASH_PDF` e trigger de congelamento, como no boletim (alterar `Scripts/v2` e o doc 11).
 
-**Status:** ⬜ (aguardando confirmação)
+**Status:** ⛔ dispensada pelo usuário em 29/10/2026 (dúvida 1): a tabela está vazia no legado, ninguém emitiu relatório de ensaio. A tabela `LAB_RELATORIO_ENSAIO` e a trigger continuam no banco (sem tela); se um dia for preciso, vira um módulo depois da virada.

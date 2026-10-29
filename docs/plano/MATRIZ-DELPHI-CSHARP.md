@@ -53,7 +53,7 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 | Localização das Amostras | `un_LocalAmostra` + `unDM_LocalAmostra` | [T24](../telas/T24-localizacao-amostras.md) | `/Localizacao` | 7 | ✅ |
 | Resultados | `un_Resultados` + `unDM_Resultados` | [T26](../telas/T26-resultados.md) | `/Resultados` | 5 | ✅ |
 | Boletim | `un_CadBoletim` + `undm_Boletim` (`un_Boletim` antigo) | [T27](../telas/T27-boletim.md) | `/Boletins` | 5 | 🟨 5.3 pronta; layout com boletins reais na 5.4 |
-| Relatório de Ensaio | `un_Relatorio_Ensaio` | [T28](../telas/T28-relatorio-ensaio.md) | `/RelatorioEnsaio` | 8 (confirmar) | ⬜ |
+| Relatório de Ensaio | `un_Relatorio_Ensaio` | [T28](../telas/T28-relatorio-ensaio.md) | — | 8 | ⛔ dispensada (29/10/2026) |
 
 ## Relatórios
 | Menu Delphi | Unit Delphi | MD v2 | Rota v2 | Fase | Situação |

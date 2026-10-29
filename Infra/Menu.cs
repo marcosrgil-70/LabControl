@@ -32,7 +32,6 @@ public static class Menu
             I("Etiquetas", "bi-upc", "Etiquetas", "ETIQUETAS.IMPRIMIR"),
             I("Resultados", "bi-clipboard-check", "Resultados", "RESULTADOS.CONSULTAR"),
             I("Boletins", "bi-file-earmark-check", "Boletins", "BOLETINS.CONSULTAR"),
-            I("Relatório de Ensaio", "bi-journal-text", "RelatorioEnsaio", "RELATORIO_ENSAIO.CONSULTAR"),
         ]),
         new("Cadastros",
         [

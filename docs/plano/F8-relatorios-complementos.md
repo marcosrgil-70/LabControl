@@ -15,6 +15,8 @@
 - **Esforço:** G
 
 ### 8.2 T28 — Relatório de ensaio (**confirmar antes**)
+> ⛔ **Dispensada em 29/10/2026** — dispensada pelo usuário em 29/10/2026 (dúvida 1): a tabela está vazia no legado, ninguém emitiu relatório de ensaio.
+
 - **Passos:** se confirmado: alterar `Scripts/v2` (PDF/hash/trigger de congelamento) + doc 11; tela conforme o MD.
 - **Esforço:** M (se confirmado)
 
