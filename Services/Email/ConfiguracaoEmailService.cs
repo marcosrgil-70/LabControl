@@ -62,6 +62,8 @@ public sealed class ConfiguracaoEmailService(LabDbContext db, IDataProtectionPro
         if (Textos.Limpo(vm.RemetenteNome)?.Length > 100) return Resultado.Erro("Nome do remetente: até 100 caracteres.", nameof(vm.RemetenteNome));
         if (copiaOculta is not null && !Textos.EmailValido(copiaOculta)) return Resultado.Erro("E-mail da cópia oculta inválido.", nameof(vm.CopiaOculta));
         if (assunto?.Length > 200) return Resultado.Erro("Assunto: até 200 caracteres.", nameof(vm.Assunto));
+        // EMAIL_TEXTO_BOLETIM é TEXT (65.535 bytes; até 4 por caractere no utf8mb4)
+        if (texto?.Length > 16_000) return Resultado.Erro("Texto do e-mail: até 16.000 caracteres.", nameof(vm.Texto));
         if (vm.NovaSenha?.Length > 200) return Resultado.Erro("Senha: até 200 caracteres.", nameof(vm.NovaSenha));
 
         (p.SmtpServidor, p.SmtpPorta, p.SmtpSeguranca, p.SmtpUsuario) = (servidor, vm.Porta, vm.Seguranca, usuario);

@@ -71,7 +71,8 @@ public sealed class AuditoriaService(LabDbContext db, IEmpresaContexto ctx, Amos
         {
             var (temAntes, temDepois) = (antes.TryGetValue(n, out var va), depois.TryGetValue(n, out var vd));
             // inclusão/exclusão e eventos: só um dos lados; alteração: só as colunas que mudaram (P21)
-            var mudou = a.Acao == AcoesAuditoria.Alteracao ? va != vd : temAntes && temDepois && va != vd;
+            // coluna sigilosa ou binária grava "***"/"[binário]" dos dois lados: se está no evento A, mudou
+            var mudou = a.Acao == AcoesAuditoria.Alteracao ? va != vd || va is "***" or "[binário]" : temAntes && temDepois && va != vd;
             return new AuditoriaCampoVM(n, va, vd, mudou);
         }).ToList();
         return new AuditoriaDetalheVM { Evento = Item(a, antes, depois), Campos = campos };

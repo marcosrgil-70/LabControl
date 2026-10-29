@@ -429,10 +429,10 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
     // ------------------------------------------------------------------ revisão, contrato, troca de produto (6.1)
 
     /// <summary>
-    /// Gera a revisão (P07) a partir da revisão vigente e devolve o ID da nova. O banco copia cabeçalho (status inicial,
-    /// sem envio, autorização ou pedido), textos sem a autorização, produtos e análises com <c>ST_REV_ANTERIOR</c>.
+    /// Gera a revisão (P07) a partir da revisão vigente e devolve o ID e o número da nova (o da origem com o "-R" da
+    /// revisão nova). O banco copia cabeçalho (status inicial, sem envio, autorização ou pedido), textos sem a
+    /// autorização, produtos e análises com <c>ST_REV_ANTERIOR</c>.
     /// </summary>
-    /// <summary>Revisão nova pela rotina; devolve o ID e o número (o da origem com o "-R" da revisão nova).</summary>
     public async Task<Resultado<RevisaoProposta>> GerarRevisaoAsync(int id, string? motivo)
     {
         var p = await db.LabPropostas.AsNoTracking().Where(x => x.IdLabPropostas == id).Select(x => new { x.UltimaRevisao, x.NrProposta }).SingleOrDefaultAsync();

@@ -33,6 +33,8 @@
 - **Esforço:** M
 
 ### 8.5 Revisão
+> ✅ **Concluída em 29/10/2026** — `/simplify` (4 revisores; pendência 30) e `/code-review high` de `fb989a0..HEAD` (9 achados: 6 corrigidos, 3 sem mudança). Detalhes no Diário do plano. **Fase 8 completa** (8.2 dispensada).
+
 `/simplify` + `/code-review`.
 
 ## Definição de pronto

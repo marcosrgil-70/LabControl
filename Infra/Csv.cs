@@ -7,7 +7,18 @@ public sealed class Csv
 {
     private readonly StringBuilder _texto = new();
 
-    public static string Celula(string? s) => s is null ? "" : "\"" + s.Replace("\"", "\"\"") + "\"";
+    /// <summary>
+    /// Texto que o Excel leria como fórmula (<c>=</c>, <c>+</c>, <c>-</c>, <c>@</c>, tab, CR — mesmo entre aspas) sai com
+    /// <c>'</c> na frente: a auditoria exporta logins digitados por quem nem entrou. Número com sinal ("-1,5") fica como está.
+    /// </summary>
+    public static string Celula(string? s)
+    {
+        if (s is null) return "";
+        if (s.Length > 0 && s[0] is '=' or '+' or '-' or '@' or '\t' or '\r'
+            && !((s[0] is '+' or '-') && decimal.TryParse(s, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.GetCultureInfo("pt-BR"), out _)))
+            s = "'" + s;
+        return "\"" + s.Replace("\"", "\"\"") + "\"";
+    }
 
     public Csv Linha(params IEnumerable<string?> celulas)
     {

@@ -4,10 +4,6 @@ namespace LabControl.Models;
 
 public partial class Entidade
 {
-    /// <summary>
-    /// Cadastro da T12 (clientes/fornecedores): não é a empresa usuária e tem algum tipo comercial. A lista da T12 e
-    /// os contatos abertos por ela usam o mesmo critério — um profissional só (T13) não aparece nem é alterado por lá.
-    /// </summary>
     /// <summary>Texto livre: nome, fantasia ou CPF/CNPJ (com ou sem pontuação). A busca da T12, dos pedidos e dos relatórios.</summary>
     public static Expression<Func<Entidade, bool>> Busca(string texto)
     {
@@ -18,6 +14,10 @@ public partial class Entidade
                         e.CpfCnpj.Replace(".", "").Replace("/", "").Replace("-", "").Contains(digitos))));
     }
 
+    /// <summary>
+    /// Cadastro da T12 (clientes/fornecedores): não é a empresa usuária e tem algum tipo comercial. A lista da T12 e
+    /// os contatos abertos por ela usam o mesmo critério — um profissional só (T13) não aparece nem é alterado por lá.
+    /// </summary>
     public static readonly Expression<Func<Entidade, bool>> DaTelaDeClientes = e => !e.TipoEmpresaUsuaria
         && (e.TipoCliente || e.TipoFornecedor || e.TipoVendedor || e.TipoTransportador);
 }
