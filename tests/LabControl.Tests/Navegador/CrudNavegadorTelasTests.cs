@@ -1177,4 +1177,43 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         await Assertions.Expect(p.Locator("#tabelaEnvios")).ToContainTextAsync("cliente@teste.com; cópia: gerente@cliente.com");
         Assert.Empty(s.ErrosJs);
     }
+
+    [Fact]
+    public async Task Auditoria_filtra_mostra_a_diferenca_o_historico_da_amostra_e_exporta()
+    {
+        await using var c = await Cenario.CriarAsync();
+        var (amo, _, _) = await c.AmostraComBoletimAsync(await c.HojeAsync());
+        Assert.True((await c.Procedures.GerarRevisaoAmostraAsync(amo.IdLabHistAmostras, "LOTE DIGITADO ERRADO")).Sucesso);
+        c.Proposta.PorcDesconto = 5;
+        await c.Db.SaveChangesAsync();
+        await using var s = await app.EntrarAsync(c);
+        var p = s.Pagina;
+
+        await s.IrAsync("/Auditoria");
+        await Assertions.Expect(p.Locator("#De")).Not.ToHaveValueAsync("");   // últimos 7 dias
+        await p.SelectOptionAsync("#Acao", "R");
+        await p.ClickAsync("#botaoPesquisarAuditoria");
+        await Assertions.Expect(p.Locator("#tabelaAuditoria tbody tr")).ToHaveCountAsync(1);
+        await Assertions.Expect(p.Locator("#tabelaAuditoria tbody")).ToContainTextAsync("motivo: LOTE DIGITADO ERRADO");
+
+        await p.SelectOptionAsync("#Acao", "A");
+        await p.SelectOptionAsync("#Assunto", "PROPOSTAS");
+        await p.ClickAsync("#botaoPesquisarAuditoria");
+        await p.Locator("#tabelaAuditoria tbody tr", new() { Has = p.Locator($"a[href='/Propostas/Editar/{c.Proposta.IdLabPropostas}']") })
+            .First.Locator("a", new() { HasText = "Ver diferença" }).ClickAsync();
+        await Assertions.Expect(p.Locator("#acaoEvento")).ToHaveTextAsync("Alteração");
+        var linha = p.Locator("#tabelaDiferenca tr.table-warning", new() { HasText = "PORC_DESCONTO" });
+        await Assertions.Expect(linha).ToContainTextAsync("10");
+        await Assertions.Expect(linha).ToContainTextAsync("5");
+
+        var csv = await p.APIRequest.GetAsync($"{app.Url}/Auditoria/Csv?Acao=R");
+        Assert.Contains("LOTE DIGITADO ERRADO", await csv.TextAsync());
+
+        await p.ClickAsync("#abaHistoricoAmostra");
+        await p.FillAsync("#numero", amo.NrAmostra);
+        await p.ClickAsync("#botaoHistoricoAmostra");
+        await Assertions.Expect(p.Locator(".tabela-historico")).ToHaveCountAsync(2);   // a amostra e a revisão R01
+        await Assertions.Expect(p.Locator("body")).ToContainTextAsync("motivo: LOTE DIGITADO ERRADO");
+        Assert.Empty(s.ErrosJs);
+    }
 }

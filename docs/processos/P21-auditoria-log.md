@@ -32,6 +32,9 @@
 - As linhas I/A/E do `SaveChanges` também são gravadas por INSERT direto, e o rastreador só é aceito (`AcceptAllChanges`) depois do commit: se a auditoria ou o commit falham, as alterações continuam pendentes.
 - Testes: `tests/LabControl.Tests/AuditoriaTests.cs`.
 
+## Consulta (tarefa 8.4, 29/10/2026)
+Tela [T06](../telas/T06-auditoria.md#implementação-tarefa-84-29102026): eventos com filtros, diferença campo a campo, CSV e histórico da amostra. Os logins não têm `ID_EMPRESAS`: a consulta mostra os dos usuários com acesso à empresa ativa (ADMIN_GLOBAL vê todos).
+
 ## Cenários de teste
 - Alterar uma amostra → uma linha em `LAB_HIST_AMOSTRAS_LOG` (A) com o usuário correto e uma em `AUDITORIA` com antes/depois.
 - Emitir boletim → `AUDITORIA` M.

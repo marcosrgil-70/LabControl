@@ -1,0 +1,7 @@
+@model string
+<h5 class="mb-1"><i class="bi bi-clock-history me-2 text-primary"></i>Auditoria</h5>
+<p class="small text-body-secondary mb-3">Quem fez o quê e quando (rastreabilidade da ISO/IEC 17025). Somente consulta: nada aqui pode ser alterado ou excluído.</p>
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link @(Model == "eventos" ? "active" : "")" asp-action="Index" id="abaEventos">Eventos</a></li>
+    <li class="nav-item"><a class="nav-link @(Model == "amostra" ? "active" : "")" asp-action="Amostra" id="abaHistoricoAmostra">Histórico da amostra</a></li>
+</ul>

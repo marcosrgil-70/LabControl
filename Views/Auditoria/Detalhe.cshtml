@@ -1,0 +1,53 @@
+@model AuditoriaDetalheVM
+@{
+    ViewData["Title"] = "Evento de auditoria";
+    var e = Model.Evento;
+    var soUmLado = Model.Campos.All(c => c.Antes is null) || Model.Campos.All(c => c.Depois is null);
+}
+
+<partial name="_Abas" model="@("eventos")" />
+
+<div class="card mb-3">
+    <div class="card-body small row g-2" id="cabecalhoEvento">
+        <div class="col-sm-6 col-lg-3"><span class="text-body-secondary">Data/hora:</span> @e.Quando.ToString("dd/MM/yyyy HH:mm:ss")</div>
+        <div class="col-sm-6 col-lg-3"><span class="text-body-secondary">Usuário:</span> @(e.Usuario ?? "—")</div>
+        <div class="col-sm-6 col-lg-3"><span class="text-body-secondary">Ação:</span> <strong id="acaoEvento">@e.Acao</strong></div>
+        <div class="col-sm-6 col-lg-3"><span class="text-body-secondary">IP:</span> @e.Ip</div>
+        <div class="col-sm-6 col-lg-3"><span class="text-body-secondary">Assunto:</span> @e.Assunto <span class="text-body-secondary">(@e.Tabela)</span></div>
+        <div class="col-sm-6 col-lg-3"><span class="text-body-secondary">Registro:</span>
+            @if (e.Link is not null) { <a href="@e.Link">@e.IdRegistro</a> } else { @e.IdRegistro }</div>
+        @if (e.Empresa is not null)
+        {
+            <div class="col-sm-6 col-lg-3"><span class="text-body-secondary">Empresa:</span> @e.Empresa</div>
+        }
+        @if (e.Resumo is not null)
+        {
+            <div class="col-12"><span class="text-body-secondary">Resumo:</span> @e.Resumo</div>
+        }
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header py-2 small fw-semibold">Dados gravados @(soUmLado ? "" : "— os campos alterados estão destacados")</div>
+    <div class="table-responsive">
+        <table class="table table-sm mb-0 small align-middle" id="tabelaDiferenca">
+            <thead><tr><th style="width: 22%">Campo</th><th>Antes</th><th>Depois</th></tr></thead>
+            <tbody>
+                @foreach (var c in Model.Campos)
+                {
+                    <tr class="@(c.Mudou ? "table-warning" : "")">
+                        <td class="font-monospace">@c.Campo</td>
+                        <td class="text-break">@if (c.Antes is null) { <span class="text-body-secondary">—</span> } else { @c.Antes }</td>
+                        <td class="text-break @(c.Mudou ? "fw-semibold" : "")">@if (c.Depois is null) { <span class="text-body-secondary">—</span> } else { @c.Depois }</td>
+                    </tr>
+                }
+                @if (Model.Campos.Count == 0)
+                {
+                    <tr><td colspan="3" class="text-center text-body-secondary py-3">Evento sem dados.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<button type="button" class="btn btn-outline-secondary" onclick="history.back()"><i class="bi bi-arrow-left me-1"></i>Voltar</button>

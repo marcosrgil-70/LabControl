@@ -57,6 +57,7 @@ builder.Services.AddSingleton(s => ArmazemBoletins.DaConfiguracao(s.GetRequiredS
 builder.Services.AddScoped<EtiquetaService>();
 builder.Services.AddScoped<MovimentacaoService>();
 builder.Services.AddScoped<LocalizacaoService>();
+builder.Services.AddScoped<AuditoriaService>();
 builder.Services.AddScoped<LabControl.Services.Relatorios.RelatoriosService>();
 builder.Services.AddScoped<LabControl.Services.Email.ConfiguracaoEmailService>();
 builder.Services.AddScoped<LabControl.Services.Email.EnvioBoletimService>();

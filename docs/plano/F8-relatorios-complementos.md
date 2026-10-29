@@ -27,6 +27,8 @@
 - **Esforço:** S
 
 ### 8.4 T06 — Auditoria (consulta)
+> ✅ **Concluída em 29/10/2026** — ver [T06 › Implementação](../telas/T06-auditoria.md#implementação-tarefa-84-29102026); aceite em `AuditoriaConsultaTests` e no navegador `Auditoria_filtra_mostra_a_diferenca_o_historico_da_amostra_e_exporta`.
+
 - **Passos:** filtros, grid, diferença antes/depois, aba histórico da amostra, CSV.
 - **Esforço:** M
 
@@ -35,4 +37,4 @@
 
 ## Definição de pronto
 - [x] Relatórios com números corretos (sem duplicar revisões). — 8.1, comparados com o legado em 2017.
-- [ ] Auditoria consultável (8.4); e-mail de boletim funcionando — ✅ 8.3 (com servidor falso nos testes; envio real a conferir com a conta do laboratório, pendência 38).
+- [x] Auditoria consultável (8.4); e-mail de boletim funcionando — ✅ 8.3 (com servidor falso nos testes; envio real a conferir com a conta do laboratório, pendência 38).

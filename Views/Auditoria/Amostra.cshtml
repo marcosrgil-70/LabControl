@@ -1,0 +1,45 @@
+@model HistoricoAmostraVM
+@{
+    ViewData["Title"] = "Histórico da amostra";
+}
+
+<partial name="_Abas" model="@("amostra")" />
+
+<form method="get" class="row g-2 align-items-end mb-3" id="filtroHistoricoAmostra">
+    <div class="col-sm-6 col-lg-3">
+        <label class="form-label small mb-0" for="numero">Nº da amostra</label>
+        <input name="numero" id="numero" value="@Model.Numero" class="form-control form-control-sm font-monospace" placeholder="04-00001-01/26" required />
+    </div>
+    <div class="col-auto"><button type="submit" class="btn btn-outline-primary btn-sm" id="botaoHistoricoAmostra"><i class="bi bi-search me-1"></i>Ver histórico</button></div>
+</form>
+<p class="small text-body-secondary">Log gravado pelo próprio banco a cada inclusão, alteração e exclusão da amostra (todas as revisões da amostra física), inclusive o log migrado do sistema antigo.</p>
+
+@if (Model.Mensagem is not null)
+{
+    <div class="alert alert-warning small py-2" id="avisoHistorico">@Model.Mensagem</div>
+}
+@foreach (var (nr, linhas) in Model.Revisoes)
+{
+    <div class="card mb-3">
+        <div class="card-header py-2 small fw-semibold font-monospace">@nr</div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 small tabela-historico">
+                <thead><tr><th style="width: 9rem">Quando</th><th style="width: 7rem">Ação</th><th>Detalhes</th></tr></thead>
+                <tbody>
+                    @foreach (var l in linhas)
+                    {
+                        <tr class="@(l.Legado ? "text-body-secondary" : "")">
+                            <td class="text-nowrap">@(l.Quando?.ToString("dd/MM/yyyy HH:mm") ?? "sem data")</td>
+                            <td>@l.Acao</td>
+                            <td>@l.Resumo</td>
+                        </tr>
+                    }
+                    @if (linhas.Count == 0)
+                    {
+                        <tr><td colspan="3" class="text-center text-body-secondary py-2">Sem registros.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

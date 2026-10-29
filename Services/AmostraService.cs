@@ -187,7 +187,7 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
                 t.Idioma.Descricao, t.Prazo.Descricao, t.DtPrevista)).ToListAsync();
 
     /// <summary>Log da amostra; as linhas migradas do legado (sem data nem usuário) vêm marcadas.</summary>
-    private async Task<IReadOnlyList<AmostraLogVM>> HistoricoAsync(int id)
+    public async Task<IReadOnlyList<AmostraLogVM>> HistoricoAsync(int id)
     {
         var linhas = await db.LabHistAmostrasLog.AsNoTracking().Where(l => l.IdLabHistAmostras == id).OrderBy(l => l.DtLog).ThenBy(l => l.IdLabHistAmostrasLog)
             .Select(l => new { l.Acao, l.DtLog, l.Dados, l.IdUsuarios }).ToListAsync();

@@ -1,0 +1,107 @@
+@using LabControl.Services
+@model AuditoriaListaVM
+@{
+    ViewData["Title"] = "Auditoria";
+    var f = Model.Filtro;
+    Dictionary<string, string> Rota(int pagina) => new Dictionary<string, string?>
+    {
+        ["De"] = f.De?.ToString("yyyy-MM-dd"), ["Ate"] = f.Ate?.ToString("yyyy-MM-dd"), ["Usuario"] = f.Usuario, ["Assunto"] = f.Assunto,
+        ["Acao"] = f.Acao, ["Registro"] = f.Registro, ["TodasEmpresas"] = f.TodasEmpresas ? "true" : null, ["Pagina"] = pagina.ToString(),
+    }.Where(kv => kv.Value is not null).ToDictionary(kv => kv.Key, kv => kv.Value!);
+}
+
+<partial name="_Abas" model="@("eventos")" />
+
+<form method="get" class="row g-2 align-items-end mb-3" id="filtroAuditoria">
+    <div class="col-6 col-lg-2">
+        <label class="form-label small mb-0" for="De">De</label>
+        <input name="De" id="De" type="date" value="@f.De?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+    </div>
+    <div class="col-6 col-lg-2">
+        <label class="form-label small mb-0" for="Ate">até</label>
+        <input name="Ate" id="Ate" type="date" value="@f.Ate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+    </div>
+    <div class="col-6 col-lg-2">
+        <label class="form-label small mb-0" for="Usuario">Usuário (login)</label>
+        <input name="Usuario" id="Usuario" value="@f.Usuario" class="form-control form-control-sm" />
+    </div>
+    <div class="col-6 col-lg-2">
+        <label class="form-label small mb-0" for="Assunto">Assunto</label>
+        <select name="Assunto" id="Assunto" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            @foreach (var (chave, a) in AuditoriaService.Assuntos)
+            {
+                <option value="@chave" selected="@(f.Assunto == chave)">@a.Nome</option>
+            }
+        </select>
+    </div>
+    <div class="col-6 col-lg-2">
+        <label class="form-label small mb-0" for="Acao">Ação</label>
+        <select name="Acao" id="Acao" class="form-select form-select-sm">
+            <option value="">Todas</option>
+            @foreach (var (codigo, nome) in AuditoriaService.Acoes)
+            {
+                <option value="@codigo" selected="@(f.Acao == codigo)">@nome</option>
+            }
+        </select>
+    </div>
+    <div class="col-6 col-lg-2">
+        <label class="form-label small mb-0" for="Registro">Registro ou nº do documento</label>
+        <input name="Registro" id="Registro" value="@f.Registro" class="form-control form-control-sm" placeholder="ID, nº, login…" />
+    </div>
+    @if (Model.AdminGlobal)
+    {
+        <div class="col-auto">
+            <div class="form-check mb-1">
+                <input type="checkbox" name="TodasEmpresas" id="TodasEmpresas" value="true" checked="@f.TodasEmpresas" class="form-check-input" />
+                <label class="form-check-label small" for="TodasEmpresas">Todas as empresas (e logins de qualquer usuário)</label>
+            </div>
+        </div>
+    }
+    <div class="col-auto d-flex gap-1">
+        <button type="submit" class="btn btn-outline-primary btn-sm" id="botaoPesquisarAuditoria"><i class="bi bi-search me-1"></i>Pesquisar</button>
+        <button type="submit" formaction="/Auditoria/Csv" class="btn btn-outline-secondary btn-sm" lc-permissao="AUDITORIA.IMPRIMIR" id="botaoCsvAuditoria"><i class="bi bi-filetype-csv me-1"></i>CSV (Excel)</button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0 small" id="tabelaAuditoria">
+            <thead><tr><th>Data/hora</th><th>Usuário</th><th>Ação</th><th>Assunto</th><th>Registro</th><th>Resumo</th><th>IP</th>@if (f.TodasEmpresas) { <th>Empresa</th> }<th></th></tr></thead>
+            <tbody>
+                @foreach (var a in Model.Itens)
+                {
+                    <tr>
+                        <td class="text-nowrap">@a.Quando.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        <td>@(a.Usuario ?? "—")</td>
+                        <td class="text-nowrap">@a.Acao</td>
+                        <td title="@a.Tabela">@a.Assunto</td>
+                        <td class="font-monospace text-nowrap">@if (a.Link is not null) { <a href="@a.Link" title="Abrir a tela do registro">@a.IdRegistro</a> } else { @a.IdRegistro }</td>
+                        <td>@a.Resumo</td>
+                        <td class="text-nowrap">@a.Ip</td>
+                        @if (f.TodasEmpresas) { <td>@a.Empresa</td> }
+                        <td class="text-end"><a asp-action="Detalhe" asp-route-id="@a.Id" class="btn btn-outline-secondary btn-sm text-nowrap"><i class="bi bi-arrow-left-right me-1"></i>Ver diferença</a></td>
+                    </tr>
+                }
+                @if (Model.Itens.Count == 0)
+                {
+                    <tr><td colspan="9" class="text-center text-body-secondary py-3">Nenhum evento no período e filtros informados.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center small py-2">
+        <span class="text-body-secondary" id="totalAuditoria">@Model.Total.ToString("N0") evento(s) de @f.De?.ToString("dd/MM/yyyy") a @f.Ate?.ToString("dd/MM/yyyy")</span>
+        @if (Model.Paginas > 1)
+        {
+            <nav class="ms-auto" aria-label="Páginas">
+                <ul class="pagination pagination-sm mb-0">
+                    @foreach (var n in Enumerable.Range(1, Model.Paginas).Where(n => n <= 3 || n > Model.Paginas - 3 || Math.Abs(n - f.Pagina) <= 2))
+                    {
+                        <li class="page-item @(n == f.Pagina ? "active" : "")"><a class="page-link" asp-action="Index" asp-all-route-data="@Rota(n)">@n</a></li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</div>
