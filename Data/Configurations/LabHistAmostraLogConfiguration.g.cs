@@ -20,7 +20,7 @@ public partial class LabHistAmostraLogConfiguration : IEntityTypeConfiguration<L
         b.Property(e => e.IdEmpresas).HasColumnName("ID_EMPRESAS");
         b.Property(e => e.IdLabHistAmostras).HasColumnName("ID_LAB_HIST_AMOSTRAS");
         b.Property(e => e.Acao).HasColumnName("ACAO").HasMaxLength(1).IsFixedLength().IsRequired();
-        b.Property(e => e.Dados).HasColumnName("DADOS").HasColumnType("json").IsRequired();
+        b.Property(e => e.Dados).HasColumnName("DADOS").IsRequired();
         b.Property(e => e.IdUsuarios).HasColumnName("ID_USUARIOS");
         b.Property(e => e.DtLog).HasColumnName("DT_LOG").HasColumnType("datetime(3)").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
         Ajustar(b);

@@ -426,7 +426,10 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
         return Resultado.Ok(new ArquivoPdf(pdf, Path.GetFileName(b.ArquivoPdf)));
     }
 
-    private static string NomeArquivo(BoletimDocumento d) => $"{d.CodBoletim.Replace('/', '-')} R{d.Revisao:00}.pdf";
+    private static string NomeArquivo(BoletimDocumento d) => NomeArquivo(d.CodBoletim, d.Revisao);
+
+    /// <summary>Nome do PDF do boletim (impressão, anexo do e-mail).</summary>
+    public static string NomeArquivo(string codBoletim, int revisao) => $"{codBoletim.Replace('/', '-')} R{revisao:00}.pdf";
 
     /// <summary>Reúne o que o laudo imprime (P16 › Layout).</summary>
     public async Task<BoletimDocumento?> DocumentoAsync(int id, ModoBoletim modo)
@@ -491,14 +494,6 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
         resultado is not null && unidade is { Length: > 0 } u && resultado.EndsWith(" " + u, StringComparison.Ordinal) ? resultado[..^(u.Length + 1)] : resultado;
 
     // imagem que o QuestPDF não consegue ler não pode derrubar a emissão: sai sem ela e fica no log
-    private byte[]? ImagemValida(byte[]? imagem, string qual, int id)
-    {
-        if (imagem is null) return null;
-        try { QuestPDF.Infrastructure.Image.FromBinaryData(imagem).Dispose(); return imagem; }
-        catch (Exception ex) when (ex is not OutOfMemoryException)
-        {
-            log.LogWarning(ex, "Boletim {Id}: {Qual} não é uma imagem válida — impresso sem ela.", id, qual);
-            return null;
-        }
-    }
+    private byte[]? ImagemValida(byte[]? imagem, string qual, int id) =>
+        Pdf.ImagemValida(imagem, ex => log.LogWarning(ex, "Boletim {Id}: {Qual} não é uma imagem válida — impresso sem ela.", id, qual));
 }

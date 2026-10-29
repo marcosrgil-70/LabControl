@@ -106,7 +106,7 @@ public sealed class BoletinsController(BoletimService boletins, EnvioBoletimServ
         var r = await envio.EnviarAsync(vm);
         if (this.AplicarNoFormulario(r, $"Boletim enviado por e-mail para {vm.Para?.Trim()}."))
             return RedirectToAction(nameof(Editar), new { id });
-        return await envio.RecarregarAsync(vm) is { } tela ? View(tela) : NotFound();
+        return vm.CodBoletim.Length > 0 ? View(vm) : RedirectToAction(nameof(Editar), new { id });   // sem dados: boletim não encontrado/emitido
     }
 
     [HttpPost, Permissao("BOLETINS.REVISAR")]

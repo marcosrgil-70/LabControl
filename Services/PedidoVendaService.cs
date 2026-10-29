@@ -27,8 +27,10 @@ public sealed partial class PedidoVendaService(LabDbContext db, Procedures proce
         var q = db.PedidosVenda.AsNoTracking();
         if (f.NrPedido is { } nr) q = q.Where(p => p.NrPedido == nr);
         if (Textos.Limpo(f.Cliente) is { } c)
-            q = q.Where(p => p.Entidade.Nome.Contains(c) || (p.Entidade.NomeFantasia != null && p.Entidade.NomeFantasia.Contains(c))
-                             || (p.Entidade.CpfCnpj != null && p.Entidade.CpfCnpj.Contains(c)));
+        {
+            var clientes = db.Entidades.Where(Entidade.Busca(c)).Select(e => e.IdEntidades);
+            q = q.Where(p => clientes.Contains(p.IdEntidades));
+        }
         if (Textos.Limpo(f.Proposta) is { } n && RegexProposta().Match(n) is { Success: true } m)
         {
             var cod = int.Parse(m.Groups["cod"].Value);
@@ -135,12 +137,12 @@ public sealed partial class PedidoVendaService(LabDbContext db, Procedures proce
     }
 
     /// <summary>Gera o pedido (número, itens e amostras já recebidas pelo banco) e devolve o ID.</summary>
-    public async Task<Resultado<int>> GerarAsync(PedidoVendaGerarVM vm)
+    public async Task<Resultado<PedidoGerado>> GerarAsync(PedidoVendaGerarVM vm)
     {
         if (vm.DtAutorizacao is not { } dt) return Resultado.Erro(MensagemSemAutorizacao, nameof(vm.DtAutorizacao));
         if (dt > await db.HojeAsync()) return Resultado.Erro("Data de Autorização não pode ser futura.", nameof(vm.DtAutorizacao));
         var r = await procedures.GerarPedidoVendaAsync(vm.IdProposta, dt, Corte(vm.AutorizadoPor, 100), Corte(vm.NrPedidoCliente, 40));
-        return r.Sucesso ? Resultado.Ok(r.Valor.IdPedido) : Resultado.Erro(r.Mensagem!);
+        return r.Sucesso ? Resultado.Ok(r.Valor) : Resultado.Erro(r.Mensagem!);
     }
 
     // ------------------------------------------------------------------ ações do pedido

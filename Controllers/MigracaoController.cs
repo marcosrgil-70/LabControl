@@ -38,13 +38,12 @@ public sealed class MigracaoController(MigracaoService migracao, MigracaoExecuto
     {
         if (executor.Atual is not { } r) return NotFound();
         var (log, anomalias, conferencias) = r.Copia();
-        var csv = new StringBuilder("Tipo;Etapa;Item;Esperado;Encontrado;Situação\r\n");
-        static string C(string? s) => "\"" + (s ?? "").Replace("\"", "\"\"") + "\"";
-        foreach (var e in r.Etapas) csv.Append($"Etapa;{e.Codigo};{C(e.Nome)};;{e.Gravados};{C($"{e.Situacao} {e.Erro}".TrimEnd())}\r\n");
-        foreach (var c in conferencias) csv.Append($"Conferência;{c.Etapa};{C(c.Item)};{C(c.Esperado)};{C(c.Encontrado)};{(c.Ok ? "OK" : "FALHA")}\r\n");
-        foreach (var a in anomalias) csv.Append($"Anomalia;{a.Etapa};{C(a.Texto)};;;\r\n");
-        foreach (var l in log) csv.Append($"Log;;{C(l)};;;\r\n");
-        return File(Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv.ToString())).ToArray(), "text/csv",
+        var csv = new Csv().Linha("Tipo", "Etapa", "Item", "Esperado", "Encontrado", "Situação");
+        foreach (var e in r.Etapas) csv.Linha("Etapa", e.Codigo, e.Nome, null, e.Gravados.ToString(), $"{e.Situacao} {e.Erro}".TrimEnd());
+        foreach (var c in conferencias) csv.Linha("Conferência", c.Etapa, c.Item, c.Esperado, c.Encontrado, c.Ok ? "OK" : "FALHA");
+        foreach (var a in anomalias) csv.Linha("Anomalia", a.Etapa, a.Texto, null, null, null);
+        foreach (var l in log) csv.Linha("Log", null, l, null, null, null);
+        return File(csv.Bytes(), "text/csv",
             $"migracao-{r.Destino}-{r.Inicio:yyyyMMdd-HHmm}.csv");
     }
 

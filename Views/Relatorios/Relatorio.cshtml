@@ -146,11 +146,6 @@
                         <tbody>
                             @foreach (var l in linhas)
                             {
-                                if (l.Tipo == TipoLinha.Grupo)
-                                {
-                                    <tr class="table-primary"><td colspan="@t.Colunas.Count" class="fw-semibold">@l.Celulas[0]</td></tr>
-                                    continue;
-                                }
                                 <tr class="@Classe(l.Tipo)">
                                     @for (var i = 0; i < t.Colunas.Count; i++)
                                     {

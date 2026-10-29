@@ -3,6 +3,7 @@ using LabControl.Infra;
 using LabControl.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -62,6 +63,10 @@ builder.Services.AddScoped<LabControl.Services.Relatorios.RelatoriosService>();
 builder.Services.AddScoped<LabControl.Services.Email.ConfiguracaoEmailService>();
 builder.Services.AddScoped<LabControl.Services.Email.EnvioBoletimService>();
 builder.Services.AddSingleton<LabControl.Infra.IEnvioEmail, LabControl.Infra.EnvioEmailSmtp>();
+// senha do e-mail (T05) cifrada pelo Data Protection: o nome fixo evita que mudar a pasta do app invalide as chaves
+// (onde guardar as chaves em produção: pendência 27)
+builder.Services.AddDataProtection().SetApplicationName("LabControl");
+LabControl.Infra.Pdf.Configurar();
 builder.Services.AddSingleton<LabControl.Infra.IImpressoraRaw, LabControl.Infra.ImpressoraRawWindows>();
 builder.Services.AddScoped<ParametroAnaliseService>();
 builder.Services.AddScoped<LabControl.Services.Migracao.MigracaoService>();

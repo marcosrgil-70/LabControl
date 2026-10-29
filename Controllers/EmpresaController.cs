@@ -41,12 +41,8 @@ public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresa
 
     /// <summary>T05 — parâmetros da empresa ativa (aba "Parâmetros"), numeração somente leitura (aba "Numeração") e e-mail (aba "E-mail").</summary>
     [HttpGet, Permissao("PARAMETROS_EMPRESA.CONSULTAR")]
-    public async Task<IActionResult> Parametros()
-    {
-        if (await parametros.CarregarAsync() is not { } vm) return NotFound();
-        vm.Email = (await email.CarregarAsync())!;
-        return View(vm);
-    }
+    public async Task<IActionResult> Parametros() =>
+        await parametros.CarregarAsync() is { } vm ? View(vm) : NotFound();
 
     [HttpPost, Permissao("PARAMETROS_EMPRESA.ALTERAR")]
     public async Task<IActionResult> Parametros(ParametrosEmpresaVM vm)
@@ -54,7 +50,6 @@ public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresa
         if (ModelState.IsValid && this.AplicarNoFormulario(await parametros.AlterarAsync(vm), "Parâmetros da empresa gravados."))
             return RedirectToAction(nameof(Parametros));
         await parametros.PrepararAsync(vm);
-        vm.Email = (await email.CarregarAsync())!;
         return View(vm);
     }
 
@@ -69,10 +64,8 @@ public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresa
             return Redirect(Url.Action(nameof(Parametros)) + "#email");
         }
         ModelState.AddModelError(r.Campo is null ? nameof(ParametrosEmpresaVM.Email) : $"{nameof(ParametrosEmpresaVM.Email)}.{r.Campo}", r.Mensagem!);
-        var vm = (await parametros.CarregarAsync())!;
-        var gravado = (await email.CarregarAsync())!;
-        (dados.TemSenha, dados.Configurado, dados.NovaSenha) = (gravado.TemSenha, gravado.Configurado, null);
-        vm.Email = dados;
+        dados.NovaSenha = null;   // a senha digitada nunca volta para a tela
+        var vm = (await parametros.CarregarAsync(dados))!;
         ViewData["Aba"] = "email";
         return View(nameof(Parametros), vm);
     }

@@ -29,14 +29,7 @@ public sealed class ClienteService(LabDbContext db)
             "transportador" => q.Where(e => e.TipoTransportador),
             _ => q,
         };
-        if (!string.IsNullOrWhiteSpace(f.Texto))
-        {
-            var t = f.Texto.Trim();
-            var digitos = Documentos.SoDigitos(t);
-            q = q.Where(e => e.Nome.Contains(t) || (e.NomeFantasia != null && e.NomeFantasia.Contains(t))
-                             || (e.CpfCnpj != null && (e.CpfCnpj.Contains(t) || (digitos.Length >= 3 &&
-                                 e.CpfCnpj.Replace(".", "").Replace("/", "").Replace("-", "").Contains(digitos)))));
-        }
+        if (!string.IsNullOrWhiteSpace(f.Texto)) q = q.Where(Entidade.Busca(f.Texto));
         // inativos que a pesquisa acharia: a tela avisa (senão o cadastro "some" depois de inativado)
         var ocultos = f.Inativos ? 0 : await q.CountAsync(e => e.Inativo);
         if (!f.Inativos) q = q.Where(e => !e.Inativo);

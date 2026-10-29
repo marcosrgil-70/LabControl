@@ -22,8 +22,8 @@ public partial class AuditoriaConfiguration : IEntityTypeConfiguration<Auditoria
         b.Property(e => e.Tabela).HasColumnName("TABELA").HasMaxLength(60).IsRequired();
         b.Property(e => e.IdRegistro).HasColumnName("ID_REGISTRO").HasMaxLength(60).IsRequired();
         b.Property(e => e.Acao).HasColumnName("ACAO").HasMaxLength(1).IsFixedLength().IsRequired();
-        b.Property(e => e.DadosAntes).HasColumnName("DADOS_ANTES").HasColumnType("json");
-        b.Property(e => e.DadosDepois).HasColumnName("DADOS_DEPOIS").HasColumnType("json");
+        b.Property(e => e.DadosAntes).HasColumnName("DADOS_ANTES");
+        b.Property(e => e.DadosDepois).HasColumnName("DADOS_DEPOIS");
         b.Property(e => e.Ip).HasColumnName("IP").HasMaxLength(45);
         b.Property(e => e.DtEvento).HasColumnName("DT_EVENTO").HasColumnType("datetime(3)").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
         Ajustar(b);

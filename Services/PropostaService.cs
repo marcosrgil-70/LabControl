@@ -432,14 +432,17 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
     /// Gera a revisão (P07) a partir da revisão vigente e devolve o ID da nova. O banco copia cabeçalho (status inicial,
     /// sem envio, autorização ou pedido), textos sem a autorização, produtos e análises com <c>ST_REV_ANTERIOR</c>.
     /// </summary>
-    public async Task<Resultado<int>> GerarRevisaoAsync(int id, string? motivo)
+    /// <summary>Revisão nova pela rotina; devolve o ID e o número (o da origem com o "-R" da revisão nova).</summary>
+    public async Task<Resultado<RevisaoProposta>> GerarRevisaoAsync(int id, string? motivo)
     {
         var p = await db.LabPropostas.AsNoTracking().Where(x => x.IdLabPropostas == id).Select(x => new { x.UltimaRevisao, x.NrProposta }).SingleOrDefaultAsync();
         if (p is null) return Resultado.Erro(MensagemNaoEncontrada);
         if (!p.UltimaRevisao) return Resultado.Erro($"Só é possível revisar a última revisão da proposta ({p.NrProposta} já foi substituída).");
         if (Textos.Limpo(motivo) is not { } m) return Resultado.Erro("Informe o motivo da revisão.", "motivo");
         var r = await procedures.GerarRevisaoPropostaAsync(id, m.Length > 500 ? m[..500] : m);
-        return r.Sucesso ? Resultado.Ok(r.Valor.IdNovo) : Resultado.Erro(r.Mensagem!);
+        if (!r.Sucesso) return Resultado.Erro(r.Mensagem!);
+        var sufixo = p.NrProposta.LastIndexOf("-R", StringComparison.Ordinal);
+        return Resultado.Ok(new RevisaoProposta(r.Valor.IdNovo, $"{(sufixo < 0 ? p.NrProposta : p.NrProposta[..sufixo])}-R{r.Valor.Revisao}"));
     }
 
     /// <summary>
@@ -499,7 +502,7 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
         {
             EmpresaNome = emp.RazaoSocial, EmpresaCnpj = emp.Cnpj is { Length: > 0 } c ? Documentos.FormatarCnpj(c) : null,
             EmpresaEndereco = endEmp?.OfType<string>().ToList() ?? [], EmpresaFone = await FoneAsync(emp.IdEntidades),
-            Logo = ImagemValida(emp.Logo), Cabecalho = Textos.Limpo(emp.CabecalhoLaudo), Rodape = Textos.Limpo(emp.RodapeLaudo),
+            Logo = Pdf.ImagemValida(emp.Logo), Cabecalho = Textos.Limpo(emp.CabecalhoLaudo), Rodape = Textos.Limpo(emp.RodapeLaudo),
             NrProposta = v.NrProposta, RevisaoSubstituida = !v.UltimaRevisao, DtSolicitacao = v.DtSolicitacao, DtValidade = v.DtValidade,
             Comercial = v.ComercialNome, ClienteNome = v.ClienteNome, ClienteDocumento = v.ClienteCpfCnpj,
             Contato = v.NomeContato, Departamento = v.ContatoDepartamento, ContatoEmail = v.ContatoEmail, ClienteFone = await FoneAsync(v.IdEntidades),
@@ -520,14 +523,6 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
 
     // ------------------------------------------------------------------ apoio
 
-    // logo que o QuestPDF não lê não pode derrubar a impressão: sai sem ele
-    private static byte[]? ImagemValida(byte[]? imagem)
-    {
-        if (imagem is null) return null;
-        try { QuestPDF.Infrastructure.Image.FromBinaryData(imagem).Dispose(); return imagem; }
-        catch (Exception ex) when (ex is not OutOfMemoryException) { return null; }
-    }
-
     private static bool LerPercentual(string? texto, out decimal valor)
     {
         valor = 0;
@@ -544,3 +539,6 @@ public sealed partial class PropostaService(LabDbContext db, IEmpresaContexto ct
 
     private static string? Formatar(decimal v, string formato) => v == 0 ? null : v.ToString(formato, System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
 }
+
+/// <summary>Revisão gerada: ID e número (para a mensagem, sem reler a proposta).</summary>
+public sealed record RevisaoProposta(int Id, string NrProposta);

@@ -31,9 +31,8 @@ public sealed class PedidosVendaController(PedidoVendaService pedidos) : Control
     {
         var r = await pedidos.GerarAsync(vm);
         if (!this.AplicarNoTempData(r)) return RedirectToAction("Editar", "Propostas", new { id = vm.IdProposta });
-        var gerado = await pedidos.CarregarAsync(r.Valor);
-        TempData[Mensagens.Sucesso] = $"Pedido de venda {gerado?.NrPedido} gerado.";
-        return RedirectToAction(nameof(Editar), new { id = r.Valor });
+        TempData[Mensagens.Sucesso] = $"Pedido de venda {PedidoVendaService.Numero(r.Valor.NrPedido)} gerado.";
+        return RedirectToAction(nameof(Editar), new { id = r.Valor.IdPedido });
     }
 
     [HttpPost, Permissao("PEDIDOS_VENDA.ALTERAR")]

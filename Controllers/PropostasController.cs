@@ -76,9 +76,8 @@ public sealed class PropostasController(PropostaService propostas) : Controller
     {
         var r = await propostas.GerarRevisaoAsync(id, motivo);
         if (!this.AplicarNoTempData(r)) return RedirectToAction(nameof(Editar), new { id });
-        var nova = await propostas.CarregarAsync(r.Valor);
-        TempData[Mensagens.Sucesso] = $"Revisão criada: {nova?.NrProposta}. A anterior ficou somente leitura.";
-        return RedirectToAction(nameof(Editar), new { id = r.Valor });
+        TempData[Mensagens.Sucesso] = $"Revisão criada: {r.Valor.NrProposta}. A anterior ficou somente leitura.";
+        return RedirectToAction(nameof(Editar), new { id = r.Valor.Id });
     }
 
     /// <summary>Troca o produto de um item na proposta e nas amostras dela.</summary>

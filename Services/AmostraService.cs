@@ -187,14 +187,17 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
                 t.Idioma.Descricao, t.Prazo.Descricao, t.DtPrevista)).ToListAsync();
 
     /// <summary>Log da amostra; as linhas migradas do legado (sem data nem usuário) vêm marcadas.</summary>
-    public async Task<IReadOnlyList<AmostraLogVM>> HistoricoAsync(int id)
+    private async Task<IReadOnlyList<AmostraLogVM>> HistoricoAsync(int id) => (await HistoricoAsync([id]))[id];
+
+    /// <summary>Log de várias amostras (as revisões de uma amostra física, na T06) numa consulta; amostra sem log = lista vazia.</summary>
+    public async Task<Dictionary<int, IReadOnlyList<AmostraLogVM>>> HistoricoAsync(List<int> idsAmostras)
     {
-        var linhas = await db.LabHistAmostrasLog.AsNoTracking().Where(l => l.IdLabHistAmostras == id).OrderBy(l => l.DtLog).ThenBy(l => l.IdLabHistAmostrasLog)
-            .Select(l => new { l.Acao, l.DtLog, l.Dados, l.IdUsuarios }).ToListAsync();
+        var linhas = await db.LabHistAmostrasLog.AsNoTracking().Where(l => idsAmostras.Contains(l.IdLabHistAmostras)).OrderBy(l => l.DtLog).ThenBy(l => l.IdLabHistAmostrasLog)
+            .Select(l => new { l.IdLabHistAmostras, l.Acao, l.DtLog, l.Dados, l.IdUsuarios }).ToListAsync();
         var ids = linhas.Where(l => l.IdUsuarios != null).Select(l => l.IdUsuarios!.Value).Distinct().ToList();
         var usuarios = await db.Usuarios.AsNoTracking().Where(u => ids.Contains(u.IdUsuarios)).ToDictionaryAsync(u => u.IdUsuarios, u => u.Login);
         var status = await db.AmostrasStatus.AsNoTracking().ToDictionaryAsync(s => s.IdAmostrasStatus, s => s.Descricao);
-        return linhas.Select(l =>
+        var porAmostra = linhas.ToLookup(l => l.IdLabHistAmostras, l =>
         {
             using var json = JsonDocument.Parse(l.Dados);
             var raiz = json.RootElement;
@@ -210,7 +213,8 @@ public sealed class AmostraService(LabDbContext db, IEmpresaContexto ctx, Proced
             if (Valor("NR_LOTE") is { } lote) partes.Add($"lote {lote}");
             if (Valor("MOTIVO_REVISAO") is { } motivo) partes.Add($"motivo: {motivo}");
             return new AmostraLogVM(l.Acao switch { "I" => "Inclusão", "E" => "Exclusão", _ => "Alteração" }, legado ? null : l.DtLog, legado, string.Join(" · ", partes));
-        }).ToList();
+        });
+        return idsAmostras.Distinct().ToDictionary(id => id, id => (IReadOnlyList<AmostraLogVM>)porAmostra[id].ToList());
     }
 
     // ------------------------------------------------------------------ gravação

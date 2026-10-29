@@ -72,8 +72,6 @@ public static partial class PropostaPdf
     private const string Cinza = "#666666";
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
 
-    // licença Community (dúvida 10, 27/10/2026): gratuita só para faturamento anual < US$ 1 mi
-    static PropostaPdf() => QuestPDF.Settings.License = LicenseType.Community;
 
     /// <summary>
     /// Pedido de venda (6.2): o <c>frx_PedVenda</c> do legado é a proposta sem o contrato e sem a Autorização de Serviço,

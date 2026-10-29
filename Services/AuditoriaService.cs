@@ -1,6 +1,4 @@
 using System.Globalization;
-using System.Text;
-using System.Text.Json;
 using LabControl.Data;
 using LabControl.Infra;
 using LabControl.ViewModels;
@@ -40,6 +38,9 @@ public sealed class AuditoriaService(LabDbContext db, IEmpresaContexto ctx, Amos
         [AcoesAuditoria.Login] = "Login", [AcoesAuditoria.EnvioEmail] = "Envio por e-mail",
     };
 
+    private static readonly Dictionary<string, string> AssuntoDaTabela =
+        Assuntos.Values.SelectMany(a => a.Tabelas.Select(t => (t, a.Nome))).ToDictionary(x => x.t, x => x.Nome, StringComparer.OrdinalIgnoreCase);
+
     // tela do registro (quando a tabela tem uma e o ID é o da própria linha)
     private static readonly Dictionary<string, string> Telas = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -50,10 +51,7 @@ public sealed class AuditoriaService(LabDbContext db, IEmpresaContexto ctx, Amos
 
     public async Task<AuditoriaListaVM> ListarAsync(AuditoriaFiltroVM f)
     {
-        var hoje = await db.HojeAsync();
-        f.Ate ??= hoje;
-        f.De ??= f.Ate.Value.AddDays(-6);
-        if (!ctx.AdminGlobal) f.TodasEmpresas = false;
+        await NormalizarAsync(f);
         var q = Consulta(f);
         var total = await q.CountAsync();
         f.Pagina = Paginacao.Ajustar(f.Pagina, total, AuditoriaFiltroVM.TamanhoPagina);
@@ -67,8 +65,7 @@ public sealed class AuditoriaService(LabDbContext db, IEmpresaContexto ctx, Amos
     {
         var a = await Projetar(Visiveis(ctx.AdminGlobal).Where(x => x.IdAuditoria == id)).SingleOrDefaultAsync();
         if (a is null) return null;
-        var antes = Campos(a.DadosAntes);
-        var depois = Campos(a.DadosDepois);
+        var (antes, depois) = (DadosAuditoria.Campos(a.DadosAntes), DadosAuditoria.Campos(a.DadosDepois));
         var nomes = antes.Keys.Concat(depois.Keys).Distinct().ToList();   // a ordem da gravação
         var campos = nomes.Select(n =>
         {
@@ -77,23 +74,22 @@ public sealed class AuditoriaService(LabDbContext db, IEmpresaContexto ctx, Amos
             var mudou = a.Acao == AcoesAuditoria.Alteracao ? va != vd : temAntes && temDepois && va != vd;
             return new AuditoriaCampoVM(n, va, vd, mudou);
         }).ToList();
-        return new AuditoriaDetalheVM { Evento = Item(a), Campos = campos };
+        return new AuditoriaDetalheVM { Evento = Item(a, antes, depois), Campos = campos };
     }
 
     /// <summary>CSV do filtro (UTF-8 com BOM e <c>;</c>), até <see cref="MaxCsv"/> linhas, com os JSON antes/depois.</summary>
     public async Task<byte[]> CsvAsync(AuditoriaFiltroVM f)
     {
-        await ListarAsync(f);   // mesmas datas padrão e a mesma restrição de empresas
+        await NormalizarAsync(f);
         var linhas = await Projetar(Consulta(f).OrderByDescending(a => a.DtEvento).ThenByDescending(a => a.IdAuditoria).Take(MaxCsv)).ToListAsync();
-        static string C(string? s) => s is null ? "" : "\"" + s.Replace("\"", "\"\"") + "\"";
-        var csv = new StringBuilder("Data/hora;Usuário;Ação;Assunto;Tabela;Registro;IP;Empresa;Resumo;Antes;Depois\r\n");
+        var csv = new Csv().Linha("Data/hora", "Usuário", "Ação", "Assunto", "Tabela", "Registro", "IP", "Empresa", "Resumo", "Antes", "Depois");
         foreach (var a in linhas)
         {
             var i = Item(a);
-            csv.AppendJoin(';', [C(i.Quando.ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture)), C(i.Usuario), C(i.Acao), C(i.Assunto),
-                C(i.Tabela), C(i.IdRegistro), C(i.Ip), C(i.Empresa), C(i.Resumo), C(a.DadosAntes), C(a.DadosDepois)]).Append("\r\n");
+            csv.Linha(i.Quando.ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture), i.Usuario, i.Acao, i.Assunto,
+                i.Tabela, i.IdRegistro, i.Ip, i.Empresa, i.Resumo, a.DadosAntes, a.DadosDepois);
         }
-        return Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv.ToString())).ToArray();
+        return csv.Bytes();
     }
 
     /// <summary>Aba "Histórico da amostra": todas as revisões da amostra física pelo número (com ou sem " R01").</summary>
@@ -103,11 +99,12 @@ public sealed class AuditoriaService(LabDbContext db, IEmpresaContexto ctx, Amos
         var achadas = await db.LabHistAmostras.AsNoTracking().Where(a => a.NrAmostra == n || a.NrAmostra.StartsWith(n + " "))
             .Select(a => a.IdAmostraRaiz ?? a.IdLabHistAmostras).Distinct().ToListAsync();
         if (achadas.Count == 0) return new HistoricoAmostraVM { Numero = n, Mensagem = $"Amostra {n} não encontrada nesta empresa (digite o número completo, ex.: 04-00001-01/26)." };
-        var revisoes = await db.LabHistAmostras.AsNoTracking().Where(a => achadas.Contains(a.IdAmostraRaiz ?? a.IdLabHistAmostras))
+        // pela chave e pelo índice da raiz (COALESCE(...) IN (...) não usa índice)
+        var revisoes = await db.LabHistAmostras.AsNoTracking()
+            .Where(a => achadas.Contains(a.IdLabHistAmostras) || (a.IdAmostraRaiz != null && achadas.Contains(a.IdAmostraRaiz.Value)))
             .OrderBy(a => a.IdAmostraRaiz ?? a.IdLabHistAmostras).ThenBy(a => a.Revisao).Select(a => new { a.IdLabHistAmostras, a.NrAmostra }).ToListAsync();
-        var lista = new List<(string, IReadOnlyList<AmostraLogVM>)>();
-        foreach (var r in revisoes) lista.Add((r.NrAmostra, await amostras.HistoricoAsync(r.IdLabHistAmostras)));
-        return new HistoricoAmostraVM { Numero = n, Revisoes = lista };
+        var logs = await amostras.HistoricoAsync(revisoes.Select(r => r.IdLabHistAmostras).ToList());
+        return new HistoricoAmostraVM { Numero = n, Revisoes = revisoes.Select(r => (r.NrAmostra, logs[r.IdLabHistAmostras])).ToList() };
     }
 
     // ------------------------------------------------------------------ consulta
@@ -115,18 +112,27 @@ public sealed class AuditoriaService(LabDbContext db, IEmpresaContexto ctx, Amos
     private sealed record Linha(long IdAuditoria, DateTime DtEvento, string? Login, string Acao, string Tabela, string IdRegistro,
         string? Ip, string? DadosAntes, string? DadosDepois, string? Empresa);
 
+    /// <summary>Período padrão (últimos 7 dias) e "todas as empresas" só para ADMIN_GLOBAL.</summary>
+    private async Task NormalizarAsync(AuditoriaFiltroVM f)
+    {
+        f.Ate ??= await db.HojeAsync();
+        f.De ??= f.Ate.Value.AddDays(-6);
+        if (!ctx.AdminGlobal) f.TodasEmpresas = false;
+    }
+
     /// <summary>
-    /// O que o usuário pode ver. Sem o filtro global (os logins não têm empresa): empresa ativa + logins de quem tem acesso
-    /// a ela; ADMIN_GLOBAL com "todas", tudo.
+    /// O que o usuário pode ver: eventos da empresa ativa + logins (gravados sem empresa) dos usuários com acesso a ela;
+    /// ADMIN_GLOBAL com "todas", tudo. A regra é explícita porque o IgnoreQueryFilters vale para a consulta inteira (num
+    /// UNION com o filtro global, o filtro sumia também da outra parte e a empresa vazava — achado no /simplify da 8.5).
     /// </summary>
     private IQueryable<Models.Auditoria> Visiveis(bool todas)
     {
         var q = db.Auditoria.IgnoreQueryFilters().AsNoTracking();
         if (todas) return q;
         var ativa = ctx.EmpresaId;
-        var usuariosDaEmpresa = db.UsuariosEmpresas.IgnoreQueryFilters().Where(u => u.IdEmpresas == ativa).Select(u => u.IdUsuarios.ToString());
+        var usuariosDaEmpresa = db.UsuariosEmpresas.IgnoreQueryFilters().Where(u => u.IdEmpresas == ativa).Select(u => (int?)u.IdUsuarios);
         return q.Where(a => (ativa != null && a.IdEmpresas == ativa)
-                            || (a.IdEmpresas == null && a.Acao == AcoesAuditoria.Login && a.Tabela == "USUARIOS" && usuariosDaEmpresa.Contains(a.IdRegistro)));
+                            || (a.IdEmpresas == null && a.Acao == AcoesAuditoria.Login && usuariosDaEmpresa.Contains(a.IdUsuarios)));
     }
 
     private IQueryable<Models.Auditoria> Consulta(AuditoriaFiltroVM f)
@@ -138,10 +144,8 @@ public sealed class AuditoriaService(LabDbContext db, IEmpresaContexto ctx, Amos
         if (Textos.Limpo(f.Usuario) is { } u)
         {
             var ids = db.Usuarios.IgnoreQueryFilters().Where(x => x.Login.Contains(u)).Select(x => (int?)x.IdUsuarios);
-            var idsTexto = db.Usuarios.IgnoreQueryFilters().Where(x => x.Login.Contains(u)).Select(x => x.IdUsuarios.ToString());
-            // login: ainda sem sessão, o usuário fica no ID do registro (ou o login digitado, se não existe)
-            q = q.Where(a => ids.Contains(a.IdUsuarios)
-                             || (a.Acao == AcoesAuditoria.Login && (idsTexto.Contains(a.IdRegistro) || a.IdRegistro.Contains(u))));
+            // tentativa com login inexistente: sem usuário, o login digitado fica no ID do registro ("LOGIN:...")
+            q = q.Where(a => ids.Contains(a.IdUsuarios) || (a.IdUsuarios == null && a.Acao == AcoesAuditoria.Login && a.IdRegistro.Contains(u)));
         }
         if (f.Assunto is { } s && Assuntos.TryGetValue(s, out var assunto))
         {
@@ -150,14 +154,7 @@ public sealed class AuditoriaService(LabDbContext db, IEmpresaContexto ctx, Amos
         }
         if (f.Acao is { } ac && Acoes.ContainsKey(ac)) q = q.Where(a => a.Acao == ac);
         if (Textos.Limpo(f.Registro) is { } r)
-        {
-            // DADOS_* são JSON: o Contains do EF vira CAST AS JSON e quebra com texto comum; LIKE sobre o texto da coluna
-            var padrao = "%" + r.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_") + "%";
-            var nosDados = db.Auditoria.FromSqlInterpolated(
-                    $"SELECT * FROM AUDITORIA WHERE CAST(DADOS_DEPOIS AS CHAR) LIKE {padrao} OR CAST(DADOS_ANTES AS CHAR) LIKE {padrao}")
-                .IgnoreQueryFilters().Select(x => x.IdAuditoria);
-            q = q.Where(a => a.IdRegistro == r || nosDados.Contains(a.IdAuditoria));
-        }
+            q = q.Where(a => a.IdRegistro == r || (a.DadosDepois != null && a.DadosDepois.Contains(r)) || (a.DadosAntes != null && a.DadosAntes.Contains(r)));
         return q;
     }
 
@@ -170,53 +167,31 @@ public sealed class AuditoriaService(LabDbContext db, IEmpresaContexto ctx, Amos
         select new Linha(a.IdAuditoria, a.DtEvento, u == null ? null : u.Login, a.Acao, a.Tabela, a.IdRegistro, a.Ip, a.DadosAntes, a.DadosDepois,
             e == null ? null : e.CodEmpresa + " — " + (e.NomeFantasia ?? e.RazaoSocial));
 
-    private static AuditoriaItemVM Item(Linha a)
+    private static AuditoriaItemVM Item(Linha a) => Item(a, DadosAuditoria.Campos(a.DadosAntes), DadosAuditoria.Campos(a.DadosDepois));
+
+    /// <param name="antes">JSON já lido (uma vez por linha).</param>
+    private static AuditoriaItemVM Item(Linha a, Dictionary<string, string?> antes, Dictionary<string, string?> d)
     {
-        var assunto = Assuntos.Values.FirstOrDefault(x => x.Tabelas.Contains(a.Tabela, StringComparer.OrdinalIgnoreCase)).Nome ?? a.Tabela;
+        var assunto = AssuntoDaTabela.GetValueOrDefault(a.Tabela, a.Tabela);
         var link = Telas.TryGetValue(a.Tabela, out var tela) && int.TryParse(a.IdRegistro, out _) && a.Acao != AcoesAuditoria.Exclusao ? tela + a.IdRegistro : null;
-        // login: ainda sem sessão (ID_USUARIOS vazio); o login digitado está nos dados
-        var usuario = a.Login ?? (a.Acao == AcoesAuditoria.Login ? Campos(a.DadosDepois).GetValueOrDefault("LOGIN") : null);
+        // tentativa com login inexistente: sem usuário, o login digitado está nos dados
+        var usuario = a.Login ?? (a.Acao == AcoesAuditoria.Login ? d.GetValueOrDefault("LOGIN") : null);
         return new AuditoriaItemVM(a.IdAuditoria, a.DtEvento, usuario, Acoes.GetValueOrDefault(a.Acao, a.Acao), assunto, a.Tabela, a.IdRegistro, link, a.Ip,
-            Resumo(a), a.Empresa);
+            Resumo(a.Acao, antes, d), a.Empresa);
     }
 
     /// <summary>Uma linha para o grid: motivo das revisões, resultado do login, destinatários do e-mail, número do documento.</summary>
-    private static string? Resumo(Linha a)
+    private static string? Resumo(string acao, Dictionary<string, string?> antes, Dictionary<string, string?> d)
     {
-        var d = Campos(a.DadosDepois);
-        var antes = Campos(a.DadosAntes);
         string? V(string campo) => d.GetValueOrDefault(campo) ?? antes.GetValueOrDefault(campo);
-        if (a.Acao == AcoesAuditoria.Login)
+        if (acao == AcoesAuditoria.Login)
             return V("SUCESSO") == "true" ? $"entrou ({V("LOGIN")})" : $"falhou ({V("LOGIN")}{(V("MOTIVO") is { } m ? ": " + m.ToLowerInvariant() : "")})";
-        if (a.Acao == AcoesAuditoria.EnvioEmail) return $"para {V("PARA")}";
+        if (acao == AcoesAuditoria.EnvioEmail) return $"para {V("PARA")}";
         var partes = new List<string>();
         foreach (var c in new[] { "NR_PROPOSTA", "NR_AMOSTRA", "COD_BOLETIM", "NR_PEDIDO", "LOGIN", "DESCRICAO" })
             if (V(c) is { } v) { partes.Add(v); break; }
         if ((V("MOTIVO") ?? V("MOTIVO_REVISAO")) is { } motivo) partes.Add("motivo: " + motivo);
-        if (a.Acao == AcoesAuditoria.Alteracao && partes.Count == 0 && d.Count > 0) partes.Add(string.Join(", ", d.Keys.Take(4)) + (d.Count > 4 ? "…" : ""));
+        if (acao == AcoesAuditoria.Alteracao && partes.Count == 0 && d.Count > 0) partes.Add(string.Join(", ", d.Keys.Take(4)) + (d.Count > 4 ? "…" : ""));
         return partes.Count == 0 ? null : string.Join(" · ", partes);
-    }
-
-    /// <summary>JSON da auditoria → campo/valor em texto (objetos e listas aninhados ficam como JSON).</summary>
-    private static Dictionary<string, string?> Campos(string? json)
-    {
-        var r = new Dictionary<string, string?>();
-        if (string.IsNullOrWhiteSpace(json)) return r;
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            if (doc.RootElement.ValueKind != JsonValueKind.Object) return new() { ["(dados)"] = json };
-            foreach (var p in doc.RootElement.EnumerateObject())
-                r[p.Name] = p.Value.ValueKind switch
-                {
-                    JsonValueKind.Null => null,
-                    JsonValueKind.String => p.Value.GetString(),
-                    JsonValueKind.True => "true",
-                    JsonValueKind.False => "false",
-                    _ => p.Value.GetRawText(),
-                };
-        }
-        catch (JsonException) { r["(dados)"] = json; }
-        return r;
     }
 }

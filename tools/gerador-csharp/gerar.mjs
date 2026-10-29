@@ -129,7 +129,8 @@ function tipo(sqlType, ctx) {
   if ((mm = U.match(/^CHAR\((\d+)\)/))) return { cs: 'string', maxLength: +mm[1], fixed: true };
   if (/^(TINY|MEDIUM|LONG)?TEXT$/.test(U)) return { cs: 'string', colType: t.toLowerCase() };
   if (/^(TINY|MEDIUM|LONG)?BLOB$/.test(U)) return { cs: 'byte[]', colType: t.toLowerCase() };
-  if (U === 'JSON') return { cs: 'string', colType: 'json' };
+  // JSON como texto comum: com HasColumnType("json") o Pomelo tipa os parâmetros como JSON e o Contains vira CAST AS JSON (T06)
+  if (U === 'JSON') return { cs: 'string' };
   if (U === 'DATE') return { cs: 'DateOnly', value: true };
   if (U === 'TIME') return { cs: 'TimeOnly', value: true };
   if (/^DATETIME(\(\d\))?$/.test(U)) return { cs: 'DateTime', value: true, colType: t.toLowerCase() };

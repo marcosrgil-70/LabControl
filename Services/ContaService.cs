@@ -64,7 +64,7 @@ public sealed class ContaService(LabDbContext db, IAuditoria auditoria, TimeProv
         {
             if (motivo == "SENHA") await RegistrarFalhaAsync(usu!.IdUsuarios);
             await auditoria.RegistrarAsync(AcoesAuditoria.Login, "USUARIOS", usu?.IdUsuarios.ToString() ?? Truncar("LOGIN:" + codigo),
-                depois: new { SUCESSO = false, MOTIVO = motivo, LOGIN = codigo });
+                depois: new { SUCESSO = false, MOTIVO = motivo, LOGIN = codigo }, idUsuario: usu?.IdUsuarios);
             return Resultado.Erro(MensagemLoginInvalido);
         }
 
@@ -75,7 +75,7 @@ public sealed class ContaService(LabDbContext db, IAuditoria auditoria, TimeProv
              WHERE ID_USUARIOS = {usu!.IdUsuarios}
             """);
         await auditoria.RegistrarAsync(AcoesAuditoria.Login, "USUARIOS", usu.IdUsuarios.ToString(),
-            depois: new { SUCESSO = true, LOGIN = codigo });
+            depois: new { SUCESSO = true, LOGIN = codigo }, idUsuario: usu.IdUsuarios);
         return Resultado.Ok(usu.IdUsuarios);
     }
 

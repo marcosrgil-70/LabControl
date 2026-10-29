@@ -26,7 +26,7 @@ public class PedidosVendaTests
             IdProposta = idProposta ?? c.Proposta.IdLabPropostas, DtAutorizacao = await c.HojeAsync(), AutorizadoPor = "MARIA DO CLIENTE", NrPedidoCliente = "PO-77",
         });
         Assert.True(r.Sucesso, r.Mensagem);
-        return r.Valor;
+        return r.Valor.IdPedido;
     }
 
     private static async Task EmitirAsync(Cenario c, int idBoletim) =>

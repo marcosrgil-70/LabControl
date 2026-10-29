@@ -30,20 +30,13 @@ public sealed class EnvioBoletimService(LabDbContext db, BoletimService boletins
         return Resultado.Ok(vm);
     }
 
-    /// <summary>Recusa: a tela volta com o que foi digitado (dados de exibição recarregados).</summary>
-    public async Task<EnvioBoletimVM?> RecarregarAsync(EnvioBoletimVM vm)
-    {
-        var dados = await DadosAsync(vm.IdBoletim);
-        if (!dados.Sucesso) return null;
-        var cfg = await config.ConfiguracaoAsync();
-        await ExibicaoAsync(vm, dados.Valor, cfg.Sucesso ? cfg.Valor : null);
-        return vm;
-    }
-
+    /// <summary>Envia; numa recusa o <paramref name="vm"/> já volta com os dados de exibição (a tela reexibe o digitado).</summary>
     public async Task<Resultado> EnviarAsync(EnvioBoletimVM vm)
     {
         var dados = await DadosAsync(vm.IdBoletim);
         if (!dados.Sucesso) return dados.Falha;
+        var cfg = await config.ConfiguracaoAsync();
+        await ExibicaoAsync(vm, dados.Valor, cfg.Sucesso ? cfg.Valor : null);
         var para = ConfiguracaoEmailService.Enderecos(vm.Para);
         if (para is null) return Resultado.Erro("Há um endereço inválido em \"Para\" (separe vários com ponto e vírgula).", nameof(vm.Para));
         if (para.Count == 0) return Resultado.Erro("Informe ao menos um destinatário.", nameof(vm.Para));
@@ -56,8 +49,6 @@ public sealed class EnvioBoletimService(LabDbContext db, BoletimService boletins
         if (assunto.Length > 200) return Resultado.Erro("Assunto: até 200 caracteres.", nameof(vm.Assunto));
         var texto = Textos.Limpo(vm.Texto);
         if (texto is null) return Resultado.Erro("Escreva a mensagem.", nameof(vm.Texto));
-
-        var cfg = await config.ConfiguracaoAsync();
         if (!cfg.Sucesso) return cfg.Falha;
         var c = cfg.Valor;
         // o mesmo PDF da reimpressão: arquivo da emissão conferido pelo hash (alerta de integridade não envia)
@@ -98,7 +89,7 @@ public sealed class EnvioBoletimService(LabDbContext db, BoletimService boletins
     {
         (vm.CodBoletim, vm.Revisao, vm.NrAmostra, vm.Cliente) = (d.CodBoletim, d.Revisao, d.NrAmostra, d.Cliente);
         (vm.Remetente, vm.CopiaOculta) = (c?.Remetente, c?.CopiaOculta);
-        vm.Anexo = $"{d.CodBoletim.Replace('/', '-')} R{d.Revisao:00}.pdf" + (d.TemArquivo ? "" : " (2ª via — boletim migrado)");
+        vm.Anexo = BoletimService.NomeArquivo(d.CodBoletim, d.Revisao) + (d.TemArquivo ? "" : " (2ª via — boletim migrado)");
         var id = vm.IdBoletim.ToString();
         vm.Envios = (await (from a in db.Auditoria.AsNoTracking()
                             where a.Tabela == Tabela && a.IdRegistro == id && a.Acao == AcoesAuditoria.EnvioEmail
@@ -113,11 +104,8 @@ public sealed class EnvioBoletimService(LabDbContext db, BoletimService boletins
 
     private static string? Destinatarios(string? json)
     {
-        if (json is null) return null;
-        using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var r = doc.RootElement;
-        string? Campo(string nome) => r.TryGetProperty(nome, out var v) && v.ValueKind == System.Text.Json.JsonValueKind.String ? v.GetString() : null;
-        return Campo("COPIA") is { } cc ? $"{Campo("PARA")}; cópia: {cc}" : Campo("PARA");
+        var d = DadosAuditoria.Campos(json);
+        return d.GetValueOrDefault("COPIA") is { } cc ? $"{d.GetValueOrDefault("PARA")}; cópia: {cc}" : d.GetValueOrDefault("PARA");
     }
 
     private static string Preencher(string modelo, DadosBoletim d) => modelo

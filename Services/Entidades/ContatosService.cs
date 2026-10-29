@@ -157,7 +157,7 @@ public sealed class ContatosService(LabDbContext db)
     {
         if (!await PertenceAsync(dono, idEntidade)) return Resultado.Erro(MensagemNaoEncontrado);
         var email = Textos.Limpo(vm.Email)?.ToLowerInvariant();
-        if (email is null || email.Length > 150 || !new EmailAddressAttribute().IsValid(email) || !email.Contains('.'))
+        if (email is null || !Textos.EmailValido(email))
             return Resultado.Erro("E-mail inválido.", nameof(vm.Email));
         if (vm.IdEmailsTipos is { } tipo && !await db.EmailsTipos.AnyAsync(t => t.IdEmailsTipos == tipo))
             return Resultado.Erro("Tipo de e-mail não encontrado.", nameof(vm.IdEmailsTipos));

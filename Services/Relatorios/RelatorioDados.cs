@@ -1,9 +1,9 @@
-using System.Text;
+using LabControl.Infra;
 
 namespace LabControl.Services.Relatorios;
 
-/// <summary>Papel da linha na tabela: dado, cabeçalho de grupo, subtotal do grupo ou total geral.</summary>
-public enum TipoLinha { Dado, Grupo, Subtotal, Total }
+/// <summary>Papel da linha na tabela: dado, subtotal do grupo ou total geral.</summary>
+public enum TipoLinha { Dado, Subtotal, Total }
 
 public sealed record ColunaRelatorio(string Titulo, bool Numero = false, float Largura = 1);
 
@@ -19,7 +19,6 @@ public sealed class TabelaRelatorio
     public int Dados => Linhas.Count(l => l.Tipo == TipoLinha.Dado);
 
     public void Dado(params string?[] celulas) => Linhas.Add(new(celulas));
-    public void Grupo(string texto) => Linhas.Add(new([texto], TipoLinha.Grupo));
     public void Subtotal(params string?[] celulas) => Linhas.Add(new(celulas, TipoLinha.Subtotal));
     public void Total(params string?[] celulas) => Linhas.Add(new(celulas, TipoLinha.Total));
 }
@@ -41,16 +40,14 @@ public sealed class RelatorioDados
     /// <summary>CSV em UTF-8 com BOM e <c>;</c> (abre direto no Excel em português); tabelas separadas por uma linha em branco.</summary>
     public byte[] Csv()
     {
-        static string C(string? s) => s is null ? "" : "\"" + s.Replace("\"", "\"\"") + "\"";
-        var csv = new StringBuilder();
-        csv.Append(C(Titulo)).Append("\r\n").Append(C(Subtitulo)).Append("\r\n");
+        var csv = new Csv().Linha(Titulo).Linha(Subtitulo);
         foreach (var t in Tabelas)
         {
-            csv.Append("\r\n");
-            if (t.Titulo is not null) csv.Append(C(t.Titulo)).Append("\r\n");
-            csv.AppendJoin(';', t.Colunas.Select(c => C(c.Titulo))).Append("\r\n");
-            foreach (var l in t.Linhas) csv.AppendJoin(';', l.Celulas.Select(C)).Append("\r\n");
+            csv.Linha();
+            if (t.Titulo is not null) csv.Linha(t.Titulo);
+            csv.Linha(t.Colunas.Select(c => c.Titulo));
+            foreach (var l in t.Linhas) csv.Linha(l.Celulas);
         }
-        return Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv.ToString())).ToArray();
+        return csv.Bytes();
     }
 }

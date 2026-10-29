@@ -16,7 +16,7 @@ public partial class Auditoria : IFiltradoPorEmpresa
     public int? IdUsuarios { get; set; }
     public string Tabela { get; set; } = string.Empty;
     public string IdRegistro { get; set; } = string.Empty;
-    /// <summary><c>ACAO</c> — I, A, E, R (revisão), M (emissão)</summary>
+    /// <summary><c>ACAO</c> — I, A, E, R (revisão), M (emissão), D (desfazer revisão), L (login), N (envio por e-mail)</summary>
     public string Acao { get; set; } = string.Empty;
     public string? DadosAntes { get; set; }
     public string? DadosDepois { get; set; }

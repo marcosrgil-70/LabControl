@@ -131,7 +131,7 @@ public class ConcorrenciaTests
         var s = new PedidoVendaService(c.Db, c.Procedures, new PropostaService(c.Db, c.Ativa, c.Procedures), new ServicoAuditoria(c.Db, c.Ativa));
         var r = await s.GerarAsync(new PedidoVendaGerarVM { IdProposta = c.Proposta.IdLabPropostas, DtAutorizacao = await c.HojeAsync() });
         Assert.True(r.Sucesso, r.Mensagem);
-        return r.Valor;
+        return r.Valor.IdPedido;
     }
 
     /// <summary>Mantém a conexão do contexto aberta com espera de trava de 3 s (em vez de 50 s): esperar = falhar.</summary>

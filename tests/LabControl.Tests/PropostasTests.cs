@@ -189,11 +189,12 @@ public class PropostasTests
         Assert.True(r1.Sucesso, r1.Mensagem);
         c.Db.ChangeTracker.Clear();
 
-        var nova = (await s.CarregarAsync(r1.Valor))!;
+        var nova = (await s.CarregarAsync(r1.Valor.Id))!;
+        Assert.Equal(nova.NrProposta, r1.Valor.NrProposta);   // o número da mensagem, sem reler a proposta
         Assert.Equal($"000002/{hoje.Year % 100:00}-R1", nova.NrProposta);
         Assert.Equal((1, "Cliente pediu mais um parâmetro", (string?)null), (nova.Revisao, nova.MotivoRevisao, nova.Bloqueio));
         Assert.Equal("<p>Cláusula <strong>1</strong></p>", nova.TxContrato);
-        var p1 = await c.Db.LabPropostas.AsNoTracking().SingleAsync(p => p.IdLabPropostas == r1.Valor);
+        var p1 = await c.Db.LabPropostas.AsNoTracking().SingleAsync(p => p.IdLabPropostas == r1.Valor.Id);
         Assert.Equal((null, null, 270m), (p1.DtAutorizacao, p1.DtEnvioCliente, p1.VrTotalProposta));
         Assert.Equal(await c.Db.EmpresasParametros.Select(x => x.IdLabPropostasStatusInicial).SingleAsync(), p1.IdLabPropostasStatus);
         var linhas = PropostaService.LerItens(nova.ItensJson)!.SelectMany(i => i.Analises).ToList();
@@ -273,8 +274,8 @@ public class PropostasTests
         Assert.True(troca.Sucesso, troca.Mensagem);
         var produtos = await c.Db.LabHistAmostras.AsNoTracking().OrderBy(a => a.Revisao).Select(a => a.IdProdutos).ToListAsync();
         Assert.Equal([c.Produto.IdProdutos, outro.IdProdutos], produtos);   // revisão antiga intacta, vigente trocada
-        Assert.Equal(outro.IdProdutos, await c.Db.PedidosVendaItens.Where(i => i.IdPedidosVenda == pedido.Valor).Select(i => i.IdProdutos).SingleAsync());
-        Assert.Equal("QUEIJO PRATO", await c.Db.VwPedidosVendaSaldo.Where(i => i.IdPedidosVenda == pedido.Valor).Select(i => i.ProdutoDescricao).SingleAsync());
+        Assert.Equal(outro.IdProdutos, await c.Db.PedidosVendaItens.Where(i => i.IdPedidosVenda == pedido.Valor.IdPedido).Select(i => i.IdProdutos).SingleAsync());
+        Assert.Equal("QUEIJO PRATO", await c.Db.VwPedidosVendaSaldo.Where(i => i.IdPedidosVenda == pedido.Valor.IdPedido).Select(i => i.ProdutoDescricao).SingleAsync());
     }
 
     [Fact]

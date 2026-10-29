@@ -19,7 +19,8 @@ public sealed class ParametrosEmpresaService(LabDbContext db, IEmpresaContexto c
         ["PRODUTO"] = "Produto", ["RELATORIO_ENSAIO"] = "Relatório de ensaio",
     };
 
-    public async Task<ParametrosEmpresaVM?> CarregarAsync()
+    /// <param name="email">Aba E-mail recusada: reexibe o digitado em vez do gravado.</param>
+    public async Task<ParametrosEmpresaVM?> CarregarAsync(EmailEmpresaVM? email = null)
     {
         var p = await db.EmpresasParametros.AsNoTracking().SingleOrDefaultAsync();
         if (p is null) return null;
@@ -32,15 +33,20 @@ public sealed class ParametrosEmpresaService(LabDbContext db, IEmpresaContexto c
             DiasPesquisaPadrao = p.DiasPesquisaPadrao, ExigeResp2Boletim = p.ExigeResp2Boletim,
             TextoPadraoLegenda = p.TextoPadraoLegenda, TextoPadraoContrato = p.TextoPadraoContrato,
         };
-        await PrepararAsync(vm);
+        await PrepararAsync(vm, email ?? Email.ConfiguracaoEmailService.Tela(p));
         return vm;
     }
 
-    /// <summary>Combos (só status da empresa ativa: ativos + o já escolhido), numeração e data da última alteração.</summary>
-    public async Task PrepararAsync(ParametrosEmpresaVM vm)
+    /// <summary>Combos (só status da empresa ativa: ativos + o já escolhido), numeração, data da última alteração e aba E-mail.</summary>
+    public async Task PrepararAsync(ParametrosEmpresaVM vm, EmailEmpresaVM? email = null)
     {
         vm.AdminGlobal = ctx.AdminGlobal;
-        vm.AlteradoEm = await db.EmpresasParametros.Select(p => p.AlteradoEm).SingleOrDefaultAsync();
+        if (email is null)
+        {
+            var p = await db.EmpresasParametros.AsNoTracking().SingleAsync();
+            (vm.AlteradoEm, vm.Email) = (p.AlteradoEm, Email.ConfiguracaoEmailService.Tela(p));
+        }
+        else (vm.AlteradoEm, vm.Email) = (await db.EmpresasParametros.Select(p => p.AlteradoEm).SingleOrDefaultAsync(), email);
         // List (não array): string[]/int[].Contains vira ReadOnlySpan no C# 14 e o EF não traduz
         static List<int> Escolhidos(params int?[] ids) => ids.OfType<int>().ToList();
         var prop = Escolhidos(vm.IdLabPropostasStatusInicial, vm.IdLabPropostasStatusEnvcli);

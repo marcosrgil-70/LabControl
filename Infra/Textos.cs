@@ -12,6 +12,10 @@ public static class Textos
     /// <summary>Aparado e em maiúsculas; vazio vira null.</summary>
     public static string? Maiusculas(string? s) => Limpo(s)?.ToUpperInvariant();
 
+    /// <summary>E-mail aceito nos contatos e no envio do boletim (a mesma regra nos dois: até 150, com domínio).</summary>
+    public static bool EmailValido(string email) =>
+        email.Length <= 150 && new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(email) && email.Contains('.');
+
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
 
     /// <summary>

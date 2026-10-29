@@ -66,8 +66,6 @@ public static class BoletimPdf
 {
     private const string Cinza = "#666666";
 
-    // licença Community (dúvida 10, 27/10/2026): gratuita só para faturamento anual < US$ 1 mi
-    static BoletimPdf() => QuestPDF.Settings.License = LicenseType.Community;
     private static readonly System.Globalization.CultureInfo PtBr = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
 
     public static byte[] Gerar(BoletimDocumento d) => Document.Create(doc => doc.Page(page =>

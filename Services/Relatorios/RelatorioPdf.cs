@@ -11,11 +11,8 @@ public sealed record EmpresaRelatorio(string Nome, string? Cnpj, byte[]? Logo);
 public static class RelatorioPdf
 {
     private const string Cinza = "#666666";
-    private const string FundoGrupo = "#EEF3FA";
     private const string FundoTotal = "#E6E6E6";
 
-    // licença Community (dúvida 10): a mesma do boletim e da proposta
-    static RelatorioPdf() => QuestPDF.Settings.License = LicenseType.Community;
 
     public static byte[] Gerar(RelatorioDados r, EmpresaRelatorio empresa, DateTime emitidoEm) => Document.Create(doc => doc.Page(page =>
     {
@@ -73,12 +70,6 @@ public static class RelatorioPdf
             });
             foreach (var l in t.Linhas)
             {
-                if (l.Tipo == TipoLinha.Grupo)
-                {
-                    tab.Cell().ColumnSpan((uint)t.Colunas.Count).Background(FundoGrupo).PaddingVertical(2).PaddingHorizontal(2)
-                        .Text(l.Celulas[0]).Bold();
-                    continue;
-                }
                 for (var i = 0; i < t.Colunas.Count; i++)
                 {
                     var cel = tab.Cell().BorderBottom(0.3f).BorderColor("#DDDDDD").PaddingVertical(1.5f).PaddingHorizontal(2);

@@ -1,4 +1,3 @@
-using System.Net.Mail;
 using System.Security.Cryptography;
 using LabControl.Data;
 using LabControl.Infra;
@@ -23,24 +22,25 @@ public sealed class ConfiguracaoEmailService(LabDbContext db, IDataProtectionPro
 
     private IDataProtector Protetor => protecao.CreateProtector("LabControl.EmpresasParametros.SmtpSenha.v1");
 
-    public async Task<EmailEmpresaVM?> CarregarAsync()
+    public async Task<EmailEmpresaVM?> CarregarAsync() =>
+        await db.EmpresasParametros.AsNoTracking().SingleOrDefaultAsync() is { } p ? Tela(p) : null;
+
+    /// <summary>Aba E-mail a partir dos parâmetros já lidos (a T05 lê a linha uma vez para as três abas).</summary>
+    public static EmailEmpresaVM Tela(Models.EmpresaParametros p) => new()
     {
-        var p = await db.EmpresasParametros.AsNoTracking().SingleOrDefaultAsync();
-        if (p is null) return null;
-        return new EmailEmpresaVM
-        {
             Servidor = p.SmtpServidor, Porta = p.SmtpPorta, Seguranca = p.SmtpSeguranca, Usuario = p.SmtpUsuario,
             Remetente = p.EmailRemetente, RemetenteNome = p.EmailRemetenteNome, CopiaOculta = p.EmailCopiaOculta,
             Assunto = p.EmailAssuntoBoletim ?? AssuntoPadrao, Texto = p.EmailTextoBoletim ?? TextoPadrao,
             TemSenha = p.SmtpSenha is not null, Configurado = p.SmtpServidor is not null,
-        };
-    }
+    };
 
     /// <summary>Servidor vazio desliga o envio (os outros campos ficam guardados).</summary>
     public async Task<Resultado> GravarAsync(EmailEmpresaVM vm)
     {
         var p = await db.EmpresasParametros.SingleOrDefaultAsync();
         if (p is null) return Resultado.Erro("Parâmetros da empresa não encontrados.");
+        // a aba reexibida numa recusa mostra a situação gravada (a senha digitada nunca volta)
+        (vm.TemSenha, vm.Configurado) = (p.SmtpSenha is not null, p.SmtpServidor is not null);
         var servidor = Textos.Limpo(vm.Servidor)?.ToLowerInvariant();
         var usuario = Textos.Limpo(vm.Usuario);
         var remetente = Textos.Limpo(vm.Remetente)?.ToLowerInvariant();
@@ -58,9 +58,9 @@ public sealed class ConfiguracaoEmailService(LabDbContext db, IDataProtectionPro
         }
         if (!Enum.IsDefined(vm.Seguranca)) return Resultado.Erro("Escolha a segurança da conexão.", nameof(vm.Seguranca));
         if (usuario?.Length > 150) return Resultado.Erro("Usuário: até 150 caracteres.", nameof(vm.Usuario));
-        if (remetente is not null && !EmailValido(remetente, 150)) return Resultado.Erro("E-mail do remetente inválido.", nameof(vm.Remetente));
+        if (remetente is not null && !Textos.EmailValido(remetente)) return Resultado.Erro("E-mail do remetente inválido.", nameof(vm.Remetente));
         if (Textos.Limpo(vm.RemetenteNome)?.Length > 100) return Resultado.Erro("Nome do remetente: até 100 caracteres.", nameof(vm.RemetenteNome));
-        if (copiaOculta is not null && !EmailValido(copiaOculta, 150)) return Resultado.Erro("E-mail da cópia oculta inválido.", nameof(vm.CopiaOculta));
+        if (copiaOculta is not null && !Textos.EmailValido(copiaOculta)) return Resultado.Erro("E-mail da cópia oculta inválido.", nameof(vm.CopiaOculta));
         if (assunto?.Length > 200) return Resultado.Erro("Assunto: até 200 caracteres.", nameof(vm.Assunto));
         if (vm.NovaSenha?.Length > 200) return Resultado.Erro("Senha: até 200 caracteres.", nameof(vm.NovaSenha));
 
@@ -78,7 +78,11 @@ public sealed class ConfiguracaoEmailService(LabDbContext db, IDataProtectionPro
     /// <summary>Configuração gravada pronta para enviar (senha decifrada), ou a mensagem do que falta.</summary>
     public async Task<Resultado<ConfiguracaoEmail>> ConfiguracaoAsync()
     {
-        var p = await db.EmpresasParametros.AsNoTracking().SingleOrDefaultAsync();
+        // só as colunas do e-mail (a linha tem os textos longos do contrato e da legenda)
+        var p = await db.EmpresasParametros.AsNoTracking()
+            .Select(x => new { x.SmtpServidor, x.SmtpPorta, x.SmtpSeguranca, x.SmtpUsuario, x.SmtpSenha, x.EmailRemetente, x.EmailRemetenteNome,
+                x.EmailCopiaOculta, x.EmailAssuntoBoletim, x.EmailTextoBoletim })
+            .SingleOrDefaultAsync();
         if (p?.SmtpServidor is null || p.EmailRemetente is null) return Resultado.Erro(NaoConfigurado);
         string? senha = null;
         if (p.SmtpSenha is not null)
@@ -99,7 +103,7 @@ public sealed class ConfiguracaoEmailService(LabDbContext db, IDataProtectionPro
     public async Task<Resultado> TestarAsync(string? destino)
     {
         var para = Textos.Limpo(destino)?.ToLowerInvariant();
-        if (para is null || !EmailValido(para, 150)) return Resultado.Erro("Informe um e-mail válido para o teste.");
+        if (para is null || !Textos.EmailValido(para)) return Resultado.Erro("Informe um e-mail válido para o teste.");
         var cfg = await ConfiguracaoAsync();
         if (!cfg.Sucesso) return cfg.Falha;
         var c = cfg.Valor;
@@ -127,11 +131,8 @@ public sealed class ConfiguracaoEmailService(LabDbContext db, IDataProtectionPro
     {
         var lista = (texto ?? "").Split([';', ',', ' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries)
             .Select(e => e.ToLowerInvariant()).Distinct().ToList();
-        return lista.All(e => EmailValido(e, 150)) ? lista : null;
+        return lista.All(Textos.EmailValido) ? lista : null;
     }
-
-    public static bool EmailValido(string email, int max) =>
-        email.Length <= max && MailAddress.TryCreate(email, out var a) && a.Address == email && a.Host.Contains('.');
 
     private static string Normalizar(string s) => s.Replace("\r\n", "\n").Trim();
 }

@@ -25,6 +25,21 @@ public sealed class RelatorioFiltroVM
     /// <summary>Botão "Visualizar": sem ele a tela abre só com os filtros (período padrão).</summary>
     public bool Visualizar { get; set; }
 
+    /// <summary>Apaga os filtros que o relatório não oferece (parâmetro na URL não vale; a consulta aplica todo filtro informado).</summary>
+    public void ManterSomente(FiltrosRelatorio oferecidos)
+    {
+        bool Tem(FiltrosRelatorio x) => oferecidos.HasFlag(x);
+        if (!Tem(FiltrosRelatorio.Cliente)) Cliente = null;
+        if (!Tem(FiltrosRelatorio.Cobranca)) Cobranca = null;
+        if (!Tem(FiltrosRelatorio.Situacao)) Situacao = null;
+        if (!Tem(FiltrosRelatorio.Produto)) Produto = null;
+        if (!Tem(FiltrosRelatorio.Parametro)) Parametro = null;
+        if (!Tem(FiltrosRelatorio.TipoAnalise)) TipoAnalise = null;
+        if (!Tem(FiltrosRelatorio.Acreditado)) Acreditado = null;
+        if (!Tem(FiltrosRelatorio.Analista)) Analista = null;
+        if (!Tem(FiltrosRelatorio.AgruparPorCliente)) AgruparPorCliente = false;
+    }
+
     public static string NomeSituacao(SituacaoPedido s) => s switch
     {
         SituacaoPedido.Aberto => "Aberto",

@@ -49,7 +49,7 @@ public class AuditoriaConsultaTests
 
         // CSV com o filtro
         var csv = Encoding.UTF8.GetString(await s.CsvAsync(new AuditoriaFiltroVM { Acao = "R" }));
-        Assert.StartsWith("﻿Data/hora;Usuário;Ação;Assunto;Tabela;Registro;IP;Empresa;Resumo;Antes;Depois", csv);
+        Assert.StartsWith("﻿\"Data/hora\";\"Usuário\";\"Ação\";\"Assunto\"", csv);
         Assert.Contains("LOTE DIGITADO ERRADO", csv);
 
         // histórico da amostra: as duas revisões pelo número (com ou sem o " R01")

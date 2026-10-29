@@ -28,6 +28,7 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
 {
     public const string PeriodoInvalido = "Período de datas inválido. Por favor, verificar.";
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
+    private static readonly StringComparer TextoPtBr = StringComparer.Create(PtBr, true);
 
     public static readonly IReadOnlyList<DefinicaoRelatorio> Catalogo =
     [
@@ -66,6 +67,7 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
     public async Task<Resultado<RelatorioDados>> GerarAsync(DefinicaoRelatorio d, RelatorioFiltroVM f)
     {
         if (f.De is not { } de || f.Ate is not { } ate || ate < de) return Resultado.Erro(PeriodoInvalido, nameof(f.De));
+        f.ManterSomente(d.Filtros);   // filtro que o relatório não oferece não vale (as consultas aplicam todo filtro informado)
         var r = new RelatorioDados { Nome = d.Nome, Titulo = d.Titulo, Subtitulo = Subtitulo(d, f) };
         switch (d.Nome)
         {
@@ -85,11 +87,7 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
     {
         var e = await db.Empresas.AsNoTracking().Where(x => x.IdEmpresas == ctx.EmpresaId)
             .Select(x => new { x.RazaoSocial, x.Cnpj, x.Logo }).SingleAsync();
-        byte[]? logo = null;
-        if (e.Logo is not null)
-            try { QuestPDF.Infrastructure.Image.FromBinaryData(e.Logo).Dispose(); logo = e.Logo; }
-            catch (Exception ex) when (ex is not OutOfMemoryException) { }
-        return new EmpresaRelatorio(e.RazaoSocial, e.Cnpj is { Length: > 0 } c ? Documentos.FormatarCnpj(c) : null, logo);
+        return new EmpresaRelatorio(e.RazaoSocial, e.Cnpj is { Length: > 0 } c ? Documentos.FormatarCnpj(c) : null, Pdf.ImagemValida(e.Logo));
     }
 
     // ------------------------------------------------------------------ T30-01
@@ -98,12 +96,8 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
     {
         // RN-09.07: uma linha por pedido (o pedido aponta para a revisão vigente da proposta); o legado lia todas as revisões
         var q = db.PedidosVenda.AsNoTracking().Where(p => p.Situacao != SituacaoPedido.Cancelado && p.DtAutorizacao >= de && p.DtAutorizacao <= ate);
-        if (Textos.Limpo(f.Cliente) is { } c)
-            q = q.Where(p => p.Entidade.Nome.Contains(c) || (p.Entidade.NomeFantasia != null && p.Entidade.NomeFantasia.Contains(c))
-                             || (p.Entidade.CpfCnpj != null && p.Entidade.CpfCnpj.Contains(c)));
-        if (Textos.Limpo(f.Cobranca) is { } cb)
-            q = q.Where(p => p.EntCobranca.Nome.Contains(cb) || (p.EntCobranca.NomeFantasia != null && p.EntCobranca.NomeFantasia.Contains(cb))
-                             || (p.EntCobranca.CpfCnpj != null && p.EntCobranca.CpfCnpj.Contains(cb)));
+        if (Entidades(f.Cliente) is { } clientes) q = q.Where(p => clientes.Contains(p.IdEntidades));
+        if (Entidades(f.Cobranca) is { } cobrancas) q = q.Where(p => cobrancas.Contains(p.IdEntCobranca));
         if (f.Situacao is { } s) q = q.Where(p => p.Situacao == s);
         var pedidos = await q.Select(p => new
             {
@@ -121,7 +115,7 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
                 new("Cobrança", Largura: 2.2f), new("Condição", Largura: 1.3f), new("% desc.", true, 0.7f), new("Desconto (R$)", true), new("Total (R$)", true),
             ],
         };
-        foreach (var g in pedidos.GroupBy(p => (p.IdEntidades, p.Nome)).OrderBy(g => g.Key.Nome, StringComparer.Create(PtBr, true)).ThenBy(g => g.Key.IdEntidades))
+        foreach (var g in pedidos.GroupBy(p => (p.IdEntidades, p.Nome)).OrderBy(g => g.Key.Nome, TextoPtBr).ThenBy(g => g.Key.IdEntidades))
         {
             foreach (var p in g.OrderBy(p => p.DtAutorizacao).ThenBy(p => p.NrPedido))
                 t.Dado(Data(p.DtAutorizacao), PedidoVendaService.Numero(p.NrPedido), p.NrProposta, p.CpfCnpj, p.Nome, p.Cobranca, p.Condicao,
@@ -145,42 +139,39 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
         // agrupar o ano inteiro pela VW_LAB_AMOSTRAS levava 3,6 s por consulta (0,15 s assim, 2017 do legado)
         var fisicas = db.LabHistAmostras.AsNoTracking().Where(a => a.UltimaRevisao);
         if (f.SomenteComPedido) fisicas = fisicas.Where(a => a.IdPedidosVenda != null);   // RN-09.08, padrão do legado
-        if (porProduto && Textos.Limpo(f.Cliente) is { } c)
-            fisicas = fisicas.Where(a => a.Entidade.Nome.Contains(c) || (a.Entidade.NomeFantasia != null && a.Entidade.NomeFantasia.Contains(c))
-                                         || (a.Entidade.CpfCnpj != null && a.Entidade.CpfCnpj.Contains(c)));
-        if (porProduto && Textos.Limpo(f.Produto) is { } pd) fisicas = fisicas.Where(a => a.Produto.Codigo.Contains(pd) || a.Produto.Descricao.Contains(pd));
+        if (Entidades(f.Cliente) is { } clientes) fisicas = fisicas.Where(a => clientes.Contains(a.IdEntidades));
+        if (Textos.Limpo(f.Produto) is { } pd) fisicas = fisicas.Where(a => a.Produto.Codigo.Contains(pd) || a.Produto.Descricao.Contains(pd));
 
-        // RN-09.03: recebida = a amostra física (revisão 0) entregue no período; revisões não são entradas novas
-        var entradas = await (from a in fisicas
-                              join raiz in db.LabHistAmostras on a.IdAmostraRaiz ?? a.IdLabHistAmostras equals raiz.IdLabHistAmostras
-                              where raiz.DtEntrega >= de && raiz.DtEntrega <= ate
-                              group a by new { a.IdEntidades, a.Entidade.Nome, a.Entidade.CpfCnpj, a.IdProdutos, a.Produto.Codigo, a.Produto.Descricao } into g
-                              select new ContagemAmostras(g.Key.IdEntidades, g.Key.Nome, g.Key.CpfCnpj, g.Key.IdProdutos, g.Key.Codigo, g.Key.Descricao, g.Count()))
+        // contagem por cliente + produto (a T30-02 soma os produtos do cliente)
+        static Task<List<ContagemAmostras>> Contar(IQueryable<LabHistAmostra> q) =>
+            (from a in q
+             group a by new { a.IdEntidades, a.Entidade.Nome, a.Entidade.CpfCnpj, a.IdProdutos, a.Produto.Codigo, a.Produto.Descricao } into g
+             select new ContagemAmostras(g.Key.IdEntidades, g.Key.Nome, g.Key.CpfCnpj, g.Key.IdProdutos, g.Key.Codigo, g.Key.Descricao, g.Count()))
             .ToListAsync();
+        // RN-09.03: recebida = a amostra física (revisão 0) entregue no período; revisões não são entradas novas
+        var entradas = await Contar(from a in fisicas
+                                    join raiz in db.LabHistAmostras on a.IdAmostraRaiz ?? a.IdLabHistAmostras equals raiz.IdLabHistAmostras
+                                    where raiz.DtEntrega >= de && raiz.DtEntrega <= ate
+                                    select a);
         // RN-09.04: analisada = amostra física com algum parâmetro da última revisão do resultado no período, contada uma vez
         var raizesAnalisadas = db.LabResultadosParam
             .Where(p => p.LabResultadoAnalise.UltimaRevisao && p.DtResultado >= de && p.DtResultado <= ate)
             .Select(p => p.LabResultadoAnalise.LabHistAmostra.IdAmostraRaiz ?? p.LabResultadoAnalise.IdLabHistAmostras);
-        var analisadas = await (from a in fisicas
-                                where raizesAnalisadas.Contains(a.IdAmostraRaiz ?? a.IdLabHistAmostras)
-                                group a by new { a.IdEntidades, a.Entidade.Nome, a.Entidade.CpfCnpj, a.IdProdutos, a.Produto.Codigo, a.Produto.Descricao } into g
-                                select new ContagemAmostras(g.Key.IdEntidades, g.Key.Nome, g.Key.CpfCnpj, g.Key.IdProdutos, g.Key.Codigo, g.Key.Descricao, g.Count()))
-            .ToListAsync();
+        var analisadas = await Contar(fisicas.Where(a => raizesAnalisadas.Contains(a.IdAmostraRaiz ?? a.IdLabHistAmostras)));
 
         // junta as duas contagens pela chave (cliente, e produto na T30-03)
-        var linhas = entradas.Select(e => (e, Analisada: false)).Concat(analisadas.Select(a => (e: a, Analisada: true)))
-            .GroupBy(x => (x.e.IdCliente, Produto: porProduto ? x.e.IdProduto : 0))
-            .Select(g =>
-            {
-                var k = g.First().e;
-                return new
-                {
-                    k.IdCliente, k.Cliente, k.CpfCnpj, k.ProdutoCodigo, k.Produto,
-                    Entradas = g.Where(x => !x.Analisada).Sum(x => x.e.Quantidade),
-                    Analisadas = g.Where(x => x.Analisada).Sum(x => x.e.Quantidade),
-                };
-            })
-            .OrderBy(x => x.Cliente, StringComparer.Create(PtBr, true)).ThenBy(x => x.IdCliente).ThenBy(x => x.ProdutoCodigo)
+        var porChave = new Dictionary<(int, int), (ContagemAmostras Info, int Entradas, int Analisadas)>();
+        void Somar(ContagemAmostras c, int entradas, int analisadas)
+        {
+            var chave = (c.IdCliente, porProduto ? c.IdProduto : 0);
+            (ContagemAmostras Info, int Entradas, int Analisadas) atual = porChave.GetValueOrDefault(chave, (c, 0, 0));
+            porChave[chave] = (atual.Info, atual.Entradas + entradas, atual.Analisadas + analisadas);
+        }
+        foreach (var e in entradas) Somar(e, e.Quantidade, 0);
+        foreach (var a in analisadas) Somar(a, 0, a.Quantidade);
+        var linhas = porChave.Values
+            .Select(v => new { v.Info.IdCliente, v.Info.Cliente, v.Info.CpfCnpj, v.Info.ProdutoCodigo, v.Info.Produto, v.Entradas, v.Analisadas })
+            .OrderBy(x => x.Cliente, TextoPtBr).ThenBy(x => x.IdCliente).ThenBy(x => x.ProdutoCodigo)
             .ToList();
 
         if (!porProduto)
@@ -231,7 +222,7 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
         public string? Analista { get; init; }
     }
 
-    private Task<List<LinhaResultado>> ResultadosAsync(RelatorioFiltroVM f, DateOnly de, DateOnly ate, FiltrosRelatorio filtros)
+    private Task<List<LinhaResultado>> ResultadosAsync(RelatorioFiltroVM f, DateOnly de, DateOnly ate)
     {
         // o legado (T30-04) ligava o ID do parâmetro ao ID do teste; aqui o parâmetro vem do teste do resultado
         var q = from r in db.VwLabResultados.AsNoTracking()
@@ -239,17 +230,15 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
                 join t in db.LabHistAmostrasTestes on r.IdLabHistAmostrasTestes equals t.IdLabHistAmostrasTestes
                 join a in db.LabHistAmostras on r.IdLabHistAmostras equals a.IdLabHistAmostras
                 select new { r, t, a };
-        if (filtros.HasFlag(FiltrosRelatorio.Cliente) && Textos.Limpo(f.Cliente) is { } c)
-            q = q.Where(x => x.a.Entidade.Nome.Contains(c) || (x.a.Entidade.NomeFantasia != null && x.a.Entidade.NomeFantasia.Contains(c))
-                             || (x.a.Entidade.CpfCnpj != null && x.a.Entidade.CpfCnpj.Contains(c)));
-        if (filtros.HasFlag(FiltrosRelatorio.Parametro) && Textos.Limpo(f.Parametro) is { } p)
+        if (Entidades(f.Cliente) is { } clientes) q = q.Where(x => clientes.Contains(x.a.IdEntidades));
+        if (Textos.Limpo(f.Parametro) is { } p)
             q = q.Where(x => x.r.Parametro.Contains(p) || x.r.DescReduzida.Contains(p));
-        if (filtros.HasFlag(FiltrosRelatorio.TipoAnalise) && Textos.Limpo(f.TipoAnalise) is { } ta)
+        if (Textos.Limpo(f.TipoAnalise) is { } ta)
             q = q.Where(x => x.t.LabParametroAnalise.AnaliseTipo.Descricao.Contains(ta));
-        if (filtros.HasFlag(FiltrosRelatorio.Acreditado) && f.Acreditado is { } acr) q = q.Where(x => x.r.Auditado == acr);
-        if (filtros.HasFlag(FiltrosRelatorio.Produto) && Textos.Limpo(f.Produto) is { } pd)
+        if (f.Acreditado is { } acr) q = q.Where(x => x.r.Auditado == acr);
+        if (Textos.Limpo(f.Produto) is { } pd)
             q = q.Where(x => x.a.Produto.Codigo.Contains(pd) || x.a.Produto.Descricao.Contains(pd));
-        if (filtros.HasFlag(FiltrosRelatorio.Analista) && Textos.Limpo(f.Analista) is { } an)
+        if (Textos.Limpo(f.Analista) is { } an)
             q = q.Where(x => x.r.AnalistaNome != null && x.r.AnalistaNome.Contains(an));
         return q.Select(x => new LinhaResultado
             {
@@ -263,8 +252,8 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
 
     private async Task ParametrosAnalisadosAsync(RelatorioDados r, RelatorioFiltroVM f, DateOnly de, DateOnly ate)
     {
-        var linhas = await ResultadosAsync(f, de, ate, FiltrosRelatorio.Cliente | FiltrosRelatorio.Parametro | FiltrosRelatorio.TipoAnalise | FiltrosRelatorio.Acreditado);
-        var texto = StringComparer.Create(PtBr, true);
+        var linhas = await ResultadosAsync(f, de, ate);
+        var texto = TextoPtBr;
         var t = new TabelaRelatorio
         {
             Colunas = [new("Resultado", Largura: 0.9f), new("Parâmetro", Largura: 3f), new("Amostra", Largura: 1.4f), new("Cliente", Largura: 3f), new("CPF/CNPJ", Largura: 1.4f)],
@@ -289,16 +278,19 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
         t.Total(null, $"Total geral: {Qtde(linhas.Count, "parâmetro analisado", "parâmetros analisados")}", null, null, null);
         r.Tabelas.Add(t);
 
-        var resumo = new TabelaRelatorio { Titulo = "Total por parâmetro", Colunas = [new("Parâmetro", Largura: 4f), new("Analisados", true)] };
-        foreach (var g in linhas.GroupBy(l => (l.IdParametro, l.Parametro)).OrderBy(g => g.Key.Parametro, texto)) resumo.Dado(g.Key.Parametro, Inteiro(g.Count()));
-        resumo.Total("Total geral", Inteiro(linhas.Count));
-        if (f.AgruparPorCliente) r.Tabelas.Add(resumo);
+        if (f.AgruparPorCliente)
+        {
+            var resumo = new TabelaRelatorio { Titulo = "Total por parâmetro", Colunas = [new("Parâmetro", Largura: 4f), new("Analisados", true)] };
+            foreach (var g in linhas.GroupBy(l => (l.IdParametro, l.Parametro)).OrderBy(g => g.Key.Parametro, texto)) resumo.Dado(g.Key.Parametro, Inteiro(g.Count()));
+            resumo.Total("Total geral", Inteiro(linhas.Count));
+            r.Tabelas.Add(resumo);
+        }
         r.Notas.Add("Cada parâmetro da última revisão do resultado conta uma vez (o relatório do legado ligava o parâmetro ao teste errado e não é comparável).");
     }
 
     private async Task TempoAnalisesAsync(RelatorioDados r, RelatorioFiltroVM f, DateOnly de, DateOnly ate)
     {
-        var linhas = await ResultadosAsync(f, de, ate, FiltrosRelatorio.Parametro | FiltrosRelatorio.TipoAnalise);
+        var linhas = await ResultadosAsync(f, de, ate);
         // RN-09.06: dias inclusivos, como o legado (início e resultado no mesmo dia = 1)
         static int Dias(LinhaResultado l) => l.DtResultado.DayNumber - l.DtInicial.DayNumber + 1;
         static int? Atraso(LinhaResultado l) => l.DtPrevista is { } p ? Math.Max(0, l.DtResultado.DayNumber - p.DayNumber) : null;
@@ -321,7 +313,7 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
             Titulo = "Por parâmetro (dias)",
             Colunas = [new("Parâmetro", Largura: 4f), new("Análises", true), new("Média", true), new("Mínimo", true), new("Máximo", true), new("Em atraso", true)],
         };
-        foreach (var g in linhas.GroupBy(l => (l.IdParametro, l.Parametro)).OrderBy(g => g.Key.Parametro, StringComparer.Create(PtBr, true)))
+        foreach (var g in linhas.GroupBy(l => (l.IdParametro, l.Parametro)).OrderBy(g => g.Key.Parametro, TextoPtBr))
             resumo.Dado(g.Key.Parametro, Inteiro(g.Count()), Decimal(g.Average(Dias)), Inteiro(g.Min(Dias)), Inteiro(g.Max(Dias)),
                 Inteiro(g.Count(l => Atraso(l) > 0)));
         if (linhas.Count > 0)
@@ -333,8 +325,8 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
 
     private async Task ProducaoAsync(RelatorioDados r, RelatorioFiltroVM f, DateOnly de, DateOnly ate)
     {
-        var linhas = await ResultadosAsync(f, de, ate, FiltrosRelatorio.Parametro | FiltrosRelatorio.Produto | FiltrosRelatorio.Analista);
-        var texto = StringComparer.Create(PtBr, true);
+        var linhas = await ResultadosAsync(f, de, ate);
+        var texto = TextoPtBr;
         var t = new TabelaRelatorio
         {
             Colunas = [new("Resultado", Largura: 0.9f), new("Parâmetro", Largura: 3f), new("Produto", Largura: 2.6f), new("Qtde. amostra", true, 1.1f), new("Analista", Largura: 2f), new("Amostra", Largura: 1.4f)],
@@ -358,24 +350,28 @@ public sealed class RelatoriosService(LabDbContext db, IEmpresaContexto ctx)
 
     // ------------------------------------------------------------------ apoio
 
+    /// <summary>IDs das entidades da busca de texto livre (a mesma da T12), ou null sem texto.</summary>
+    private IQueryable<int>? Entidades(string? texto) =>
+        Textos.Limpo(texto) is { } t ? db.Entidades.Where(Entidade.Busca(t)).Select(e => e.IdEntidades) : null;
+
     private static string Subtitulo(DefinicaoRelatorio d, RelatorioFiltroVM f)
     {
         var partes = new List<string> { $"{d.Periodo}: {Data(f.De!.Value)} a {Data(f.Ate!.Value)}" };
-        void Se(FiltrosRelatorio filtro, string rotulo, string? valor)
+        void Se(string rotulo, string? valor)
         {
-            if (d.Filtros.HasFlag(filtro) && Textos.Limpo(valor) is { } v) partes.Add($"{rotulo}: {v}");
+            if (Textos.Limpo(valor) is { } v) partes.Add($"{rotulo}: {v}");
         }
-        Se(FiltrosRelatorio.Cliente, "Cliente", f.Cliente);
-        Se(FiltrosRelatorio.Cobranca, "Cobrança", f.Cobranca);
-        Se(FiltrosRelatorio.Situacao, "Situação", f.Situacao is { } s ? RelatorioFiltroVM.NomeSituacao(s) : null);
-        Se(FiltrosRelatorio.Produto, "Produto", f.Produto);
-        Se(FiltrosRelatorio.Parametro, "Parâmetro", f.Parametro);
-        Se(FiltrosRelatorio.TipoAnalise, "Tipo de análise", f.TipoAnalise);
-        Se(FiltrosRelatorio.Acreditado, "Acreditado", f.Acreditado is { } a ? (a ? "sim" : "não") : null);
-        Se(FiltrosRelatorio.Analista, "Analista", f.Analista);
+        Se("Cliente", f.Cliente);
+        Se("Cobrança", f.Cobranca);
+        Se("Situação", f.Situacao is { } s ? RelatorioFiltroVM.NomeSituacao(s) : null);
+        Se("Produto", f.Produto);
+        Se("Parâmetro", f.Parametro);
+        Se("Tipo de análise", f.TipoAnalise);
+        Se("Acreditado", f.Acreditado is { } a ? (a ? "sim" : "não") : null);
+        Se("Analista", f.Analista);
         if (d.Filtros.HasFlag(FiltrosRelatorio.SomenteComPedido))
             partes.Add(f.SomenteComPedido ? "Somente amostras com pedido de venda" : "Todas as amostras (com e sem pedido de venda)");
-        if (d.Filtros.HasFlag(FiltrosRelatorio.AgruparPorCliente) && f.AgruparPorCliente) partes.Add("Agrupado por cliente");
+        if (f.AgruparPorCliente) partes.Add("Agrupado por cliente");
         return string.Join(" · ", partes);
     }
 
