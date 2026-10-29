@@ -23,6 +23,7 @@ public sealed class AppNavegador : IAsyncLifetime
     public IBrowser Browser { get; private set; } = null!;
     public string Url { get; private set; } = "";
     public ImpressoraDoTeste Impressora { get; } = new();
+    public EmailDoTeste Email { get; } = new();
     public string PastaBoletins { get; } = Path.Combine(Path.GetTempPath(), "lc-boletins-navegador-" + Guid.NewGuid().ToString("N")[..8]);
 
     public async Task InitializeAsync()
@@ -36,6 +37,7 @@ public sealed class AppNavegador : IAsyncLifetime
             {
                 s.AddSingleton<IFonteCep>(new CepDoTeste());
                 s.AddSingleton<LabControl.Infra.IImpressoraRaw>(Impressora); // etiquetas (T25) sem Argox: guarda os comandos
+                s.AddSingleton<LabControl.Infra.IEnvioEmail>(Email);          // e-mail (8.3) sem servidor: guarda as mensagens
             });
         });
         _app.UseKestrel(0);

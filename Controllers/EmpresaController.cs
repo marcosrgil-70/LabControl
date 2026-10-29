@@ -1,5 +1,6 @@
 using LabControl.Infra;
 using LabControl.Services;
+using LabControl.Services.Email;
 using LabControl.Services.Entidades;
 using LabControl.ViewModels;
 using Microsoft.AspNetCore.Authentication;
@@ -9,7 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace LabControl.Controllers;
 
 /// <summary>T03 — dados da empresa ativa (<c>/Empresa/Dados</c>), logo e contatos (endereços, telefones e e-mails da entidade da empresa). A lista e a inclusão ficam em <see cref="EmpresasController"/>.</summary>
-public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresaService parametros, ContatosService contatos, ContaService conta, IEmpresaContexto ctx) : Controller
+public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresaService parametros, ConfiguracaoEmailService email, ContatosService contatos,
+    ContaService conta, IEmpresaContexto ctx) : Controller
 {
     private int Ativa => ctx.EmpresaId ?? throw new InvalidOperationException("Sem empresa ativa.");
 
@@ -37,10 +39,14 @@ public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresa
         return View(vm);
     }
 
-    /// <summary>T05 — parâmetros da empresa ativa (aba "Parâmetros") e numeração somente leitura (aba "Numeração").</summary>
+    /// <summary>T05 — parâmetros da empresa ativa (aba "Parâmetros"), numeração somente leitura (aba "Numeração") e e-mail (aba "E-mail").</summary>
     [HttpGet, Permissao("PARAMETROS_EMPRESA.CONSULTAR")]
-    public async Task<IActionResult> Parametros() =>
-        await parametros.CarregarAsync() is { } vm ? View(vm) : NotFound();
+    public async Task<IActionResult> Parametros()
+    {
+        if (await parametros.CarregarAsync() is not { } vm) return NotFound();
+        vm.Email = (await email.CarregarAsync())!;
+        return View(vm);
+    }
 
     [HttpPost, Permissao("PARAMETROS_EMPRESA.ALTERAR")]
     public async Task<IActionResult> Parametros(ParametrosEmpresaVM vm)
@@ -48,7 +54,35 @@ public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresa
         if (ModelState.IsValid && this.AplicarNoFormulario(await parametros.AlterarAsync(vm), "Parâmetros da empresa gravados."))
             return RedirectToAction(nameof(Parametros));
         await parametros.PrepararAsync(vm);
+        vm.Email = (await email.CarregarAsync())!;
         return View(vm);
+    }
+
+    /// <summary>T05 — aba E-mail (8.3): servidor de saída e modelos do e-mail do boletim. Recusa: a aba volta com o digitado.</summary>
+    [HttpPost, Permissao("PARAMETROS_EMPRESA.ALTERAR")]
+    public async Task<IActionResult> Email([Bind(Prefix = nameof(ParametrosEmpresaVM.Email))] EmailEmpresaVM dados)
+    {
+        var r = await email.GravarAsync(dados);
+        if (r.Sucesso)
+        {
+            TempData[Mensagens.Sucesso] = "Configuração de e-mail gravada.";
+            return Redirect(Url.Action(nameof(Parametros)) + "#email");
+        }
+        ModelState.AddModelError(r.Campo is null ? nameof(ParametrosEmpresaVM.Email) : $"{nameof(ParametrosEmpresaVM.Email)}.{r.Campo}", r.Mensagem!);
+        var vm = (await parametros.CarregarAsync())!;
+        var gravado = (await email.CarregarAsync())!;
+        (dados.TemSenha, dados.Configurado, dados.NovaSenha) = (gravado.TemSenha, gravado.Configurado, null);
+        vm.Email = dados;
+        ViewData["Aba"] = "email";
+        return View(nameof(Parametros), vm);
+    }
+
+    /// <summary>"Enviar e-mail de teste" com a configuração gravada.</summary>
+    [HttpPost, Permissao("PARAMETROS_EMPRESA.ALTERAR")]
+    public async Task<IActionResult> TestarEmail(string? destino)
+    {
+        this.AplicarNoTempData(await email.TestarAsync(destino), $"E-mail de teste enviado para {destino?.Trim()}. Confira a caixa de entrada (e o spam).");
+        return Redirect(Url.Action(nameof(Parametros)) + "#email");
     }
 
     /// <summary>T05 — ajuste manual de uma linha da numeração, com motivo (só ADMIN_GLOBAL).</summary>

@@ -181,6 +181,7 @@
         else
         {
             <a asp-action="Imprimir" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-secondary" lc-permissao="BOLETINS.IMPRIMIR" id="botaoImprimir"><i class="bi bi-printer me-1"></i>@(Model.TemArquivo ? "Imprimir" : "Imprimir 2ª via")</a>
+            <a asp-action="Email" asp-route-id="@Model.Id" class="btn btn-outline-secondary" lc-permissao="BOLETINS.IMPRIMIR" id="botaoEnviarEmail"><i class="bi bi-envelope me-1"></i>Enviar por e-mail</a>
         }
         @if (Model.UltimaRevisao)
         {

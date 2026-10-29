@@ -71,6 +71,14 @@ public enum FinalidadeEndereco
     [ValorBanco("COBRANCA"), System.ComponentModel.DataAnnotations.Display(Name = "Cobrança")] Cobranca,
 }
 
+/// <summary>EMPRESAS_PARAMETROS.SMTP_SEGURANCA (8.3)</summary>
+public enum SegurancaSmtp
+{
+    [ValorBanco("NENHUMA"), System.ComponentModel.DataAnnotations.Display(Name = "Nenhuma")] Nenhuma,
+    [ValorBanco("SSL"), System.ComponentModel.DataAnnotations.Display(Name = "SSL/TLS direto (porta 465)")] Ssl,
+    [ValorBanco("STARTTLS"), System.ComponentModel.DataAnnotations.Display(Name = "STARTTLS (porta 587)")] StartTls,
+}
+
 /// <summary>Valor do membro do enum na coluna ENUM do MySQL.</summary>
 [AttributeUsage(AttributeTargets.Field)]
 public sealed class ValorBancoAttribute(string valor) : Attribute

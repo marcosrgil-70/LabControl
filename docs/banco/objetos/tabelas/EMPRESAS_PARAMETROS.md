@@ -13,7 +13,7 @@ Parâmetros de funcionamento de cada empresa: status padrão, limites de dias, t
 
 Comentário do script: _2. PARÂMETROS DA EMPRESA_
 
-Notas do script: _FKs de status criadas no fim do script_
+Notas do script: _envio do boletim por e-mail (8.3, configurado pelo usuário na T05, aba E-mail)_ · _FKs de status criadas no fim do script_
 
 ## Colunas
 | # | Coluna | Tipo | Nulo | Padrão | Preenchida por | Descrição |
@@ -31,7 +31,17 @@ Notas do script: _FKs de status criadas no fim do script_
 | 11 | `EXIGE_RESP2_BOLETIM` | TINYINT(1) | não | 0 | aplicação |  |
 | 12 | `TEXTO_PADRAO_LEGENDA` | TEXT | sim |  | aplicação |  |
 | 13 | `TEXTO_PADRAO_CONTRATO` | MEDIUMTEXT | sim |  | aplicação |  |
-| 14 | `ALTERADO_EM` | DATETIME | sim |  | banco |  |
+| 14 | `SMTP_SERVIDOR` | VARCHAR(150) | sim |  | aplicação | Servidor de saída (SMTP); vazio = envio desligado |
+| 15 | `SMTP_PORTA` | INT | não | 587 | aplicação |  |
+| 16 | `SMTP_SEGURANCA` | ENUM('NENHUMA','SSL','STARTTLS') | não | 'STARTTLS' | aplicação |  |
+| 17 | `SMTP_USUARIO` | VARCHAR(150) | sim |  | aplicação |  |
+| 18 | `SMTP_SENHA` | VARCHAR(1000) | sim |  | aplicação | Cifrada pela aplicação (ASP.NET Data Protection), nunca em texto puro; a auditoria mostra *** |
+| 19 | `EMAIL_REMETENTE` | VARCHAR(150) | sim |  | aplicação | Endereço do campo De: |
+| 20 | `EMAIL_REMETENTE_NOME` | VARCHAR(100) | sim |  | aplicação |  |
+| 21 | `EMAIL_COPIA_OCULTA` | VARCHAR(150) | sim |  | aplicação | Cópia oculta de todo boletim enviado (opcional) |
+| 22 | `EMAIL_ASSUNTO_BOLETIM` | VARCHAR(200) | sim |  | aplicação | Modelo; marcadores {boletim} {amostra} {cliente} {empresa} |
+| 23 | `EMAIL_TEXTO_BOLETIM` | TEXT | sim |  | aplicação | Modelo do corpo (texto); mesmos marcadores |
+| 24 | `ALTERADO_EM` | DATETIME | sim |  | banco |  |
 
 ## Chaves, restrições e índices
 - **PK:** `ID_EMPRESAS`
@@ -71,11 +81,13 @@ Notas do script: _FKs de status criadas no fim do script_
 - `ID_LAB_PROPOSTAS_STATUS_ENVCLI`: ao mudar a proposta para esse status a trigger grava `DT_ENVIO_CLIENTE`.
 - `ID_AMOSTRAS_STATUS_RESULTADOS`: legado do filtro da tela de Resultados/Etiquetas (no v2 vale `AMOSTRAS_STATUS.PERMITE_RESULTADO`).
 - `EXIGE_RESP2_BOLETIM` é verificado por `SP_EMITIR_BOLETIM`.
+- Envio de e-mail (8.3, D-26): `SMTP_*` e `EMAIL_*` editados na T05 › E-mail; `SMTP_SERVIDOR` vazio desliga o envio; `SMTP_SENHA` cifrada pela aplicação (Data Protection) — nunca gravar em texto puro; modelos nulos = padrão do `ConfiguracaoEmailService` (marcadores {boletim} {amostra} {cliente} {empresa}).
 - `DIAS_PESQUISA_PADRAO` (365) é o período inicial dos filtros de consulta (Delphi: `Data_Servidor - 365`).
 
 ## Implementação no C# (EF Core)
 - **Multiempresa:** entra no Global Query Filter por `ID_EMPRESAS` (empresa ativa) e o `SaveChanges` preenche `ID_EMPRESAS` na inclusão.
 - `TINYINT(1)` → `bool`: `EXIGE_RESP2_BOLETIM`.
+- `ENUM` → enum C# com conversão para string: `SMTP_SEGURANCA` ('NENHUMA','SSL','STARTTLS').
 - Datas mantidas pelo MySQL (`DEFAULT/ON UPDATE CURRENT_TIMESTAMP`): `ALTERADO_EM` — mapear como gerado pelo banco.
 - Ler uma vez por request (cache curto por empresa) — usado em várias telas.
 
@@ -95,6 +107,17 @@ CREATE TABLE EMPRESAS_PARAMETROS (
   EXIGE_RESP2_BOLETIM              TINYINT(1)   NOT NULL DEFAULT 0,
   TEXTO_PADRAO_LEGENDA             TEXT         NULL,
   TEXTO_PADRAO_CONTRATO            MEDIUMTEXT   NULL,
+  -- envio do boletim por e-mail (8.3, configurado pelo usuário na T05, aba E-mail)
+  SMTP_SERVIDOR                    VARCHAR(150) NULL COMMENT 'Servidor de saída (SMTP); vazio = envio desligado',
+  SMTP_PORTA                       INT          NOT NULL DEFAULT 587,
+  SMTP_SEGURANCA                   ENUM('NENHUMA','SSL','STARTTLS') NOT NULL DEFAULT 'STARTTLS',
+  SMTP_USUARIO                     VARCHAR(150) NULL,
+  SMTP_SENHA                       VARCHAR(1000) NULL COMMENT 'Cifrada pela aplicação (ASP.NET Data Protection), nunca em texto puro; a auditoria mostra ***',
+  EMAIL_REMETENTE                  VARCHAR(150) NULL COMMENT 'Endereço do campo De:',
+  EMAIL_REMETENTE_NOME             VARCHAR(100) NULL,
+  EMAIL_COPIA_OCULTA               VARCHAR(150) NULL COMMENT 'Cópia oculta de todo boletim enviado (opcional)',
+  EMAIL_ASSUNTO_BOLETIM            VARCHAR(200) NULL COMMENT 'Modelo; marcadores {boletim} {amostra} {cliente} {empresa}',
+  EMAIL_TEXTO_BOLETIM              TEXT         NULL COMMENT 'Modelo do corpo (texto); mesmos marcadores',
   ALTERADO_EM                      DATETIME     NULL ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT FK_EMPPARAM_EMPRESAS FOREIGN KEY (ID_EMPRESAS) REFERENCES EMPRESAS (ID_EMPRESAS)
   -- FKs de status criadas no fim do script

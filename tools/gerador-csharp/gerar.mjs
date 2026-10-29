@@ -51,6 +51,7 @@ const ENUMS = {
   "'E','S'": 'EntradaSaida',
   "'ARQUIVADA','DESCARTADA'": 'SituacaoArquivo',
   "'GERAL','NOTA_FISCAL','CORRESPONDENCIA','ENTREGA','COBRANCA'": 'FinalidadeEndereco',
+  "'NENHUMA','SSL','STARTTLS'": 'SegurancaSmtp',
 };
 // valor gravado no banco -> membro do enum C#
 const MEMBROS = {
@@ -61,6 +62,7 @@ const MEMBROS = {
   SituacaoPedido: { ABERTO: 'Aberto', EM_EXECUCAO: 'EmExecucao', CONCLUIDO: 'Concluido', CANCELADO: 'Cancelado' },
   EntradaSaida: { E: 'Entrada', S: 'Saida' },
   SituacaoArquivo: { ARQUIVADA: 'Arquivada', DESCARTADA: 'Descartada' },
+  SegurancaSmtp: { NENHUMA: 'Nenhuma', SSL: 'Ssl', STARTTLS: 'StartTls' },
   FinalidadeEndereco: { GERAL: 'Geral', NOTA_FISCAL: 'NotaFiscal', CORRESPONDENCIA: 'Correspondencia', ENTREGA: 'Entrega', COBRANCA: 'Cobranca' },
 };
 

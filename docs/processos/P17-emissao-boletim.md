@@ -27,7 +27,7 @@
 | Alterar a amostra | "Amostra com boletim emitido: gere uma revisão da amostra." |
 - **Reimpressão** usa o arquivo gravado (conferir o hash; divergência = alerta de integridade).
 - Correção: só por revisão ([P18](P18-revisao-boletim.md)).
-- Envio por e-mail ao contato do resultado da proposta (fase 8; dúvida 2 do plano) anexa o PDF gravado.
+- Envio por e-mail ao contato do resultado da proposta anexa o PDF gravado — **feito na 8.3 (29/10/2026)**: servidor configurado pela empresa na T05 › E-mail (D-26), PDF conferido pelo hash antes de anexar, evento `N` na auditoria. Ver [T27 › Envio por e-mail](../telas/T27-boletim.md#envio-por-e-mail-tarefa-83-29102026).
 
 ## Migração
 Todo boletim migrado recebe `DH_EMISSAO = DH_GERACAO` (histórico congelado); sem PDF (`ARQUIVO_PDF` nulo) — reimpressão dos antigos gera o PDF a partir dos dados gravados, com a indicação "2ª via — boletim migrado".

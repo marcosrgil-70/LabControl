@@ -8,6 +8,7 @@
 <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#parametros" type="button" role="tab">Parâmetros</button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#numeracao" type="button" role="tab">Numeração</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#email" type="button" role="tab" id="abaEmail">E-mail</button></li>
 </ul>
 
 <div class="tab-content">
@@ -117,6 +118,10 @@
         </form>
     </div>
 
+    <div class="tab-pane fade" id="email" role="tabpanel">
+        <partial name="_Email" model="Model" />
+    </div>
+
     <div class="tab-pane fade" id="numeracao" role="tabpanel">
         <div class="alert alert-info py-2 small">
             <i class="bi bi-info-circle me-1"></i>A numeração é gerada pelo banco. Ela reinicia sozinha a cada ano (linha nova por ano):
@@ -189,9 +194,10 @@
 
 @section Scripts {
     <script>
-        // volta para a aba Numeração depois do ajuste (redirect com #numeracao)
-        if (location.hash === '#numeracao')
-            bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#numeracao"]')).show();
+        // volta para a aba Numeração/E-mail depois do ajuste ou da gravação (redirect com #numeracao/#email, ou recusa na aba E-mail)
+        const aba = '@(ViewData["Aba"])' || location.hash.substring(1);
+        if (aba === 'numeracao' || aba === 'email')
+            bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#' + aba + '"]')).show();
 
         const retro = document.getElementById('DiasRetroativosEntrega');
         const aviso = () => document.getElementById('avisoRetroativos').classList.toggle('d-none', !(Number(retro.value) > 30));

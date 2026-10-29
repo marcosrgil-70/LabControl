@@ -29,6 +29,22 @@ public partial class EmpresaParametros : IPorEmpresa
     public bool ExigeResp2Boletim { get; set; }
     public string? TextoPadraoLegenda { get; set; }
     public string? TextoPadraoContrato { get; set; }
+    /// <summary><c>SMTP_SERVIDOR</c> — Servidor de saída (SMTP); vazio = envio desligado</summary>
+    public string? SmtpServidor { get; set; }
+    public int SmtpPorta { get; set; } = 587;
+    public SegurancaSmtp SmtpSeguranca { get; set; } = SegurancaSmtp.StartTls;
+    public string? SmtpUsuario { get; set; }
+    /// <summary><c>SMTP_SENHA</c> — Cifrada pela aplicação (ASP.NET Data Protection), nunca em texto puro; a auditoria mostra ***</summary>
+    public string? SmtpSenha { get; set; }
+    /// <summary><c>EMAIL_REMETENTE</c> — Endereço do campo De:</summary>
+    public string? EmailRemetente { get; set; }
+    public string? EmailRemetenteNome { get; set; }
+    /// <summary><c>EMAIL_COPIA_OCULTA</c> — Cópia oculta de todo boletim enviado (opcional)</summary>
+    public string? EmailCopiaOculta { get; set; }
+    /// <summary><c>EMAIL_ASSUNTO_BOLETIM</c> — Modelo; marcadores {boletim} {amostra} {cliente} {empresa}</summary>
+    public string? EmailAssuntoBoletim { get; set; }
+    /// <summary><c>EMAIL_TEXTO_BOLETIM</c> — Modelo do corpo (texto); mesmos marcadores</summary>
+    public string? EmailTextoBoletim { get; set; }
     /// <summary><c>ALTERADO_EM</c> — Calculada pelo banco (trigger/default): não é enviada; relida após gravar.</summary>
     public DateTime? AlteradoEm { get; set; }
 

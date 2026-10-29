@@ -175,7 +175,7 @@ CREATE TABLE AUDITORIA (
   ID_USUARIOS      INT          NULL,
   TABELA           VARCHAR(60)  NOT NULL,
   ID_REGISTRO      VARCHAR(60)  NOT NULL,
-  ACAO             CHAR(1)      NOT NULL COMMENT 'I, A, E, R (revisão), M (emissão)',
+  ACAO             CHAR(1)      NOT NULL COMMENT 'I, A, E, R (revisão), M (emissão), D (desfazer revisão), L (login), N (envio por e-mail)',
   DADOS_ANTES      JSON         NULL,
   DADOS_DEPOIS     JSON         NULL,
   IP               VARCHAR(45)  NULL,
@@ -202,6 +202,17 @@ CREATE TABLE EMPRESAS_PARAMETROS (
   EXIGE_RESP2_BOLETIM              TINYINT(1)   NOT NULL DEFAULT 0,
   TEXTO_PADRAO_LEGENDA             TEXT         NULL,
   TEXTO_PADRAO_CONTRATO            MEDIUMTEXT   NULL,
+  -- envio do boletim por e-mail (8.3, configurado pelo usuário na T05, aba E-mail)
+  SMTP_SERVIDOR                    VARCHAR(150) NULL COMMENT 'Servidor de saída (SMTP); vazio = envio desligado',
+  SMTP_PORTA                       INT          NOT NULL DEFAULT 587,
+  SMTP_SEGURANCA                   ENUM('NENHUMA','SSL','STARTTLS') NOT NULL DEFAULT 'STARTTLS',
+  SMTP_USUARIO                     VARCHAR(150) NULL,
+  SMTP_SENHA                       VARCHAR(1000) NULL COMMENT 'Cifrada pela aplicação (ASP.NET Data Protection), nunca em texto puro; a auditoria mostra ***',
+  EMAIL_REMETENTE                  VARCHAR(150) NULL COMMENT 'Endereço do campo De:',
+  EMAIL_REMETENTE_NOME             VARCHAR(100) NULL,
+  EMAIL_COPIA_OCULTA               VARCHAR(150) NULL COMMENT 'Cópia oculta de todo boletim enviado (opcional)',
+  EMAIL_ASSUNTO_BOLETIM            VARCHAR(200) NULL COMMENT 'Modelo; marcadores {boletim} {amostra} {cliente} {empresa}',
+  EMAIL_TEXTO_BOLETIM              TEXT         NULL COMMENT 'Modelo do corpo (texto); mesmos marcadores',
   ALTERADO_EM                      DATETIME     NULL ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT FK_EMPPARAM_EMPRESAS FOREIGN KEY (ID_EMPRESAS) REFERENCES EMPRESAS (ID_EMPRESAS)
   -- FKs de status criadas no fim do script

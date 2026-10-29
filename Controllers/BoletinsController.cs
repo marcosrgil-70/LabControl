@@ -1,5 +1,6 @@
 using LabControl.Infra;
 using LabControl.Services;
+using LabControl.Services.Email;
 using LabControl.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,7 +10,7 @@ namespace LabControl.Controllers;
 /// T27 — Boletim (<c>/Boletins</c>, tarefa 5.3): consulta, montagem (seleção em dois grids, ordem, textos), prévia,
 /// emissão com PDF + SHA-256, reimpressão do arquivo gravado, revisão e desfazer.
 /// </summary>
-public sealed class BoletinsController(BoletimService boletins) : Controller
+public sealed class BoletinsController(BoletimService boletins, EnvioBoletimService envio) : Controller
 {
     [HttpGet, Permissao("BOLETINS.CONSULTAR")]
     public async Task<IActionResult> Index(BoletimFiltroVM filtro)
@@ -89,6 +90,24 @@ public sealed class BoletinsController(BoletimService boletins) : Controller
     /// <summary>Reimpressão do emitido (o PDF gravado, conferido pelo hash) ou 2ª via do migrado.</summary>
     [HttpGet, Permissao("BOLETINS.IMPRIMIR")]
     public async Task<IActionResult> Imprimir(int id) => Pdf(id, await boletins.ImprimirAsync(id));
+
+    /// <summary>Enviar o boletim emitido por e-mail (8.3): destinatários sugeridos, assunto e texto do modelo da empresa.</summary>
+    [HttpGet, Permissao("BOLETINS.IMPRIMIR")]
+    public async Task<IActionResult> Email(int id)
+    {
+        var r = await envio.PrepararAsync(id);
+        return this.AplicarNoTempData(r) ? View(r.Valor) : RedirectToAction(nameof(Editar), new { id });
+    }
+
+    [HttpPost, Permissao("BOLETINS.IMPRIMIR")]
+    public async Task<IActionResult> Email(int id, EnvioBoletimVM vm)
+    {
+        vm.IdBoletim = id;
+        var r = await envio.EnviarAsync(vm);
+        if (this.AplicarNoFormulario(r, $"Boletim enviado por e-mail para {vm.Para?.Trim()}."))
+            return RedirectToAction(nameof(Editar), new { id });
+        return await envio.RecarregarAsync(vm) is { } tela ? View(tela) : NotFound();
+    }
 
     [HttpPost, Permissao("BOLETINS.REVISAR")]
     public async Task<IActionResult> Revisao(int id, string? motivo)

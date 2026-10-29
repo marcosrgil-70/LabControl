@@ -21,6 +21,8 @@
 - **Esforço:** M (se confirmado)
 
 ### 8.3 Envio de boletim por e-mail
+> ✅ **Concluída em 29/10/2026** — dúvida 2 respondida pelo usuário: a configuração do servidor fica numa **aba "E-mail" em Parâmetros da Empresa**, por empresa e editável pelo usuário (D-26). Ver [T05 › Aba E-mail](../telas/T05-parametros-empresa.md#aba-e-mail-tarefa-83-29102026--pedido-do-usuário) e [T27 › Envio por e-mail](../telas/T27-boletim.md#envio-por-e-mail-tarefa-83-29102026); aceite em `EmailTests` e no navegador `Email_configurado_na_empresa_envia_o_boletim_emitido`.
+
 - **Passos:** configurar SMTP (dúvida 2); botão "Enviar por e-mail" no boletim emitido → contato do resultado da proposta (+ cópia opcional), anexando o PDF gravado; registrar envio em `AUDITORIA`.
 - **Esforço:** S
 
@@ -33,4 +35,4 @@
 
 ## Definição de pronto
 - [x] Relatórios com números corretos (sem duplicar revisões). — 8.1, comparados com o legado em 2017.
-- [ ] Auditoria consultável; e-mail de boletim funcionando.
+- [ ] Auditoria consultável (8.4); e-mail de boletim funcionando — ✅ 8.3 (com servidor falso nos testes; envio real a conferir com a conta do laboratório, pendência 38).

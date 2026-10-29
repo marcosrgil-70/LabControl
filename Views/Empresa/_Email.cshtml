@@ -1,0 +1,121 @@
+@model ParametrosEmpresaVM
+@{
+    var e = Model.Email;
+}
+@* T05 › E-mail (8.3): servidor de saída e modelos do e-mail do boletim desta empresa *@
+<div class="alert @(e.Configurado ? "alert-success" : "alert-warning") py-2 small" id="situacaoEmail">
+    @if (e.Configurado)
+    {
+        <i class="bi bi-check-circle me-1"></i>@:Envio de boletins por e-mail ligado. Use "Enviar e-mail de teste" para conferir.
+    }
+    else
+    {
+        <i class="bi bi-exclamation-triangle me-1"></i>@:Envio de e-mail desligado: informe o servidor e o remetente (os dados vêm do provedor do e-mail do laboratório — os mesmos do Outlook).
+    }
+</div>
+
+<form method="post" asp-action="Email" novalidate id="formEmail" autocomplete="off">
+    <div asp-validation-summary="All" class="alert alert-danger py-2 @(ViewData["Aba"] as string == "email" ? "" : "d-none")"></div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold py-2">Servidor de saída (SMTP)</div>
+        <div class="card-body row g-3">
+            <div class="col-md-5">
+                <label asp-for="Email.Servidor" class="form-label small"></label>
+                <input asp-for="Email.Servidor" class="form-control" placeholder="smtp.seuprovedor.com.br" maxlength="150" />
+                <span asp-validation-for="Email.Servidor" class="text-danger small"></span>
+                <div class="form-text">Vazio desliga o envio.</div>
+            </div>
+            <div class="col-6 col-md-2">
+                <label asp-for="Email.Porta" class="form-label small"></label>
+                <input asp-for="Email.Porta" type="number" min="1" max="65535" class="form-control" />
+                <span asp-validation-for="Email.Porta" class="text-danger small"></span>
+            </div>
+            <div class="col-6 col-md-5">
+                <label asp-for="Email.Seguranca" class="form-label small"></label>
+                <select asp-for="Email.Seguranca" asp-items="Html.GetEnumSelectList<SegurancaSmtp>()" class="form-select"></select>
+                <div class="form-text">Gmail e Microsoft 365: STARTTLS na porta 587.</div>
+            </div>
+            <div class="col-md-5">
+                <label asp-for="Email.Usuario" class="form-label small"></label>
+                <input asp-for="Email.Usuario" class="form-control" maxlength="150" autocomplete="off" />
+                <span asp-validation-for="Email.Usuario" class="text-danger small"></span>
+                <div class="form-text">Normalmente o próprio endereço de e-mail. Vazio = servidor sem autenticação.</div>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Email.NovaSenha" class="form-label small"></label>
+                <input asp-for="Email.NovaSenha" type="password" value="" class="form-control" maxlength="200" autocomplete="new-password"
+                       placeholder="@(e.TemSenha ? "•••••••• (gravada — em branco mantém)" : "")" />
+                <span asp-validation-for="Email.NovaSenha" class="text-danger small"></span>
+                <div class="form-text">Guardada cifrada; nunca é mostrada. No Gmail use uma "senha de app".</div>
+            </div>
+            @if (e.TemSenha)
+            {
+                <div class="col-md-3 d-flex align-items-center">
+                    <div class="form-check mt-md-3">
+                        <input asp-for="Email.ApagarSenha" class="form-check-input" />
+                        <label asp-for="Email.ApagarSenha" class="form-check-label small"></label>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold py-2">Remetente</div>
+        <div class="card-body row g-3">
+            <div class="col-md-5">
+                <label asp-for="Email.Remetente" class="form-label small"></label>
+                <input asp-for="Email.Remetente" type="email" class="form-control" placeholder="laudos@laboratorio.com.br" maxlength="150" />
+                <span asp-validation-for="Email.Remetente" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Email.RemetenteNome" class="form-label small"></label>
+                <input asp-for="Email.RemetenteNome" class="form-control" maxlength="100" />
+                <span asp-validation-for="Email.RemetenteNome" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Email.CopiaOculta" class="form-label small"></label>
+                <input asp-for="Email.CopiaOculta" type="email" class="form-control" maxlength="150" />
+                <span asp-validation-for="Email.CopiaOculta" class="text-danger small"></span>
+                <div class="form-text">Opcional: o laboratório recebe uma cópia de cada boletim enviado.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fw-semibold py-2">Modelo do e-mail do boletim</div>
+        <div class="card-body row g-3">
+            <div class="col-12">
+                <label asp-for="Email.Assunto" class="form-label small"></label>
+                <input asp-for="Email.Assunto" class="form-control" maxlength="200" />
+                <span asp-validation-for="Email.Assunto" class="text-danger small"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Email.Texto" class="form-label small"></label>
+                <textarea asp-for="Email.Texto" rows="6" class="form-control"></textarea>
+                <div class="form-text">Marcadores trocados no envio: <code>{boletim}</code> <code>{amostra}</code> <code>{cliente}</code> <code>{empresa}</code>. O PDF do boletim vai anexado.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <button type="submit" class="btn btn-primary" lc-permissao="PARAMETROS_EMPRESA.ALTERAR" id="botaoGravarEmail"><i class="bi bi-check-lg me-1"></i>Gravar</button>
+    </div>
+</form>
+
+@if (e.Configurado)
+{
+    <form method="post" asp-action="TestarEmail" class="card" lc-permissao="PARAMETROS_EMPRESA.ALTERAR" id="formTestarEmail">
+        <div class="card-body row g-2 align-items-end">
+            <div class="col-md-5">
+                <label for="destinoTeste" class="form-label small">Enviar e-mail de teste para</label>
+                <input name="destino" id="destinoTeste" type="email" class="form-control" required maxlength="150" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary" id="botaoTestarEmail"><i class="bi bi-send me-1"></i>Enviar e-mail de teste</button>
+            </div>
+            <div class="col-12 form-text">Usa a configuração gravada (grave antes de testar).</div>
+        </div>
+    </form>
+}

@@ -29,6 +29,16 @@ public partial class EmpresaParametrosConfiguration : IEntityTypeConfiguration<E
         b.Property(e => e.ExigeResp2Boletim).HasColumnName("EXIGE_RESP2_BOLETIM");
         b.Property(e => e.TextoPadraoLegenda).HasColumnName("TEXTO_PADRAO_LEGENDA").HasColumnType("text");
         b.Property(e => e.TextoPadraoContrato).HasColumnName("TEXTO_PADRAO_CONTRATO").HasColumnType("mediumtext");
+        b.Property(e => e.SmtpServidor).HasColumnName("SMTP_SERVIDOR").HasMaxLength(150);
+        b.Property(e => e.SmtpPorta).HasColumnName("SMTP_PORTA");
+        b.Property(e => e.SmtpSeguranca).HasColumnName("SMTP_SEGURANCA").HasConversion(EnumBanco<SegurancaSmtp>.Conversor);
+        b.Property(e => e.SmtpUsuario).HasColumnName("SMTP_USUARIO").HasMaxLength(150);
+        b.Property(e => e.SmtpSenha).HasColumnName("SMTP_SENHA").HasMaxLength(1000);
+        b.Property(e => e.EmailRemetente).HasColumnName("EMAIL_REMETENTE").HasMaxLength(150);
+        b.Property(e => e.EmailRemetenteNome).HasColumnName("EMAIL_REMETENTE_NOME").HasMaxLength(100);
+        b.Property(e => e.EmailCopiaOculta).HasColumnName("EMAIL_COPIA_OCULTA").HasMaxLength(150);
+        b.Property(e => e.EmailAssuntoBoletim).HasColumnName("EMAIL_ASSUNTO_BOLETIM").HasMaxLength(200);
+        b.Property(e => e.EmailTextoBoletim).HasColumnName("EMAIL_TEXTO_BOLETIM").HasColumnType("text");
         b.Property(e => e.AlteradoEm).HasColumnName("ALTERADO_EM").HasColumnType("datetime").CalculadaPeloBanco();
         b.HasOne(e => e.Empresa).WithOne().HasForeignKey<EmpresaParametros>(e => e.IdEmpresas).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_EMPPARAM_EMPRESAS");
         b.HasOne(e => e.LabPropostasStatusInicial).WithMany().HasForeignKey(e => e.IdLabPropostasStatusInicial).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_EMPPARAM_PROPINI");

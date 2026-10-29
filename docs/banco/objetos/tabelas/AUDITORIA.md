@@ -21,7 +21,7 @@ Comentário do script: _Auditoria genérica gravada pela aplicação (antes/depo
 | 3 | `ID_USUARIOS` | INT | sim |  | aplicação |  |
 | 4 | `TABELA` | VARCHAR(60) | não |  | aplicação |  |
 | 5 | `ID_REGISTRO` | VARCHAR(60) | não |  | aplicação |  |
-| 6 | `ACAO` | CHAR(1) | não |  | aplicação | I, A, E, R (revisão), M (emissão) |
+| 6 | `ACAO` | CHAR(1) | não |  | aplicação | I, A, E, R (revisão), M (emissão), D (desfazer revisão), L (login), N (envio por e-mail) |
 | 7 | `DADOS_ANTES` | JSON | sim |  | aplicação |  |
 | 8 | `DADOS_DEPOIS` | JSON | sim |  | aplicação |  |
 | 9 | `IP` | VARCHAR(45) | sim |  | aplicação |  |
@@ -72,7 +72,7 @@ CREATE TABLE AUDITORIA (
   ID_USUARIOS      INT          NULL,
   TABELA           VARCHAR(60)  NOT NULL,
   ID_REGISTRO      VARCHAR(60)  NOT NULL,
-  ACAO             CHAR(1)      NOT NULL COMMENT 'I, A, E, R (revisão), M (emissão)',
+  ACAO             CHAR(1)      NOT NULL COMMENT 'I, A, E, R (revisão), M (emissão), D (desfazer revisão), L (login), N (envio por e-mail)',
   DADOS_ANTES      JSON         NULL,
   DADOS_DEPOIS     JSON         NULL,
   IP               VARCHAR(45)  NULL,

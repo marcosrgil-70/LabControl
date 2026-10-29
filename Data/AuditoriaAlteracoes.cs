@@ -18,6 +18,7 @@ public static class AcoesAuditoria
     public const string Emissao = "M";
     public const string DesfazerRevisao = "D";
     public const string Login = "L";
+    public const string EnvioEmail = "N";
 }
 
 /// <summary>
@@ -41,7 +42,7 @@ public static class AuditoriaAlteracoes
         "ENTIDADES_FUNCIONARIOS",
     };
 
-    private static readonly HashSet<string> Sigilosas = new(StringComparer.OrdinalIgnoreCase) { "SENHA_HASH" };
+    private static readonly HashSet<string> Sigilosas = new(StringComparer.OrdinalIgnoreCase) { "SENHA_HASH", "SMTP_SENHA" };
 
     // ULTIMO_ACESSO muda a cada login (o evento de login já é auditado com ACAO = L);
     // ALTERADO_POR repete AUDITORIA.ID_USUARIOS (preenchido pelo LabDbContext em toda alteração real)

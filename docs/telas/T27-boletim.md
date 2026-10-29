@@ -86,4 +86,11 @@ Filtros: cliente (filtra as amostras), amostra, "exibir a partir de" (−365 dia
 - **Testes:** `BoletinsTests` (8) e `AceiteFase5Tests` (cascata pela revisão da amostra; dois boletins para o mesmo resultado) e navegador `Boletim_monta_reordena_visualiza_e_emite`.
 - **Para a 5.4:** comparar com 3 boletins reais (dúvida 5) e ajustar o visual; o rodapé não tem frase fixa — o texto legal é o `RODAPE_LAUDO` da empresa.
 
-**Status:** ✅ concluída na tarefa 5.3 (27/10/2026); layout validado com boletins reais na 5.4.
+## Envio por e-mail (tarefa 8.3, 29/10/2026)
+- Botão **"Enviar por e-mail"** no boletim emitido (`BOLETINS.IMPRIMIR` — quem pode imprimir pode enviar) → `/Boletins/Email/{id}`: "Para" sugerido = e-mail do **contato do resultado da proposta**, "Cópia" opcional, assunto e texto do modelo da empresa (T05 › E-mail) com os marcadores preenchidos; vários endereços separados por ponto e vírgula (até 10).
+- Anexo = **o PDF gravado na emissão, conferido pelo SHA-256** (o mesmo do "Imprimir"; alerta de integridade não envia); boletim migrado vai como 2ª via. Cópia oculta automática se configurada.
+- Cada envio que deu certo vira um evento `N` em `AUDITORIA` (destinatários, assunto, anexo, servidor); a tela de envio lista o histórico. Sem configuração: "O envio de e-mail não está configurado nesta empresa: preencha Parâmetros da Empresa › E-mail."
+- O status do boletim **não** muda sozinho ao enviar (continua pelo combo de status).
+- Arquivos: `Services/Email/EnvioBoletimService.cs`, `Infra/EnvioEmail.cs` (MailKit; `IEnvioEmail` trocado por um falso nos testes), `Views/Boletins/Email.cshtml`. Teste: `EmailTests.Boletim_emitido_vai_com_o_pdf_gravado_e_o_envio_fica_no_historico` + navegador.
+
+**Status:** ✅ concluída na tarefa 5.3 (27/10/2026); envio por e-mail na 8.3 (29/10/2026); layout validado com boletins reais na 5.4.

@@ -44,6 +44,15 @@ Validações: dias ≥ 0 (`DIAS_RETROATIVOS_ENTREGA` entre 0 e 365, com aviso se
 - **Numeração:** grid de `SEQUENCIAS_DOCUMENTOS` da empresa ativa (ano 0 = não anual). Ajuste numa transação: `SELECT … FOR UPDATE` na linha (mesma trava do `SP_PROXIMO_NUMERO`); recusa valor igual ao atual ou menor que o maior já usado (`MAX(COD_AMOSTRA)`/`MAX(COD_PROPOSTA)`/`MAX(NR_RELATORIO)` do ano, `MAX(NR_PEDIDO)`, maior `PRODUTOS.CODIGO` numérico); motivo de 10 a 500 caracteres; `UPDATE` direto + evento `A` em `AUDITORIA` (`ID_REGISTRO` = `empresa-tipo-ano`; antes: `ULTIMO_NUMERO`; depois: `ULTIMO_NUMERO`, `MAIOR_USADO`, `MOTIVO`). Só linhas existentes são ajustáveis (o ano novo nasce sozinho; os máximos do legado entram pela M-18).
 - Aceite em `ParametrosEmpresaServiceTests` (4 testes).
 
-**Status:** ✅ concluída na tarefa 1.6 (20/10/2026).
+## Aba "E-mail" (tarefa 8.3, 29/10/2026 — pedido do usuário)
+Configuração do envio de boletins por e-mail **da empresa ativa**, editável pelo usuário (`PARAMETROS_EMPRESA.ALTERAR`), em `EMPRESAS_PARAMETROS` (D-26):
+- **Servidor de saída:** servidor SMTP (vazio = envio desligado), porta (padrão 587), segurança (Nenhuma, SSL/TLS direto — 465, STARTTLS — 587), usuário e senha. A senha é **cifrada** (ASP.NET Data Protection), nunca volta para a tela ("em branco mantém a gravada"; "Apagar a senha gravada") e aparece como `***` na auditoria.
+- **Remetente:** e-mail e nome do campo "De:", e cópia oculta opcional de todo boletim enviado.
+- **Modelo do e-mail do boletim:** assunto e texto com os marcadores `{boletim}` `{amostra}` `{cliente}` `{empresa}` (vazio = o padrão).
+- **"Enviar e-mail de teste"** com a configuração gravada; falha de conexão/autenticação aparece com a mensagem do servidor.
+- Se as chaves do Data Protection do servidor mudarem (outra máquina), o envio pede a senha de novo em vez de dar erro.
+- Arquivos: `Services/Email/ConfiguracaoEmailService.cs`, `Views/Empresa/_Email.cshtml`, actions `Email` e `TestarEmail` do `EmpresaController`. Testes: `EmailTests.Configuracao_valida_cifra_a_senha_e_a_auditoria_nao_mostra` e o de navegador `Email_configurado_na_empresa_envia_o_boletim_emitido`.
+
+**Status:** ✅ concluída na tarefa 1.6 (20/10/2026); aba E-mail na 8.3 (29/10/2026).
 
 > **Teste no navegador (20/10/2026, [P26](../processos/P26-testes-ponta-a-ponta.md)):** `Empresa_dados_contatos_e_parametros` — alterar os dias retroativos e conferir o valor gravado.

@@ -1,0 +1,73 @@
+@model EnvioBoletimVM
+@{
+    ViewData["Title"] = $"Enviar boletim {Model.CodBoletim}";
+}
+
+<h5 class="mb-1"><i class="bi bi-envelope me-2 text-primary"></i>Enviar boletim por e-mail</h5>
+<p class="small text-body-secondary mb-3">
+    Boletim <strong>@Model.CodBoletim R@(Model.Revisao.ToString("00"))</strong> · amostra @Model.NrAmostra · @Model.Cliente
+</p>
+
+<form method="post" asp-action="Email" asp-route-id="@Model.IdBoletim" novalidate id="formEnvioEmail">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+    <div class="card mb-3">
+        <div class="card-body row g-3">
+            <div class="col-md-6">
+                <label class="form-label small">De</label>
+                <input class="form-control-plaintext" readonly value="@Model.Remetente" id="remetenteEmail" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small">Anexo</label>
+                <div class="form-control-plaintext"><i class="bi bi-file-earmark-pdf me-1 text-danger"></i><span id="anexoEmail">@Model.Anexo</span></div>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Para" class="form-label small"></label>
+                <input asp-for="Para" class="form-control" />
+                <span asp-validation-for="Para" class="text-danger small"></span>
+                <div class="form-text">Sugerido: o contato do resultado da proposta. Vários: separe com ponto e vírgula.</div>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Copia" class="form-label small"></label>
+                <input asp-for="Copia" class="form-control" />
+                <span asp-validation-for="Copia" class="text-danger small"></span>
+                @if (Model.CopiaOculta is not null)
+                {
+                    <div class="form-text">Cópia oculta automática para @Model.CopiaOculta (Parâmetros da Empresa › E-mail).</div>
+                }
+            </div>
+            <div class="col-12">
+                <label asp-for="Assunto" class="form-label small"></label>
+                <input asp-for="Assunto" class="form-control" maxlength="200" />
+                <span asp-validation-for="Assunto" class="text-danger small"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Texto" class="form-label small"></label>
+                <textarea asp-for="Texto" rows="8" class="form-control"></textarea>
+                <span asp-validation-for="Texto" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a asp-action="Editar" asp-route-id="@Model.IdBoletim" class="btn btn-outline-secondary">Voltar</a>
+        <button type="submit" class="btn btn-primary" id="botaoEnviar"><i class="bi bi-send me-1"></i>Enviar</button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-header py-2 small fw-semibold"><i class="bi bi-clock-history me-1"></i>Envios deste boletim</div>
+    <div class="table-responsive">
+        <table class="table table-sm mb-0 small" id="tabelaEnvios">
+            <thead><tr><th>Quando</th><th>Usuário</th><th>Destinatários</th></tr></thead>
+            <tbody>
+                @foreach (var e in Model.Envios)
+                {
+                    <tr><td class="text-nowrap">@e.Quando.ToString("dd/MM/yyyy HH:mm")</td><td>@e.Usuario</td><td>@e.Para</td></tr>
+                }
+                @if (Model.Envios.Count == 0)
+                {
+                    <tr><td colspan="3" class="text-center text-body-secondary py-2">Ainda não enviado por e-mail.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

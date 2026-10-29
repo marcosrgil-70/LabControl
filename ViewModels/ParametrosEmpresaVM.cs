@@ -45,6 +45,7 @@ public sealed class ParametrosEmpresaVM
     public IReadOnlyList<OpcaoVM> StatusBoletins { get; set; } = [];
     public IReadOnlyList<SequenciaVM> Numeracao { get; set; } = [];
     [ValidateNever] public AjusteNumeracaoVM Ajuste { get; set; } = new(); // formulário próprio (AjustarNumeracao)
+    [ValidateNever] public EmailEmpresaVM Email { get; set; } = new();     // aba E-mail, formulário próprio (8.3)
 }
 
 /// <summary>Linha da aba "Numeração" (<c>SEQUENCIAS_DOCUMENTOS</c>). <paramref name="Ano"/> 0 = numeração não anual.</summary>

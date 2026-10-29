@@ -1122,4 +1122,59 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         Assert.Equal("application/pdf", pdf.Headers["content-type"]);
         Assert.Empty(s.ErrosJs);
     }
+
+    [Fact]
+    public async Task Email_configurado_na_empresa_envia_o_boletim_emitido()
+    {
+        await using var c = await Cenario.CriarAsync();
+        // boletim emitido pelo serviço, com o PDF na pasta do app de testes
+        await c.Db.EntidadesFuncionarios.Where(f => f.IdEntidades == c.Ativa.ProfissionalId).ExecuteUpdateAsync(x => x.SetProperty(f => f.AssinaBoletim, true));
+        var (amo, _, num, _) = await c.AmostraComResultadoAsync(await c.HojeAsync());
+        var boletins = new LabControl.Services.BoletimService(c.Db, c.Ativa, c.Procedures, new LabControl.Services.AmostraService(c.Db, c.Ativa, c.Procedures),
+            new LabControl.Infra.ArmazemBoletins(app.PastaBoletins), Microsoft.Extensions.Logging.Abstractions.NullLogger<LabControl.Services.BoletimService>.Instance);
+        var novo = (await boletins.NovoAsync(amo.IdLabHistAmostras))!;
+        (novo.Selecionados, novo.IdResponsavel1) = ([num.IdLabResultadosParam], c.Ativa.ProfissionalId);
+        var id = (await boletins.GravarAsync(novo)).Valor;
+        Assert.True((await boletins.EmitirAsync(id)).Sucesso);
+        await using var s = await app.EntrarAsync(c);
+        var p = s.Pagina;
+
+        // sem configuração: o envio avisa onde configurar
+        await s.IrAsync($"/Boletins/Editar/{id}");
+        await p.ClickAsync("#botaoEnviarEmail");
+        Assert.Equal(LabControl.Services.Email.ConfiguracaoEmailService.NaoConfigurado, await s.AlertaAsync());
+
+        await s.IrAsync("/Empresa/Parametros#email");
+        await Assertions.Expect(p.Locator("#situacaoEmail")).ToContainTextAsync("desligado");
+        await p.FillAsync("#Email_Servidor", "smtp.teste.com.br");
+        await p.FillAsync("#Email_Usuario", "laudos@teste.com.br");
+        await p.ClickAsync("#botaoGravarEmail");   // sem senha e sem remetente: volta para a aba com a mensagem
+        await Assertions.Expect(p.Locator("#formEmail .validation-summary-errors")).ToContainTextAsync("Informe o e-mail do remetente.");
+        await Assertions.Expect(p.Locator("#Email_Servidor")).ToHaveValueAsync("smtp.teste.com.br");
+        await p.FillAsync("#Email_Remetente", "laudos@teste.com.br");
+        await p.FillAsync("#Email_NovaSenha", "senha-de-app");
+        await p.ClickAsync("#botaoGravarEmail");
+        await p.WaitForURLAsync(u => u.Contains("/Empresa/Parametros"));   // a página da recusa também tem um alerta: espera o redirect
+        Assert.Equal("Configuração de e-mail gravada.", await s.AlertaAsync());
+        await Assertions.Expect(p.Locator("#situacaoEmail")).ToContainTextAsync("ligado");
+        await Assertions.Expect(p.Locator("#Email_NovaSenha")).ToHaveValueAsync("");   // a senha nunca volta para a tela
+        await p.FillAsync("#destinoTeste", "eu@teste.com");
+        await p.ClickAsync("#botaoTestarEmail");
+        Assert.StartsWith("E-mail de teste enviado para eu@teste.com.", await s.AlertaAsync());
+
+        await s.IrAsync($"/Boletins/Editar/{id}");
+        await p.ClickAsync("#botaoEnviarEmail");
+        await Assertions.Expect(p.Locator("#Para")).ToHaveValueAsync("cliente@teste.com");
+        await Assertions.Expect(p.Locator("#tabelaEnvios")).ToContainTextAsync("Ainda não enviado");
+        await p.FillAsync("#Copia", "gerente@cliente.com");
+        await p.ClickAsync("#botaoEnviar");
+        Assert.Equal("Boletim enviado por e-mail para cliente@teste.com.", await s.AlertaAsync());
+        var enviado = app.Email.Enviados.Last().Mensagem;
+        Assert.Equal(["cliente@teste.com"], enviado.Para);
+        Assert.Equal(["gerente@cliente.com"], enviado.Copia);
+        Assert.Single(enviado.Anexos);
+        await p.ClickAsync("#botaoEnviarEmail");
+        await Assertions.Expect(p.Locator("#tabelaEnvios")).ToContainTextAsync("cliente@teste.com; cópia: gerente@cliente.com");
+        Assert.Empty(s.ErrosJs);
+    }
 }
