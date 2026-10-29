@@ -1,6 +1,7 @@
 using LabControl.Data;
 using LabControl.Infra;
 using LabControl.Models;
+using LabControl.Services;
 using LabControl.Services.Migracao;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -126,6 +127,71 @@ public class MigracaoTests(ITestOutputHelper saida)
     }
 
     [Fact]
+    public async Task Instalacao_nova_migra_no_proprio_banco_e_falha_desfaz_tudo()
+    {
+        // instalador sem backup (decisão do usuário, 29/10/2026): um banco só, com a empresa digitada e o ADMINISTRADOR /
+        // Admin123; a T07 migra o legado nele mesmo, substituindo esse conteúdo inicial
+        if (!File.Exists(Fdb)) { saida.WriteLine($"Legado {Fdb} ausente: migração não testada."); return; }
+        const string banco = "labcontrol_instalacao_teste";
+        await BancoTeste.RecriarAsync(banco, "Laboratório Instalado Ltda");
+        var s = new MigracaoService(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+            { ["ConnectionStrings:LabControl"] = new MySqlConnector.MySqlConnectionStringBuilder(BancoTeste.ConnectionString) { Database = banco }.ConnectionString }).Build());
+        Assert.True(s.SubstituiBancoEmUso(banco));
+        var v = await s.ValidarAsync(Pedido(banco));
+        Assert.True(v.Sucesso, v.Mensagem);
+
+        var ctx = new EmpresaFixa { AdminGlobal = true };
+        var opcoes = new DbContextOptionsBuilder<Data.LabDbContext>();
+        opcoes.Configurar(s.ConexaoDestino(banco), ctx);
+
+        // interrompida no meio (já apagou o conteúdo do instalador e gravou etapas): nada fica, o banco volta como estava
+        using (var cancelar = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
+            try { await s.ExecutarAsync(Pedido(banco), MigracaoService.NovoRelatorio(banco), cancelar.Token); } catch (OperationCanceledException) { }
+        await using (var db = new Data.LabDbContext(opcoes.Options, ctx))
+        {
+            Assert.Equal("LABORATÓRIO INSTALADO LTDA", await db.Empresas.Select(e => e.RazaoSocial).SingleAsync());
+            Assert.Equal([ContaService.LoginAdministrador], await db.Usuarios.Select(u => u.Login).ToListAsync());
+            Assert.Equal(0, await db.Produtos.CountAsync());
+        }
+
+        var relatorio = MigracaoService.NovoRelatorio(banco);
+        await s.ExecutarAsync(Pedido(banco), relatorio);
+        var (log, _, conferencias) = relatorio.Copia();
+        foreach (var l in log) saida.WriteLine(l);
+        Assert.True(relatorio.Sucesso, string.Join("\n", relatorio.Etapas.Select(e => $"{e.Codigo} {e.Situacao} {e.Erro}")));
+        Assert.All(conferencias, c => Assert.True(c.Ok, $"{c.Etapa} {c.Item}: esperado {c.Esperado}, encontrado {c.Encontrado}"));
+
+        await using (var db = new Data.LabDbContext(opcoes.Options, ctx))
+        {
+            // a empresa e os usuários são os do legado (a do instalador saiu); as mesmas contagens do banco vazio
+            var empresa = await db.Empresas.SingleAsync();
+            Assert.NotEqual("LABORATÓRIO INSTALADO LTDA", empresa.RazaoSocial);
+            ctx.EmpresaId = empresa.IdEmpresas;
+            Assert.Equal((15, 2358, 5770, 5312), (await db.Usuarios.CountAsync(), await db.LabPropostas.CountAsync(),
+                await db.LabHistAmostras.CountAsync(), await db.LabBoletimAnalises.CountAsync()));
+            Assert.Equal(1, await db.Entidades.CountAsync(e => e.TipoEmpresaUsuaria));
+            // o ADMINISTRADOR migrado entra com Admin123, sem troca (como o do instalador); os outros, com a provisória
+            var conta = UsuariosTeste.Servico(db, ctx);
+            var entrar = await conta.EntrarAsync(ContaService.LoginAdministrador, ContaService.SenhaDesenvolvimento);
+            Assert.True(entrar.Sucesso, entrar.Mensagem);
+            var identidade = await conta.MontarIdentidadeAsync(entrar.Valor, ctx.EmpresaId);
+            Assert.True(identidade.Sucesso, identidade.Mensagem);
+            Assert.NotEqual("1", identidade.Valor.FindFirst(LabClaims.TrocarSenha)?.Value);
+            Assert.Equal(1, (await db.Usuarios.SingleAsync(u => u.Login == ContaService.LoginAdministrador)).UsucodLegado);
+        }
+
+        // agora o banco tem os dados do laboratório: não é substituído de novo
+        Assert.Contains("já tem cadastros ou movimentos", (await s.ValidarAsync(Pedido(banco))).Mensagem);
+        await using (var con = new MySqlConnector.MySqlConnection(BancoTeste.ConnectionString))
+        {
+            await con.OpenAsync();
+            await using var cmd = con.CreateCommand();
+            cmd.CommandText = $"DROP DATABASE IF EXISTS {banco}";
+            await cmd.ExecuteNonQueryAsync();
+        }
+    }
+
+    [Fact]
     public async Task Validacao_do_pedido()
     {
         var s = Servico();
@@ -134,8 +200,8 @@ public class MigracaoTests(ITestOutputHelper saida)
         Assert.Equal("BancoDestino", (await s.ValidarAsync(Pedido(banco: "x; drop"))).Campo);
         var inexistente = await s.ValidarAsync(Pedido(banco: "labcontrol_nao_existe_" + Guid.NewGuid().ToString("N")[..6]));
         Assert.Contains("recriar.ps1", inexistente.Mensagem);
-        // banco com dados (o de testes) é recusado
-        Assert.Contains("não está vazio", (await s.ValidarAsync(Pedido(banco: BancoTeste.NomeBanco))).Mensagem);
+        // o banco em uso (o de testes) tem cadastros: não é substituído
+        Assert.Contains("já tem cadastros ou movimentos", (await s.ValidarAsync(Pedido(banco: BancoTeste.NomeBanco))).Mensagem);
     }
 }
 

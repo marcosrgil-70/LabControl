@@ -12,10 +12,16 @@ namespace LabControl.Services.Migracao;
 public sealed record PedidoMigracao(string CaminhoFirebird, string UsuarioFirebird, string SenhaFirebird, string BancoDestino, string SenhaProvisoria, string? Ip);
 
 /// <summary>
-/// Migração Firebird → MySQL v2 (M-01…M-18; docs/processos/P24-migracao.md). O destino é um banco
-/// <b>vazio</b> recém-criado pelos scripts (decisão do usuário: banco separado, ex. <c>labcontrol_migracao</c>);
-/// conexão própria com <c>@LC_MIGRACAO = 1</c>; uma transação por etapa (falha desfaz só a etapa e para a execução);
-/// repetir = recriar o destino.
+/// Migração Firebird → MySQL v2 (M-01…M-18; docs/processos/P24-migracao.md). Dois destinos possíveis:
+/// <list type="bullet">
+/// <item>um banco <b>vazio</b> recém-criado pelos scripts (ex. <c>labcontrol_migracao</c>): uma transação por etapa (falha
+/// desfaz só a etapa e para a execução); repetir = recriar o destino;</item>
+/// <item>o <b>banco em uso</b>, se ele só tiver o que o instalador criou (empresa 001 + ADMINISTRADOR do <c>inicial.sql</c>;
+/// decisão do usuário, 29/10/2026: um banco só, LabControlDB): esse conteúdo é apagado e as etapas rodam como num banco
+/// vazio, <b>numa transação só</b> — falha desfaz tudo e o banco volta como o instalador deixou. O ADMINISTRADOR
+/// migrado fica com Admin123, sem troca, como o do instalador.</item>
+/// </list>
+/// Conexão própria com <c>@LC_MIGRACAO = 1</c>.
 /// </summary>
 public sealed partial class MigracaoService(IConfiguration config)
 {
@@ -29,6 +35,15 @@ public sealed partial class MigracaoService(IConfiguration config)
     ];
 
     private static readonly string[] BancosProibidos = ["labcontrol", "mysql", "sys", "information_schema", "performance_schema"];
+
+    /// <summary>Tabelas preenchidas pelos scripts (05_seed, 06_cidades): ficam ao substituir o banco em uso.</summary>
+    private static readonly string[] TabelasDosScripts = ["PAISES", "ESTADOS", "CIDADES", "PERMISSOES"];
+
+    /// <summary>Banco da connection string do app, em minúsculas (como o MySQL no Windows guarda).</summary>
+    public string BancoEmUso => new MySqlConnectionStringBuilder(config.GetConnectionString("LabControl") ?? "").Database.ToLowerInvariant();
+
+    /// <summary>O destino é o próprio banco do app: a migração substitui o conteúdo do instalador.</summary>
+    public bool SubstituiBancoEmUso(string banco) => string.Equals(banco.Trim(), BancoEmUso, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Connection string do app com outro banco (mesmo servidor e usuário).</summary>
     public string ConexaoDestino(string banco) =>
@@ -50,9 +65,26 @@ public sealed partial class MigracaoService(IConfiguration config)
             await using var con = new MySqlConnection(ConexaoDestino(banco));
             await con.OpenAsync(ct);
             await using var cmd = con.CreateCommand();
-            cmd.CommandText = "SELECT (SELECT COUNT(*) FROM EMPRESAS) + (SELECT COUNT(*) FROM USUARIOS)";
-            if (Convert.ToInt64(await cmd.ExecuteScalarAsync(ct)) > 0)
-                return Resultado.Erro($"O banco {banco} não está vazio. A migração exige um banco recém-criado: rode {ComandoRecriar(banco)}", "BancoDestino");
+            if (SubstituiBancoEmUso(banco))
+            {
+                // só o que o inicial.sql cria: no máximo 1 empresa, o ADMINISTRADOR, a entidade da empresa e o profissional
+                // especial — nenhum cadastro do laboratório, proposta ou amostra
+                cmd.CommandText = $"""
+                    SELECT (SELECT COUNT(*) FROM EMPRESAS) <= 1
+                       AND (SELECT COUNT(*) FROM USUARIOS WHERE LOGIN <> '{ContaService.LoginAdministrador}' OR USUCOD_LEGADO IS NOT NULL) = 0
+                       AND (SELECT COUNT(*) FROM ENTIDADES) <= 2
+                       AND NOT EXISTS (SELECT 1 FROM LAB_PROPOSTAS) AND NOT EXISTS (SELECT 1 FROM LAB_HIST_AMOSTRAS)
+                    """;
+                if (Convert.ToInt64(await cmd.ExecuteScalarAsync(ct)) != 1)
+                    return Resultado.Erro($"O banco em uso ({banco}) já tem cadastros ou movimentos: a migração só substitui um banco recém-instalado " +
+                                          "(a empresa e o ADMINISTRADOR criados pelo instalador).", "BancoDestino");
+            }
+            else
+            {
+                cmd.CommandText = "SELECT (SELECT COUNT(*) FROM EMPRESAS) + (SELECT COUNT(*) FROM USUARIOS)";
+                if (Convert.ToInt64(await cmd.ExecuteScalarAsync(ct)) > 0)
+                    return Resultado.Erro($"O banco {banco} não está vazio. A migração exige um banco recém-criado: rode {ComandoRecriar(banco)}", "BancoDestino");
+            }
         }
         catch (MySqlException ex) when (ex.ErrorCode is MySqlErrorCode.UnknownDatabase or MySqlErrorCode.NoSuchTable)
         {
@@ -82,32 +114,43 @@ public sealed partial class MigracaoService(IConfiguration config)
             await using var fb = await LeitorFirebird.AbrirAsync(p.CaminhoFirebird, p.UsuarioFirebird, p.SenhaFirebird, ct);
             await using var db = new LabDbContext(opcoes, empresa);
             await db.Database.OpenConnectionAsync(ct); // a conexão fica aberta: @LC_MIGRACAO vale até o fim
+            var substituir = SubstituiBancoEmUso(p.BancoDestino);
             var c = new ContextoMigracao(fb, db, empresa, relatorio, p.SenhaProvisoria)
             {
-                AdministradorDesenvolvimento = config.GetValue<bool>(ContaService.ChaveAdministradorDesenvolvimento),
+                AdministradorDesenvolvimento = substituir || config.GetValue<bool>(ContaService.ChaveAdministradorDesenvolvimento),
             };
             await c.LigarModoMigracaoAsync(ct);
             relatorio.Log($"Origem: {p.CaminhoFirebird} → destino: {p.BancoDestino}.");
 
+            // banco em uso: uma transação para tudo (falha → o banco volta como o instalador deixou)
+            await using var unica = substituir ? await db.Database.BeginTransactionAsync(ct) : null;
+            if (unica is not null)
+            {
+                var apagadas = await LimparInstalacaoAsync(db, BancoEmUso, ct);
+                relatorio.Log($"Banco em uso {BancoEmUso}: conteúdo do instalador apagado ({apagadas} linha(s)); tudo numa transação só.");
+            }
+            var falhou = false;
             foreach (var (etapa, estado) in Etapas.Zip(relatorio.Etapas))
             {
                 c.Etapa = etapa.Codigo;
                 estado.Situacao = SituacaoEtapa.Executando;
                 var relogio = Stopwatch.StartNew();
-                await using var tx = await db.Database.BeginTransactionAsync(ct);
+                await using var tx = unica is null ? await db.Database.BeginTransactionAsync(ct) : null;
                 try
                 {
                     estado.Gravados = await etapa.ExecutarAsync(c, ct);
                     await db.SaveChangesAsync(ct);
-                    await tx.CommitAsync(ct);
+                    if (tx is not null) await tx.CommitAsync(ct);
                     estado.Situacao = SituacaoEtapa.Ok;
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    await tx.RollbackAsync(CancellationToken.None);
+                    await (tx ?? unica)!.RollbackAsync(CancellationToken.None);
                     estado.Situacao = SituacaoEtapa.Erro;
                     estado.Erro = ErrosMySql.MensagemDeNegocio(ex) ?? ex.GetBaseException().Message;
                     relatorio.Log($"[{etapa.Codigo}] ERRO: {estado.Erro}");
+                    if (unica is not null) relatorio.Log("Tudo desfeito: o banco em uso voltou como o instalador deixou. Corrija e execute de novo.");
+                    falhou = true;
                     break;
                 }
                 finally
@@ -116,6 +159,11 @@ public sealed partial class MigracaoService(IConfiguration config)
                     db.ChangeTracker.Clear(); // a etapa seguinte trabalha pelos dicionários, não pelo que ficou rastreado
                 }
                 relatorio.Log($"[{etapa.Codigo}] {etapa.Nome}: {estado.Gravados} registro(s) em {estado.Tempo.TotalSeconds:0.0} s.");
+            }
+            if (unica is not null && !falhou)
+            {
+                await unica.CommitAsync(ct);
+                relatorio.Log($"Banco em uso {BancoEmUso} substituído pelos dados do legado. Entre de novo: ADMINISTRADOR / Admin123.");
             }
             await db.Database.ExecuteSqlRawAsync("SET @LC_MIGRACAO = 0", CancellationToken.None);
         }
@@ -129,6 +177,26 @@ public sealed partial class MigracaoService(IConfiguration config)
         {
             relatorio.Concluir();
         }
+    }
+
+    /// <summary>
+    /// Apaga o conteúdo do instalador (empresa, ADMINISTRADOR, perfis, auxiliares padrão, auditoria…) dentro da transação
+    /// da migração, deixando só o que os scripts semeiam: o banco fica como recém-criado. DELETE (não TRUNCATE, que
+    /// confirmaria a transação e exige DROP); sem as chaves estrangeiras durante a limpeza, porque a ordem não importa.
+    /// </summary>
+    private static async Task<int> LimparInstalacaoAsync(LabDbContext db, string banco, CancellationToken ct)
+    {
+        var tabelas = await db.Database.SqlQueryRaw<string>(
+            "SELECT TABLE_NAME AS Value FROM information_schema.TABLES WHERE TABLE_SCHEMA = {0} AND TABLE_TYPE = 'BASE TABLE'", banco).ToListAsync(ct);
+        var linhas = 0;
+        await db.Database.ExecuteSqlRawAsync("SET FOREIGN_KEY_CHECKS = 0", ct);
+        try
+        {
+            foreach (var t in tabelas.Where(t => !TabelasDosScripts.Contains(t, StringComparer.OrdinalIgnoreCase)))
+                linhas += await db.Database.ExecuteSqlRawAsync("DELETE FROM `" + t.Replace("`", "``") + "`", ct);
+        }
+        finally { await db.Database.ExecuteSqlRawAsync("SET FOREIGN_KEY_CHECKS = 1", CancellationToken.None); }
+        return linhas;
     }
 
     [GeneratedRegex("^[a-z][a-z0-9_]{1,63}$")]

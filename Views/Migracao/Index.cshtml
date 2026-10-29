@@ -18,7 +18,7 @@
 @if (r is null || r.Terminou)
 {
     <form method="post" asp-action="Executar" class="card mb-3" id="formMigracao" style="max-width: 56rem" novalidate
-          data-confirmar="Executar a migração (M-01 a M-18) para o banco informado? O legado só é lido; o destino precisa estar vazio.">
+          data-confirmar="Executar a migração (M-01 a M-18) para o banco informado? O legado só é lido. Se o destino for o banco em uso, a empresa e o ADMINISTRADOR do instalador serão substituídos pelos dados do legado.">
         <div class="card-header fw-semibold py-2">Nova execução</div>
         <div class="card-body row g-3">
             <div asp-validation-summary="All" class="col-12 alert alert-danger py-2 mb-0" data-erros></div>
@@ -37,7 +37,11 @@
             <div class="col-md-4">
                 <label asp-for="Form.BancoDestino" class="form-label small"></label>
                 <input asp-for="Form.BancoDestino" name="BancoDestino" class="form-control font-monospace" />
-                <div class="form-text">Crie vazio antes: <code>@MigracaoService.ComandoRecriar(f.BancoDestino)</code></div>
+                <div class="form-text">
+                    Banco em uso (<code>@Model.BancoEmUso</code>): só se for recém-instalado — a empresa e o ADMINISTRADOR do instalador
+                    são <strong>substituídos</strong> pelos dados do legado; ao final, entre de novo com ADMINISTRADOR / Admin123.
+                    Outro banco: crie vazio antes com <code>@MigracaoService.ComandoRecriar("<banco>")</code>.
+                </div>
             </div>
             <div class="col-md-4">
                 <label asp-for="Form.SenhaProvisoria" class="form-label small"></label>

@@ -9,8 +9,9 @@
      trocando "labcontrol_v2" pelo nome do banco, e PARA no primeiro erro;
   3. confere as contagens de objetos (59 tabelas, 10 views, 8 funções,
      26 procedures, 48 triggers, 109 permissões, 5.571 cidades);
-  4. com -Dev: roda dev/*.sql (empresa 001 + usuário ADMINISTRADOR / senha
-     Admin123, só para desenvolvimento);
+  4. com -Empresa "<nome>": roda inicial.sql (empresa 001 com esse nome + usuário ADMINISTRADOR / senha
+     Admin123, sem troca — o instalador usa no banco zerado LabControlDB); -Dev é o mesmo com a empresa
+     "LABORATÓRIO (DESENVOLVIMENTO)";
   5. com -Teste: cria um banco temporário labcontrol_teste_<id>, roda
      teste/roteiro_12_7.sql e apaga o banco no final (a não ser que -Manter).
 
@@ -21,6 +22,7 @@
 .EXAMPLE
   .\Scripts\v2\recriar.ps1                       # recria labcontrol_v2
   .\Scripts\v2\recriar.ps1 -Dev                  # recria labcontrol_v2 com empresa 001 + usuário ADMIN
+  .\Scripts\v2\recriar.ps1 -Banco LabControlDB -Empresa "LABORATÓRIO EXEMPLO LTDA"
   .\Scripts\v2\recriar.ps1 -Teste                # banco temporário + roteiro 12 §7
   .\Scripts\v2\recriar.ps1 -Banco labcontrol_v2_hml -Forcar
 #>
@@ -33,6 +35,7 @@ param(
   [string]$MySql = '',
   [switch]$Teste,
   [switch]$Dev,
+  [string]$Empresa = '',
   [switch]$Manter,
   [switch]$Forcar
 )
@@ -161,12 +164,18 @@ SELECT
     Write-Host 'AVISO: contagens diferentes do esperado. Se o schema mudou de propósito, atualize $esperado neste script e o doc 11.' -ForegroundColor Yellow
   }
 
-  if ($Dev) {
-    foreach ($arq in Get-ChildItem (Join-Path $pasta 'dev') -Filter '*.sql' | Sort-Object Name) {
-      try { [void](Sql '' $arq.FullName @("-D$Banco")) } catch { throw "dev/$($arq.Name): $($_.Exception.Message)" }
-      Write-Host ("  dev/{0,-22} ok" -f $arq.Name) -ForegroundColor Green
-    }
-    Write-Host '  login de desenvolvimento: ADMINISTRADOR / Admin123 (acesso a tudo, sem troca de senha)' -ForegroundColor Cyan
+  if ($Dev -and -not $Empresa) { $Empresa = 'LABORATÓRIO (DESENVOLVIMENTO)'; $fantasia = 'LABORATÓRIO DEV' }
+  if ($Empresa) {
+    $Empresa = $Empresa.Trim()
+    if ($Empresa.Length -lt 3 -or $Empresa.Length -gt 150) { throw 'nome da empresa: de 3 a 150 caracteres.' }
+    if (-not $fantasia) { $fantasia = if ($Empresa.Length -le 60) { $Empresa } else { $Empresa.Substring(0, 60) } }
+    $texto = { param($v) "'" + $v.ToUpperInvariant().Replace('\', '\\').Replace("'", "''") + "'" }
+    $inicial = Join-Path $tmp 'inicial.sql'
+    [IO.File]::WriteAllText($inicial, "SET @EMPRESA_RAZAO = $(& $texto $Empresa), @EMPRESA_FANTASIA = $(& $texto $fantasia);`n" +
+      [IO.File]::ReadAllText((Join-Path $pasta 'inicial.sql'), $utf8), $utf8)
+    try { [void](Sql '' $inicial @("-D$Banco")) } catch { throw "inicial.sql: $($_.Exception.Message)" }
+    Write-Host ("  {0,-26} ok" -f 'inicial.sql') -ForegroundColor Green
+    Write-Host "  empresa 001: $($Empresa.ToUpperInvariant()); login: ADMINISTRADOR / Admin123 (acesso a tudo, sem troca de senha)" -ForegroundColor Cyan
   }
 
   if ($Teste) {

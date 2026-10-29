@@ -24,13 +24,15 @@ public class MigracaoTelaTests(AppWeb app) : IClassFixture<AppWeb>
             await web.PostarAsync("/Conta/Empresa", "/Conta/Empresa", ("IdEmpresa", c.Empresa.IdEmpresas.ToString()));
             var html = await (await web.GetAsync("/Migracao")).HtmlAsync();
             Assert.Contains("Executar migração", html);
-            Assert.Contains(@"recriar.ps1 -Banco labcontrol_migracao -Forcar", html);
+            Assert.Contains(@"recriar.ps1 -Banco <banco> -Forcar", html);
+            // destino padrão = o banco em uso (instalação nova: LabControlDB só com a empresa e o ADMINISTRADOR do instalador)
+            Assert.Contains($"value=\"{BancoTeste.NomeBanco}\"", html);
 
-            // o banco de testes tem dados: recusado com o comando para criar um vazio; senhas não voltam para a tela
+            // o banco em uso tem cadastros: recusado (só um banco recém-instalado é substituído); senhas não voltam para a tela
             var recusa = await (await web.PostarAsync("/Migracao", "/Migracao/Executar",
                 ("CaminhoFirebird", @"C:\Project\Laboratorio\DBMAIS.FDB"), ("UsuarioFirebird", "SYSDBA"), ("SenhaFirebird", "masterkey"),
                 ("BancoDestino", BancoTeste.NomeBanco), ("SenhaProvisoria", "Migracao#2026"), ("ConfirmarSenha", "Migracao#2026"))).HtmlAsync();
-            Assert.Contains($"O banco {BancoTeste.NomeBanco} não está vazio", recusa);
+            Assert.Contains($"O banco em uso ({BancoTeste.NomeBanco}) já tem cadastros ou movimentos", recusa);
             Assert.DoesNotContain("Migracao#2026", recusa);
 
             var fraca = await (await web.PostarAsync("/Migracao", "/Migracao/Executar",

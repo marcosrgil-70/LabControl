@@ -16,7 +16,7 @@ Documentação: [doc 11 — modelo](../../docs/banco/11-MODELO-MYSQL.md) · [doc
 | — | `teste/roteiro_12_7.sql` | roteiro de teste do doc 12 §7 (74 verificações) — **só em banco temporário** |
 | — | `recriar.ps1` | recria um banco do zero e confere as contagens; `-Teste` roda o roteiro; `-Dev` roda `dev/*.sql` |
 | — | `backup.ps1` | backup num `.zip`: banco (`mysqldump`) + pasta dos boletins + chaves do Data Protection; `-Conferir` restaura num banco temporário e compara ([abaixo](#backup-banco--boletins--chaves)) |
-| — | `dev/admin_dev.sql` | **só desenvolvimento**: empresa `001` + usuário `ADMINISTRADOR` / senha `Admin123` (ADMIN_GLOBAL, acesso a tudo, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA" — regra do CLAUDE.md) |
+| — | `inicial.sql` | banco inicial: empresa `001` (nome em `@EMPRESA_RAZAO`) + usuário `ADMINISTRADOR` / senha `Admin123` (ADMIN_GLOBAL, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA") — rodado pelo `recriar.ps1 -Dev` (desenvolvimento) ou `-Empresa "<nome>"` (instalador; decisão do usuário, 29/10/2026) |
 
 Empresas, usuários e cadastros **não** estão no seed: vêm da migração ([doc 13](../../docs/banco/13-MIGRACAO-DADOS.md)) ou do cadastro de nova empresa (`SP_INICIALIZAR_EMPRESA`).
 
@@ -25,6 +25,7 @@ Empresas, usuários e cadastros **não** estão no seed: vêm da migração ([do
 ```powershell
 .\Scripts\v2\recriar.ps1                 # recria labcontrol_v2 (se o banco existir, pede confirmação)
 .\Scripts\v2\recriar.ps1 -Dev            # idem + empresa 001 e usuário ADMINISTRADOR / Admin123 (desenvolvimento)
+.\Scripts\v2\recriar.ps1 -Banco LabControlDB -Empresa "LABORATÓRIO X LTDA" -Forcar   # o que o instalador faz no banco zerado
 .\Scripts\v2\recriar.ps1 -Teste          # cria labcontrol_teste_<id>, roda o roteiro 12 §7 e apaga o banco
 .\Scripts\v2\recriar.ps1 -Teste -Manter  # idem, mas mantém o banco temporário para inspeção
 ```

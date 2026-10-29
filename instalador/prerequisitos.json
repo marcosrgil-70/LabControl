@@ -1,17 +1,30 @@
 [
   {
+    "id": "Hosting",
+    "nome": ".NET 10 Hosting Bundle",
+    "versao": "10.0.14",
     "arquivo": "dotnet-hosting-10.0.14-win.exe",
     "url": "https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/10.0.14/dotnet-hosting-10.0.14-win.exe",
+    "url_alternativa": "",
     "sha256": "582F73CC22CBB548ED35A5E029C6025785AC56AB8A06FCF9A951788B8806D4EC"
   },
   {
+    "id": "Vc",
+    "nome": "Visual C++ 2015-2022 (x64)",
+    "versao": "14",
     "arquivo": "vc_redist.x64.exe",
     "url": "https://aka.ms/vs/17/release/vc_redist.x64.exe",
-    "sha256": "CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B"
+    "url_alternativa": "",
+    "sha256": "CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B",
+    "sem_hash_no_setup": true
   },
   {
+    "id": "MySql",
+    "nome": "MySQL Community Server",
+    "versao": "8.0.46",
     "arquivo": "mysql-8.0.46-winx64.zip",
     "url": "https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46-winx64.zip",
+    "url_alternativa": "https://downloads.mysql.com/archives/get/p/23/file/mysql-8.0.46-winx64.zip",
     "sha256": "28E9EDA019D88EFF4478D811EA2110B83F02A3966BE157FE91CC55DEF3AB0D4D"
   }
 ]

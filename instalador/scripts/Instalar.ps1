@@ -5,18 +5,20 @@
 .DESCRIPTION
   Pode ser repetido: o que já está pronto é conferido e mantido.
    1. IIS (com o console e os cmdlets de administração);
-   2. Visual C++ Redistributable (MySQL) e .NET 10 Hosting Bundle (ASP.NET Core no IIS);
+   2. Visual C++ Redistributable (MySQL) e .NET 10 Hosting Bundle (ASP.NET Core no IIS), se faltarem — os instaladores
+      vêm de -PastaPrerequisitos (baixados pelo setup) e precisam da assinatura digital da Microsoft;
    3. MySQL 8.0 como serviço "MySQL80", ouvindo só em 127.0.0.1 (se ainda não houver um MySQL);
-   4. banco labcontrol_v2: se não existir, restaura o backup .zip do banco migrado (Scripts/v2/backup.ps1) e
-      define a senha provisória do ADMINISTRADOR (troca obrigatória no 1º acesso). Se existir, é mantido;
+   4. banco (padrão LabControlDB): se existir, é mantido (atualização). Se não existir: com -ArquivoBackup, restaura o
+      backup (usuários e senhas do backup); sem backup, cria zerado pelos scripts com a empresa LC_EMPRESA e o
+      ADMINISTRADOR / Admin123 sem troca (decisão do usuário, 29/10/2026) — o legado vem depois pela T07, no mesmo banco;
    5. usuários do MySQL "labcontrol" (app) e "labcontrol_backup" com permissões mínimas e senhas aleatórias;
-   6. pastas de dados (boletins, chaves, backup) com acesso restrito;
+   6. pastas (boletins, chaves, backup) com acesso restrito;
    7. arquivos do sistema, pool e site do IIS em HTTPS com certificado autoassinado (exportado para as estações);
    8. regra do firewall, tarefa diária de backup (22h) e teste de abertura da tela de login.
 
-  Senhas: LC_SENHA_ROOT (root do MySQL: a nova, se o MySQL for instalado agora; a atual, se já existir) e
-  LC_SENHA_ADMIN (provisória do ADMINISTRADOR, só na restauração) vêm por variável de ambiente — nunca pela linha de
-  comando nem pelo log. As senhas internas (app e backup) são geradas aqui e não aparecem em lugar nenhum.
+  LC_SENHA_ROOT (root do MySQL: a nova, se o MySQL for instalado agora; a atual, se já existir) e LC_EMPRESA (nome da
+  empresa, banco novo) vêm por variável de ambiente — nunca pela linha de comando nem pelo log. As senhas internas
+  (app e backup) são geradas aqui e não aparecem em lugar nenhum.
 
   Código de saída: 0 ok; 3010 ok, mas o Windows precisa reiniciar; 1 erro (ver o log em <dados>\logs).
 #>
@@ -24,6 +26,9 @@
 param(
   [Parameter(Mandatory)] [string]$PastaApp,
   [Parameter(Mandatory)] [string]$PastaDados,
+  [string]$PastaBoletins = '',
+  [string]$PastaPrerequisitos = '',
+  [string]$Banco = 'LabControlDB',
   [string]$NomeServidor = $env:COMPUTERNAME,
   [int]$PortaHttps = 443,
   [string]$ArquivoBackup = '',
@@ -36,23 +41,25 @@ $ProgressPreference = 'SilentlyContinue'
 $aqui = Split-Path -Parent $MyInvocation.MyCommand.Path
 . (Join-Path $aqui 'Funcoes.ps1')
 
-$Banco = 'labcontrol_v2'
 $Site = 'LabControl'
 $Pool = 'LabControl'
 $IdentidadePool = "IIS AppPool\$Pool"
 $ServicoMySql = 'MySQL80'
 $pacote = Join-Path $PastaApp 'pacote'
-$prereq = Join-Path $pacote 'prerequisitos'
+$prereq = if ($PastaPrerequisitos) { $PastaPrerequisitos } else { Join-Path $pacote 'prerequisitos' }
 $pastaSite = Join-Path $PastaApp 'site'
+if (-not $PastaBoletins) { $PastaBoletins = Join-Path $PastaDados 'boletins' }
 $pastas = @{
-  Boletins = Join-Path $PastaDados 'boletins'
+  Boletins = $PastaBoletins
   Chaves   = Join-Path $PastaDados 'chaves'
   Backup   = Join-Path $PastaDados 'backup'
   Config   = Join-Path $PastaDados 'config'
   Logs     = Join-Path $PastaDados 'logs'
   Cert     = Join-Path $PastaDados 'certificado'
 }
+$boletinsJaExistia = Test-Path $PastaBoletins
 $reiniciar = $false
+$bancoNovo = $false
 
 New-Item -ItemType Directory -Force -Path $PastaDados, $pastas.Logs | Out-Null
 $log = Join-Path $pastas.Logs ("instalacao-{0:yyyyMMdd-HHmmss}.log" -f (Get-Date))
@@ -60,7 +67,7 @@ Start-Transcript -Path $log | Out-Null
 
 try {
   Etapa "LabControl v2 — instalação em $env:COMPUTERNAME"
-  Info "Sistema: $PastaApp   Dados: $PastaDados   Endereço: https://${NomeServidor}:$PortaHttps/"
+  Info "Sistema: $PastaApp   Boletins: $PastaBoletins   Dados: $PastaDados   Endereço: https://${NomeServidor}:$PortaHttps/"
 
   # --- 0. conferências -------------------------------------------------------------------------------------
   $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -71,6 +78,8 @@ try {
   if (-not $senhaRoot) { throw 'senha do root do MySQL não informada (LC_SENHA_ROOT).' }
   if ($ArquivoBackup -and -not (Test-Path $ArquivoBackup)) { throw "backup não encontrado: $ArquivoBackup" }
   if ($NomeServidor -notmatch '^[A-Za-z0-9.-]+$') { throw "nome do servidor inválido: $NomeServidor" }
+  if ($Banco -notmatch '^[A-Za-z][A-Za-z0-9_]{1,63}$' -or $Banco -eq 'labcontrol') { throw "nome de banco inválido: $Banco" }
+  $bancoSql = $Banco.ToLowerInvariant()   # o MySQL no Windows guarda os nomes em minúsculas (lower_case_table_names = 1)
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
   # --- 1. IIS ----------------------------------------------------------------------------------------------
@@ -90,10 +99,15 @@ try {
 
   # --- 2. VC++ e .NET Hosting Bundle -----------------------------------------------------------------------
   Etapa '2/9 Visual C++ e .NET 10 Hosting Bundle'
-  function Instalador([string]$arquivo, [string]$nome, [string]$modo = '/install') {
-    $exe = Join-Path $prereq $arquivo
-    if (-not (Test-Path $exe)) { throw "$nome não está no pacote ($exe)." }
-    $p = Start-Process $exe -ArgumentList $modo, '/quiet', '/norestart' -Wait -PassThru
+  # instalador baixado: só com a assinatura digital válida da Microsoft (o VC++ vem de um link sem hash fixo)
+  function Instalador([string]$filtro, [string]$nome, [string]$modo = '/install') {
+    $exe = Get-ChildItem $prereq -Filter $filtro -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $exe) { throw "$nome não está instalado e o instalador não foi encontrado em $prereq (execute o setup de novo, com internet ou com a pasta prerequisitos)." }
+    $assinatura = Get-AuthenticodeSignature $exe.FullName
+    if ($assinatura.Status -ne 'Valid' -or $assinatura.SignerCertificate.Subject -notmatch 'O=Microsoft Corporation') {
+      throw "$($exe.Name): assinatura digital inválida ($($assinatura.Status)). Arquivo recusado."
+    }
+    $p = Start-Process $exe.FullName -ArgumentList $modo, '/quiet', '/norestart' -Wait -PassThru
     switch ($p.ExitCode) {
       0 { Ok "$nome instalado." }
       1638 { Ok "${nome}: já havia uma versão igual ou mais nova." }
@@ -101,18 +115,19 @@ try {
       default { throw "$nome terminou com o código $($p.ExitCode)." }
     }
   }
-  Instalador 'vc_redist.x64.exe' 'Visual C++ 2015-2022 (x64)'
+  $vc = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64' -ErrorAction SilentlyContinue
+  if ($vc -and $vc.Installed -eq 1) { Ok "Visual C++ $($vc.Version) já instalado." }
+  else { Instalador 'vc_redist.x64.exe' 'Visual C++ 2015-2022 (x64)' }
   $ancm = Join-Path $env:ProgramFiles 'IIS\Asp.Net Core Module\V2\aspnetcorev2.dll'
   $runtime = Get-ChildItem (Join-Path $env:ProgramFiles 'dotnet\shared\Microsoft.AspNetCore.App') -Directory -Filter '10.*' -ErrorAction SilentlyContinue
-  $hosting = Get-ChildItem $prereq -Filter 'dotnet-hosting-*.exe' | Select-Object -First 1
-  if (-not $hosting) { throw '.NET Hosting Bundle não está no pacote.' }
-  $versaoPacote = [version]($hosting.Name -replace '^dotnet-hosting-([\d.]+)-win\.exe$', '$1')
+  $hosting = Get-ChildItem $prereq -Filter 'dotnet-hosting-*.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+  $versaoPacote = if ($hosting) { [version]($hosting.Name -replace '^dotnet-hosting-([\d.]+)-win\.exe$', '$1') } else { [version]'10.0.0' }
   if ((Test-Path $ancm) -and ($runtime | Where-Object { [version]$_.Name -ge $versaoPacote })) {
     Ok ".NET $(($runtime | Sort-Object { [version]$_.Name } | Select-Object -Last 1).Name) e o módulo do IIS já instalados."
   } else {
     # .NET instalado antes do IIS fica sem o módulo do IIS: nesse caso, reparar
     $modo = if ($runtime | Where-Object { [version]$_.Name -eq $versaoPacote }) { '/repair' } else { '/install' }
-    Instalador $hosting.Name ".NET Hosting Bundle $versaoPacote" $modo
+    Instalador 'dotnet-hosting-*.exe' ".NET Hosting Bundle $versaoPacote" $modo
     # o módulo do ASP.NET Core só entra no IIS depois de reiniciar os serviços web
     & net.exe stop was /y | Out-Null
     & net.exe start w3svc | Out-Null
@@ -128,8 +143,8 @@ try {
   } else {
     $base = Join-Path $env:ProgramFiles 'MySQL\MySQL Server 8.0'
     $dadosMySql = Join-Path $env:ProgramData 'MySQL\MySQL Server 8.0'
-    $zip = Get-ChildItem $prereq -Filter 'mysql-8.0.*-winx64.zip' | Select-Object -First 1
-    if (-not $zip) { throw 'MySQL não está no pacote.' }
+    $zip = Get-ChildItem $prereq -Filter 'mysql-8.0.*-winx64.zip' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $zip) { throw "MySQL não está instalado e o arquivo do MySQL não foi encontrado em $prereq (execute o setup de novo, com internet ou com a pasta prerequisitos)." }
     if (Test-Path (Join-Path $dadosMySql 'Data')) { throw "já existe uma pasta de dados do MySQL em $dadosMySql\Data sem o serviço: confira antes de instalar." }
     Info "Extraindo $($zip.Name) para $base (sem os símbolos de depuração)..."
     Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -172,7 +187,10 @@ default-character-set=utf8mb4
     & sc.exe failure $ServicoMySql reset= 86400 actions= restart/60000/restart/60000/restart/60000 | Out-Null
     Start-Service $ServicoMySql
     # root nasce sem senha (só local, por segundos): define a senha digitada no assistente
-    MySql (Join-Path $mysqlBin 'mysql.exe') '' "ALTER USER 'root'@'localhost' IDENTIFIED BY $(SqlTexto $senhaRoot);" | Out-Null
+    for ($i = 0; ; $i++) {
+      try { MySql (Join-Path $mysqlBin 'mysql.exe') '' "ALTER USER 'root'@'localhost' IDENTIFIED BY $(SqlTexto $senhaRoot);" | Out-Null; break }
+      catch { if ($i -ge 30) { throw }; Start-Sleep 2 }
+    }
     Ok "MySQL instalado: serviço $ServicoMySql, só em 127.0.0.1:3306."
   }
   $mysql = Join-Path $mysqlBin 'mysql.exe'
@@ -184,18 +202,27 @@ default-character-set=utf8mb4
 
   # --- 4. banco --------------------------------------------------------------------------------------------
   Etapa "4/9 Banco $Banco"
-  $existe = (MySql $mysql $senhaRoot "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '$Banco';").Trim() -eq '1'
+  $existe = (MySql $mysql $senhaRoot "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = $(SqlTexto $bancoSql);").Trim() -eq '1'
   New-Item -ItemType Directory -Force -Path $pastas.Values | Out-Null
   if ($existe) {
-    if ($ArquivoBackup) { throw "o banco $Banco já existe e o instalador nunca o sobrescreve. Para restaurar um backup, apague o banco antes (depois de um backup!) ou instale sem informar o arquivo." }
+    if ($ArquivoBackup) { throw "o banco $Banco já existe e o instalador nunca o sobrescreve. Para restaurar um backup, apague o banco antes (depois de um backup!) ou escolha 'banco novo' (que mantém o existente)." }
     Ok "Banco $Banco existente mantido (atualização do sistema)."
+  } elseif ($ArquivoBackup) {
+    RestaurarBanco -Mysql $mysql -SenhaRoot $senhaRoot -Zip $ArquivoBackup -Banco $bancoSql -PastaBoletins $pastas.Boletins `
+                   -PastaChaves $pastas.Chaves -RestaurarChaves:$RestaurarChaves -Recriar (Join-Path $aqui 'recriar.ps1') -PastaTemp $PastaDados
   } else {
-    if (-not $ArquivoBackup) { throw "o banco $Banco não existe: informe o backup (.zip) do banco migrado, gerado pelo Scripts\v2\backup.ps1." }
-    $senhaAdmin = $env:LC_SENHA_ADMIN
-    if (-not $senhaAdmin -or $senhaAdmin.Length -lt 8) { throw 'senha provisória do ADMINISTRADOR não informada ou com menos de 8 caracteres (LC_SENHA_ADMIN).' }
-    RestaurarBanco -Mysql $mysql -SenhaRoot $senhaRoot -Zip $ArquivoBackup -Banco $Banco -PastaBoletins $pastas.Boletins `
-                   -PastaChaves $pastas.Chaves -RestaurarChaves:$RestaurarChaves -SenhaAdmin $senhaAdmin `
-                   -Recriar (Join-Path $aqui 'recriar.ps1') -PastaTemp $PastaDados
+    $empresa = "$env:LC_EMPRESA".Trim()
+    if ($empresa.Length -lt 3) { throw 'nome da empresa não informado (LC_EMPRESA).' }
+    Info "Criando o banco $Banco pelos scripts (alguns minutos)..."
+    $antes = $env:MYSQL_PWD
+    try {
+      $env:MYSQL_PWD = $senhaRoot
+      & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $aqui 'recriar.ps1') -Banco $bancoSql -Empresa $empresa `
+          -MySql $mysql -Usuario root -Forcar
+      if ($LASTEXITCODE -ne 0) { throw "recriar.ps1 terminou com o código $LASTEXITCODE." }
+    } finally { $env:MYSQL_PWD = $antes }
+    $bancoNovo = $true
+    Ok "Banco $Banco criado: empresa 001 ($($empresa.ToUpperInvariant())) e usuário ADMINISTRADOR / Admin123."
   }
 
   # --- 5. usuários do MySQL --------------------------------------------------------------------------------
@@ -206,7 +233,7 @@ default-character-set=utf8mb4
   MySql $mysql $senhaRoot @"
 CREATE USER IF NOT EXISTS 'labcontrol'@'localhost' IDENTIFIED BY $(SqlTexto $senhaApp);
 ALTER USER 'labcontrol'@'localhost' IDENTIFIED BY $(SqlTexto $senhaApp);
-GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE, CREATE TEMPORARY TABLES ON ``$Banco``.* TO 'labcontrol'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE, CREATE TEMPORARY TABLES ON ``$bancoSql``.* TO 'labcontrol'@'localhost';
 CREATE USER IF NOT EXISTS 'labcontrol_backup'@'localhost' IDENTIFIED BY $(SqlTexto $senhaBackup);
 ALTER USER 'labcontrol_backup'@'localhost' IDENTIFIED BY $(SqlTexto $senhaBackup);
 GRANT SELECT, SHOW VIEW, TRIGGER, EVENT, LOCK TABLES, SHOW_ROUTINE ON *.* TO 'labcontrol_backup'@'localhost';
@@ -227,10 +254,15 @@ GRANT SELECT, SHOW VIEW, TRIGGER, EVENT, LOCK TABLES, SHOW_ROUTINE ON *.* TO 'la
   if ((Get-WebAppPoolState -Name $Pool).Value -eq 'Started') { Stop-WebAppPool -Name $Pool; Start-Sleep 3 }
 
   RestringirPasta $PastaDados
-  RestringirPasta $pastas.Boletins $IdentidadePool
+  if ($boletinsJaExistia -and -not $PastaBoletins.StartsWith($PastaDados, [StringComparison]::OrdinalIgnoreCase)) {
+    # pasta escolhida que já existia (ex.: um disco compartilhado): só acrescenta a gravação do pool, sem tirar acessos
+    $acl = Get-Acl $pastas.Boletins
+    $acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($IdentidadePool, 'Modify', 'ContainerInherit, ObjectInherit', 'None', 'Allow')))
+    Set-Acl $pastas.Boletins $acl
+  } else { RestringirPasta $pastas.Boletins $IdentidadePool }
   RestringirPasta $pastas.Chaves $IdentidadePool
   foreach ($p in 'Backup', 'Config', 'Logs', 'Cert') { RestringirPasta $pastas[$p] }
-  Ok "Pastas em $PastaDados (boletins e chaves: só administradores, SYSTEM e o pool do IIS)."
+  Ok "Pastas prontas: boletins em $($pastas.Boletins); chaves, backups e logs em $PastaDados (acesso restrito)."
 
   # --- 7. arquivos do sistema ------------------------------------------------------------------------------
   Etapa '7/9 Arquivos do sistema'
@@ -337,7 +369,7 @@ pause
   $scriptBackup = Join-Path $aqui 'backup.ps1'
   $logBackup = Join-Path $pastas.Logs 'backup-ultimo.log'
   $comando = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$scriptBackup`" -Destino `"$($pastas.Backup)`" -PastaApp `"$pastaSite`" " +
-             "-Usuario labcontrol_backup -ArquivoSenha `"$arquivoSenha`" -MySqlBin `"$mysqlBin`" > `"$logBackup`" 2>&1"
+             "-Banco $bancoSql -Usuario labcontrol_backup -ArquivoSenha `"$arquivoSenha`" -MySqlBin `"$mysqlBin`" > `"$logBackup`" 2>&1"
   $acao = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument "/c $comando"
   $gatilho = New-ScheduledTaskTrigger -Daily -At $HoraBackup
   $conta = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
@@ -365,7 +397,10 @@ Dados:      $PastaDados
 MySQL:      serviço MySQL80 (ou o já existente), só local; banco $Banco
             usuários: root (senha definida no assistente — guarde-a), labcontrol e labcontrol_backup (senhas internas)
 
-Primeiro acesso: ADMINISTRADOR com a senha provisória digitada no assistente (troca obrigatória).
+Acesso: usuário ADMINISTRADOR, senha Admin123 (banco novo) — ou os usuários e senhas do backup restaurado.
+Sistema antigo: entre como ADMINISTRADOR e use Sistema › Migração com o banco destino  (o próprio
+banco): a empresa e o ADMINISTRADOR da instalação são substituídos pelos dados do legado. O Firebird do sistema
+antigo precisa estar rodando NESTE servidor (localhost:3050) — informe o caminho do .FDB na tela.
 Estações: copiar a pasta $($pastas.Cert) e executar instalar-certificado-na-estacao.cmd como administrador
 (uma vez por estação), senão o navegador avisa "não seguro".
 Copie os backups para fora do servidor (outro disco, nuvem): eles têm os dados dos clientes.

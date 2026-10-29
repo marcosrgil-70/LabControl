@@ -11,29 +11,6 @@ function Info([string]$texto) { Write-Host "  $texto" }
 function Aviso([string]$texto) { Write-Host "  AVISO: $texto" -ForegroundColor Yellow }
 function Ok([string]$texto) { Write-Host "  $texto" -ForegroundColor Green }
 
-<#
-  Hash de senha no formato do ASP.NET Core Identity (PasswordHasher, versão 3 — o mesmo do ContaService.GerarHash):
-  0x01 | PRF (HMACSHA512 = 2) | iterações (100.000) | tamanho do sal (16) | sal | subchave PBKDF2 (32 bytes), em Base64.
-#>
-function HashSenha([string]$senha) {
-  $sal = New-Object byte[] 16
-  $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
-  try { $rng.GetBytes($sal) } finally { $rng.Dispose() }
-  $iteracoes = 100000
-  $kdf = New-Object Security.Cryptography.Rfc2898DeriveBytes($senha, $sal, $iteracoes, [Security.Cryptography.HashAlgorithmName]::SHA512)
-  try { $sub = $kdf.GetBytes(32) } finally { $kdf.Dispose() }
-  $saida = New-Object byte[] (13 + $sal.Length + $sub.Length)
-  $saida[0] = 1
-  $be = { param([int]$v, [int]$pos) $saida[$pos] = [byte](($v -shr 24) -band 255); $saida[$pos + 1] = [byte](($v -shr 16) -band 255)
-          $saida[$pos + 2] = [byte](($v -shr 8) -band 255); $saida[$pos + 3] = [byte]($v -band 255) }
-  & $be 2 1
-  & $be $iteracoes 5
-  & $be $sal.Length 9
-  [Array]::Copy($sal, 0, $saida, 13, $sal.Length)
-  [Array]::Copy($sub, 0, $saida, 13 + $sal.Length, $sub.Length)
-  return [Convert]::ToBase64String($saida)
-}
-
 # Senha aleatória para os usuários internos do MySQL (app e backup): letras e números, sem caracteres que
 # atrapalhem a connection string (; = ' ")
 function SenhaAleatoria([int]$tamanho = 32) {
@@ -97,11 +74,11 @@ function SqlTexto([string]$v) { return "'" + $v.Replace('\', '\\').Replace("'", 
 
 <#
   Restaura o banco de um backup do Scripts/v2/backup.ps1 (banco.sql + boletins/ + chaves/) com o nome $Banco, confere
-  os objetos com as contagens do recriar.ps1 e dá ao ADMINISTRADOR a senha provisória com troca obrigatória.
+  os objetos com as contagens do recriar.ps1. Usuários e senhas ficam como estão no backup.
   Se algo falhar depois de criar o banco, o banco é apagado (o instalador pode ser executado de novo).
 #>
 function RestaurarBanco([string]$Mysql, [string]$SenhaRoot, [string]$Zip, [string]$Banco, [string]$PastaBoletins,
-                        [string]$PastaChaves, [switch]$RestaurarChaves, [string]$SenhaAdmin, [string]$Recriar, [string]$PastaTemp) {
+                        [string]$PastaChaves, [switch]$RestaurarChaves, [string]$Recriar, [string]$PastaTemp) {
   try {
     Info "Restaurando $Zip..."
     Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -157,11 +134,8 @@ function RestaurarBanco([string]$Mysql, [string]$SenhaRoot, [string]$Zip, [strin
     if ($dif.Count) { throw "banco restaurado diferente do schema desta versão: $($dif -join ', ')." }
     Ok ("Banco restaurado: {0} tabelas, {1} views, {2} funções, {3} procedures, {4} triggers." -f $contagem)
 
-    # nunca o ADMINISTRADOR/Admin123 em produção (CLAUDE.md): senha provisória do assistente, troca no 1º acesso
-    $linhas = MySql $Mysql $SenhaRoot "UPDATE USUARIOS SET SENHA_HASH = $(SqlTexto (HashSenha $SenhaAdmin)), TROCAR_SENHA = 1, TENTATIVAS_FALHAS = 0, BLOQUEADO_ATE = NULL WHERE LOGIN = 'ADMINISTRADOR'; SELECT ROW_COUNT();" -banco $Banco
-    if ($linhas.Trim() -ne '1') { Aviso 'o banco restaurado não tem o usuário ADMINISTRADOR.' } else { Ok 'ADMINISTRADOR com a senha provisória do assistente (troca no 1º acesso).' }
-    $semTroca = (MySql $Mysql $SenhaRoot "SELECT GROUP_CONCAT(LOGIN) FROM USUARIOS WHERE TROCAR_SENHA = 0 AND ATIVO = 1;" -banco $Banco).Trim()
-    if ($semTroca -and $semTroca -ne 'NULL') { Info "Usuários que já trocaram a senha (mantida): $semTroca" }
+    $usuarios = (MySql $Mysql $SenhaRoot "SELECT COUNT(*) FROM USUARIOS WHERE ATIVO = 1;" -banco $Banco).Trim()
+    Info "$usuarios usuário(s) ativo(s), com as senhas do backup."
   } catch {
     try { MySql $Mysql $SenhaRoot "DROP DATABASE IF EXISTS ``$Banco``;" | Out-Null; Aviso "banco $Banco apagado (restauração incompleta)." } catch { }
     throw

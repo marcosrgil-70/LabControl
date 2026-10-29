@@ -6,9 +6,10 @@
 
 > Marque cada item. O que for anotado aqui (endereços, pastas, nomes de usuário) **não** inclui senhas: senha só no cofre/papel do responsável, nunca em arquivo versionado nem neste MD.
 
-> 🧰 **Instalador (29/10/2026):** `instalador\saida\LabControl-Setup-<versão>.exe` faz sozinho quase tudo das partes A e B. Gerado por `instalador\construir.ps1`; detalhes em [instalador/README.md](../../instalador/README.md). O que ele faz:
-> - instala o IIS, o .NET 10 Hosting Bundle, o VC++ e o MySQL 8.0, este só em `127.0.0.1`;
-> - restaura o banco migrado e dá ao ADMINISTRADOR a senha provisória com troca obrigatória;
+> 🧰 **Instalador (29/10/2026):** `instalador\saida\LabControl-Setup-<versão>.exe` (~43 MB) faz sozinho quase tudo das partes A e B. Gerado por `instalador\construir.ps1`; detalhes em [instalador/README.md](../../instalador/README.md). O que ele faz:
+> - pede o nome da empresa, a pasta do sistema e a dos boletins;
+> - confere o IIS, o VC++, o .NET 10 e o MySQL; baixa e instala o que faltar (ou usa a pasta `prerequisitos` ao lado do setup, sem internet). O MySQL fica só em `127.0.0.1`;
+> - cria o banco **`LabControlDB` zerado**, com a empresa e o **ADMINISTRADOR / Admin123** sem troca obrigatória (decisão do usuário), ou restaura um backup;
 > - cria os usuários MySQL `labcontrol` e `labcontrol_backup`, com permissões mínimas;
 > - cria as pastas com acesso restrito;
 > - configura o site HTTPS com certificado autoassinado e o firewall;
@@ -19,8 +20,9 @@
 ## A. Servidor (dias antes)
 - [ ] **Testar o instalador numa máquina virtual com Windows Server** antes do servidor do cliente (pendência 40). Ele foi testado por partes, mas nunca de ponta a ponta.
 - [ ] Servidor: Windows Server 2016 ou mais novo, 64 bits. Nome na rede: ______________________. Firebird 2.5 (32 bits) só se a consulta histórica ficar nele.
-- [ ] Rodar o `setup.exe` com o **backup do banco migrado** (`Scripts\v2\backup.ps1 … -Conferir` na máquina da migração). Anotar:
+- [ ] Rodar o `setup.exe` com **banco novo** (`LabControlDB`): a migração vem depois, pelo sistema (parte C). Para levar um banco já migrado, escolher **restaurar backup**. Anotar:
   - pasta do sistema: ______________________ (padrão `C:\LabControl`)
+  - pasta dos boletins: ______________________ (padrão `C:\LabControlDados\Boletins`)
   - pasta dos dados: ______________________ (padrão `C:\LabControlDados`; de preferência em outro disco)
   - endereço: https://______________________/
   - senha do **root** do MySQL definida no assistente: guardar no cofre (pendência 12 — a do servidor nasce nova, diferente da do desenvolvimento).
@@ -41,23 +43,23 @@ Configuração manual, só sem o instalador: [Scripts/v2/README.md](../../Script
 ## C. Dia da virada
 1. [ ] Avisar o laboratório: a partir de ____:____ ninguém lança nada no Delphi.
 2. [ ] **Backup final do Firebird** com o Delphi fechado: `gbak -b -user SYSDBA -password <senha> DBMAIS.FDB DBMAIS-<data>.fbk` (guardar junto com os backups da 9.1).
-3. [ ] **Última migração** (T07) a partir da cópia congelada, na máquina da migração:
-   - banco destino novo, criado sem `-Dev` (`.\Scripts\v2\recriar.ps1 -Banco labcontrol_virada`);
-   - o app num banco de operação, criado com `-Dev` e apagado no fim;
-   - *Sistema › Migração* com **senha provisória nova** para os usuários (não a da homologação).
+3. [ ] **Migração** (T07) no servidor, a partir da cópia congelada. O Firebird do legado precisa rodar **neste servidor** (`localhost:3050`).
+   - entrar como ADMINISTRADOR / Admin123 → *Sistema › Migração*;
+   - destino: o próprio `labcontroldb`, que é o padrão da tela;
+   - informar o caminho do `.FDB` congelado e uma **senha provisória** para os outros usuários.
 
-   Esperado: 18 etapas ok e **todas as conferências verdes** (na 9.1: 74/74).
+   Esperado: 18 etapas ok e **todas as conferências verdes** (na 9.1: 74/74). Se falhar, nada fica gravado e dá para repetir. Ao final, entrar de novo com ADMINISTRADOR / Admin123.
 4. [ ] Relatório de anomalias salvo fora do repositório (`C:\Project\backup\migracao-<data>.csv`); conferir que as decisões da pendência 39 foram aplicadas.
-5. [ ] Backup do banco migrado: `.\Scripts\v2\backup.ps1 -Destino <pasta> -Banco labcontrol_virada -Conferir` → levar o zip ao servidor.
-6. [ ] No servidor, se o banco da homologação estiver lá:
-   - rodar a tarefa de backup (guardar o zip da homologação);
-   - apagar o banco: `DROP DATABASE labcontrol_v2;` como root. O instalador nunca sobrescreve um banco existente.
-7. [ ] Rodar o `setup.exe` **com o zip da virada** e uma **senha provisória nova do ADMINISTRADOR**. Esperado: "Banco restaurado: 59 tabelas…" e a tela de login respondendo.
-8. [ ] *Sistema › Parâmetros da Empresa*: conferir numeração, período de pesquisa e **e-mail**. A senha do e-mail precisa ser digitada de novo, porque as chaves de produção são novas. Depois, "Enviar e-mail de teste".
-9. [ ] **Primeiro backup** pela tarefa agendada (rodar à mão) e conferir o zip (boletins e chaves dentro).
-10. [ ] Fumaça com o responsável: login → abrir uma amostra migrada → 2ª via de um boletim migrado → receber uma amostra nova → etiqueta na Argox.
-11. [ ] Entregar a senha provisória a cada usuário (pessoalmente); cada um troca no 1º acesso.
-12. [ ] Delphi: tirar o atalho das estações; Firebird **somente leitura** para consulta histórica por 6 meses (`gfix -mode read_only`).
+5. [ ] Se a homologação foi feita no mesmo servidor e banco, a migração da virada recusa o banco (já tem dados). Nesse caso:
+   1. guardar um backup da homologação (tarefa "LabControl - Backup" › Executar);
+   2. apagar o banco: `DROP DATABASE labcontroldb;` como root;
+   3. rodar o `setup.exe` de novo com **banco novo**;
+   4. repetir o passo 3.
+6. [ ] *Sistema › Parâmetros da Empresa*: conferir numeração, período de pesquisa e **e-mail**. A senha do e-mail precisa ser digitada de novo, porque as chaves de produção são novas. Depois, "Enviar e-mail de teste".
+7. [ ] **Primeiro backup** pela tarefa agendada (rodar à mão) e conferir o zip (boletins e chaves dentro).
+8. [ ] Fumaça com o responsável: login → abrir uma amostra migrada → 2ª via de um boletim migrado → receber uma amostra nova → etiqueta na Argox.
+9. [ ] Entregar a senha provisória a cada usuário (pessoalmente); cada um troca no 1º acesso.
+10. [ ] Delphi: tirar o atalho das estações; Firebird **somente leitura** para consulta histórica por 6 meses (`gfix -mode read_only`).
 
 ## D. Depois da virada
 - [ ] 1º dia acompanhado no laboratório; ocorrências na tabela do [roteiro de homologação](ROTEIRO-HOMOLOGACAO.md#registro-de-ocorrências).

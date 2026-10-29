@@ -1,17 +1,19 @@
 -- =====================================================================
--- LabControl v2 — dados de DESENVOLVIMENTO (nunca em produção/homologação)
--- Rodado por: .\Scripts\v2\recriar.ps1 -Dev   (depois de 01..05, no banco recriado)
--- Sem USE: o banco é escolhido na linha de comando.
+-- LabControl v2 — banco inicial: empresa 001 + usuário ADMINISTRADOR
+-- Rodado por: .\Scripts\v2\recriar.ps1 -Empresa "<nome>" (instalador, banco zerado LabControlDB) ou -Dev
+-- (desenvolvimento, empresa "LABORATÓRIO (DESENVOLVIMENTO)"), depois de 01..06, no banco recriado.
+-- O recriar.ps1 define antes @EMPRESA_RAZAO e @EMPRESA_FANTASIA. Sem USE: o banco vem da linha de comando.
 --
 -- Cria a empresa 001 (inicializada por SP_INICIALIZAR_EMPRESA) e o usuário ADMINISTRADOR (ADMIN_GLOBAL,
 -- acesso a tudo) com a senha Admin123, sem troca obrigatória, vinculado ao profissional "USUÁRIO ESPECIAL DO
--- SISTEMA" (regra de desenvolvimento/testes, CLAUDE.md). Em produção os usuários vêm da migração (M-09) ou da T02.
+-- SISTEMA" (decisão do usuário, 29/10/2026: vale também na instalação de produção — CLAUDE.md). O ADMINISTRADOR
+-- entra e migra o legado pela T07 neste mesmo banco (a migração substitui este conteúdo inicial).
 -- =====================================================================
 
 SET NAMES utf8mb4;
 
 INSERT INTO EMPRESAS (COD_EMPRESA, RAZAO_SOCIAL, NOME_FANTASIA)
-VALUES ('001', 'LABORATÓRIO (DESENVOLVIMENTO)', 'LABORATÓRIO DEV');
+VALUES ('001', @EMPRESA_RAZAO, @EMPRESA_FANTASIA);
 CALL SP_INICIALIZAR_EMPRESA(LAST_INSERT_ID());
 
 -- hash PBKDF2 (PasswordHasher do ASP.NET Core) de "Admin123"

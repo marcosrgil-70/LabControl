@@ -14,7 +14,7 @@ namespace LabControl.Controllers;
 public sealed class MigracaoController(MigracaoService migracao, MigracaoExecutor executor, IConfiguration config, IEmpresaContexto usuario) : Controller
 {
     [HttpGet, SomenteAdminGlobal]
-    public IActionResult Index() => View(new MigracaoVM { Form = FormPadrao(), Relatorio = executor.Atual });
+    public IActionResult Index() => View(new MigracaoVM { Form = FormPadrao(), Relatorio = executor.Atual, BancoEmUso = migracao.BancoEmUso });
 
     [HttpPost, SomenteAdminGlobal]
     public async Task<IActionResult> Executar(MigracaoFormVM form)
@@ -29,7 +29,7 @@ public sealed class MigracaoController(MigracaoService migracao, MigracaoExecuto
         }
         // senhas nunca voltam para a tela
         (form.SenhaFirebird, form.SenhaProvisoria, form.ConfirmarSenha) = (null, null, null);
-        return View(nameof(Index), new MigracaoVM { Form = form, Relatorio = executor.Atual });
+        return View(nameof(Index), new MigracaoVM { Form = form, Relatorio = executor.Atual, BancoEmUso = migracao.BancoEmUso });
     }
 
     /// <summary>Relatório da última execução em CSV (etapas, conferências e anomalias; sem senhas).</summary>
@@ -51,5 +51,7 @@ public sealed class MigracaoController(MigracaoService migracao, MigracaoExecuto
     {
         CaminhoFirebird = config["Firebird:DatabasePath"] ?? @"C:\Project\Laboratorio\DBMAIS.FDB",
         UsuarioFirebird = config["Firebird:User"] ?? "SYSDBA",
+        // instalação nova (LabControlDB): o destino é o próprio banco, que só tem a empresa e o ADMINISTRADOR do instalador
+        BancoDestino = migracao.BancoEmUso,
     };
 }

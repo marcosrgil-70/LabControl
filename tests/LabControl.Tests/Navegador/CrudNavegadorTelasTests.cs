@@ -505,7 +505,7 @@ public class CrudNavegadorTelasTests(AppNavegador app)
         await p.FillAsync("#Form_ConfirmarSenha", "Migracao#2026");
         await p.ClickAsync("#formMigracao button[type=submit]");
         Assert.Contains(s.Dialogos, d => d.StartsWith("Executar a migração"));
-        await Assertions.Expect(p.Locator("[data-erros]")).ToContainTextAsync($"O banco {BancoTeste.NomeBanco} não está vazio");
+        await Assertions.Expect(p.Locator("[data-erros]")).ToContainTextAsync($"O banco em uso ({BancoTeste.NomeBanco}) já tem cadastros ou movimentos");
         await Assertions.Expect(p.Locator("#Form_SenhaProvisoria")).ToHaveValueAsync("");
         Assert.Empty(s.ErrosJs);
     }

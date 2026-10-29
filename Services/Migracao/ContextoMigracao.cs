@@ -38,7 +38,7 @@ public sealed class ContextoMigracao(LeitorFirebird fb, LabDbContext db, Empresa
     public RelatorioMigracao Relatorio { get; } = relatorio;
     /// <summary>Senha provisória única dos usuários migrados (decisão do usuário); nunca vai para log ou relatório.</summary>
     public string SenhaProvisoria { get; } = senhaProvisoria;
-    /// <summary>Desenvolvimento/testes: o ADMINISTRADOR migrado fica com <see cref="ContaService.SenhaDesenvolvimento"/> (M-09).</summary>
+    /// <summary>Desenvolvimento/testes ou banco do instalador substituído: o ADMINISTRADOR migrado fica com <see cref="ContaService.SenhaDesenvolvimento"/>, sem troca (M-09).</summary>
     public bool AdministradorDesenvolvimento { get; init; }
     public string Etapa { get; set; } = "";
     public int IdEmpresa => Empresa.EmpresaId ?? throw new InvalidOperationException("A empresa ainda não foi migrada (M-01).");

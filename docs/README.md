@@ -27,7 +27,7 @@ Migração do sistema **Delphi 7 + Firebird 2.5** (`C:\Project\Laboratorio`) par
     - [`Scripts/v2/backup.ps1`](../Scripts/v2/README.md#backup-banco--boletins--chaves): banco, boletins e chaves, com conferência por restauração;
     - [checklist da virada](plano/CHECKLIST-VIRADA.md);
     - [instalador do servidor](../instalador/README.md): `setup.exe` offline com assistente. Falta o teste numa VM com Windows Server (pendência 40).
-  - **Testes:** suíte inteira **316/316** (~3 min); roteiro SQL do banco **76/76**.
+  - **Testes:** suíte inteira **317/317** (~3 min); roteiro SQL do banco **76/76**.
 - **Dúvidas respondidas em 29/10/2026:**
   - 1: T28 dispensada;
   - 2: e-mail configurado pelo usuário em Parâmetros da Empresa;

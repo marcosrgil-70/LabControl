@@ -39,11 +39,11 @@ Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md)
    `dotnet user-secrets set "ConnectionStrings:LabControl" "Server=localhost;Port=3306;Database=labcontrol_v2;User=root;Password=<senha>"`
 2. **Banco** pelos scripts: `.\Scripts\v2\recriar.ps1 -Dev` (cria o `labcontrol_v2` com a empresa 001 e o usuário de desenvolvimento). Detalhes em [Scripts/v2/README.md](Scripts/v2/README.md).
 3. **Executar:** `dotnet run` (ou `rodar.bat`) → http://localhost:5180.
-4. **Login de desenvolvimento/testes:** `ADMINISTRADOR` / `Admin123` (acesso a tudo, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA"). Nunca em produção.
+4. **Login:** `ADMINISTRADOR` / `Admin123` (acesso a tudo, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA"). Vale no desenvolvimento e, por decisão do usuário (29/10/2026), também no banco novo criado pelo instalador.
 5. **PDFs dos boletins emitidos:** pasta `Boletins:Pasta` do `appsettings.json` (padrão `storage/boletins`, fora do git). Em produção, uma pasta do servidor que **entra no backup** junto com o banco (o banco guarda só o caminho e o SHA-256).
 6. **E-mail:** cada empresa configura o servidor em *Parâmetros da Empresa › E-mail* (com "Enviar e-mail de teste"). A senha é cifrada com as chaves do Data Protection guardadas em `DataProtection:PastaChaves` (padrão `storage/chaves`, fora do git). Em produção, essa pasta fica fora da pasta do app e entra no backup, senão a senha do e-mail tem de ser digitada de novo.
 7. **Backup:** `.\Scripts\v2\backup.ps1 -Destino <pasta>` junta num zip o banco, os boletins e as chaves ([Scripts/v2/README.md](Scripts/v2/README.md#backup-banco--boletins--chaves)). Para a produção, siga o [checklist da virada](docs/plano/CHECKLIST-VIRADA.md).
-8. **Instalar no servidor do cliente:** `.\instalador\construir.ps1` gera o `LabControl-Setup-<versão>.exe` offline, com IIS, .NET, MySQL, banco, HTTPS e backup agendado ([instalador/README.md](instalador/README.md)).
+8. **Instalar no servidor do cliente:** `.\instalador\construir.ps1` gera o `LabControl-Setup-<versão>.exe` (~43 MB). O assistente pede a empresa e as pastas, confere o que o servidor já tem e baixa o que faltar (IIS, VC++, .NET, MySQL). O banco é o `LabControlDB` zerado (com `ADMINISTRADOR` / `Admin123`) ou um backup. Depois é só migrar o sistema antigo pela tela de Migração, no próprio banco. Detalhes em [instalador/README.md](instalador/README.md).
 
 ### Com os dados reais do legado
 1. `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`

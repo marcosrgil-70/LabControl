@@ -37,7 +37,8 @@
 | Encoding | conferir acentos em 20 nomes sorteados |
 
 ## Decisões do usuário e implementação (parte 1, tarefa 3.5 — 21/10/2026)
-- **Destino:** banco **separado e vazio** (padrão `labcontrol_migracao`, `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`), executado pela T07 a partir do app no `labcontrol_v2`. Para usar o banco migrado, aponte o user-secret `ConnectionStrings:LabControl` para ele.
+- **Destino:** banco **separado e vazio** (ex. `labcontrol_migracao`, `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`), executado pela T07 a partir do app no `labcontrol_v2`. Para usar o banco migrado, aponte o user-secret `ConnectionStrings:LabControl` para ele.
+- **Ou o próprio banco em uso, recém-instalado (29/10/2026):** o instalador cria o `LabControlDB` com a empresa e o ADMINISTRADOR / Admin123; a T07 aceita esse banco como destino, apaga o conteúdo inicial e migra **numa transação só** (falha desfaz tudo). Regra completa em [T07](../telas/T07-migracao.md).
 - **Usuários:**
   - **senha provisória única** para todos (dúvida 7 do plano), digitada na tela e nunca gravada em claro;
   - troca obrigatória no 1º acesso;

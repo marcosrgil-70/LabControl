@@ -105,13 +105,17 @@ public static class BancoTeste
         await cmd.ExecuteNonQueryAsync();
     }
 
-    /// <summary>Apaga e recria <paramref name="banco"/> pelos scripts (<c>recriar.ps1 -Forcar</c>), no servidor dos testes.</summary>
-    public static async Task RecriarAsync(string banco)
+    /// <summary>
+    /// Apaga e recria <paramref name="banco"/> pelos scripts (<c>recriar.ps1 -Forcar</c>), no servidor dos testes; com
+    /// <paramref name="empresa"/>, também o <c>inicial.sql</c> (empresa 001 + ADMINISTRADOR, como o instalador deixa).
+    /// </summary>
+    public static async Task RecriarAsync(string banco, string? empresa = null)
     {
         var cs = new MySqlConnectionStringBuilder(ConnectionString);
         var psi = new ProcessStartInfo("powershell.exe",
             ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", Path.Combine(RaizDoRepositorio(), "Scripts", "v2", "recriar.ps1"),
-             "-Banco", banco, "-Servidor", cs.Server, "-Porta", cs.Port.ToString(), "-Usuario", cs.UserID, "-Forcar"])
+             "-Banco", banco, "-Servidor", cs.Server, "-Porta", cs.Port.ToString(), "-Usuario", cs.UserID, "-Forcar",
+             .. (empresa is null ? Array.Empty<string>() : ["-Empresa", empresa])])
         { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
         psi.Environment["MYSQL_PWD"] = cs.Password;
         using var p = Process.Start(psi)!;

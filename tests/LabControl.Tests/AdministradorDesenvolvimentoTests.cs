@@ -15,9 +15,9 @@ public class AdministradorDesenvolvimentoTests
     [Fact]
     public void Semente_de_desenvolvimento_cria_ADMINISTRADOR_com_Admin123_sem_troca()
     {
-        var sql = File.ReadAllText(Path.Combine(BancoTeste.RaizDoRepositorio(), "Scripts", "v2", "dev", "admin_dev.sql"));
+        var sql = File.ReadAllText(Path.Combine(BancoTeste.RaizDoRepositorio(), "Scripts", "v2", "inicial.sql"));
         var m = Regex.Match(sql, @"VALUES \('(?<login>[^']+)', '[^']+', '(?<hash>[^']+)', (?<global>\d), (?<trocar>\d)\)");
-        Assert.True(m.Success, "INSERT do usuário não encontrado no admin_dev.sql");
+        Assert.True(m.Success, "INSERT do usuário não encontrado no inicial.sql");
         Assert.Equal((ContaService.LoginAdministrador, "1", "0"), (m.Groups["login"].Value, m.Groups["global"].Value, m.Groups["trocar"].Value));
         Assert.NotEqual(PasswordVerificationResult.Failed,
             new PasswordHasher<Usuario>().VerifyHashedPassword(new Usuario(), m.Groups["hash"].Value, ContaService.SenhaDesenvolvimento));

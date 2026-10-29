@@ -31,7 +31,8 @@
   - `Etapas/M01…M10`;
   - `Controllers/MigracaoController.cs`, `ViewModels/MigracaoVM.cs`, `Views/Migracao/Index.cshtml`.
 - **Decisões do usuário:**
-  - destino = **banco separado e vazio** (padrão `labcontrol_migracao`, criado por `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`), executado a partir do app logado no `labcontrol_v2`;
+  - destino = **banco separado e vazio** (ex. `labcontrol_migracao`, criado por `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`), executado a partir do app logado no `labcontrol_v2`;
+  - **ou o próprio banco em uso, recém-instalado** (29/10/2026, decisão do usuário: instalação com um banco só, `LabControlDB`). É o destino padrão da tela. Aceito só se tiver apenas o que o `inicial.sql` cria: no máximo 1 empresa, só o ADMINISTRADOR sem `USUCOD_LEGADO`, até 2 entidades, nenhuma proposta ou amostra. A migração apaga esse conteúdo (menos `PAISES`, `ESTADOS`, `CIDADES` e `PERMISSOES`, dos scripts) e roda M-01…M-18 **numa transação só**: falha ou interrupção desfaz tudo e o banco volta como o instalador deixou. O ADMINISTRADOR migrado fica com `Admin123`, sem troca. Ao final, entra-se de novo (o usuário logado foi substituído). Teste: `MigracaoTests.Instalacao_nova_migra_no_proprio_banco_e_falha_desfaz_tudo`;
   - **senha provisória única** para todos (digitada na tela, nunca gravada em claro nem exibida; troca obrigatória no 1º acesso);
   - **todos os usuários com o perfil ADMINISTRADOR** (USUCOD 1 → ADMIN_GLOBAL).
 - **Tela:**

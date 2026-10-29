@@ -3,7 +3,7 @@ using LabControl.Services.Migracao;
 
 namespace LabControl.ViewModels;
 
-/// <summary>Formulário da T07: origem Firebird, destino vazio e a senha provisória única dos usuários migrados.</summary>
+/// <summary>Formulário da T07: origem Firebird, destino (vazio ou o banco em uso recém-instalado) e a senha provisória única dos usuários migrados.</summary>
 public sealed class MigracaoFormVM
 {
     [Required(ErrorMessage = "Informe o caminho do banco do legado."), Display(Name = "Banco do legado (.FDB)")]
@@ -15,8 +15,8 @@ public sealed class MigracaoFormVM
     [Display(Name = "Senha do Firebird")]
     public string? SenhaFirebird { get; set; }
 
-    [Required(ErrorMessage = "Informe o banco destino."), Display(Name = "Banco destino (vazio)")]
-    public string BancoDestino { get; set; } = "labcontrol_migracao";
+    [Required(ErrorMessage = "Informe o banco destino."), Display(Name = "Banco destino")]
+    public string BancoDestino { get; set; } = "";
 
     [Required(ErrorMessage = "Informe a senha provisória dos usuários migrados."), Display(Name = "Senha provisória dos usuários")]
     public string? SenhaProvisoria { get; set; }
@@ -30,4 +30,6 @@ public sealed class MigracaoVM
     public required MigracaoFormVM Form { get; init; }
     /// <summary>Última execução (em andamento ou terminada) desde que o app subiu.</summary>
     public RelatorioMigracao? Relatorio { get; init; }
+    /// <summary>Banco do app: como destino, a migração substitui o conteúdo do instalador.</summary>
+    public string BancoEmUso { get; init; } = "";
 }

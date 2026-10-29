@@ -29,17 +29,18 @@ Reescrita do sistema de laboratório **Delphi 7 + Firebird** (`C:\Project\Labora
 - Erros SQLSTATE `45000` são mensagens de negócio: mostrar ao usuário.
 - Ao concluir: marcar o checklist do plano e do arquivo da fase, atualizar o "Status" do MD da tela, a matriz `docs/plano/MATRIZ-DELPHI-CSHARP.md` e o Diário.
 - **Todo commit é seguido de `git push`** para o remoto (`origin`, branch `master`) — pedido do usuário (21/10/2026). Se o push falhar, avisar o usuário com a mensagem do erro.
-- **Usuário `ADMINISTRADOR` / senha `Admin123` em desenvolvimento e testes** — pedido do usuário (23/10/2026):
+- **Usuário `ADMINISTRADOR` / senha `Admin123`** — pedido do usuário (23/10/2026, desenvolvimento e testes; 29/10/2026, também na instalação):
   - sempre entra e tem acesso a tudo (ADMIN_GLOBAL), **sem troca obrigatória de senha**;
   - vinculado ao profissional **"USUÁRIO ESPECIAL DO SISTEMA"** (criado se não existir, em cada empresa) para poder gravar o que registra o profissional do usuário (proposta, amostra…);
-  - vale em todo banco de desenvolvimento/teste: o `recriar.ps1 -Dev` cria assim (`Scripts/v2/dev/admin_dev.sql`), e a migração (M-09) deixa o ADMINISTRADOR migrado assim quando `Desenvolvimento:AdministradorComSenhaPadrao = true` (`appsettings.Development.json`);
+  - o `Scripts/v2/inicial.sql` cria assim: `recriar.ps1 -Dev` (desenvolvimento) e `recriar.ps1 -Empresa "<nome>"` (o **instalador**, banco zerado `LabControlDB`);
+  - a migração (M-09) deixa o ADMINISTRADOR migrado assim quando `Desenvolvimento:AdministradorComSenhaPadrao = true` (`appsettings.Development.json`) **ou** quando a T07 migra para o próprio banco recém-instalado;
   - constantes em `ContaService.LoginAdministrador`/`SenhaDesenvolvimento`;
-  - **nunca em produção**: lá o ADMINISTRADOR migrado recebe a senha provisória da T07 e troca no 1º acesso;
-  - num banco de desenvolvimento já existente: senha com o mesmo hash do `admin_dev.sql` e o profissional pelo bloco final do mesmo arquivo (idempotente).
+  - **produção (decisão do usuário, 29/10/2026):** na instalação nova o ADMINISTRADOR fica **fixo com `Admin123`, sem troca obrigatória**, para entrar e migrar o legado pela T07 no mesmo banco; banco restaurado de backup mantém os usuários e senhas do backup; migração para um banco separado continua com a senha provisória da T07 para todos (inclusive o ADMINISTRADOR, fora do desenvolvimento);
+  - num banco de desenvolvimento já existente: senha com o mesmo hash do `inicial.sql` e o profissional pelo bloco final do mesmo arquivo (idempotente).
 - **Antes de começar uma nova tarefa, commit + push** do que estiver pendente (`git status`; nada pendente = seguir) — pedido do usuário (23/10/2026). Assim cada tarefa começa sobre um ponto salvo no remoto.
 
 ## Comandos
-- Recriar banco: `.\Scripts\v2\recriar.ps1` (senha lida do user-secret da connection string, sem pergunta; `-Teste` = banco temporário + roteiro do doc 12 §7; `-Dev` = empresa 001 + usuário `ADMINISTRADOR` / `Admin123`, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA"). Detalhes em `Scripts/v2/README.md`.
+- Recriar banco: `.\Scripts\v2\recriar.ps1` (senha lida do user-secret da connection string, sem pergunta; `-Teste` = banco temporário + roteiro do doc 12 §7; `-Dev` = empresa 001 + usuário `ADMINISTRADOR` / `Admin123`, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA"; `-Empresa "<nome>"` = o mesmo com o nome da empresa, usado pelo instalador). Detalhes em `Scripts/v2/README.md`.
 - Firebird legado: `"C:\Program Files (x86)\Firebird\Firebird_2_5\bin\isql.exe" -user SYSDBA -password masterkey localhost:C:\Project\Laboratorio\DBMAIS.FDB`.
 - Executar: `dotnet run` (ou `rodar.bat`). Connection string em user-secrets: `dotnet user-secrets set "ConnectionStrings:LabControl" "Server=localhost;Port=3306;Database=labcontrol_v2;User=root;Password=<senha>"`. **Senha nunca em arquivo versionado**: onde fica e como trocar em `Scripts/v2/README.md` › "Senha do MySQL".
 - Gerar entidades: `node tools/gerador-csharp/gerar.mjs`. Testes: `dotnet test tests/LabControl.Tests` (usam o banco `labcontrol_teste`, recriado sozinho quando `Scripts/v2` muda — a 1ª execução leva ~3 min). Suíte inteira de uma vez, ~17 min (`MigracaoTests` roda sozinho no fim, coleção sem paralelismo — P26 §4). Testes no navegador (CRUD real das telas, Edge sem janela): `--filter "FullyQualifiedName~Navegador"` — ver `docs/processos/P26-testes-ponta-a-ponta.md`; não rodar com o `dotnet run` aberto (trava o build).

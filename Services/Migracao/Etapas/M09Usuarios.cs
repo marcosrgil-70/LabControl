@@ -39,7 +39,7 @@ public sealed class M09Usuarios : IEtapaMigracao
                 else if (!vinculados.Add(f)) c.Anomalia($"Usuário {login}: o profissional {antigoFunc} já está vinculado a outro usuário — usuário sem profissional.");
                 else func = f;
             }
-            // desenvolvimento/testes: o ADMINISTRADOR (USUCOD 1) entra com Admin123, sem troca (ContaService.SenhaDesenvolvimento)
+            // desenvolvimento/testes ou banco do instalador substituído: o ADMINISTRADOR (USUCOD 1) entra com Admin123, sem troca
             var adminDev = usucod == 1 && c.AdministradorDesenvolvimento;
             var usuario = new Usuario
             {
@@ -47,7 +47,7 @@ public sealed class M09Usuarios : IEtapaMigracao
                 SenhaHash = adminDev ? ContaService.GerarHash(ContaService.SenhaDesenvolvimento) : hash, TrocarSenha = !adminDev,
                 Ativo = true, AdminGlobal = usucod == 1, UsucodLegado = usucod, IdEmpresasUltima = c.IdEmpresa,
             };
-            if (adminDev) c.Log($"Desenvolvimento: {login} com a senha {ContaService.SenhaDesenvolvimento}, sem troca obrigatória.");
+            if (adminDev) c.Log($"{login} com a senha {ContaService.SenhaDesenvolvimento}, sem troca obrigatória.");
             c.Db.Add(usuario);
             await c.Db.SaveChangesAsync(ct);
             c.Db.Add(new UsuarioEmpresa { IdUsuarios = usuario.IdUsuarios, IdEmpresas = c.IdEmpresa, IdEntidadesFunc = func, Padrao = true, Ativo = true });
@@ -68,7 +68,7 @@ public sealed class M09Usuarios : IEtapaMigracao
     /// <summary>
     /// Desenvolvimento/testes (pedido do usuário, 23/10/2026): o ADMINISTRADOR fica vinculado ao profissional
     /// "USUÁRIO ESPECIAL DO SISTEMA" (criado se não existir), para gravar documentos que registram o profissional do
-    /// usuário (proposta, amostra…). Mesma regra do <c>Scripts/v2/dev/admin_dev.sql</c>.
+    /// usuário (proposta, amostra…). Mesma regra do <c>Scripts/v2/inicial.sql</c>.
     /// </summary>
     private static async Task VincularProfissionalEspecialAsync(ContextoMigracao c, int idUsuario, CancellationToken ct)
     {
