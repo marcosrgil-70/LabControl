@@ -15,6 +15,7 @@ Documentação: [doc 11 — modelo](../../docs/banco/11-MODELO-MYSQL.md) · [doc
 | 6 | `06_cidades.sql` | 5.571 municípios do IBGE (gerado por `tools/gerador-cidades`) |
 | — | `teste/roteiro_12_7.sql` | roteiro de teste do doc 12 §7 (74 verificações) — **só em banco temporário** |
 | — | `recriar.ps1` | recria um banco do zero e confere as contagens; `-Teste` roda o roteiro; `-Dev` roda `dev/*.sql` |
+| — | `backup.ps1` | backup num `.zip`: banco (`mysqldump`) + pasta dos boletins + chaves do Data Protection; `-Conferir` restaura num banco temporário e compara ([abaixo](#backup-banco--boletins--chaves)) |
 | — | `dev/admin_dev.sql` | **só desenvolvimento**: empresa `001` + usuário `ADMINISTRADOR` / senha `Admin123` (ADMIN_GLOBAL, acesso a tudo, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA" — regra do CLAUDE.md) |
 
 Empresas, usuários e cadastros **não** estão no seed: vêm da migração ([doc 13](../../docs/banco/13-MIGRACAO-DADOS.md)) ou do cadastro de nova empresa (`SP_INICIALIZAR_EMPRESA`).
@@ -58,7 +59,45 @@ A senha **nunca** vai para arquivo versionado (`appsettings*.json`, scripts, doc
    ```
 3. Conferir: `dotnet user-secrets list --project LabControl.csproj` e `dotnet test tests/LabControl.Tests` (conecta no `labcontrol_teste` com a senha nova).
 
-Sugestão para homologação/produção: um usuário próprio em vez do `root` (ex.: `CREATE USER 'labcontrol'@'localhost' IDENTIFIED BY '…'; GRANT ALL ON labcontrol_v2.* TO 'labcontrol'@'localhost';`). Para rodar os testes ele também precisa de `GRANT ALL ON labcontrol_teste.*`, porque os testes recriam esse banco.
+Homologação/produção: um usuário próprio do app em vez do `root` (ex.: `CREATE USER 'labcontrol'@'localhost' IDENTIFIED BY '…'; GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON labcontrol_v2.* TO 'labcontrol'@'localhost';` — [checklist da virada](../../docs/plano/CHECKLIST-VIRADA.md)). Para rodar os testes ele precisaria de `GRANT ALL ON labcontrol_teste.*`, porque os testes recriam esse banco.
+
+## Backup (banco + boletins + chaves)
+
+```powershell
+.\Scripts\v2\backup.ps1 -Destino C:\Project\backup                              # labcontrol_v2, pastas do appsettings.json
+.\Scripts\v2\backup.ps1 -Destino C:\Project\backup -Banco labcontrol_migracao -Conferir
+.\Scripts\v2\backup.ps1 -Destino D:\Backup -PastaApp C:\inetpub\LabControl -LoginPath labcontrol_backup -Usuario labcontrol_backup   # produção (tarefa agendada)
+```
+
+Gera `<banco>_<aaaaMMdd-HHmm>.zip` com:
+- `banco.sql`: `mysqldump --single-transaction --routines --triggers --events`, que não trava o uso;
+- `boletins/`: a pasta `Boletins:Pasta`;
+- `chaves/`: a pasta `DataProtection:PastaChaves`;
+- `manifesto.txt`: data, SHA-256 do dump e quantidade de arquivos.
+
+As duas pastas vêm do `appsettings.json` e do `appsettings.Production.json` da `-PastaApp`, com as mesmas regras do `Program.cs`: relativas à pasta do app ou absolutas. Também podem ser informadas com `-PastaBoletins` e `-PastaChaves`.
+
+O que o script confere e faz no fim:
+- o dump precisa terminar com `-- Dump completed`;
+- com `-Conferir`, restaura o dump num banco temporário `labcontrol_conf_<id>`, compara a quantidade de linhas de cada tabela e apaga o temporário;
+- apaga os zips do mesmo banco com mais de `-ManterDias` dias (padrão 30);
+- termina com código 1 em qualquer erro, para o Agendador de Tarefas avisar.
+
+Na 9.3, o `labcontrol_migracao` (33,5 MB de dump, 2,8 MB zipado) restaurou e conferiu 59 tabelas e 148.062 linhas em 18 s.
+
+**Senha**, nesta ordem:
+1. `-LoginPath`, a credencial guardada por `mysql_config_editor set --login-path=…` no perfil do Windows que roda a tarefa (o recomendado em produção);
+2. `MYSQL_PWD`;
+3. o user-secret (desenvolvimento);
+4. pergunta no console.
+
+Usuário só de backup: `GRANT SELECT, SHOW VIEW, TRIGGER, EVENT, LOCK TABLES, SHOW_ROUTINE ON *.*` (conferido em 29/10/2026: o dump sai com as 27 procedures, as 8 funções, os 48 triggers e as 10 views).
+
+**O zip tem a senha do e-mail cifrada e as chaves que a decifram**: guarde-o em lugar com acesso restrito.
+
+**Restaurar:**
+1. `mysql -u root -p < banco.sql`, que recria o banco com o mesmo nome. Para outro nome, troque o `CREATE DATABASE`/`USE` do início.
+2. Copie `boletins/` e `chaves/` para as pastas configuradas no app.
 
 ## Manualmente
 

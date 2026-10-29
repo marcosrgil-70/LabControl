@@ -50,7 +50,7 @@ Configuração do envio de boletins por e-mail **da empresa ativa**, editável p
 - **Remetente:** e-mail e nome do campo "De:", e cópia oculta opcional de todo boletim enviado.
 - **Modelo do e-mail do boletim:** assunto e texto com os marcadores `{boletim}` `{amostra}` `{cliente}` `{empresa}` (vazio = o padrão).
 - **"Enviar e-mail de teste"** com a configuração gravada; falha de conexão/autenticação aparece com a mensagem do servidor.
-- Se as chaves do Data Protection do servidor mudarem (outra máquina), o envio pede a senha de novo em vez de dar erro.
+- Se as chaves do Data Protection do servidor mudarem (outra máquina), o envio pede a senha de novo em vez de dar erro. As chaves ficam em `DataProtection:PastaChaves` (padrão `storage/chaves`) e entram no backup (`Scripts/v2/backup.ps1`).
 - Arquivos: `Services/Email/ConfiguracaoEmailService.cs`, `Views/Empresa/_Email.cshtml`, actions `Email` e `TestarEmail` do `EmpresaController`. Testes: `EmailTests.Configuracao_valida_cifra_a_senha_e_a_auditoria_nao_mostra` e o de navegador `Email_configurado_na_empresa_envia_o_boletim_emitido`.
 
 **Status:** ✅ concluída na tarefa 1.6 (20/10/2026); aba E-mail na 8.3 (29/10/2026).

@@ -18,14 +18,28 @@ public static partial class HtmlSimples
         // conteúdo de script/style some inteiro; os demais elementos perdem só a tag
         var s = BlocoPerigoso().Replace(html, "");
         s = Comentario().Replace(s, "");
-        s = Tag().Replace(s, m =>
+        // monta a saída só com as tags permitidas (sem atributos); entre elas, "<" e ">" viram texto — uma tag sem o
+        // ">" final ("<img src=x onerror=…") seria fechada pelo navegador com a marcação seguinte (security-review 9.3)
+        var saida = new System.Text.StringBuilder(s.Length);
+        var texto = new System.Text.StringBuilder(s.Length);
+        var pos = 0;
+        foreach (Match m in Tag().Matches(s))
         {
+            Texto(s[pos..m.Index]);
             var nome = m.Groups["nome"].Value.ToLowerInvariant();
-            if (!Permitidas.Contains(nome)) return "";
-            return nome == "br" ? "<br>" : m.Groups["fecha"].Success ? $"</{nome}>" : $"<{nome}>";
-        });
-        var texto = Tag().Replace(s, "").Replace("&nbsp;", " ");
-        return string.IsNullOrWhiteSpace(System.Net.WebUtility.HtmlDecode(texto)) ? null : s.Trim();
+            if (Permitidas.Contains(nome))
+                saida.Append(nome == "br" ? "<br>" : m.Groups["fecha"].Success ? $"</{nome}>" : $"<{nome}>");
+            pos = m.Index + m.Length;
+        }
+        Texto(s[pos..]);
+        return string.IsNullOrWhiteSpace(System.Net.WebUtility.HtmlDecode(texto.Replace("&nbsp;", " ").ToString())) ? null : saida.ToString().Trim();
+
+        void Texto(string t)
+        {
+            t = t.Replace("<", "&lt;").Replace(">", "&gt;");
+            saida.Append(t);
+            texto.Append(t);
+        }
     }
 
     [GeneratedRegex(@"<(script|style|iframe|object|embed)\b[^>]*>.*?</\1\s*>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]

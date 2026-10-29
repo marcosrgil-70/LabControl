@@ -63,9 +63,12 @@ builder.Services.AddScoped<LabControl.Services.Relatorios.RelatoriosService>();
 builder.Services.AddScoped<LabControl.Services.Email.ConfiguracaoEmailService>();
 builder.Services.AddScoped<LabControl.Services.Email.EnvioBoletimService>();
 builder.Services.AddSingleton<LabControl.Infra.IEnvioEmail, LabControl.Infra.EnvioEmailSmtp>();
-// senha do e-mail (T05) cifrada pelo Data Protection: o nome fixo evita que mudar a pasta do app invalide as chaves
-// (onde guardar as chaves em produção: pendência 27)
-builder.Services.AddDataProtection().SetApplicationName("LabControl");
+// senha do e-mail (T05) cifrada pelo Data Protection: o nome fixo evita que mudar a pasta do app invalide as chaves.
+// As chaves ficam em DataProtection:PastaChaves (relativa ao ContentRoot ou absoluta), que entra no backup junto com
+// o banco e a pasta dos boletins (pendência 27): sem elas a senha do e-mail precisa ser digitada de novo.
+builder.Services.AddDataProtection().SetApplicationName("LabControl")
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath,
+        builder.Configuration["DataProtection:PastaChaves"] is { Length: > 0 } pastaChaves ? pastaChaves : "storage/chaves")));
 LabControl.Infra.Pdf.Configurar();
 builder.Services.AddSingleton<LabControl.Infra.IImpressoraRaw, LabControl.Infra.ImpressoraRawWindows>();
 builder.Services.AddScoped<ParametroAnaliseService>();
@@ -107,6 +110,18 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+// cabeçalhos de segurança em toda resposta (security-review 9.3): nenhuma página dentro de moldura de outro site
+// (clickjacking), o navegador não adivinha o tipo dos arquivos (logo, assinatura, PDFs) e a URL não vai para outros sites
+app.Use((ctx, next) =>
+{
+    var h = ctx.Response.Headers;
+    h.XContentTypeOptions = "nosniff";
+    h.XFrameOptions = "DENY";
+    h.ContentSecurityPolicy = "frame-ancestors 'none'";
+    h["Referrer-Policy"] = "same-origin";
+    return next();
+});
 
 app.UseHttpsRedirection();
 app.UseRouting();

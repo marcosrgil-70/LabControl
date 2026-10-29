@@ -41,7 +41,8 @@ Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md)
 3. **Executar:** `dotnet run` (ou `rodar.bat`) → http://localhost:5180.
 4. **Login de desenvolvimento/testes:** `ADMINISTRADOR` / `Admin123` (acesso a tudo, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA"). Nunca em produção.
 5. **PDFs dos boletins emitidos:** pasta `Boletins:Pasta` do `appsettings.json` (padrão `storage/boletins`, fora do git). Em produção, uma pasta do servidor que **entra no backup** junto com o banco (o banco guarda só o caminho e o SHA-256).
-6. **E-mail:** cada empresa configura o servidor em *Parâmetros da Empresa › E-mail* (com "Enviar e-mail de teste"). Em produção, as chaves do Data Protection precisam ficar guardadas (pendência 27), senão a senha do e-mail tem de ser digitada de novo.
+6. **E-mail:** cada empresa configura o servidor em *Parâmetros da Empresa › E-mail* (com "Enviar e-mail de teste"). A senha é cifrada com as chaves do Data Protection guardadas em `DataProtection:PastaChaves` (padrão `storage/chaves`, fora do git). Em produção, essa pasta fica fora da pasta do app e entra no backup, senão a senha do e-mail tem de ser digitada de novo.
+7. **Backup:** `.\Scripts\v2\backup.ps1 -Destino <pasta>` junta num zip o banco, os boletins e as chaves ([Scripts/v2/README.md](Scripts/v2/README.md#backup-banco--boletins--chaves)). Para a produção, siga o [checklist da virada](docs/plano/CHECKLIST-VIRADA.md).
 
 ### Com os dados reais do legado
 1. `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`

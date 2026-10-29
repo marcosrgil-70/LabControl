@@ -11,6 +11,7 @@
 
 ## 0. Preparação (quem conduz, antes do dia)
 - [ ] Sistema publicado no servidor do laboratório apontando para o `labcontrol_migracao` (ou rodando numa máquina com acesso ao banco); endereço anotado: ______________________
+- [ ] De preferência já como na produção ([checklist da virada](CHECKLIST-VIRADA.md), parte A): HTTPS, pastas dos boletins e das chaves fora da pasta do app, usuário MySQL próprio com as permissões mínimas.
 - [ ] Impressora **Argox** instalada no servidor e visível na lista de impressoras do Windows (pendência 21).
 - [ ] Em *Sistema › Parâmetros da Empresa › E-mail*: servidor, porta, segurança, usuário, senha e remetente do e-mail do laboratório preenchidos e **"Enviar e-mail de teste"** recebido (pendência 38).
 - [ ] Um usuário para cada pessoa que vai testar (os usuários migrados entram com a senha provisória `Mudar@2026` e trocam no 1º acesso), cada um **vinculado ao seu profissional** em *Sistema › Usuários* (sem vínculo não dá para receber amostra, lançar resultado nem assinar boletim).

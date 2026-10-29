@@ -26,6 +26,21 @@ public class ContaFluxoTests(AppWeb app) : IClassFixture<AppWeb>
     }
 
     [Fact]
+    public async Task Respostas_levam_os_cabecalhos_de_seguranca()
+    {
+        // security-review 9.3: sem moldura de outro site, sem adivinhar o tipo do arquivo, URL só para o próprio site
+        using var c = app.Cliente();
+        foreach (var url in new[] { "/Conta/Login", "/" })
+        {
+            var r = await c.GetAsync(url);
+            Assert.Equal("nosniff", r.Headers.GetValues("X-Content-Type-Options").Single());
+            Assert.Equal("DENY", r.Headers.GetValues("X-Frame-Options").Single());
+            Assert.Equal("frame-ancestors 'none'", r.Headers.GetValues("Content-Security-Policy").Single());
+            Assert.Equal("same-origin", r.Headers.GetValues("Referrer-Policy").Single());
+        }
+    }
+
+    [Fact]
     public async Task Senha_errada_mostra_a_mensagem_unica()
     {
         var usu = await UsuariosTeste.CriarAsync();
