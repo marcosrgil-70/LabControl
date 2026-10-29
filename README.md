@@ -43,6 +43,7 @@ Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md)
 5. **PDFs dos boletins emitidos:** pasta `Boletins:Pasta` do `appsettings.json` (padrão `storage/boletins`, fora do git). Em produção, uma pasta do servidor que **entra no backup** junto com o banco (o banco guarda só o caminho e o SHA-256).
 6. **E-mail:** cada empresa configura o servidor em *Parâmetros da Empresa › E-mail* (com "Enviar e-mail de teste"). A senha é cifrada com as chaves do Data Protection guardadas em `DataProtection:PastaChaves` (padrão `storage/chaves`, fora do git). Em produção, essa pasta fica fora da pasta do app e entra no backup, senão a senha do e-mail tem de ser digitada de novo.
 7. **Backup:** `.\Scripts\v2\backup.ps1 -Destino <pasta>` junta num zip o banco, os boletins e as chaves ([Scripts/v2/README.md](Scripts/v2/README.md#backup-banco--boletins--chaves)). Para a produção, siga o [checklist da virada](docs/plano/CHECKLIST-VIRADA.md).
+8. **Instalar no servidor do cliente:** `.\instalador\construir.ps1` gera o `LabControl-Setup-<versão>.exe` offline, com IIS, .NET, MySQL, banco, HTTPS e backup agendado ([instalador/README.md](instalador/README.md)).
 
 ### Com os dados reais do legado
 1. `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`

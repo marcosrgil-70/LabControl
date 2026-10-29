@@ -1,0 +1,17 @@
+[
+  {
+    "arquivo": "dotnet-hosting-10.0.14-win.exe",
+    "url": "https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/10.0.14/dotnet-hosting-10.0.14-win.exe",
+    "sha256": "582F73CC22CBB548ED35A5E029C6025785AC56AB8A06FCF9A951788B8806D4EC"
+  },
+  {
+    "arquivo": "vc_redist.x64.exe",
+    "url": "https://aka.ms/vs/17/release/vc_redist.x64.exe",
+    "sha256": "CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B"
+  },
+  {
+    "arquivo": "mysql-8.0.46-winx64.zip",
+    "url": "https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46-winx64.zip",
+    "sha256": "28E9EDA019D88EFF4478D811EA2110B83F02A3966BE157FE91CC55DEF3AB0D4D"
+  }
+]

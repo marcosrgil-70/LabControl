@@ -88,8 +88,9 @@ Na 9.3, o `labcontrol_migracao` (33,5 MB de dump, 2,8 MB zipado) restaurou e con
 **Senha**, nesta ordem:
 1. `-LoginPath`, a credencial guardada por `mysql_config_editor set --login-path=…` no perfil do Windows que roda a tarefa (o recomendado em produção);
 2. `MYSQL_PWD`;
-3. o user-secret (desenvolvimento);
-4. pergunta no console.
+3. `-ArquivoSenha`, a senha cifrada pelo DPAPI da máquina (é a tarefa criada pelo [instalador](../../instalador/README.md));
+4. o user-secret (desenvolvimento);
+5. pergunta no console.
 
 Usuário só de backup: `GRANT SELECT, SHOW VIEW, TRIGGER, EVENT, LOCK TABLES, SHOW_ROUTINE ON *.*` (conferido em 29/10/2026: o dump sai com as 27 procedures, as 8 funções, os 48 triggers e as 10 views).
 

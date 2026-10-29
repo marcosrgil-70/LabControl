@@ -10,11 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Legacy/ = código v1 (referência para reescrever as telas); tests/ e tools/ têm projeto/ferramenta próprios -->
-    <Compile Remove="Legacy/**;tests/**;tools/**" />
-    <Content Remove="Legacy/**;tests/**;tools/**" />
-    <None Remove="Legacy/**;tests/**;tools/**" />
-    <EmbeddedResource Remove="Legacy/**;tests/**;tools/**" />
+    <!-- Legacy/ = código v1 (referência para reescrever as telas); tests/ e tools/ têm projeto/ferramenta próprios; instalador/ tem a publicação e os pré-requisitos -->
+    <Compile Remove="Legacy/**;tests/**;tools/**;instalador/**" />
+    <Content Remove="Legacy/**;tests/**;tools/**;instalador/**" />
+    <None Remove="Legacy/**;tests/**;tools/**;instalador/**" />
+    <EmbeddedResource Remove="Legacy/**;tests/**;tools/**;instalador/**" />
   </ItemGroup>
 
   <ItemGroup>

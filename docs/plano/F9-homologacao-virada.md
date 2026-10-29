@@ -38,6 +38,8 @@ Fases 0–8 concluídas, menos a 5.4 (layout do boletim, aguarda os 3 boletins r
 > - [`Scripts/v2/backup.ps1`](../../Scripts/v2/README.md#backup-banco--boletins--chaves) (banco + boletins + chaves, com conferência por restauração);
 > - **[CHECKLIST-VIRADA.md](CHECKLIST-VIRADA.md)** (servidor, backup agendado, passo a passo do dia, depois da virada).
 >
+> - **[Instalador do servidor](../../instalador/README.md)** (29/10/2026): `setup.exe` offline que instala IIS, .NET, MySQL, restaura o banco migrado, configura HTTPS e o backup agendado. Testar numa VM antes (pendência 40).
+>
 > Falta a virada em si, que depende da 9.2 e da 5.4.
 
 - **Passos:** `/security-review`; backup final do Firebird e do MySQL (`mysqldump --routines --triggers`); última migração com os dados do dia; apontar `appsettings` (produção) para `labcontrol_v2`; publicar; criar senhas provisórias e entregar aos usuários; desligar o LabControl.exe (manter o Firebird somente leitura para consulta histórica por 6 meses).

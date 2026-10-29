@@ -27,3 +27,8 @@ storage/
 
 ## Claude Code — permissões locais de cada máquina
 .claude/settings.local.json
+
+# Instalador: pré-requisitos baixados (MySQL, .NET, VC++) e saída do construir.ps1 — grandes, nunca no git
+instalador/prerequisitos/*.exe
+instalador/prerequisitos/*.zip
+instalador/saida/

@@ -15,8 +15,9 @@
   Termina com código 1 em qualquer erro (para o Agendador de Tarefas avisar).
 
   Senha, nesta ordem: -LoginPath (credencial guardada pelo mysql_config_editor no perfil do usuário que roda o
-  script — o jeito recomendado para a tarefa agendada); MYSQL_PWD; a do user-secret ConnectionStrings:LabControl
-  (desenvolvimento); pergunta no console. Nunca fica em arquivo versionado nem no zip.
+  script); MYSQL_PWD; -ArquivoSenha (cifrada pelo DPAPI da máquina — a tarefa agendada criada pelo instalador);
+  a do user-secret ConnectionStrings:LabControl (desenvolvimento); pergunta no console. Nunca fica em arquivo
+  versionado nem no zip.
 
   O zip tem a senha do e-mail cifrada E as chaves que a decifram: guarde-o num lugar com acesso restrito.
 
@@ -37,6 +38,8 @@ param(
   [int]$Porta = 3306,
   [string]$Usuario = 'root',
   [string]$LoginPath = '',
+  # senha cifrada pelo Windows (DPAPI da máquina), gravada pelo instalador: só administradores e o SYSTEM leem o arquivo
+  [string]$ArquivoSenha = '',
   [string]$MySqlBin = '',
   [int]$ManterDias = 30,
   [switch]$Conferir
@@ -79,6 +82,13 @@ if (-not $PastaChaves) { $PastaChaves = Configuracao 'DataProtection' 'PastaChav
 if ($LoginPath) {
   $base = @("--login-path=$LoginPath")   # tem de ser a 1ª opção do mysql/mysqldump
 } else {
+  if (-not $env:MYSQL_PWD -and $ArquivoSenha) {
+    if (-not (Test-Path $ArquivoSenha)) { Falhar "arquivo de senha não encontrado: $ArquivoSenha" }
+    Add-Type -AssemblyName System.Security
+    $cifrada = [Convert]::FromBase64String((Get-Content $ArquivoSenha -Raw).Trim())
+    $env:MYSQL_PWD = [Text.Encoding]::UTF8.GetString(
+      [Security.Cryptography.ProtectedData]::Unprotect($cifrada, $null, [Security.Cryptography.DataProtectionScope]::LocalMachine))
+  }
   if (-not $env:MYSQL_PWD) {
     $csproj = Join-Path $PSScriptRoot '..\..\LabControl.csproj'
     if ((Test-Path $csproj) -and ((Get-Content $csproj -Raw) -match '<UserSecretsId>([^<]+)</UserSecretsId>')) {
