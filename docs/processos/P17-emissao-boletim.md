@@ -46,4 +46,5 @@ Todo boletim migrado recebe `DH_EMISSAO = DH_GERACAO` (histórico congelado); se
 - Depois de emitido, a tela só deixa mudar o **status** ("Gravar status"), única coisa que o `TG_BOLETIM_BU` permite.
 - `ImprimirAsync`: lê o arquivo e confere o SHA-256; divergente, ausente ou **ilegível** (pasta fora do ar, sem permissão, caminho fora da pasta) → **"ALERTA DE INTEGRIDADE"** na tela + log de erro, nunca página de erro. Boletim migrado (sem arquivo) → 2ª via gerada dos dados, sem gravar.
 - **Passo 7 (pedido de venda concluído na emissão) não foi feito:** pendência 24 (6.2). Na migração foi feito na 5.5 (pendência 23).
+- **Backup:** a pasta `Boletins:Pasta` entra no zip do `Scripts/v2/backup.ps1`, junto com o banco e as chaves (9.3). O banco guarda só o caminho e o SHA-256, então sem a pasta não há reimpressão ([checklist da virada](../plano/CHECKLIST-VIRADA.md)).
 - Cenários acima em `BoletinsTests`. **Status:** ✅ (menos o passo 7)

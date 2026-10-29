@@ -48,7 +48,8 @@
 - As permissões são lidas na entrada/troca de empresa: mudança de perfil vale a partir da próxima entrada ou troca de empresa.
 - Ainda não há empresa ativa quando as permissões são montadas: `PERFIS_PERMISSOES` é lido com `IgnoreQueryFilters()` e a empresa **conferida** fixada no `Where` (exceção registrada no [P01](P01-multiempresa.md)).
 - A troca de senha é auditada pelo `SaveChanges` (A em `USUARIOS`, `SENHA_HASH = "***"`); o contador de falhas e o último acesso são gravados por SQL direto, cobertos pelo evento L.
-- Produção (F9): chaves do Data Protection persistidas (senão o cookie se perde a cada reinício do servidor).
+- Chaves do Data Protection em `DataProtection:PastaChaves` (padrão `storage/chaves`; 9.3, pendência 27), que entram no backup. Elas cifram o cookie, o antiforgery e a senha do e-mail. Mesmo com as chaves guardadas, **reiniciar o app pede login de novo**, de propósito: a claim `lc:instancia` vale só para a execução (pendência 16, [T00](../telas/T00-login-empresa.md)).
+- Cabeçalhos de segurança em toda resposta (9.3): `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Content-Security-Policy: frame-ancestors 'none'`, `Referrer-Policy: same-origin` (`ContaFluxoTests.Respostas_levam_os_cabecalhos_de_seguranca`).
 
 ## Cenários de teste
 - 5 senhas erradas bloqueiam por 15 min; a 6ª tentativa correta dentro do prazo é recusada.

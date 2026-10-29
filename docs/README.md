@@ -20,7 +20,13 @@ Migração do sistema **Delphi 7 + Firebird 2.5** (`C:\Project\Laboratorio`) par
     - revisão da fase (`/simplify` + `/code-review high`);
     - a T28 (Relatório de Ensaio) foi **dispensada** pelo usuário.
   - **Fase 9, 9.1 (29/10/2026):** decisões 33, 34 e 36 aplicadas, `MySqlConnector` atualizado (37) e **migração completa em banco limpo** (74/74 conferências; relatório de anomalias para revisar com o laboratório).
-  - **Testes:** suíte inteira **304/304** (~3 min); roteiro SQL do banco **76/76**.
+  - **Fase 9, 9.2 preparada:** [roteiro de homologação](plano/ROTEIRO-HOMOLOGACAO.md) para o laboratório.
+  - **Fase 9, 9.3 preparada:**
+    - revisão de segurança, com o XSS no texto rico corrigido e os cabeçalhos de segurança adicionados;
+    - chaves do Data Protection numa pasta configurável (pendência 27);
+    - [`Scripts/v2/backup.ps1`](../Scripts/v2/README.md#backup-banco--boletins--chaves): banco, boletins e chaves, com conferência por restauração;
+    - [checklist da virada](plano/CHECKLIST-VIRADA.md).
+  - **Testes:** suíte inteira **316/316** (~3 min); roteiro SQL do banco **76/76**.
 - **Dúvidas respondidas em 29/10/2026:**
   - 1: T28 dispensada;
   - 2: e-mail configurado pelo usuário em Parâmetros da Empresa;
@@ -29,8 +35,8 @@ Migração do sistema **Delphi 7 + Firebird 2.5** (`C:\Project\Laboratorio`) par
 - **A fazer:**
   - **5.4:** layout do PDF do boletim com os 3 boletins reais (numérico com expoente, descritivo, com revisão ou dois responsáveis) — aguarda o laboratório;
   - **Fase 9:**
-    - 9.2: homologação guiada;
-    - 9.3: `/security-review`, backup e virada.
+    - 9.2: homologação guiada com o laboratório, pelo [roteiro](plano/ROTEIRO-HOMOLOGACAO.md);
+    - 9.3: a virada, pelo [checklist](plano/CHECKLIST-VIRADA.md). A revisão de segurança, o backup e a pendência 27 já estão feitos.
 - **Pendências abertas:** [00-PLANO-EXECUCAO.md › Pendências registradas](00-PLANO-EXECUCAO.md#pendências-registradas-a-executar).
   - Dependem do laboratório:
     - 21: impressão de teste na Argox;
