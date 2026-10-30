@@ -128,7 +128,7 @@ Se a versão nova mudar o banco (`Scripts/v2`), o instalador ainda **não** apli
 - Uma restauração que falha apaga o banco criado pela metade.
 - **O IIS não ativa** ("Não foi possível ler a chave do Registro de configuração"): o setup tenta de novo pelo `dism.exe`. Se ainda falhar, quase sempre o Windows tem um reinício pendente ou uma atualização em andamento:
   1. Reinicie o computador e execute o setup de novo.
-  2. Se persistir, ative "Serviços de Informações da Internet" em *Ativar ou desativar recursos do Windows* e execute o setup de novo.
+  2. Se persistir, ative à mão em *Ativar ou desativar recursos do Windows*: "Serviços de Informações da Internet" e, dentro de "Ferramentas de Gerenciamento da Web", também "Scripts e Ferramentas de Gerenciamento do IIS". Depois execute o setup de novo: com o IIS já ativado, ele pula essa parte.
 
   Os detalhes do Windows ficam em `C:\Windows\Logs\DISM\dism.log`.
 

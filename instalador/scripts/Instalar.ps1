@@ -88,7 +88,12 @@ try {
   $recursosIis = 'IIS-WebServerRole', 'IIS-WebServer', 'IIS-DefaultDocument', 'IIS-StaticContent', 'IIS-HttpErrors',
                  'IIS-HttpLogging', 'IIS-RequestMonitor', 'IIS-RequestFiltering', 'IIS-HttpCompressionStatic',
                  'IIS-ManagementConsole', 'IIS-ManagementScriptingTools'
-  try {
+  # IIS já ativo (inclusive à mão, em "Recursos do Windows") com o módulo de scripts que o setup usa: não mexe
+  $iisPronto = { [int](Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\InetStp' -ErrorAction SilentlyContinue).MajorVersion -ge 10 -and
+                 (Get-Module -ListAvailable WebAdministration) }
+  if (& $iisPronto) {
+    Info 'IIS já ativado neste Windows.'
+  } else { try {
     if (Get-Command Install-WindowsFeature -ErrorAction SilentlyContinue) {
       $r = Install-WindowsFeature Web-Server, Web-Default-Doc, Web-Static-Content, Web-Http-Errors, Web-Http-Logging,
                                   Web-Request-Monitor, Web-Filtering, Web-Stat-Compression, Web-Mgmt-Console, Web-Scripting-Tools -ErrorAction Stop
@@ -110,13 +115,16 @@ try {
         $pendente = (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending') -or
                     (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired')
         $dica = if ($pendente) { 'O Windows tem um REINÍCIO PENDENTE (atualização): reinicie o computador e execute o setup de novo.' }
-                else { 'Reinicie o computador, espere o Windows Update terminar e execute o setup de novo. Se persistir, ative o IIS em "Ativar ou desativar recursos do Windows" (Serviços de Informações da Internet) e execute o setup de novo.' }
-        throw "o Windows não conseguiu ativar o IIS (dism.exe código $LASTEXITCODE). $dica`n$($saidaDism.Trim())`nDetalhes: $env:SystemRoot\Logs\DISM\dism.log"
+                else { 'Reinicie o computador, espere o Windows Update terminar e execute o setup de novo.' }
+        throw ("o Windows não conseguiu ativar o IIS (dism.exe código $LASTEXITCODE). $dica`n" +
+               'Se persistir, ative à mão em "Ativar ou desativar recursos do Windows": "Serviços de Informações da Internet" e, dentro de ' +
+               '"Ferramentas de Gerenciamento da Web", também "Scripts e Ferramentas de Gerenciamento do IIS"; depois execute o setup de novo.' +
+               "`n$($saidaDism.Trim())`nDetalhes: $env:SystemRoot\Logs\DISM\dism.log")
       }
     }
-  }
-  if ([int](Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\InetStp' -ErrorAction SilentlyContinue).MajorVersion -lt 10) {
-    throw 'o IIS não ficou instalado. Reinicie o computador e execute o setup de novo.'
+  } }
+  if (-not (& $iisPronto)) {
+    throw 'o IIS não ficou pronto (falta o IIS ou "Scripts e Ferramentas de Gerenciamento do IIS"). Reinicie o computador e execute o setup de novo.'
   }
   Ok 'IIS pronto.'
 
