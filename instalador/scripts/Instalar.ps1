@@ -84,16 +84,39 @@ try {
 
   # --- 1. IIS ----------------------------------------------------------------------------------------------
   Etapa '1/9 IIS'
-  if (Get-Command Install-WindowsFeature -ErrorAction SilentlyContinue) {
-    $r = Install-WindowsFeature Web-Server, Web-Default-Doc, Web-Static-Content, Web-Http-Errors, Web-Http-Logging,
-                                Web-Request-Monitor, Web-Filtering, Web-Stat-Compression, Web-Mgmt-Console, Web-Scripting-Tools
-    if ($r.RestartNeeded -eq 'Yes') { $reiniciar = $true }
-  } else {
-    # Windows 10/11 (teste fora de servidor)
-    $r = Enable-WindowsOptionalFeature -Online -All -NoRestart -FeatureName IIS-WebServerRole, IIS-WebServer,
-           IIS-DefaultDocument, IIS-StaticContent, IIS-HttpErrors, IIS-HttpLogging, IIS-RequestFiltering,
-           IIS-HttpCompressionStatic, IIS-ManagementConsole, IIS-ManagementScriptingTools
-    if ($r.RestartNeeded) { $reiniciar = $true }
+  # nomes do DISM (valem no Windows Server e no Windows 10/11)
+  $recursosIis = 'IIS-WebServerRole', 'IIS-WebServer', 'IIS-DefaultDocument', 'IIS-StaticContent', 'IIS-HttpErrors',
+                 'IIS-HttpLogging', 'IIS-RequestMonitor', 'IIS-RequestFiltering', 'IIS-HttpCompressionStatic',
+                 'IIS-ManagementConsole', 'IIS-ManagementScriptingTools'
+  try {
+    if (Get-Command Install-WindowsFeature -ErrorAction SilentlyContinue) {
+      $r = Install-WindowsFeature Web-Server, Web-Default-Doc, Web-Static-Content, Web-Http-Errors, Web-Http-Logging,
+                                  Web-Request-Monitor, Web-Filtering, Web-Stat-Compression, Web-Mgmt-Console, Web-Scripting-Tools -ErrorAction Stop
+      if ($r.RestartNeeded -eq 'Yes') { $reiniciar = $true }
+    } else {
+      # Windows 10/11
+      $r = Enable-WindowsOptionalFeature -Online -All -NoRestart -FeatureName $recursosIis -ErrorAction Stop
+      if ($r.RestartNeeded) { $reiniciar = $true }
+    }
+  } catch {
+    # o cmdlet às vezes falha ("Não foi possível ler a chave do Registro de configuração") e o dism.exe funciona
+    Aviso "Ativação do IIS pelo PowerShell falhou ($($_.Exception.Message.Trim())). Tentando pelo dism.exe..."
+    $argumentos = @('/Online', '/Enable-Feature', '/All', '/NoRestart', '/Quiet') + ($recursosIis | ForEach-Object { "/FeatureName:$_" })
+    $saidaDism = & "$env:SystemRoot\System32\dism.exe" @argumentos 2>&1 | Out-String
+    switch ($LASTEXITCODE) {
+      0 { }
+      3010 { $reiniciar = $true }
+      default {
+        $pendente = (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending') -or
+                    (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired')
+        $dica = if ($pendente) { 'O Windows tem um REINÍCIO PENDENTE (atualização): reinicie o computador e execute o setup de novo.' }
+                else { 'Reinicie o computador, espere o Windows Update terminar e execute o setup de novo. Se persistir, ative o IIS em "Ativar ou desativar recursos do Windows" (Serviços de Informações da Internet) e execute o setup de novo.' }
+        throw "o Windows não conseguiu ativar o IIS (dism.exe código $LASTEXITCODE). $dica`n$($saidaDism.Trim())`nDetalhes: $env:SystemRoot\Logs\DISM\dism.log"
+      }
+    }
+  }
+  if ([int](Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\InetStp' -ErrorAction SilentlyContinue).MajorVersion -lt 10) {
+    throw 'o IIS não ficou instalado. Reinicie o computador e execute o setup de novo.'
   }
   Ok 'IIS pronto.'
 
