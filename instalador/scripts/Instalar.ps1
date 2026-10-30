@@ -234,7 +234,7 @@ default-character-set=utf8mb4
   # --- 4. banco --------------------------------------------------------------------------------------------
   Etapa "4/9 Banco $Banco"
   $existe = (MySql $mysql $senhaRoot "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = $(SqlTexto $bancoSql);").Trim() -eq '1'
-  New-Item -ItemType Directory -Force -Path $pastas.Values | Out-Null
+  New-Item -ItemType Directory -Force -Path @($pastas.Values) | Out-Null   # @(): sem ele, a coleção vira um texto só
   if ($existe) {
     if ($ArquivoBackup) { throw "o banco $Banco já existe e o instalador nunca o sobrescreve. Para restaurar um backup, apague o banco antes (depois de um backup!) ou escolha 'banco novo' (que mantém o existente)." }
     Ok "Banco $Banco existente mantido (atualização do sistema)."
