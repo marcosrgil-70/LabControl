@@ -66,7 +66,11 @@ Para trocar uma versão:
 6. **Banco**, sempre chamado `LabControlDB` (o MySQL no Windows guarda `labcontroldb`):
    - **zerado:** criado pelos scripts, com a empresa digitada e o usuário **ADMINISTRADOR / Admin123**;
    - **restaurar backup (.zip):** gerado pelo `backup.ps1` ou pela tarefa diária. Ficam os usuários e senhas do backup.
-   - Nas duas opções, se o `LabControlDB` **já existir**, ele é mantido (atualização). O instalador nunca sobrescreve um banco.
+   - **Se o `LabControlDB` já existir** (pedido do usuário, 30/10/2026), o assistente confere a senha do root e pergunta antes:
+     - **Atualizar o banco existente** (recomendado): mantém todos os dados e acrescenta só o que falta nesta versão, pelo [`atualizar.ps1`](../Scripts/v2/README.md#atualizar-um-banco-existente-sem-apagar-dados);
+     - **Apagar o banco e criar um novo:** pede confirmação; depois escolhe zerado ou restaurar backup.
+     - Nos dois casos, antes de mexer, uma cópia do banco (`mysqldump`) vai para a pasta de backup: `labcontroldb-antes-da-instalacao-<data>.sql`.
+   - Backup de uma versão anterior é atualizado depois de restaurado (mesmo `atualizar.ps1`).
 7. **Endereço:** nome do servidor na rede e porta HTTPS (443).
 8. **Download:** baixa o que faltar e abre a janela do PowerShell com as 9 etapas do [`scripts/Instalar.ps1`](scripts/Instalar.ps1):
    1. IIS;
@@ -103,12 +107,12 @@ Requisitos e limites:
 ### Atualizar o sistema
 
 Execute o `setup.exe` da versão nova:
-- o `LabControlDB` existente é mantido;
+- o `LabControlDB` existente é **atualizado** (opção recomendada no assistente) — dados mantidos, cópia antes na pasta de backup;
 - os arquivos do sistema são trocados com o pool parado;
 - as senhas internas são renovadas;
 - os componentes que já estão instalados não são baixados de novo.
 
-Se a versão nova mudar o banco (`Scripts/v2`), o instalador ainda **não** aplica a mudança: siga o Diário da versão.
+Se a versão nova mudar o banco (`Scripts/v2`), a atualização aplica o que falta (tabelas, colunas, índices, rotinas, triggers, views e permissões). Coluna com definição diferente que não caiba nos dados para a instalação com o erro e a cópia de antes na pasta de backup.
 
 ### O que fica onde
 

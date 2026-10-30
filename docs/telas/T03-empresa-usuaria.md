@@ -19,10 +19,10 @@
 | Site | `SITE` | validado (http/https) |
 
 > **Correção de 20/10/2026 (pedido do usuário):** a primeira versão tinha um endereço, um telefone e um e-mail em colunas de `EMPRESAS`. Como no legado (empresa usuária = entidade `teEMP`), agora a empresa tem a **sua entidade** (`TIPO_EMPRESA_USUARIA`, criada por `SP_INICIALIZAR_EMPRESA`) com vários endereços, telefones e e-mails tipados — o mesmo componente de Clientes (T12) e Profissionais (T13). A identidade (razão social, fantasia, CNPJ, IE, IM, ativa) continua em `EMPRESAS` e é espelhada na entidade (`TG_EMPRESAS_AU`).
-| Logo | `LOGO`, `LOGO_MIME` | PNG/JPG até 1 MB; prévia; impressa no boletim, proposta, pedido e comprovante |
+| Logo | `LOGO`, `LOGO_MIME` | PNG, JPG ou BMP até 1 MB; prévia; impressa no boletim, proposta, pedido e comprovante |
 | Cabeçalho / rodapé do laudo | `CABECALHO_LAUDO`, `RODAPE_LAUDO` | texto. No boletim: o cabeçalho sai centralizado abaixo do número; do rodapé, a 1ª linha sai à esquerda do nº da página (ex.: "FORM 0069 - R2"), a 2ª à direita (ex.: "Emitente: Gerência da Qualidade") e as demais centralizadas abaixo (5.4) |
 | Nº de acreditação | `NR_ACREDITACAO` | ex.: "CRL 0000" — impresso no lugar do selo, nas páginas dos parâmetros acreditados, quando a empresa não cadastrou o selo |
-| Selo da acreditação | `SELO_ACREDITACAO`, `SELO_ACREDITACAO_MIME` | PNG/JPG até 1 MB (D-28, 30/10/2026); prévia; servido em `/Empresa/Selo/{id}`; impresso no canto direito do cabeçalho do boletim **só nas páginas dos parâmetros acreditados** (no legado era a imagem fixa `pic_INMETRO` do relatório) |
+| Selo da acreditação | `SELO_ACREDITACAO`, `SELO_ACREDITACAO_MIME` | PNG, JPG ou BMP até 1 MB (D-28, 30/10/2026); prévia; servido em `/Empresa/Selo/{id}`; impresso no canto direito do cabeçalho do boletim **só nas páginas dos parâmetros acreditados** (no legado era a imagem fixa `pic_INMETRO` do relatório) |
 | Ativa | `ATIVA` | empresa inativa some da seleção de empresa no login |
 
 ## Nova empresa (ADMIN_GLOBAL)

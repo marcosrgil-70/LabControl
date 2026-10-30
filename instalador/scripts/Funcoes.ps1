@@ -69,6 +69,39 @@ function MySql([string]$exe, [string]$senha, [string]$sql = '', [string]$arquivo
   }
 }
 
+<#
+  Cópia do banco (mysqldump com rotinas e triggers) antes de o instalador mexer nele.
+#>
+function CopiarBanco([string]$Mysql, [string]$SenhaRoot, [string]$Banco, [string]$Arquivo) {
+  $dump = Join-Path (Split-Path $Mysql) 'mysqldump.exe'
+  New-Item -ItemType Directory -Force -Path (Split-Path $Arquivo) | Out-Null
+  $err = [IO.Path]::GetTempFileName()
+  $antes = $env:MYSQL_PWD
+  try {
+    $env:MYSQL_PWD = $SenhaRoot
+    $p = Start-Process -FilePath $dump -ArgumentList '-uroot', '-h127.0.0.1', '-P3306', '--default-character-set=utf8mb4', '--single-transaction',
+           '--routines', '--triggers', '--events', '--databases', $Banco, "--result-file=`"$Arquivo`"" -RedirectStandardError $err -NoNewWindow -Wait -PassThru
+    if ($p.ExitCode -ne 0) { throw "mysqldump: $(((Get-Content $err) | Where-Object { $_ -notmatch 'Using a password' }) -join ' ')" }
+  } finally { $env:MYSQL_PWD = $antes; Remove-Item $err -ErrorAction SilentlyContinue }
+}
+
+<#
+  Atualiza um banco existente com o que falta nesta versão (Scripts/v2/atualizar.ps1: tabelas, colunas, índices,
+  rotinas, triggers, views, permissões), sem apagar dados. Com -CopiaAntes, grava antes uma cópia do banco.
+#>
+function AtualizarBanco([string]$Mysql, [string]$SenhaRoot, [string]$Banco, [string]$Script, [string]$CopiaAntes = '') {
+  $antes = $env:MYSQL_PWD
+  $preferencia = $ErrorActionPreference
+  try {
+    $env:MYSQL_PWD = $SenhaRoot
+    $ErrorActionPreference = 'Continue'   # a saída do processo filho vai para o log; o código de saída decide
+    $argumentos = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $Script, '-Banco', $Banco, '-MySql', $Mysql, '-Usuario', 'root')
+    if ($CopiaAntes) { $argumentos += @('-CopiaAntes', $CopiaAntes) }
+    & powershell.exe @argumentos 2>&1 | ForEach-Object { Info "$_" }
+    if ($LASTEXITCODE -ne 0) { throw "atualizar.ps1 terminou com o código $LASTEXITCODE (o banco ficou como estava antes do erro; cópia em $CopiaAntes)." }
+  } finally { $env:MYSQL_PWD = $antes; $ErrorActionPreference = $preferencia }
+}
+
 # Texto SQL entre aspas simples (só para valores gerados pelo instalador ou digitados no assistente)
 function SqlTexto([string]$v) { return "'" + $v.Replace('\', '\\').Replace("'", "''") + "'" }
 
@@ -116,6 +149,9 @@ function RestaurarBanco([string]$Mysql, [string]$SenhaRoot, [string]$Zip, [strin
         Info "$n chave(s) do Data Protection restaurada(s)."
       }
     } finally { $z.Dispose(); Remove-Item $dump -ErrorAction SilentlyContinue }
+
+    # backup de uma versão anterior: acrescenta o que falta nesta versão (sem cópia: o próprio backup é a cópia)
+    AtualizarBanco -Mysql $Mysql -SenhaRoot $SenhaRoot -Banco $Banco -Script (Join-Path (Split-Path $Recriar) 'atualizar.ps1')
 
     # confere os objetos com as contagens do recriar.ps1 (a mesma fonte do schema)
     $esperado = @{ TABELAS = 59; VIEWS = 10; FUNCOES = 8; PROCEDURES = 27; TRIGGERS = 48 }

@@ -78,6 +78,15 @@ public class BoletimPdfTests
         });
     }
 
+    [Theory]
+    [InlineData("7,6e1", "UFC/mL", "7,6e1 UFC/mL")]          // migrado: unidade à parte
+    [InlineData("<  10", "UFC/g", "< 10 UFC/g")]             // migrado: espaços repetidos
+    [InlineData("< 1,0e2 UFC/g", "UFC/g", "< 1,0e2 UFC/g")]  // v2: já traz a unidade
+    [InlineData("12", null, "12")]
+    [InlineData(null, "UFC/g", null)]                       // descritivo: sai o texto do tipo de resultado
+    public void Resultado_sai_com_a_unidade_uma_vez_so(string? resultado, string? unidade, string? esperado) =>
+        Assert.Equal(esperado, LabControl.Services.BoletimService.ComUnidade(resultado, unidade));
+
     private static void Gravar(string nome, BoletimDocumento d)
     {
         var pdf = BoletimPdf.Gerar(d);

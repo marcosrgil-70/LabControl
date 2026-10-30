@@ -53,6 +53,7 @@ Source: "{#Saida}\app\*"; DestDir: "{app}\pacote\app"; Flags: recursesubdirs cre
 Source: "scripts\*.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "..\Scripts\v2\backup.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "..\Scripts\v2\recriar.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
+Source: "..\Scripts\v2\atualizar.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "..\Scripts\v2\0*.sql"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "..\Scripts\v2\inicial.sql"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "LabControl.ico"; DestDir: "{app}"; Flags: ignoreversion
@@ -84,6 +85,7 @@ var
   PaginaPastas: TInputDirWizardPage;
   PaginaComponentes: TWizardPage;
   PaginaMySql: TInputQueryWizardPage;
+  PaginaExistente: TInputOptionWizardPage;
   PaginaBanco: TInputOptionWizardPage;
   PaginaBackup: TInputFileWizardPage;
   PaginaServidor: TInputQueryWizardPage;
@@ -92,6 +94,7 @@ var
   Baixar: array[0..3] of TNewCheckBox;
   Instalado: array[0..3] of Boolean;
   ServicoMySql: string;
+  BancoExiste: Boolean;
   ResultadoInstalacao: Integer;
 
 function ObterPrerequisitos(): Boolean; forward;
@@ -173,6 +176,64 @@ begin
   Instalado[2] := TemHosting();
   ServicoMySql := AcharMySql();
   Instalado[3] := ServicoMySql <> '';
+end;
+
+// mysql.exe ao lado do mysqld.exe do serviço encontrado (ImagePath: "...\bin\mysqld.exe" --defaults-file=... MySQL80)
+function ClienteMySql(): string;
+var
+  Caminho: string;
+begin
+  Result := '';
+  if (ServicoMySql = '') or not RegQueryStringValue(HKLM, 'SYSTEM\CurrentControlSet\Services\' + ServicoMySql, 'ImagePath', Caminho) then Exit;
+  Caminho := Trim(Caminho);
+  if Copy(Caminho, 1, 1) = '"' then
+  begin
+    Delete(Caminho, 1, 1);
+    Caminho := Copy(Caminho, 1, Pos('"', Caminho) - 1);
+  end
+  else if Pos(' ', Caminho) > 0 then
+    Caminho := Copy(Caminho, 1, Pos(' ', Caminho) - 1);
+  Result := ExtractFilePath(Caminho) + 'mysql.exe';
+end;
+
+// Confere a senha do root e se o banco {#Banco} já existe (MySQL já instalado). False = senha errada ou MySQL fora do ar.
+function VerificarBanco(): Boolean;
+var
+  Cliente, Saida, Parametros: string;
+  Texto: AnsiString;
+  Codigo: Integer;
+begin
+  Result := True;
+  BancoExiste := False;
+  if not Instalado[3] then Exit;
+  Cliente := ClienteMySql();
+  if not FileExists(Cliente) then Exit;   // sem o cliente, o Instalar.ps1 decide (mantém e atualiza)
+  Saida := ExpandConstant('{tmp}\banco-existe.txt');
+  Parametros := '/c ""' + Cliente + '" -uroot -h127.0.0.1 -P3306 -N -B -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ''{#Banco}''" > "' + Saida + '" 2>&1"';
+  SetEnvironmentVariable('MYSQL_PWD', PaginaMySql.Values[0]);
+  try
+    if not Exec(ExpandConstant('{cmd}'), Parametros, '', SW_HIDE, ewWaitUntilTerminated, Codigo) then Codigo := -1;
+  finally
+    SetEnvironmentVariable('MYSQL_PWD', '');
+  end;
+  Texto := '';
+  LoadStringFromFile(Saida, Texto);
+  DeleteFile(Saida);
+  if Codigo <> 0 then
+  begin
+    if Pos('Access denied', String(Texto)) > 0 then
+      MsgBox('Senha do root do MySQL incorreta.', mbError, MB_OK)
+    else
+      MsgBox('Não foi possível entrar no MySQL (o serviço ' + ServicoMySql + ' está rodando?):' + #13#10 + String(Texto), mbError, MB_OK);
+    Result := False;
+    Exit;
+  end;
+  BancoExiste := Pos('1', String(Texto)) > 0;
+end;
+
+function Atualizar(): Boolean;
+begin
+  Result := BancoExiste and (PaginaExistente.SelectedValueIndex = 0);
 end;
 
 // ---------------------------------------------------------------------------------------------- páginas
@@ -288,9 +349,18 @@ begin
   PaginaMySql.Add('Senha do root:', True);
   PaginaMySql.Add('Confirme a senha:', True);
 
-  PaginaBanco := CreateInputOptionPage(PaginaMySql.ID, 'Banco do sistema',
+  PaginaExistente := CreateInputOptionPage(PaginaMySql.ID, 'Banco do sistema',
+    'O banco {#Banco} já existe neste servidor',
+    'Escolha o que fazer com ele.', True, False);
+  PaginaExistente.Add('Atualizar o banco existente: mantém todos os dados e acrescenta só o que falta nesta versão ' +
+    '(tabelas, colunas, rotinas, permissões). Uma cópia do banco é salva antes na pasta de backup. (Recomendado)');
+  PaginaExistente.Add('Apagar o banco e criar um novo: TODOS os dados atuais são perdidos (uma cópia é salva antes na ' +
+    'pasta de backup). Depois escolha banco zerado ou restaurar um backup.');
+  PaginaExistente.SelectedValueIndex := 0;
+
+  PaginaBanco := CreateInputOptionPage(PaginaExistente.ID, 'Banco do sistema',
     'Banco novo ou backup?',
-    'Se o banco {#Banco} já existir neste servidor (atualização), ele é mantido nas duas opções.', True, False);
+    'Como criar o banco {#Banco}.', True, False);
   PaginaBanco.Add('Criar o banco {#Banco} zerado (empresa digitada + usuário ADMINISTRADOR / senha Admin123). ' +
     'Os dados do sistema antigo são trazidos depois, pelo próprio sistema: Sistema › Migração.');
   PaginaBanco.Add('Restaurar um backup (.zip) gerado pelo backup do LabControl');
@@ -315,7 +385,10 @@ end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
-  Result := (PageID = PaginaBackup.ID) and BancoNovo();
+  if PageID = PaginaExistente.ID then Result := not BancoExiste
+  else if PageID = PaginaBanco.ID then Result := Atualizar()
+  else if PageID = PaginaBackup.ID then Result := BancoNovo() or Atualizar()
+  else Result := False;
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -346,7 +419,15 @@ begin
   begin
     if PaginaMySql.Values[0] = '' then begin MsgBox('Informe a senha do root do MySQL.', mbError, MB_OK); Result := False; end
     else if PaginaMySql.Values[0] <> PaginaMySql.Values[1] then begin MsgBox('As senhas não conferem.', mbError, MB_OK); Result := False; end
-    else if (not Instalado[3]) and (Length(PaginaMySql.Values[0]) < 8) then begin MsgBox('A senha nova do root precisa ter pelo menos 8 caracteres.', mbError, MB_OK); Result := False; end;
+    else if (not Instalado[3]) and (Length(PaginaMySql.Values[0]) < 8) then begin MsgBox('A senha nova do root precisa ter pelo menos 8 caracteres.', mbError, MB_OK); Result := False; end
+    else Result := VerificarBanco();
+  end
+  else if CurPageID = PaginaExistente.ID then
+  begin
+    if (PaginaExistente.SelectedValueIndex = 1) and
+       (MsgBox('O banco {#Banco} será APAGADO com todos os dados (uma cópia é salva antes na pasta de backup).' + #13#10 + #13#10 +
+               'Confirma apagar o banco e criar um novo?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2) <> IDYES) then
+      Result := False;
   end
   else if CurPageID = PaginaBackup.ID then
   begin
@@ -433,8 +514,10 @@ var
   I: Integer;
   Banco, Componentes: string;
 begin
-  if BancoNovo() then Banco := '{#Banco} zerado (ou mantido, se já existir); login ADMINISTRADOR / Admin123'
-  else Banco := '{#Banco} restaurado de ' + PaginaBackup.Values[0] + ' (ou mantido, se já existir)';
+  if Atualizar() then Banco := '{#Banco} existente atualizado (dados mantidos; cópia antes na pasta de backup)'
+  else if BancoNovo() then Banco := '{#Banco} zerado; login ADMINISTRADOR / Admin123'
+  else Banco := '{#Banco} restaurado de ' + PaginaBackup.Values[0];
+  if BancoExiste and not Atualizar() then Banco := 'APAGAR o {#Banco} existente (cópia antes na pasta de backup) e criar: ' + Banco;
   Componentes := '';
   for I := 0 to QtdComponentes - 1 do
     if Instalado[I] then Componentes := Componentes + Space + NomeComponente(I) + ': já instalado' + NewLine
@@ -466,7 +549,9 @@ begin
       ' -Banco "{#Banco}"' +
       ' -NomeServidor "' + Trim(PaginaServidor.Values[0]) + '"' +
       ' -PortaHttps ' + Trim(PaginaServidor.Values[1]);
-    if not BancoNovo() then
+    if BancoExiste and not Atualizar() then
+      Parametros := Parametros + ' -BancoExistente Recriar';
+    if not BancoNovo() and not Atualizar() then
       Parametros := Parametros + ' -ArquivoBackup "' + PaginaBackup.Values[0] + '"';
     WizardForm.StatusLabel.Caption := 'Instalando os componentes e configurando o servidor (veja a janela do PowerShell)...';
     if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Parametros, '', SW_SHOW, ewWaitUntilTerminated, ResultadoInstalacao) then

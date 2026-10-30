@@ -477,13 +477,22 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
             NrAmostra = a.NrAmostra, Produto = a.ProdutoDescricao, Lote = a.NrLote, Fabricacao = a.Fabricacao, Validade = a.Validade,
             Recebimento = a.DtEntrega.ToDateTime(a.HrEntrega), Coletor = a.NomeColetor, Coleta = a.DtHrColeta, ObservacaoVerificacao = a.ObservacaoVerificacao,
             InicioAnalise = periodo?.Inicio, FimAnalise = periodo?.Fim,
-            Linhas = linhas.Select(l => new LinhaBoletim(l.DescParametro, l.ResultadoConcat ?? l.TipoResultadoDesc, l.Especificacao, l.Acreditado)).ToList(),
+            Linhas = linhas.Select(l => new LinhaBoletim(l.DescParametro, ComUnidade(l.ResultadoConcat, l.UnidadeSg) ?? l.TipoResultadoDesc, l.Especificacao, l.Acreditado)).ToList(),
             MetodologiaAcreditada = b.TxtMetodologiaAcred, MetodologiaNaoAcreditada = b.TxtMetodologiaUtil,
             Observacao = b.TxtObservacao, Legenda = b.TxtLegenda,
             Responsaveis = idsResp.Select(r => profissionais.FirstOrDefault(x => x.IdEntidades == r) is { } x
                 ? new ResponsavelBoletim(x.Nome, x.Cargo, x.RegistroCompleto, ImagemValida(assinaturas.GetValueOrDefault(r), "assinatura", id))
                 : null).OfType<ResponsavelBoletim>().ToList(),
         };
+    }
+
+    // o laudo mostra o resultado com a unidade ("7,6e1 UFC/mL"); o texto gravado no v2 já a traz, o do legado (migrado)
+    // não ("7,6e1" + UFC/mL à parte, às vezes com espaços repetidos: "<  10")
+    public static string? ComUnidade(string? resultado, string? unidade)
+    {
+        if (string.IsNullOrWhiteSpace(resultado)) return null;
+        resultado = System.Text.RegularExpressions.Regex.Replace(resultado.Trim(), @"\s{2,}", " ");
+        return unidade is { Length: > 0 } u && !resultado.EndsWith(" " + u, StringComparison.Ordinal) ? $"{resultado} {u}" : resultado;
     }
 
     // imagem que o QuestPDF não consegue ler não pode derrubar a emissão: sai sem ela e fica no log

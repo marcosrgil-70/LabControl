@@ -50,7 +50,7 @@ if (-not (Test-Path (Join-Path $app 'web.config'))) { throw 'a publicação não
 
 # 2. sintaxe e BOM (PowerShell 5.1 e o ISCC leem arquivo sem BOM como ANSI: os acentos estragariam)
 function TemBom([string]$caminho) { $b = [IO.File]::ReadAllBytes($caminho); return $b.Length -ge 3 -and $b[0] -eq 0xEF -and $b[1] -eq 0xBB -and $b[2] -eq 0xBF }
-foreach ($s in (Get-ChildItem (Join-Path $aqui 'scripts') -Filter *.ps1) + (Get-Item (Join-Path $raiz 'Scripts\v2\backup.ps1'), (Join-Path $raiz 'Scripts\v2\recriar.ps1'))) {
+foreach ($s in (Get-ChildItem (Join-Path $aqui 'scripts') -Filter *.ps1) + (Get-Item (Join-Path $raiz 'Scripts\v2\backup.ps1'), (Join-Path $raiz 'Scripts\v2\recriar.ps1'), (Join-Path $raiz 'Scripts\v2\atualizar.ps1'))) {
   $erros = $null
   [void][Management.Automation.Language.Parser]::ParseFile($s.FullName, [ref]$null, [ref]$erros)
   if ($erros) { throw "$($s.Name): $($erros[0].Message) (linha $($erros[0].Extent.StartLineNumber))" }

@@ -170,20 +170,21 @@ public static class BoletimPdf
             {
                 t.DefaultTextStyle(s => s.FontSize(7));
                 t.Span("Legenda:  ");
-                t.Span(d.Legenda.Replace("\r\n", "\n"));
+                t.Span(d.Legenda.Replace("\r\n", "\n").Trim());
             });
 
         col.Item().PaddingTop(3).LineHorizontal(0.75f);
         col.Item().PaddingVertical(4).PaddingLeft(6).Row(r =>
         {
             r.ConstantItem(70).Text("Métodos:");
-            r.RelativeItem().Text((parte.Metodos ?? "").Replace("\r\n", "\n")).FontSize(7.5f);
+            // textos do legado às vezes começam com uma linha em branco: sem ela, o texto fica ao lado do rótulo
+            r.RelativeItem().Text((parte.Metodos ?? "").Replace("\r\n", "\n").Trim()).FontSize(7.5f);
         });
         col.Item().LineHorizontal(0.75f);
         col.Item().PaddingVertical(4).Column(o =>
         {
             o.Item().Text("Observações:").FontSize(8);
-            if (!string.IsNullOrWhiteSpace(d.Observacao)) o.Item().Text(d.Observacao.Replace("\r\n", "\n")).FontSize(7.5f);
+            if (!string.IsNullOrWhiteSpace(d.Observacao)) o.Item().Text(d.Observacao.Replace("\r\n", "\n").Trim()).FontSize(7.5f);
         });
         col.Item().LineHorizontal(0.75f);
 

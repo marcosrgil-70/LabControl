@@ -32,9 +32,9 @@ public sealed class EmpresaVM
     [StringLength(50), Display(Name = "Nº de acreditação")] public string? NrAcreditacao { get; set; }
     [Display(Name = "Ativa")] public bool Ativa { get; set; } = true;
 
-    [Display(Name = "Logo (PNG ou JPG, até 1 MB)")] public IFormFile? NovoLogo { get; set; }
+    [Display(Name = "Logo (PNG, JPG ou BMP, até 1 MB)")] public IFormFile? NovoLogo { get; set; }
     [Display(Name = "Remover o logo")] public bool RemoverLogo { get; set; }
-    [Display(Name = "Selo da acreditação (PNG ou JPG, até 1 MB)")] public IFormFile? NovoSelo { get; set; }
+    [Display(Name = "Selo da acreditação (PNG, JPG ou BMP, até 1 MB)")] public IFormFile? NovoSelo { get; set; }
     [Display(Name = "Remover o selo")] public bool RemoverSelo { get; set; }
 
     // inclusão (ADMIN_GLOBAL)

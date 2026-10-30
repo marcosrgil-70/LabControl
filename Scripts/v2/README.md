@@ -15,6 +15,7 @@ Documentação: [doc 11 — modelo](../../docs/banco/11-MODELO-MYSQL.md) · [doc
 | 6 | `06_cidades.sql` | 5.571 municípios do IBGE (gerado por `tools/gerador-cidades`) |
 | — | `teste/roteiro_12_7.sql` | roteiro de teste do doc 12 §7 (74 verificações) — **só em banco temporário** |
 | — | `recriar.ps1` | recria um banco do zero e confere as contagens; `-Teste` roda o roteiro; `-Dev` roda `dev/*.sql` |
+| — | `atualizar.ps1` | atualiza um banco que **já existe** com o que falta nos scripts, sem apagar dados (o instalador usa na atualização) — [abaixo](#atualizar-um-banco-existente-sem-apagar-dados) |
 | — | `backup.ps1` | backup num `.zip`: banco (`mysqldump`) + pasta dos boletins + chaves do Data Protection; `-Conferir` restaura num banco temporário e compara ([abaixo](#backup-banco--boletins--chaves)) |
 | — | `inicial.sql` | banco inicial: empresa `001` (nome em `@EMPRESA_RAZAO`) + usuário `ADMINISTRADOR` / senha `Admin123` (ADMIN_GLOBAL, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA") — rodado pelo `recriar.ps1 -Dev` (desenvolvimento) ou `-Empresa "<nome>"` (instalador; decisão do usuário, 29/10/2026) |
 
@@ -113,6 +114,24 @@ Os scripts têm `USE labcontrol_v2` fixo. Para outro nome, use o `recriar.ps1 -B
 ## Roteiro de teste (doc 12 §7)
 
 **Reexecutar após qualquer mudança em 01..06:** `.\Scripts\v2\recriar.ps1 -Teste`.
+## Atualizar um banco existente (sem apagar dados)
+
+Pedido do usuário (30/10/2026): o instalador pergunta, quando o banco já existe, se **atualiza** ou **apaga e cria de novo**. A atualização é o `atualizar.ps1`, que também serve para os bancos de desenvolvimento e de migração:
+
+```powershell
+.\Scripts\v2\atualizar.ps1 -Banco labcontrol_migracao -SoMostrar   # só lista o que mudaria
+.\Scripts\v2\atualizar.ps1 -Banco labcontrol_migracao             # aplica
+.\Scripts\v2\atualizar.ps1 -Banco LabControlDB -CopiaAntes D:\backup\antes.sql   # cópia (mysqldump) antes de mudar
+```
+
+1. cria um banco de referência temporário pelo `recriar.ps1` (os mesmos scripts);
+2. compara tabela por tabela (`SHOW CREATE TABLE`): cria as tabelas que faltam, acrescenta as colunas que faltam (na posição dos scripts), ajusta colunas com definição diferente (`MODIFY`, que **para no erro** se os dados não couberem — nada é truncado) e troca índices, UNIQUE, CHECK e chaves estrangeiras diferentes; tabelas e colunas que existem só no banco ficam como estão, com aviso;
+3. apaga e recria todas as views, funções, procedures e triggers (02, 03, 04);
+4. reaplica o `05_seed` (`INSERT IGNORE`) e roda `SP_INICIALIZAR_EMPRESA` em cada empresa (o perfil ADMINISTRADOR recebe as permissões novas);
+5. confere as contagens com a referência e apaga a referência.
+
+Testado em 30/10/2026: banco dos scripts de antes da 8.3 (13 mudanças, inclusive um `MODIFY`), tabela, índice, chave estrangeira e permissões apagados de propósito (tudo voltou), e o `labcontrol_migracao` (as 2 colunas do selo, D-28). A segunda execução não encontra mais nada.
+
 O roteiro cria uma empresa e cadastros de teste, então **nunca** rode no `labcontrol_v2` real. Cada verificação gera uma linha OK/FALHA; o script termina com erro (`SQLSTATE 45000`) se houver falha.
 
 ## Mudou o banco?
@@ -120,5 +139,5 @@ O roteiro cria uma empresa e cadastros de teste, então **nunca** rode no `labco
 1. Altere o script (01..06);
 2. atualize o [doc 11](../../docs/banco/11-MODELO-MYSQL.md) e o MD do objeto em `docs/banco/objetos/`;
 3. rode `.\Scripts\v2\recriar.ps1 -Teste` (e acrescente verificações ao roteiro se a regra for nova);
-4. recrie o `labcontrol_v2` local;
+4. recrie o `labcontrol_v2` local (ou atualize os bancos que não podem ser apagados, como o `labcontrol_migracao`, com o `atualizar.ps1`);
 5. regenere as entidades C#: `node tools/gerador-csharp/gerar.mjs` (view mudou? antes atualize `views.json` — ver [tools/gerador-csharp/README.md](../../tools/gerador-csharp/README.md)) e rode `dotnet test tests/LabControl.Tests`.

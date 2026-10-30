@@ -82,7 +82,7 @@
                     <label asp-for="RemoverLogo" class="form-check-label"></label>
                 </div>
             }
-            <input asp-for="NovoLogo" type="file" class="form-control form-control-sm" accept="image/png,image/jpeg" />
+            <input asp-for="NovoLogo" type="file" class="form-control form-control-sm" accept="image/png,image/jpeg,image/bmp" />
             <span asp-validation-for="NovoLogo" class="text-danger small"></span>
             <div class="form-text">Impresso no boletim, na proposta, no pedido e no comprovante.</div>
         </div>
@@ -102,7 +102,7 @@
                         <label asp-for="RemoverSelo" class="form-check-label"></label>
                     </div>
                 }
-                <input asp-for="NovoSelo" type="file" class="form-control form-control-sm" accept="image/png,image/jpeg" />
+                <input asp-for="NovoSelo" type="file" class="form-control form-control-sm" accept="image/png,image/jpeg,image/bmp" />
                 <span asp-validation-for="NovoSelo" class="text-danger small"></span>
                 <div class="form-text">Ex.: o selo CGCRE/Inmetro com o nº CRL. Sai no canto do boletim só nas páginas dos parâmetros acreditados.</div>
             </div>

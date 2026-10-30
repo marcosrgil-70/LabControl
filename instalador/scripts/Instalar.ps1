@@ -8,8 +8,11 @@
    2. Visual C++ Redistributable (MySQL) e .NET 10 Hosting Bundle (ASP.NET Core no IIS), se faltarem — os instaladores
       vêm de -PastaPrerequisitos (baixados pelo setup) e precisam da assinatura digital da Microsoft;
    3. MySQL 8.0 como serviço "MySQL80", ouvindo só em 127.0.0.1 (se ainda não houver um MySQL);
-   4. banco (padrão LabControlDB): se existir, é mantido (atualização). Se não existir: com -ArquivoBackup, restaura o
-      backup (usuários e senhas do backup); sem backup, cria zerado pelos scripts com a empresa LC_EMPRESA e o
+   4. banco (padrão LabControlDB). Se já existir (pedido do usuário, 30/10/2026; o assistente pergunta):
+      -BancoExistente Atualizar (padrão) = mantém os dados e acrescenta o que falta pelo atualizar.ps1;
+      -BancoExistente Recriar = apaga e cria de novo como abaixo. Nos dois casos, antes, uma cópia (mysqldump) vai
+      para a pasta de backup. Se não existir: com -ArquivoBackup, restaura o backup (usuários e senhas do backup;
+      backup de versão anterior é atualizado); sem backup, cria zerado pelos scripts com a empresa LC_EMPRESA e o
       ADMINISTRADOR / Admin123 sem troca (decisão do usuário, 29/10/2026) — o legado vem depois pela T07, no mesmo banco;
    5. usuários do MySQL "labcontrol" (app) e "labcontrol_backup" com permissões mínimas e senhas aleatórias;
    6. pastas (boletins, chaves, backup) com acesso restrito;
@@ -32,6 +35,7 @@ param(
   [string]$NomeServidor = $env:COMPUTERNAME,
   [int]$PortaHttps = 443,
   [string]$ArquivoBackup = '',
+  [ValidateSet('Atualizar', 'Recriar')] [string]$BancoExistente = 'Atualizar',
   [switch]$RestaurarChaves,
   [string]$HoraBackup = '22:00'
 )
@@ -235,25 +239,36 @@ default-character-set=utf8mb4
   Etapa "4/9 Banco $Banco"
   $existe = (MySql $mysql $senhaRoot "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = $(SqlTexto $bancoSql);").Trim() -eq '1'
   New-Item -ItemType Directory -Force -Path @($pastas.Values) | Out-Null   # @(): sem ele, a coleção vira um texto só
-  if ($existe) {
-    if ($ArquivoBackup) { throw "o banco $Banco já existe e o instalador nunca o sobrescreve. Para restaurar um backup, apague o banco antes (depois de um backup!) ou escolha 'banco novo' (que mantém o existente)." }
-    Ok "Banco $Banco existente mantido (atualização do sistema)."
-  } elseif ($ArquivoBackup) {
-    RestaurarBanco -Mysql $mysql -SenhaRoot $senhaRoot -Zip $ArquivoBackup -Banco $bancoSql -PastaBoletins $pastas.Boletins `
-                   -PastaChaves $pastas.Chaves -RestaurarChaves:$RestaurarChaves -Recriar (Join-Path $aqui 'recriar.ps1') -PastaTemp $PastaDados
+  $copia = Join-Path $pastas.Backup ("{0}-antes-da-instalacao-{1:yyyyMMdd-HHmmss}.sql" -f $bancoSql, (Get-Date))
+  if ($existe -and $BancoExistente -eq 'Atualizar') {
+    if ($ArquivoBackup) { throw "o banco $Banco já existe: para restaurar um backup, execute o setup de novo e escolha 'Apagar o banco e criar um novo'." }
+    Info "Banco $Banco existente: atualizando com o que falta nesta versão (dados mantidos)..."
+    AtualizarBanco -Mysql $mysql -SenhaRoot $senhaRoot -Banco $bancoSql -Script (Join-Path $aqui 'atualizar.ps1') -CopiaAntes $copia
+    Ok "Banco $Banco atualizado; cópia de antes em $copia."
   } else {
-    $empresa = "$env:LC_EMPRESA".Trim()
-    if ($empresa.Length -lt 3) { throw 'nome da empresa não informado (LC_EMPRESA).' }
-    Info "Criando o banco $Banco pelos scripts (alguns minutos)..."
-    $antes = $env:MYSQL_PWD
-    try {
-      $env:MYSQL_PWD = $senhaRoot
-      & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $aqui 'recriar.ps1') -Banco $bancoSql -Empresa $empresa `
-          -MySql $mysql -Usuario root -Forcar
-      if ($LASTEXITCODE -ne 0) { throw "recriar.ps1 terminou com o código $LASTEXITCODE." }
-    } finally { $env:MYSQL_PWD = $antes }
-    $bancoNovo = $true
-    Ok "Banco $Banco criado: empresa 001 ($($empresa.ToUpperInvariant())) e usuário ADMINISTRADOR / Admin123."
+    if ($existe) {
+      Info "Banco $Banco existente: copiando para $copia antes de apagar..."
+      CopiarBanco -Mysql $mysql -SenhaRoot $senhaRoot -Banco $bancoSql -Arquivo $copia
+      MySql $mysql $senhaRoot "DROP DATABASE ``$bancoSql``;" | Out-Null
+      Ok "Banco $Banco apagado (pedido no assistente); cópia em $copia."
+    }
+    if ($ArquivoBackup) {
+      RestaurarBanco -Mysql $mysql -SenhaRoot $senhaRoot -Zip $ArquivoBackup -Banco $bancoSql -PastaBoletins $pastas.Boletins `
+                     -PastaChaves $pastas.Chaves -RestaurarChaves:$RestaurarChaves -Recriar (Join-Path $aqui 'recriar.ps1') -PastaTemp $PastaDados
+    } else {
+      $empresa = "$env:LC_EMPRESA".Trim()
+      if ($empresa.Length -lt 3) { throw 'nome da empresa não informado (LC_EMPRESA).' }
+      Info "Criando o banco $Banco pelos scripts (alguns minutos)..."
+      $antes = $env:MYSQL_PWD
+      try {
+        $env:MYSQL_PWD = $senhaRoot
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $aqui 'recriar.ps1') -Banco $bancoSql -Empresa $empresa `
+            -MySql $mysql -Usuario root -Forcar
+        if ($LASTEXITCODE -ne 0) { throw "recriar.ps1 terminou com o código $LASTEXITCODE." }
+      } finally { $env:MYSQL_PWD = $antes }
+      $bancoNovo = $true
+      Ok "Banco $Banco criado: empresa 001 ($($empresa.ToUpperInvariant())) e usuário ADMINISTRADOR / Admin123."
+    }
   }
 
   # --- 5. usuários do MySQL --------------------------------------------------------------------------------

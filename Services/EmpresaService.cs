@@ -184,15 +184,15 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
         return Resultado.Ok();
     }
 
-    // logo e selo: até 1 MB, PNG ou JPG pelo conteúdo (assinatura), não pelo nome/Content-Type enviados
+    // logo e selo: até 1 MB, PNG, JPG ou BMP (o selo do legado é BMP) pelo conteúdo (assinatura), não pelo nome/Content-Type enviados
     private static async Task<(byte[]? Bytes, string? Mime, string? Erro)> LerImagemAsync(IFormFile arquivo, string qual)
     {
         if (arquivo.Length > TamanhoMaximoLogo) return (null, null, $"{qual} deve ter no máximo 1 MB.");
         using var ms = new MemoryStream();
         await arquivo.CopyToAsync(ms);
         var bytes = ms.ToArray();
-        var mime = bytes is [0x89, 0x50, 0x4E, 0x47, ..] ? "image/png" : bytes is [0xFF, 0xD8, 0xFF, ..] ? "image/jpeg" : null;
-        return mime is null ? (null, null, $"{qual} deve ser uma imagem PNG ou JPG.") : (bytes, mime, null);
+        var mime = bytes is [0x89, 0x50, 0x4E, 0x47, ..] ? "image/png" : bytes is [0xFF, 0xD8, 0xFF, ..] ? "image/jpeg" : bytes is [0x42, 0x4D, ..] ? "image/bmp" : null;
+        return mime is null ? (null, null, $"{qual} deve ser uma imagem PNG, JPG ou BMP.") : (bytes, mime, null);
     }
 
     private static string? CampoDoErro(string? mensagem) => mensagem switch

@@ -44,6 +44,7 @@ Rode você mesmo (PowerShell): o `recriar.ps1` lê a senha do user-secret `Conne
 Se ele pedir a senha (user-secret ausente ou de outro usuário), peça ao usuário para rodar com o prefixo `!` na caixa de mensagem.
 - Regra nova → acrescente verificação OK/FALHA em `Scripts/v2/teste/roteiro_12_7.sql` (positiva **e** negativa, com a mensagem exata) e atualize a contagem no README.
 - Tudo OK → recriar o banco local: `.\Scripts\v2\recriar.ps1 -Dev -Forcar` (apaga e recria `labcontrol_v2` com a empresa 001 e `ADMIN`/`Admin123`). **Confirme com o usuário antes**: apaga os dados de desenvolvimento.
+- Bancos que não podem ser apagados (`labcontrol_migracao`, bancos migrados): `.\Scripts\v2\atualizar.ps1 -Banco <nome>` acrescenta o que mudou (o instalador usa o mesmo na atualização do servidor).
 - O script recusa `labcontrol` (v1). Nunca rode o roteiro no `labcontrol_v2` real.
 
 ## 4. Regenerar o C#

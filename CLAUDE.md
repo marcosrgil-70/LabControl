@@ -41,6 +41,7 @@ Reescrita do sistema de laboratório **Delphi 7 + Firebird** (`C:\Project\Labora
 
 ## Comandos
 - Recriar banco: `.\Scripts\v2\recriar.ps1` (senha lida do user-secret da connection string, sem pergunta; `-Teste` = banco temporário + roteiro do doc 12 §7; `-Dev` = empresa 001 + usuário `ADMINISTRADOR` / `Admin123`, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA"; `-Empresa "<nome>"` = o mesmo com o nome da empresa, usado pelo instalador). Detalhes em `Scripts/v2/README.md`.
+- Atualizar um banco que já existe (sem apagar dados; o instalador usa o mesmo): `.\Scripts\v2\atualizar.ps1 -Banco <nome>` (`-SoMostrar` só lista). Ver `Scripts/v2/README.md`.
 - Firebird legado: `"C:\Program Files (x86)\Firebird\Firebird_2_5\bin\isql.exe" -user SYSDBA -password masterkey localhost:C:\Project\Laboratorio\DBMAIS.FDB`.
   - O `DBMAIS.FDB` recebe cópias novas do laboratório: desde 29/10/2026 ele tem ~10× os dados da 9.1.
   - O `MigracaoTests` lê a cópia fixa da 9.1 (`C:\Project\backup\DBMAIS-9.1.FDB`), porque confere as contagens do aceite.

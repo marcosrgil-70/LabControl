@@ -119,8 +119,8 @@ Notas do script: _FK_EMPRESAS_ENT criada no fim do script (ENTIDADES depende de 
 - `COD_EMPRESA` (3) único e imutável; CNPJ único.
 - Criar empresa = INSERT + `CALL SP_INICIALIZAR_EMPRESA(id)` + vincular o usuário criador com perfil ADMINISTRADOR.
 - **Endereços, telefones e e-mails** ficam na entidade da empresa (`ID_ENTIDADES`, `TIPO_EMPRESA_USUARIA`), como no legado — vários, por tipo (P25). A entidade é criada por `SP_INICIALIZAR_EMPRESA`; a identidade (razão social, fantasia, CNPJ, IE, IM, ativa) é espelhada nela por `TG_EMPRESAS_AU`.
-- Logo (PNG/JPG até 1 MB) e `NR_ACREDITACAO` são impressos no boletim/proposta/pedido.
-- Selo da acreditação (`SELO_ACREDITACAO`, PNG/JPG até 1 MB, D-28): impresso no canto do cabeçalho do boletim só nas páginas dos parâmetros acreditados (como o `pic_INMETRO` do legado); sem selo, sai o texto `NR_ACREDITACAO`.
+- Logo (PNG, JPG ou BMP até 1 MB) e `NR_ACREDITACAO` são impressos no boletim/proposta/pedido.
+- Selo da acreditação (`SELO_ACREDITACAO`, PNG, JPG ou BMP até 1 MB, D-28): impresso no canto do cabeçalho do boletim só nas páginas dos parâmetros acreditados (como o `pic_INMETRO` do legado); sem selo, sai o texto `NR_ACREDITACAO`.
 
 ## Implementação no C# (EF Core)
 - Chave auto-incremento: `ID_EMPRESAS`.
