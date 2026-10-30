@@ -86,6 +86,18 @@ Filtros: cliente (filtra as amostras), amostra, "exibir a partir de" (−365 dia
 - **Testes:** `BoletinsTests` (8) e `AceiteFase5Tests` (cascata pela revisão da amostra; dois boletins para o mesmo resultado) e navegador `Boletim_monta_reordena_visualiza_e_emite`.
 - **Para a 5.4:** comparar com 3 boletins reais (dúvida 5) e ajustar o visual; o rodapé não tem frase fixa — o texto legal é o `RODAPE_LAUDO` da empresa.
 
+## Layout do PDF (tarefa 5.4, 30/10/2026)
+Refeito pelo `frxRboletin` (`un_CadBoletim.dfm`) e conferido com 6 boletins reais enviados pelo usuário (pasta `exemplos/Boletins`, fora do git): com e sem análise acreditada, com expoente, com especificação, com dois responsáveis e com duas páginas.
+- **Página:** A4, margens 10/8/10/5 mm, Calibri 9 (registrada das fontes do Windows por `Pdf.Configurar`; sem ela, a fonte padrão do QuestPDF).
+- **Cabeçalho (toda página):** logo da empresa à esquerda (se cadastrado), "BOLETIM DE ANÁLISE" e "BA {código}" (+ " R{n}" na revisão) no centro, `CABECALHO_LAUDO` abaixo; **selo da acreditação à direita só nas páginas dos parâmetros acreditados** (`EMPRESAS.SELO_ACREDITACAO`, D-28; sem selo, o texto do `NR_ACREDITACAO`).
+- **Boletim misto** (parâmetros acreditados e não acreditados), como o legado (grupo por `ACREDITADO` com página nova): duas partes, **"BA … A"** com os acreditados, o selo e a metodologia acreditada, e **"BA … B"** com os demais, sem o selo e com a metodologia não acreditada; cada parte com os dados, a tabela, a legenda, os métodos, as observações, a data e os responsáveis. Boletim de uma parte só imprime os dois textos de metodologia (acreditado primeiro).
+- **Blocos:** faixas cinza "Dados da Empresa" (cliente, endereço do laudo, solicitante = contato do resultado), "Dados da Amostra" (nome; lote, código, proposta, fabricação, validade e coletor à esquerda; recebimento, início e término da análise, pedido de venda e data/hora da coleta à direita; "Não Informado(a)" quando vazio; observação da verificação) e "Análises" (tabela com bordas: Parâmetros, Resultado, "Especificação *"; expoente "7,6 x 10¹ UFC/mL" com a unidade junto; cabeçalho repetido na quebra de página).
+- **Depois da tabela:** "Legenda:" (oculta se vazia ou "NA", como o legado), linha, "Métodos:", linha, "Observações:", linha, "CIDADE, dd de mês de aaaa." e os responsáveis lado a lado (nome, cargo, registro; assinatura só no emitido), sem separar a data das assinaturas.
+- **Rodapé:** 1ª linha do `RODAPE_LAUDO` à esquerda, "Página X de Y" no centro, 2ª linha à direita, demais centralizadas.
+- **Saiu do PDF** (o legado não imprime): CNPJ e endereço da empresa no cabeçalho, CPF/CNPJ e e-mail do cliente, "(*)" nos parâmetros acreditados e a coluna separada da unidade.
+- **Testes:** `BoletimPdfTests` (partes A/B, selo, métodos; com `LABCONTROL_PDF_SAIDA` grava os PDFs dos cenários e com `LABCONTROL_SELO` usa o selo real).
+- **Status:** 🟨 aguardando a aprovação do usuário (aceite da 5.4).
+
 ## Envio por e-mail (tarefa 8.3, 29/10/2026)
 - Botão **"Enviar por e-mail"** no boletim emitido (`BOLETINS.IMPRIMIR` — quem pode imprimir pode enviar) → `/Boletins/Email/{id}`: "Para" sugerido = e-mail do **contato do resultado da proposta**, "Cópia" opcional, assunto e texto do modelo da empresa (T05 › E-mail) com os marcadores preenchidos; vários endereços separados por ponto e vírgula (até 10).
 - Anexo = **o PDF gravado na emissão, conferido pelo SHA-256** (o mesmo do "Imprimir"; alerta de integridade não envia); boletim migrado vai como 2ª via. Cópia oculta automática se configurada.

@@ -52,7 +52,7 @@ Todas as telas do LabControl.exe (menu `un_Menu.dfm`) e as telas auxiliares, com
 | Movimentação de Amostras | `un_MovimentacaoAmostras` | [T23](../telas/T23-movimentacao-amostras.md) | `/Movimentacao` | 7 | ✅ |
 | Localização das Amostras | `un_LocalAmostra` + `unDM_LocalAmostra` | [T24](../telas/T24-localizacao-amostras.md) | `/Localizacao` | 7 | ✅ |
 | Resultados | `un_Resultados` + `unDM_Resultados` | [T26](../telas/T26-resultados.md) | `/Resultados` | 5 | ✅ |
-| Boletim | `un_CadBoletim` + `undm_Boletim` (`un_Boletim` antigo) | [T27](../telas/T27-boletim.md) | `/Boletins` | 5 | 🟨 5.3 pronta; layout com boletins reais na 5.4 |
+| Boletim | `un_CadBoletim` + `undm_Boletim` (`un_Boletim` antigo) | [T27](../telas/T27-boletim.md) | `/Boletins` | 5 | 🟨 5.3 pronta; layout da 5.4 refeito com os boletins reais (30/10/2026) — aguardando aprovação do usuário |
 | Relatório de Ensaio | `un_Relatorio_Ensaio` | [T28](../telas/T28-relatorio-ensaio.md) | — | 8 | ⛔ dispensada (29/10/2026) |
 
 ## Relatórios

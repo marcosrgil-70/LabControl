@@ -94,6 +94,11 @@ public sealed class EmpresaController(EmpresaService empresas, ParametrosEmpresa
     public async Task<IActionResult> Logo(int? id) =>
         await empresas.LogoAsync(id ?? Ativa) is { } logo ? File(logo.Dados, logo.Mime) : NotFound();
 
+    /// <summary>Selo da acreditação (D-28): da empresa ativa ou, para ADMIN_GLOBAL, de qualquer uma.</summary>
+    [HttpGet, ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> Selo(int? id) =>
+        await empresas.SeloAsync(id ?? Ativa) is { } selo ? File(selo.Dados, selo.Mime) : NotFound();
+
     // ---- contatos da empresa ativa (endereços, telefones e e-mails da entidade da empresa — P25)
 
     private const string RotaContatos = "/Empresa";

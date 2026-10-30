@@ -443,9 +443,9 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
         var contato = await db.EntidadesEmails.AsNoTracking().Where(e => e.IdEntidadesEmails == p.IdEntContatoResultado)
             .Select(e => new { e.NomeContato, e.Email }).SingleOrDefaultAsync();
         var emp = await db.Empresas.AsNoTracking().Where(e => e.IdEmpresas == b.IdEmpresas)
-            .Select(e => new { e.RazaoSocial, e.Cnpj, e.Logo, e.NrAcreditacao, e.CabecalhoLaudo, e.RodapeLaudo, e.IdEntidades }).SingleAsync();
-        var endEmp = await db.VwEntidadesEnderecos.AsNoTracking().Where(e => e.IdEntidades == emp.IdEntidades && !e.Inativo)
-            .OrderBy(e => e.IdEntidadesEnderecos).Select(e => new { e.EnderecoLinha1, e.EnderecoLinha2, e.Cidade, e.Uf }).FirstOrDefaultAsync();
+            .Select(e => new { e.RazaoSocial, e.Logo, e.SeloAcreditacao, e.NrAcreditacao, e.CabecalhoLaudo, e.RodapeLaudo, e.IdEntidades }).SingleAsync();
+        var cidadeEmp = await db.VwEntidadesEnderecos.AsNoTracking().Where(e => e.IdEntidades == emp.IdEntidades && !e.Inativo)
+            .OrderBy(e => e.IdEntidadesEnderecos).Select(e => e.Cidade).FirstOrDefaultAsync();
 
         var linhas = await db.LabBoletimParametros.AsNoTracking().Where(x => x.IdLabBoletimAnalises == id)
             .OrderBy(x => x.Ordem).ThenBy(x => x.IdLabBoletimParametros).ToListAsync();
@@ -464,22 +464,20 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
         return new BoletimDocumento
         {
             Modo = modo,
-            EmpresaNome = emp.RazaoSocial, EmpresaCnpj = emp.Cnpj is { Length: > 0 } cnpj ? Documentos.FormatarCnpj(cnpj) : null,
-            EmpresaEndereco = new[] { endEmp?.EnderecoLinha1, endEmp?.EnderecoLinha2 }.OfType<string>().ToList(),
-            EmpresaCidade = endEmp is null ? null : $"{endEmp.Cidade}/{endEmp.Uf}",
+            EmpresaNome = emp.RazaoSocial, EmpresaCidade = cidadeEmp,
             Logo = ImagemValida(emp.Logo, "logo da empresa", id),
-            NrAcreditacao = a.TipoAcreditacao >= 1 ? Textos.Limpo(emp.NrAcreditacao) : null,
+            // o PDF decide pelas linhas: selo/nº só nas páginas dos parâmetros acreditados (D-28)
+            SeloAcreditacao = ImagemValida(emp.SeloAcreditacao, "selo da acreditação", id), NrAcreditacao = Textos.Limpo(emp.NrAcreditacao),
             Cabecalho = Textos.Limpo(emp.CabecalhoLaudo), Rodape = Textos.Limpo(emp.RodapeLaudo),
             CodBoletim = b.CodBoletim, Revisao = b.Revisao, DtBoletim = b.DtBoletim,
-            ClienteNome = a.ClienteNome, ClienteDocumento = a.ClienteCpfCnpj,
+            ClienteNome = a.ClienteNome,
             EnderecoLaudo = new[] { laudo?.EnderecoLinha1, laudo?.EnderecoLinha2 }.OfType<string>().ToList(),
-            Contato = contato is null ? null : string.Join(" — ", new[] { contato.NomeContato, contato.Email }.OfType<string>()),
+            Contato = Textos.Limpo(contato?.NomeContato) ?? contato?.Email, // "Solicitante" no laudo
             NrProposta = a.NrProposta, NrPedido = a.NrPedidoFmt,
             NrAmostra = a.NrAmostra, Produto = a.ProdutoDescricao, Lote = a.NrLote, Fabricacao = a.Fabricacao, Validade = a.Validade,
             Recebimento = a.DtEntrega.ToDateTime(a.HrEntrega), Coletor = a.NomeColetor, Coleta = a.DtHrColeta, ObservacaoVerificacao = a.ObservacaoVerificacao,
             InicioAnalise = periodo?.Inicio, FimAnalise = periodo?.Fim,
-            Linhas = linhas.Select(l => new LinhaBoletim(l.DescParametro, SemUnidade(l.ResultadoConcat ?? l.TipoResultadoDesc, l.UnidadeSg),
-                l.UnidadeSg, l.Especificacao, l.Acreditado)).ToList(),
+            Linhas = linhas.Select(l => new LinhaBoletim(l.DescParametro, l.ResultadoConcat ?? l.TipoResultadoDesc, l.Especificacao, l.Acreditado)).ToList(),
             MetodologiaAcreditada = b.TxtMetodologiaAcred, MetodologiaNaoAcreditada = b.TxtMetodologiaUtil,
             Observacao = b.TxtObservacao, Legenda = b.TxtLegenda,
             Responsaveis = idsResp.Select(r => profissionais.FirstOrDefault(x => x.IdEntidades == r) is { } x
@@ -487,10 +485,6 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
                 : null).OfType<ResponsavelBoletim>().ToList(),
         };
     }
-
-    // o texto formatado do banco já traz a unidade ("< 1,0e2 UFC/g"); no laudo ela tem coluna própria
-    private static string? SemUnidade(string? resultado, string? unidade) =>
-        resultado is not null && unidade is { Length: > 0 } u && resultado.EndsWith(" " + u, StringComparison.Ordinal) ? resultado[..^(u.Length + 1)] : resultado;
 
     // imagem que o QuestPDF não consegue ler não pode derrubar a emissão: sai sem ela e fica no log
     private byte[]? ImagemValida(byte[]? imagem, string qual, int id) =>

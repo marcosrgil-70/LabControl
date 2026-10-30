@@ -43,7 +43,7 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
         {
             Id = e.IdEmpresas, CodEmpresa = e.CodEmpresa, RazaoSocial = e.RazaoSocial, NomeFantasia = e.NomeFantasia, Cnpj = e.Cnpj,
             InscEstadual = e.InscEstadual, InscMunicipal = e.InscMunicipal, IdEntidades = e.IdEntidades, Site = e.Site, CabecalhoLaudo = e.CabecalhoLaudo, RodapeLaudo = e.RodapeLaudo, NrAcreditacao = e.NrAcreditacao, Ativa = e.Ativa,
-            TemLogo = e.Logo is { Length: > 0 },
+            TemLogo = e.Logo is { Length: > 0 }, TemSelo = e.SeloAcreditacao is { Length: > 0 },
         };
         await PrepararAsync(vm);
         return vm;
@@ -56,8 +56,8 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
         if (vm.Id != 0)
         {
             var atual = await db.Empresas.AsNoTracking().Where(e => e.IdEmpresas == vm.Id)
-                .Select(e => new { TemLogo = e.Logo != null, e.IdEntidades }).SingleOrDefaultAsync();
-            (vm.TemLogo, vm.IdEntidades) = (atual?.TemLogo ?? false, atual?.IdEntidades);
+                .Select(e => new { TemLogo = e.Logo != null, TemSelo = e.SeloAcreditacao != null, e.IdEntidades }).SingleOrDefaultAsync();
+            (vm.TemLogo, vm.TemSelo, vm.IdEntidades) = (atual?.TemLogo ?? false, atual?.TemSelo ?? false, atual?.IdEntidades);
         }
         if (vm.Id == 0 && ctx.AdminGlobal)
         {
@@ -133,6 +133,15 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
         return l is null ? null : (l.Logo!, l.LogoMime ?? "image/png");
     }
 
+    /// <summary>Selo da acreditação (D-28) da empresa ativa (ou de qualquer uma, ADMIN_GLOBAL) para a tela.</summary>
+    public async Task<(byte[] Dados, string Mime)?> SeloAsync(int id)
+    {
+        if (!PodeVer(id)) return null;
+        var l = await db.Empresas.AsNoTracking().Where(e => e.IdEmpresas == id && e.SeloAcreditacao != null)
+            .Select(e => new { e.SeloAcreditacao, e.SeloAcreditacaoMime }).SingleOrDefaultAsync();
+        return l is null ? null : (l.SeloAcreditacao!, l.SeloAcreditacaoMime ?? "image/png");
+    }
+
     /// <summary>Entidade da empresa (endereços, telefones e e-mails), criada por SP_INICIALIZAR_EMPRESA.</summary>
     public async Task<int?> EntidadeDaEmpresaAsync(int id) =>
         PodeVer(id) ? await db.Empresas.Where(e => e.IdEmpresas == id).Select(e => e.IdEntidades).SingleOrDefaultAsync() : null;
@@ -149,16 +158,18 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
         }
         if (vm.NovoLogo is { Length: > 0 } arquivo)
         {
-            if (arquivo.Length > TamanhoMaximoLogo) return Resultado.Erro("O logo deve ter no máximo 1 MB.", nameof(vm.NovoLogo));
-            using var ms = new MemoryStream();
-            await arquivo.CopyToAsync(ms);
-            var bytes = ms.ToArray();
-            // tipo pelo conteúdo (assinatura), não pelo nome/Content-Type enviados
-            var mime = bytes is [0x89, 0x50, 0x4E, 0x47, ..] ? "image/png" : bytes is [0xFF, 0xD8, 0xFF, ..] ? "image/jpeg" : null;
-            if (mime is null) return Resultado.Erro("O logo deve ser uma imagem PNG ou JPG.", nameof(vm.NovoLogo));
+            var (bytes, mime, erro) = await LerImagemAsync(arquivo, "O logo");
+            if (erro is not null) return Resultado.Erro(erro, nameof(vm.NovoLogo));
             (e.Logo, e.LogoMime) = (bytes, mime);
         }
         else if (vm.RemoverLogo) (e.Logo, e.LogoMime) = (null, null);
+        if (vm.NovoSelo is { Length: > 0 } selo)
+        {
+            var (bytes, mime, erro) = await LerImagemAsync(selo, "O selo da acreditação");
+            if (erro is not null) return Resultado.Erro(erro, nameof(vm.NovoSelo));
+            (e.SeloAcreditacao, e.SeloAcreditacaoMime) = (bytes, mime);
+        }
+        else if (vm.RemoverSelo) (e.SeloAcreditacao, e.SeloAcreditacaoMime) = (null, null);
 
         e.RazaoSocial = vm.RazaoSocial.Trim();
         e.NomeFantasia = Textos.Limpo(vm.NomeFantasia);
@@ -171,6 +182,17 @@ public sealed class EmpresaService(LabDbContext db, IEmpresaContexto ctx, Proced
         e.NrAcreditacao = Textos.Limpo(vm.NrAcreditacao);
         if (ctx.AdminGlobal) e.Ativa = vm.Ativa; // usuário comum não inativa a própria empresa
         return Resultado.Ok();
+    }
+
+    // logo e selo: até 1 MB, PNG ou JPG pelo conteúdo (assinatura), não pelo nome/Content-Type enviados
+    private static async Task<(byte[]? Bytes, string? Mime, string? Erro)> LerImagemAsync(IFormFile arquivo, string qual)
+    {
+        if (arquivo.Length > TamanhoMaximoLogo) return (null, null, $"{qual} deve ter no máximo 1 MB.");
+        using var ms = new MemoryStream();
+        await arquivo.CopyToAsync(ms);
+        var bytes = ms.ToArray();
+        var mime = bytes is [0x89, 0x50, 0x4E, 0x47, ..] ? "image/png" : bytes is [0xFF, 0xD8, 0xFF, ..] ? "image/jpeg" : null;
+        return mime is null ? (null, null, $"{qual} deve ser uma imagem PNG ou JPG.") : (bytes, mime, null);
     }
 
     private static string? CampoDoErro(string? mensagem) => mensagem switch

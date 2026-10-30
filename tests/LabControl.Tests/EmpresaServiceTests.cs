@@ -171,6 +171,19 @@ public class EmpresaServiceTests(AppWeb app) : IClassFixture<AppWeb>
         Assert.Equal("O logo deve ser uma imagem PNG ou JPG.", (await s.AlterarAsync(vm)).Mensagem);
         vm.NovoLogo = Arquivo(new byte[EmpresaService.TamanhoMaximoLogo + 1]);
         Assert.Equal("O logo deve ter no máximo 1 MB.", (await s.AlterarAsync(vm)).Mensagem);
+
+        // selo da acreditação (D-28): mesmas regras do logo, gravado e removido à parte
+        vm.NovoLogo = null;
+        vm.NovoSelo = Arquivo("GIF89a"u8.ToArray());
+        Assert.Equal(("O selo da acreditação deve ser uma imagem PNG ou JPG.", "NovoSelo"), ((await s.AlterarAsync(vm)).Mensagem, (await s.AlterarAsync(vm)).Campo));
+        vm.NovoSelo = Arquivo([0xFF, 0xD8, 0xFF, 0xE0, 1, 2]);
+        Assert.True((await s.AlterarAsync(vm)).Sucesso);
+        Assert.True((await s.CarregarAsync(c.Empresa.IdEmpresas))!.TemSelo);
+        Assert.Equal("image/jpeg", (await s.SeloAsync(c.Empresa.IdEmpresas))?.Mime);
+        (vm.NovoSelo, vm.RemoverSelo) = (null, true);
+        Assert.True((await s.AlterarAsync(vm)).Sucesso);
+        Assert.Null(await s.SeloAsync(c.Empresa.IdEmpresas));
+        Assert.Equal("image/png", (await s.LogoAsync(c.Empresa.IdEmpresas))?.Mime); // o logo continua
     }
 
     private static IFormFile Arquivo(byte[] bytes) => new FormFile(new MemoryStream(bytes), 0, bytes.Length, "NovoLogo", "logo.bin");

@@ -8,7 +8,11 @@ namespace LabControl.Services.Boletins;
 /// <summary>Para que o PDF é gerado: prévia (marca d'água, sem assinaturas), emissão (definitivo) ou 2ª via de boletim migrado.</summary>
 public enum ModoBoletim { Previa, Emitido, SegundaViaMigrado }
 
-public sealed record LinhaBoletim(string Parametro, string? Resultado, string? Unidade, string? Especificacao, bool Acreditado);
+/// <summary>Uma linha da tabela; <paramref name="Resultado"/> e <paramref name="Especificacao"/> já com a unidade ("7,6e1 UFC/mL").</summary>
+public sealed record LinhaBoletim(string Parametro, string? Resultado, string? Especificacao, bool Acreditado);
+
+/// <summary>Uma parte do boletim (página nova): os parâmetros, se leva o selo, o sufixo do número ("A"/"B") e os métodos.</summary>
+public sealed record ParteBoletim(IReadOnlyList<LinhaBoletim> Linhas, bool Acreditada, string? Sufixo, string? Metodos);
 
 public sealed record ResponsavelBoletim(string Nome, string? Cargo, string? Registro, byte[]? Assinatura);
 
@@ -18,11 +22,12 @@ public sealed class BoletimDocumento
     public required ModoBoletim Modo { get; init; }
     // empresa
     public required string EmpresaNome { get; init; }
-    public string? EmpresaCnpj { get; init; }
-    public IReadOnlyList<string> EmpresaEndereco { get; init; } = [];
+    /// <summary>Cidade da empresa, impressa antes da data ("SANTA BÁRBARA D'OESTE, 29 de outubro de 2026.").</summary>
     public string? EmpresaCidade { get; init; }
     public byte[]? Logo { get; init; }
-    /// <summary>Nº de acreditação, só quando a amostra tem parâmetro acreditado (<c>FN_ACREDITADO ≥ 1</c>).</summary>
+    /// <summary>Selo da acreditação (D-28): só nas páginas dos parâmetros acreditados.</summary>
+    public byte[]? SeloAcreditacao { get; init; }
+    /// <summary>Nº de acreditação: impresso no lugar do selo quando a empresa não cadastrou a imagem.</summary>
     public string? NrAcreditacao { get; init; }
     public string? Cabecalho { get; init; }
     public string? Rodape { get; init; }
@@ -32,8 +37,8 @@ public sealed class BoletimDocumento
     public DateOnly DtBoletim { get; init; }
     // cliente, proposta
     public required string ClienteNome { get; init; }
-    public string? ClienteDocumento { get; init; }
     public IReadOnlyList<string> EnderecoLaudo { get; init; } = [];
+    /// <summary>Nome do contato do resultado ("Solicitante").</summary>
     public string? Contato { get; init; }
     public string? NrProposta { get; init; }
     public string? NrPedido { get; init; }
@@ -59,193 +64,252 @@ public sealed class BoletimDocumento
 }
 
 /// <summary>
-/// Laudo em PDF (QuestPDF, dúvida 10). A 5.3 entrega todas as seções com os dados certos; a 5.4 ajusta o visual lado a lado
-/// com boletins reais do legado (<c>frxRboletin</c>).
+/// Laudo em PDF (QuestPDF, dúvida 10) no layout do <c>frxRboletin</c> do legado, conferido com os boletins reais do
+/// laboratório (5.4). Como no legado, os parâmetros acreditados saem primeiro: boletim misto vira duas partes em páginas
+/// separadas — "A" (acreditados, com o selo) e "B" (não acreditados, sem o selo), cada uma com os seus métodos.
 /// </summary>
 public static class BoletimPdf
 {
-    private const string Cinza = "#666666";
+    private const string CinzaFaixa = "#A6A6A6";
+    private const string CinzaCabecalhoTabela = "#D9D9D9";
 
     private static readonly System.Globalization.CultureInfo PtBr = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
 
-    public static byte[] Gerar(BoletimDocumento d) => Document.Create(doc => doc.Page(page =>
+    public static byte[] Gerar(BoletimDocumento d) => Document.Create(doc =>
     {
-        page.Size(PageSizes.A4);
-        page.Margin(1.5f, Unit.Centimetre);
-        page.DefaultTextStyle(t => t.FontSize(9));
-        page.Header().Element(c => Cabecalho(c, d));
-        page.Content().PaddingVertical(8).Element(c => Corpo(c, d));
-        page.Footer().Element(c => Rodape(c, d));
-        if (d.Modo == ModoBoletim.Previa)
-            page.Foreground().AlignCenter().AlignMiddle().Rotate(-40)
-                .Text("PRÉVIA — NÃO VÁLIDO").FontSize(54).Bold().FontColor("#D9D9D9");
-    })).WithMetadata(new DocumentMetadata { Title = $"Boletim {d.CodBoletim} R{d.Revisao:00}", Author = d.EmpresaNome, Creator = "LabControl" })
+        foreach (var parte in Partes(d))
+            doc.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.MarginLeft(10, Unit.Millimetre);
+                page.MarginRight(8, Unit.Millimetre);
+                page.MarginTop(10, Unit.Millimetre);
+                page.MarginBottom(5, Unit.Millimetre);
+                page.DefaultTextStyle(t => (Pdf.FonteBoletim is null ? t : t.FontFamily(Pdf.FonteBoletim)).FontSize(9));
+                page.Header().Element(c => Cabecalho(c, d, parte));
+                page.Content().Element(c => Corpo(c, d, parte));
+                page.Footer().Element(c => Rodape(c, d));
+                if (d.Modo == ModoBoletim.Previa)
+                    page.Foreground().AlignCenter().AlignMiddle().Rotate(-40)
+                        .Text("PRÉVIA — NÃO VÁLIDO").FontSize(54).Bold().FontColor("#D9D9D9");
+            });
+    }).WithMetadata(new DocumentMetadata { Title = $"Boletim {d.CodBoletim} R{d.Revisao:00}", Author = d.EmpresaNome, Creator = "LabControl" })
       .GeneratePdf();
 
-    private static void Cabecalho(IContainer c, BoletimDocumento d) => c.Column(col =>
+    // legado: grupo por ACREDITADO com página nova; misto = "BA … A" com o selo e "BA … B" sem o selo
+    public static IReadOnlyList<ParteBoletim> Partes(BoletimDocumento d)
     {
-        col.Item().Row(row =>
+        var acreditadas = d.Linhas.Where(l => l.Acreditado).ToList();
+        var outras = d.Linhas.Where(l => !l.Acreditado).ToList();
+        if (acreditadas.Count > 0 && outras.Count > 0)
+            return [new(acreditadas, true, "A", d.MetodologiaAcreditada), new(outras, false, "B", d.MetodologiaNaoAcreditada)];
+        // parte única: os dois textos (acreditado primeiro), para não perder o que foi digitado no outro campo
+        var metodos = string.Join("\n", new[] { d.MetodologiaAcreditada, d.MetodologiaNaoAcreditada }.Where(t => !string.IsNullOrWhiteSpace(t)));
+        return [new(d.Linhas, acreditadas.Count > 0, null, metodos)];
+    }
+
+    private static void Cabecalho(IContainer c, BoletimDocumento d, ParteBoletim parte) => c.Column(col =>
+    {
+        col.Item().Height(100).Row(row =>
         {
-            if (d.Logo is not null) row.ConstantItem(110).Height(55).AlignMiddle().Image(d.Logo).FitArea();
-            row.RelativeItem().PaddingLeft(d.Logo is null ? 0 : 10).Column(e =>
+            row.ConstantItem(120).AlignMiddle().Element(x =>
             {
-                e.Item().Text(d.EmpresaNome).FontSize(12).Bold();
-                if (d.EmpresaCnpj is not null) e.Item().Text($"CNPJ {d.EmpresaCnpj}").FontColor(Cinza);
-                foreach (var l in d.EmpresaEndereco) e.Item().Text(l).FontColor(Cinza);
-                if (d.Cabecalho is not null) e.Item().Text(d.Cabecalho).FontColor(Cinza);
+                if (d.Logo is not null) x.Height(90).AlignCenter().AlignMiddle().Image(d.Logo).FitArea();
             });
-            row.ConstantItem(150).AlignRight().Column(e =>
+            row.RelativeItem().PaddingTop(48).Column(t =>
             {
-                e.Item().AlignRight().Text("BOLETIM DE ANÁLISE").FontSize(11).Bold();
-                e.Item().AlignRight().Text(t => { t.Span("Nº ").FontColor(Cinza); t.Span(d.CodBoletim).Bold(); });
-                e.Item().AlignRight().Text($"Revisão {d.Revisao:00}");
-                if (d.NrAcreditacao is not null) e.Item().AlignRight().Text($"Acreditação {d.NrAcreditacao}").FontColor(Cinza);
+                t.Item().AlignCenter().Text("BOLETIM DE ANÁLISE").FontSize(14);
+                var numero = $"BA {d.CodBoletim}{(d.Revisao > 0 ? $" R{d.Revisao}" : "")}{(parte.Sufixo is null ? "" : " " + parte.Sufixo)}";
+                t.Item().PaddingTop(2).AlignCenter().Text(numero);
+                if (d.Cabecalho is not null) t.Item().PaddingTop(2).AlignCenter().Text(d.Cabecalho.Replace("\r\n", "\n")).FontSize(7.5f);
+            });
+            row.ConstantItem(120).PaddingTop(8).Element(x =>
+            {
+                if (!parte.Acreditada) return;
+                if (d.SeloAcreditacao is not null) x.Height(85).AlignCenter().Image(d.SeloAcreditacao).FitArea();
+                else if (d.NrAcreditacao is not null) x.AlignCenter().AlignMiddle().Text($"Acreditação {d.NrAcreditacao}").Bold();
             });
         });
         if (d.Modo == ModoBoletim.SegundaViaMigrado)
             col.Item().PaddingTop(4).Background("#F2F2F2").Padding(3).AlignCenter()
                 .Text("2ª VIA — BOLETIM MIGRADO DO SISTEMA ANTERIOR (reimpresso a partir dos dados gravados)").FontSize(8).Bold();
-        col.Item().PaddingTop(6).LineHorizontal(1);
+        col.Item().Height(14);
     });
 
-    private static void Corpo(IContainer c, BoletimDocumento d) => c.Column(col =>
+    private static void Corpo(IContainer c, BoletimDocumento d, ParteBoletim parte) => c.Column(col =>
     {
-        col.Spacing(8);
-        col.Item().Element(x => Bloco(x, "Cliente", b =>
+        col.Item().Element(x => Faixa(x, "Dados da Empresa"));
+        col.Item().PaddingLeft(4).PaddingVertical(2).Table(t =>
         {
-            Campo(b, "Nome", d.ClienteNome);
-            Campo(b, "CPF/CNPJ", d.ClienteDocumento);
-            Campo(b, "Endereço", d.EnderecoLaudo.Count == 0 ? null : string.Join(" — ", d.EnderecoLaudo));
-            Campo(b, "Contato", d.Contato);
-            Campo(b, "Proposta", d.NrProposta);
-            Campo(b, "Pedido de venda", d.NrPedido);
-        }));
-        col.Item().Element(x => Bloco(x, "Amostra", b =>
-        {
-            Campo(b, "Nº da amostra", d.NrAmostra);
-            Campo(b, "Amostra", d.Produto);
-            Campo(b, "Lote", d.Lote);
-            Campo(b, "Fabricação", d.Fabricacao);
-            Campo(b, "Validade", d.Validade);
-            Campo(b, "Recebimento", d.Recebimento.ToString("dd/MM/yyyy HH:mm"));
-            Campo(b, "Coletor", d.Coletor);
-            Campo(b, "Coleta", d.Coleta?.ToString("dd/MM/yyyy HH:mm"));
-            Campo(b, "Observação", d.ObservacaoVerificacao);
-            Campo(b, "Período de análise", d.InicioAnalise is null ? null : $"{d.InicioAnalise:dd/MM/yyyy} a {d.FimAnalise:dd/MM/yyyy}");
-        }));
-        col.Item().Element(x => Resultados(x, d));
-        if (d.Linhas.Any(l => l.Acreditado))
-            col.Item().Text("(*) Parâmetro acreditado.").FontSize(8).FontColor(Cinza);
-        Texto(col, "Metodologias — acreditadas", d.MetodologiaAcreditada);
-        Texto(col, "Metodologias — não acreditadas", d.MetodologiaNaoAcreditada);
-        Texto(col, "Observações", d.Observacao);
-        Texto(col, "Legenda", d.Legenda);
-        col.Item().PaddingTop(6).Text($"{(d.EmpresaCidade is null ? "" : d.EmpresaCidade + ", ")}{d.DtBoletim.ToString("dd 'de' MMMM 'de' yyyy", PtBr)}.");
-        col.Item().PaddingTop(10).Element(x => Assinaturas(x, d));
-    });
+            t.ColumnsDefinition(cd => { cd.ConstantColumn(52); cd.RelativeColumn(); });
+            Par(t, "Empresa:", d.ClienteNome);
+            for (var i = 0; i < d.EnderecoLaudo.Count; i++) Par(t, i == 0 ? "Endereço:" : "", d.EnderecoLaudo[i], recuo: i > 0);
+            Par(t, "Solicitante:", d.Contato);
+        });
 
-    private static void Bloco(IContainer c, string titulo, Action<TableDescriptor> campos) => c.Column(col =>
-    {
-        col.Item().Text(titulo.ToUpperInvariant()).Bold().FontSize(9);
-        col.Item().Border(0.5f).BorderColor("#BBBBBB").Padding(4).Table(t =>
+        col.Item().Element(x => Faixa(x, "Dados da Amostra"));
+        col.Item().PaddingLeft(4).PaddingVertical(2).Table(t =>
         {
-            t.ColumnsDefinition(cd => { cd.ConstantColumn(95); cd.RelativeColumn(); cd.ConstantColumn(95); cd.RelativeColumn(); });
-            campos(t);
+            t.ColumnsDefinition(cd => { cd.ConstantColumn(78); cd.RelativeColumn(); cd.RelativeColumn(1.2f); });
+            Inteira(t, "Nome da Amostra:", d.Produto);
+            Dupla(t, "Nr. Lote:", Informado(d.Lote, "Não Informado"), "Data Recebimento:", d.Recebimento.ToString("dd/MM/yyyy"));
+            Dupla(t, "Código Amostra:", d.NrAmostra, "Data Início Análise:", d.InicioAnalise?.ToString("dd/MM/yyyy"));
+            Dupla(t, "Proposta:", d.NrProposta, "Data Término Análise:", d.FimAnalise?.ToString("dd/MM/yyyy"));
+            Dupla(t, "Data Fabricação:", Informado(d.Fabricacao, "Não Informada"), d.NrPedido is null ? "" : "Pedido de Venda:", d.NrPedido);
+            Dupla(t, "Data Validade:", Informado(d.Validade, "Não Informada"), "", null);
+            var hora = d.Coleta is { TimeOfDay.Ticks: > 0 } h ? h.ToString("HH:mm") : "Não Informada";
+            Dupla(t, "Coletor:", Informado(d.Coletor, "Não Informado"),
+                "Data Coleta:", $"{d.Coleta?.ToString("dd/MM/yyyy") ?? "Não Informada"}      Hora Coleta: {hora}");
+            if (!string.IsNullOrWhiteSpace(d.ObservacaoVerificacao)) Inteira(t, "Observação:", d.ObservacaoVerificacao);
+        });
+
+        col.Item().PaddingTop(10).Element(x => Faixa(x, "Análises"));
+        col.Item().PaddingTop(4).PaddingHorizontal(4).Element(x => Tabela(x, parte.Linhas));
+        if (!string.IsNullOrWhiteSpace(d.Legenda) && !d.Legenda.Trim().Equals("NA", StringComparison.OrdinalIgnoreCase)) // legado: "NA" esconde
+            col.Item().PaddingTop(3).PaddingLeft(6).Text(t =>
+            {
+                t.DefaultTextStyle(s => s.FontSize(7));
+                t.Span("Legenda:  ");
+                t.Span(d.Legenda.Replace("\r\n", "\n"));
+            });
+
+        col.Item().PaddingTop(3).LineHorizontal(0.75f);
+        col.Item().PaddingVertical(4).PaddingLeft(6).Row(r =>
+        {
+            r.ConstantItem(70).Text("Métodos:");
+            r.RelativeItem().Text((parte.Metodos ?? "").Replace("\r\n", "\n")).FontSize(7.5f);
+        });
+        col.Item().LineHorizontal(0.75f);
+        col.Item().PaddingVertical(4).Column(o =>
+        {
+            o.Item().Text("Observações:").FontSize(8);
+            if (!string.IsNullOrWhiteSpace(d.Observacao)) o.Item().Text(d.Observacao.Replace("\r\n", "\n")).FontSize(7.5f);
+        });
+        col.Item().LineHorizontal(0.75f);
+
+        // data e responsáveis não se separam
+        col.Item().ShowEntire().Column(a =>
+        {
+            a.Item().PaddingTop(4).PaddingLeft(8)
+                .Text($"{(d.EmpresaCidade is null ? "" : d.EmpresaCidade.ToUpper(PtBr) + ", ")}{d.DtBoletim.ToString("dd 'de' MMMM 'de' yyyy", PtBr)}.");
+            a.Item().PaddingTop(6).PaddingLeft(8).Element(x => Assinaturas(x, d));
+            a.Item().LineHorizontal(0.75f);
         });
     });
 
-    private static void Campo(TableDescriptor t, string rotulo, string? valor)
+    // faixa cinza com o título centralizado (o legado usa um degradê do branco ao cinza)
+    private static void Faixa(IContainer c, string titulo) => c.Height(12).Layers(l =>
+    {
+        l.PrimaryLayer().Row(r =>
+        {
+            const int passos = 48;
+            for (var i = 0; i < passos; i++)
+            {
+                var v = (int)Math.Round(255 - (255 - 0xA6) * (i + 1) / (double)passos);
+                r.RelativeItem().Background($"#{v:X2}{v:X2}{v:X2}");
+            }
+            r.RelativeItem(90).Background(CinzaFaixa);
+        });
+        l.Layer().AlignCenter().AlignMiddle().Text(titulo).Bold();
+    });
+
+    private static void Par(TableDescriptor t, string rotulo, string? valor, bool recuo = false)
     {
         if (string.IsNullOrWhiteSpace(valor)) return;
-        t.Cell().Text(rotulo + ":").FontColor(Cinza);
-        t.Cell().PaddingRight(6).Text(valor);
+        t.Cell().PaddingVertical(1).Text(rotulo);
+        t.Cell().PaddingVertical(1).PaddingLeft(recuo ? 24 : 0).Text(valor);
     }
 
-    private static void Resultados(IContainer c, BoletimDocumento d)
+    private static void Inteira(TableDescriptor t, string rotulo, string? valor)
     {
-        var comEspecificacao = d.Linhas.Any(l => !string.IsNullOrWhiteSpace(l.Especificacao)); // RN-08.09
-        c.Column(col =>
+        t.Cell().PaddingVertical(1).Text(rotulo);
+        t.Cell().ColumnSpan(2).PaddingVertical(1).Text(valor ?? "");
+    }
+
+    private static void Dupla(TableDescriptor t, string rotulo1, string? valor1, string rotulo2, string? valor2)
+    {
+        t.Cell().PaddingVertical(1).Text(rotulo1);
+        t.Cell().PaddingVertical(1).Text(valor1 ?? "");
+        // à direita o valor vem logo depois do rótulo, como no legado
+        t.Cell().PaddingVertical(1).Text(rotulo2.Length == 0 ? "" : $"{rotulo2}  {valor2}");
+    }
+
+    private static string Informado(string? valor, string vazio) => string.IsNullOrWhiteSpace(valor) ? vazio : valor;
+
+    private static void Tabela(IContainer c, IReadOnlyList<LinhaBoletim> linhas)
+    {
+        var comEspecificacao = linhas.Any(l => !string.IsNullOrWhiteSpace(l.Especificacao)); // RN-08.09
+        c.Border(0.75f).Table(t =>
         {
-            col.Item().Text("RESULTADOS").Bold();
-            col.Item().Table(t =>
+            t.ColumnsDefinition(cd =>
             {
-                t.ColumnsDefinition(cd =>
-                {
-                    cd.RelativeColumn(4);
-                    cd.RelativeColumn(2.2f);
-                    cd.RelativeColumn(1.2f);
-                    if (comEspecificacao) cd.RelativeColumn(2.2f);
-                });
-                t.Header(h =>
-                {
-                    foreach (var titulo in new[] { "Parâmetro", "Resultado", "Unidade" }.Concat(comEspecificacao ? ["Especificação"] : []))
-                        h.Cell().Background("#EEEEEE").BorderBottom(0.5f).Padding(3).Text(titulo).Bold();
-                });
-                foreach (var l in d.Linhas)
-                {
-                    Celula(t).Text(l.Parametro + (l.Acreditado ? " (*)" : ""));
-                    Celula(t).Text(x => Expoente(x, l.Resultado));
-                    Celula(t).Text(l.Unidade ?? "");
-                    if (comEspecificacao) Celula(t).Text(x => Expoente(x, l.Especificacao));
-                }
+                if (comEspecificacao) { cd.RelativeColumn(3.9f); cd.RelativeColumn(3); cd.RelativeColumn(3.1f); }
+                else { cd.RelativeColumn(7); cd.RelativeColumn(3); }
             });
+            t.Header(h =>
+            {
+                // legado: "Especificação *" — o asterisco remete à legenda/observação digitada pelo laboratório
+                foreach (var titulo in new[] { "Parâmetros", "Resultado" }.Concat(comEspecificacao ? ["Especificação *"] : []))
+                    h.Cell().Border(0.75f).Background(CinzaCabecalhoTabela).PaddingVertical(2).AlignCenter()
+                        .Text(titulo).FontSize(11).Bold().Italic();
+            });
+            foreach (var l in linhas)
+            {
+                Celula(t).Text(l.Parametro);
+                Celula(t).Text(x => Expoente(x, l.Resultado));
+                if (comEspecificacao) Celula(t).Text(x => Expoente(x, l.Especificacao));
+            }
         });
     }
 
-    private static IContainer Celula(TableDescriptor t) => t.Cell().BorderBottom(0.25f).BorderColor("#DDDDDD").Padding(3);
+    private static IContainer Celula(TableDescriptor t) =>
+        t.Cell().Border(0.75f).MinHeight(32).PaddingHorizontal(4).PaddingVertical(4).AlignCenter().AlignMiddle();
 
-    // "< 1,0e2" → "< 1,0 × 10" + "2" sobrescrito
+    // "7,6e1 UFC/mL" → "7,6 x 10" + "1" sobrescrito + " UFC/mL" (como o legado)
     private static void Expoente(TextDescriptor t, string? texto)
     {
+        t.AlignCenter();
         var p = ResultadoTexto.Partes(texto);
         if (p is null) return;
         t.Span(p.Antes);
         if (p.Expoente is null) return;
-        t.Span(" × 10");
+        t.Span(" x 10");
         t.Span(p.Expoente).Superscript();
         t.Span(p.Depois);
-    }
-
-    private static void Texto(ColumnDescriptor col, string titulo, string? texto)
-    {
-        if (string.IsNullOrWhiteSpace(texto)) return;
-        col.Item().Column(c =>
-        {
-            c.Item().Text(titulo.ToUpperInvariant()).Bold();
-            c.Item().Text(texto.Replace("\r\n", "\n"));
-        });
     }
 
     private static void Assinaturas(IContainer c, BoletimDocumento d) => c.Row(row =>
     {
         foreach (var r in d.Responsaveis)
-            row.RelativeItem().PaddingHorizontal(10).Column(col =>
+            row.RelativeItem().PaddingRight(10).Column(col =>
             {
                 // assinatura só no emitido (RN-08.11)
-                if (d.Modo == ModoBoletim.Emitido && r.Assinatura is not null) col.Item().Height(40).AlignCenter().Image(r.Assinatura).FitArea();
-                else col.Item().Height(40);
-                col.Item().LineHorizontal(0.5f);
-                col.Item().AlignCenter().Text(r.Nome).Bold();
-                if (r.Cargo is not null) col.Item().AlignCenter().Text(r.Cargo);
-                if (r.Registro is not null) col.Item().AlignCenter().Text(r.Registro).FontColor(Cinza);
+                if (d.Modo == ModoBoletim.Emitido && r.Assinatura is not null) col.Item().Height(36).AlignLeft().Image(r.Assinatura).FitArea();
+                else col.Item().Height(24);
+                col.Item().Text(r.Nome);
+                if (r.Cargo is not null) col.Item().Text(r.Cargo);
+                if (r.Registro is not null) col.Item().Text(r.Registro);
             });
+        if (d.Responsaveis.Count == 1) row.RelativeItem();
     });
 
-    private static void Rodape(IContainer c, BoletimDocumento d) => c.Column(col =>
+    // RODAPE_LAUDO (T03): 1ª linha à esquerda do nº da página, 2ª à direita, as demais centralizadas abaixo
+    private static void Rodape(IContainer c, BoletimDocumento d) => c.PaddingTop(6).Column(col =>
     {
-        col.Item().LineHorizontal(0.5f);
-        if (d.Rodape is not null) col.Item().Text(d.Rodape).FontSize(7).FontColor(Cinza);
+        var linhas = (d.Rodape ?? "").Replace("\r\n", "\n").Split('\n', StringSplitOptions.TrimEntries);
         col.Item().Row(row =>
         {
-            row.RelativeItem();
-            row.ConstantItem(160).AlignRight().Text(t =>
+            row.RelativeItem().AlignBottom().PaddingLeft(30).Text(linhas.ElementAtOrDefault(0) ?? "").FontSize(7);
+            row.ConstantItem(120).AlignCenter().Text(t =>
             {
-                t.DefaultTextStyle(s => s.FontSize(7).FontColor(Cinza));
-                t.Span($"{d.CodBoletim} R{d.Revisao:00} — página ");
+                t.Span("Página ");
                 t.CurrentPageNumber();
                 t.Span(" de ");
                 t.TotalPages();
             });
+            row.RelativeItem().AlignBottom().Text(linhas.ElementAtOrDefault(1) ?? "").FontSize(7);
         });
+        foreach (var l in linhas.Skip(2).Where(l => l.Length > 0))
+            col.Item().AlignCenter().Text(l).FontSize(7);
     });
 }

@@ -21,6 +21,8 @@
 7. **Visualizar**: PDF de prévia com marca d'água "PRÉVIA — NÃO VÁLIDO" e sem assinaturas. Emissão: [P17](P17-emissao-boletim.md).
 
 ## Layout do PDF (dados do `qry_ImpBolet` do legado)
+> **Layout final (5.4, 30/10/2026):** ver [T27 › Layout do PDF](../telas/T27-boletim.md#layout-do-pdf-tarefa-54-30102026) — selo só nas páginas dos acreditados e boletim misto em duas partes (A/B), como o legado. A lista abaixo é a dos dados reunidos na 5.3.
+
 Cabeçalho da empresa (logo, endereço, nº de acreditação se `FN_ACREDITADO` ≥ 1) · Boletim nº + revisão · cliente (nome, CPF/CNPJ), endereço do laudo, contato do resultado · proposta · **pedido de venda** · amostra: nº (com R), produto, lote, fabricação e validade parciais, data de recebimento, coletor e data/hora da coleta, observação da verificação · período de análise (menor `DT_INICIAL` → maior `DT_RESULTADO`) · tabela: parâmetro, resultado (expoente sobrescrito), unidade, especificação (coluna só se algum parâmetro tiver especificação), marca de acreditado · metodologias (acreditado / não acreditado) · observações · legenda · responsáveis (nome + sobrenome, cargo, registro "CRF-SP 12345", assinatura **só no emitido**) · local e data (cidade da empresa + data do boletim) · rodapé.
 
 ## Regras

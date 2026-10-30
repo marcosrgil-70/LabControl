@@ -32,3 +32,6 @@ storage/
 instalador/prerequisitos/*.exe
 instalador/prerequisitos/*.zip
 instalador/saida/
+
+# Boletins reais de exemplo (5.4) — têm dados de clientes, nunca no git
+exemplos/

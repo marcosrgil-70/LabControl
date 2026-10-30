@@ -30,9 +30,11 @@ Notas do script: _FK_EMPRESAS_ENT criada no fim do script (ENTIDADES depende de 
 | 12 | `CABECALHO_LAUDO` | TEXT | sim |  | aplicação |  |
 | 13 | `RODAPE_LAUDO` | TEXT | sim |  | aplicação |  |
 | 14 | `NR_ACREDITACAO` | VARCHAR(50) | sim |  | aplicação | Ex.: CRL INMETRO — exibido no boletim acreditado |
-| 15 | `ATIVA` | TINYINT(1) | não | 1 | aplicação |  |
-| 16 | `CRIADO_EM` | DATETIME | não | CURRENT_TIMESTAMP | banco |  |
-| 17 | `ALTERADO_EM` | DATETIME | sim |  | banco |  |
+| 15 | `SELO_ACREDITACAO` | MEDIUMBLOB | sim |  | aplicação | Selo da acreditação (ex.: CGCRE/Inmetro com o nº CRL), no cabeçalho do boletim só nas páginas dos parâmetros acreditados (D-28) |
+| 16 | `SELO_ACREDITACAO_MIME` | VARCHAR(50) | sim |  | aplicação |  |
+| 17 | `ATIVA` | TINYINT(1) | não | 1 | aplicação |  |
+| 18 | `CRIADO_EM` | DATETIME | não | CURRENT_TIMESTAMP | banco |  |
+| 19 | `ALTERADO_EM` | DATETIME | sim |  | banco |  |
 
 ## Chaves, restrições e índices
 - **PK:** `ID_EMPRESAS`
@@ -118,11 +120,12 @@ Notas do script: _FK_EMPRESAS_ENT criada no fim do script (ENTIDADES depende de 
 - Criar empresa = INSERT + `CALL SP_INICIALIZAR_EMPRESA(id)` + vincular o usuário criador com perfil ADMINISTRADOR.
 - **Endereços, telefones e e-mails** ficam na entidade da empresa (`ID_ENTIDADES`, `TIPO_EMPRESA_USUARIA`), como no legado — vários, por tipo (P25). A entidade é criada por `SP_INICIALIZAR_EMPRESA`; a identidade (razão social, fantasia, CNPJ, IE, IM, ativa) é espelhada nela por `TG_EMPRESAS_AU`.
 - Logo (PNG/JPG até 1 MB) e `NR_ACREDITACAO` são impressos no boletim/proposta/pedido.
+- Selo da acreditação (`SELO_ACREDITACAO`, PNG/JPG até 1 MB, D-28): impresso no canto do cabeçalho do boletim só nas páginas dos parâmetros acreditados (como o `pic_INMETRO` do legado); sem selo, sai o texto `NR_ACREDITACAO`.
 
 ## Implementação no C# (EF Core)
 - Chave auto-incremento: `ID_EMPRESAS`.
 - `TINYINT(1)` → `bool`: `ATIVA`.
-- Blob → `byte[]` carregado só quando necessário (não incluir nas listas): `LOGO`.
+- Blob → `byte[]` carregado só quando necessário (não incluir nas listas): `LOGO`, `SELO_ACREDITACAO`.
 - Datas mantidas pelo MySQL (`DEFAULT/ON UPDATE CURRENT_TIMESTAMP`): `CRIADO_EM`, `ALTERADO_EM` — mapear como gerado pelo banco.
 - Tabela global (não recebe o filtro de empresa); a lista de empresas só aparece para ADMIN_GLOBAL.
 
@@ -143,6 +146,8 @@ CREATE TABLE EMPRESAS (
   CABECALHO_LAUDO  TEXT         NULL,
   RODAPE_LAUDO     TEXT         NULL,
   NR_ACREDITACAO   VARCHAR(50)  NULL COMMENT 'Ex.: CRL INMETRO — exibido no boletim acreditado',
+  SELO_ACREDITACAO MEDIUMBLOB   NULL COMMENT 'Selo da acreditação (ex.: CGCRE/Inmetro com o nº CRL), no cabeçalho do boletim só nas páginas dos parâmetros acreditados (D-28)',
+  SELO_ACREDITACAO_MIME VARCHAR(50) NULL,
   ATIVA            TINYINT(1)   NOT NULL DEFAULT 1,
   CRIADO_EM        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   ALTERADO_EM      DATETIME     NULL ON UPDATE CURRENT_TIMESTAMP,

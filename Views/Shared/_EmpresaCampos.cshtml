@@ -90,15 +90,31 @@
             <div class="col-sm-6">
                 <label asp-for="NrAcreditacao" class="form-label small"></label>
                 <input asp-for="NrAcreditacao" class="form-control" placeholder="ex.: CRL 0000" />
-                <div class="form-text">Impresso no boletim acreditado.</div>
+                <div class="form-text">Impresso no boletim acreditado quando não há selo.</div>
+            </div>
+            <div class="col-sm-6">
+                <label asp-for="NovoSelo" class="form-label small"></label>
+                @if (Model.TemSelo)
+                {
+                    <div class="mb-2"><img src="/Empresa/Selo/@Model.Id" alt="Selo atual" class="empresa-logo border rounded p-1" /></div>
+                    <div class="form-check small mb-2">
+                        <input asp-for="RemoverSelo" class="form-check-input" />
+                        <label asp-for="RemoverSelo" class="form-check-label"></label>
+                    </div>
+                }
+                <input asp-for="NovoSelo" type="file" class="form-control form-control-sm" accept="image/png,image/jpeg" />
+                <span asp-validation-for="NovoSelo" class="text-danger small"></span>
+                <div class="form-text">Ex.: o selo CGCRE/Inmetro com o nº CRL. Sai no canto do boletim só nas páginas dos parâmetros acreditados.</div>
             </div>
             <div class="col-12">
                 <label asp-for="CabecalhoLaudo" class="form-label small"></label>
                 <textarea asp-for="CabecalhoLaudo" class="form-control" rows="2"></textarea>
+                <div class="form-text">Opcional: sai centralizado abaixo do número do boletim.</div>
             </div>
             <div class="col-12">
                 <label asp-for="RodapeLaudo" class="form-label small"></label>
-                <textarea asp-for="RodapeLaudo" class="form-control" rows="2"></textarea>
+                <textarea asp-for="RodapeLaudo" class="form-control" rows="3" placeholder="FORM 0069 - R2&#10;Emitente: Gerência da Qualidade"></textarea>
+                <div class="form-text">No boletim: a 1ª linha sai à esquerda do número da página, a 2ª à direita e as demais centralizadas abaixo (ex.: endereço e telefone).</div>
             </div>
         </div>
     </div>

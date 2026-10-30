@@ -30,6 +30,8 @@ public partial class EmpresaConfiguration : IEntityTypeConfiguration<Empresa>
         b.Property(e => e.CabecalhoLaudo).HasColumnName("CABECALHO_LAUDO").HasColumnType("text");
         b.Property(e => e.RodapeLaudo).HasColumnName("RODAPE_LAUDO").HasColumnType("text");
         b.Property(e => e.NrAcreditacao).HasColumnName("NR_ACREDITACAO").HasMaxLength(50);
+        b.Property(e => e.SeloAcreditacao).HasColumnName("SELO_ACREDITACAO").HasColumnType("mediumblob");
+        b.Property(e => e.SeloAcreditacaoMime).HasColumnName("SELO_ACREDITACAO_MIME").HasMaxLength(50);
         b.Property(e => e.Ativa).HasColumnName("ATIVA");
         b.Property(e => e.CriadoEm).HasColumnName("CRIADO_EM").HasColumnType("datetime").PreenchidaPeloBancoNaInclusao(alteravel: false, enviar: false);
         b.Property(e => e.AlteradoEm).HasColumnName("ALTERADO_EM").HasColumnType("datetime").CalculadaPeloBanco();

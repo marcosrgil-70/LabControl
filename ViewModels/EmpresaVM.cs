@@ -34,6 +34,8 @@ public sealed class EmpresaVM
 
     [Display(Name = "Logo (PNG ou JPG, até 1 MB)")] public IFormFile? NovoLogo { get; set; }
     [Display(Name = "Remover o logo")] public bool RemoverLogo { get; set; }
+    [Display(Name = "Selo da acreditação (PNG ou JPG, até 1 MB)")] public IFormFile? NovoSelo { get; set; }
+    [Display(Name = "Remover o selo")] public bool RemoverSelo { get; set; }
 
     // inclusão (ADMIN_GLOBAL)
     [Display(Name = "Copiar cadastros de")] public int? CopiarDe { get; set; }
@@ -41,6 +43,7 @@ public sealed class EmpresaVM
 
     // exibição
     public bool TemLogo { get; set; }
+    public bool TemSelo { get; set; }
     public bool AdminGlobal { get; set; }
     /// <summary>Entidade da empresa (endereços, telefones e e-mails — componente de contatos).</summary>
     public int? IdEntidades { get; set; }

@@ -74,6 +74,8 @@ CREATE TABLE EMPRESAS (
   CABECALHO_LAUDO  TEXT         NULL,
   RODAPE_LAUDO     TEXT         NULL,
   NR_ACREDITACAO   VARCHAR(50)  NULL COMMENT 'Ex.: CRL INMETRO — exibido no boletim acreditado',
+  SELO_ACREDITACAO MEDIUMBLOB   NULL COMMENT 'Selo da acreditação (ex.: CGCRE/Inmetro com o nº CRL), no cabeçalho do boletim só nas páginas dos parâmetros acreditados (D-28)',
+  SELO_ACREDITACAO_MIME VARCHAR(50) NULL,
   ATIVA            TINYINT(1)   NOT NULL DEFAULT 1,
   CRIADO_EM        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   ALTERADO_EM      DATETIME     NULL ON UPDATE CURRENT_TIMESTAMP,

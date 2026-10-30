@@ -27,6 +27,9 @@ public partial class Empresa
     public string? RodapeLaudo { get; set; }
     /// <summary><c>NR_ACREDITACAO</c> — Ex.: CRL INMETRO — exibido no boletim acreditado</summary>
     public string? NrAcreditacao { get; set; }
+    /// <summary><c>SELO_ACREDITACAO</c> — Selo da acreditação (ex.: CGCRE/Inmetro com o nº CRL), no cabeçalho do boletim só nas páginas dos parâmetros acreditados (D-28)</summary>
+    public byte[]? SeloAcreditacao { get; set; }
+    public string? SeloAcreditacaoMime { get; set; }
     public bool Ativa { get; set; } = true;
     /// <summary><c>CRIADO_EM</c> — Preenchida pelo banco na inclusão.</summary>
     public DateTime CriadoEm { get; set; }
