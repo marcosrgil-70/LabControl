@@ -59,8 +59,10 @@ public sealed class M11Propostas : IEtapaMigracao
         // dono de cada endereço/e-mail no legado (endereço de cobrança de outra entidade; contato inexistente)
         var donoEndereco = (await c.Fb.LerAsync("SELECT ID_ENTIDADES_ENDERECOS, ID_ENTIDADES FROM ENTIDADES_ENDERECOS", ct))
             .ToDictionary(l => l.IntObrigatorio("ID_ENTIDADES_ENDERECOS"), l => l.Int("ID_ENTIDADES"));
+        var primeiroEndereco = donoEndereco.Where(e => e.Value is not null).GroupBy(e => e.Value!.Value).ToDictionary(g => g.Key, g => g.Min(e => e.Key));
         var emails = await c.Fb.LerAsync("SELECT ID_ENTIDADES_EMAILS, ID_ENTIDADES FROM ENTIDADES_EMAILS ORDER BY ID_ENTIDADES_EMAILS", ct);
-        var primeiroEmail = emails.GroupBy(l => l.Int("ID_ENTIDADES") ?? 0).ToDictionary(g => g.Key, g => g.First().IntObrigatorio("ID_ENTIDADES_EMAILS"));
+        var primeiroEmail = emails.Where(l => c.Mapa("ENTIDADES_EMAILS").ContainsKey(l.IntObrigatorio("ID_ENTIDADES_EMAILS")))
+            .GroupBy(l => l.Int("ID_ENTIDADES") ?? 0).ToDictionary(g => g.Key, g => g.First().IntObrigatorio("ID_ENTIDADES_EMAILS"));
 
         int Obrigatorio(int? valor, string onde, string oque) =>
             valor ?? throw new InvalidOperationException($"{onde}: {oque} não migrado — a proposta não pode ser gravada sem ele.");
@@ -97,7 +99,12 @@ public sealed class M11Propostas : IEtapaMigracao
                     endCobranca = null;
                 }
                 var endLaudo = l.Int("ID_ENT_END_LAUDO");
-                if (endLaudo is { } el && donoEndereco.GetValueOrDefault(el) != cliente)
+                if (endLaudo is null && primeiroEndereco.TryGetValue(cliente ?? 0, out var pend))
+                {
+                    c.Anomalia($"{onde}: sem endereço do laudo no legado — usado o 1º endereço do cliente ({pend}).");
+                    endLaudo = pend;
+                }
+                else if (endLaudo is { } el && donoEndereco.GetValueOrDefault(el) != cliente)
                     c.Anomalia($"{onde}: endereço do laudo {el} é de outra entidade no legado — mantido.");
                 var solicitacao = l.Data("DT_SOLICITACAO") ?? throw new InvalidOperationException($"{onde}: sem data de solicitação.");
                 var validade = l.Data("DT_VALIDADE");

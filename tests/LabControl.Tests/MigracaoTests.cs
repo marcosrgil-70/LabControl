@@ -10,15 +10,17 @@ using Xunit.Abstractions;
 namespace LabControl.Tests;
 
 /// <summary>
-/// Aceite da 3.5, da 4.1 e da 5.1: migração M-01…M-18 do Firebird real (<c>C:\Project\Laboratorio\DBMAIS.FDB</c>) para um
-/// banco vazio recriado a cada execução (<c>labcontrol_migracao_teste</c>). Sem o legado nesta máquina o teste só avisa.
+/// Aceite da 3.5, da 4.1 e da 5.1: migração M-01…M-18 do Firebird real para um banco vazio recriado a cada execução
+/// (<c>labcontrol_migracao_teste</c>). A origem é a cópia fixa da 9.1 (<c>C:\Project\backup\DBMAIS-9.1.FDB</c>, restaurada
+/// do <c>DBMAIS-20261029.fbk</c>), e não o <c>DBMAIS.FDB</c>, que recebe cópias novas do laboratório: as contagens abaixo são
+/// as do aceite. Sem o legado nesta máquina o teste só avisa.
 /// Roda na coleção <see cref="ColecaoMigracao"/>: sozinho, depois das outras (pendência 18).
 /// </summary>
 [Collection(ColecaoMigracao.Nome)]
 public class MigracaoTests(ITestOutputHelper saida)
 {
     private const string Banco = "labcontrol_migracao_teste";
-    private const string Fdb = @"C:\Project\Laboratorio\DBMAIS.FDB";
+    private const string Fdb = @"C:\Project\backup\DBMAIS-9.1.FDB";
     private const string SenhaProvisoria = "Migracao#2026";
 
     private static MigracaoService Servico() => new(new ConfigurationBuilder()

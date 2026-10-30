@@ -69,17 +69,12 @@ public static class Conversoes
     }
 
     /// <summary>
-    /// E-mail do legado limpo: só o primeiro endereço (corta em vírgula, ponto e vírgula ou espaço), sem &lt; &gt;,
-    /// em minúsculas. Devolve null se não sobrar algo com "@".
+    /// E-mail do legado limpo: o primeiro trecho com "@" (separa em vírgula, ponto e vírgula, espaço e &lt; &gt;, como em
+    /// <c>Nome &lt;nome@x.com&gt;</c>), em minúsculas. Devolve null se nenhum trecho tiver "@".
     /// </summary>
-    public static string? Email(string? valor)
-    {
-        var s = (valor ?? "").Trim().Replace("<", "").Replace(">", "");
-        var corte = s.IndexOfAny([',', ';', ' ']);
-        if (corte >= 0) s = s[..corte];
-        s = s.Trim().ToLowerInvariant();
-        return s.Contains('@') ? s : null;
-    }
+    public static string? Email(string? valor) =>
+        (valor ?? "").Split([',', ';', ' ', '<', '>'], StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault(s => s.Contains('@'))?.Trim('\'', '"').ToLowerInvariant();
 
     /// <summary>
     /// Data parcial (validade/fabricação) do legado no formato que a <c>TG_AMOSTRAS_BI</c> aceita mesmo na migração:

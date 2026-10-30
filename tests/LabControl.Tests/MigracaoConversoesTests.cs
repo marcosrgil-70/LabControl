@@ -38,6 +38,9 @@ public class MigracaoConversoesTests
         Assert.Equal("contato@empax.com.br", Conversoes.Email("Contato@Empax.com.br, www.empax.com.br"));
         Assert.Equal("a@b.com", Conversoes.Email("<a@b.com>;"));
         Assert.Null(Conversoes.Email("sem arroba"));
+        Assert.Equal("anacasamasso44@gmail.com", Conversoes.Email("ana casamasso' <AnaCasamasso44@gmail.com>"));
+        Assert.Equal("x@y.com", Conversoes.Email("x@y.com 97416-3599 (renata)"));
+        Assert.Null(Conversoes.Email("x"));
     }
 
     // RTF do TRichEdit do legado (amostras reais de LAB_PROPOSTAS_CONTRATOS/_OBSERVACAO e LAB_HIST_AMOSTRAS_OBSERVACAO)

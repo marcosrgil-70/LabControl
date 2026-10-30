@@ -107,7 +107,10 @@ public sealed partial class MigracaoService(IConfiguration config)
     {
         var empresa = new EmpresaDaMigracao { Ip = p.Ip };
         var construtor = new DbContextOptionsBuilder<LabDbContext>();
-        construtor.Configurar(ConexaoDestino(p.BancoDestino.Trim().ToLowerInvariant()), empresa);
+        // comandos da migração (lotes grandes, UPDATEs com JOIN em todas as linhas) passam dos 30 s padrão num banco grande;
+        // o tempo esgotado quebra a conexão e, com ela, a transação inteira
+        var conexao = new MySqlConnectionStringBuilder(ConexaoDestino(p.BancoDestino.Trim().ToLowerInvariant())) { DefaultCommandTimeout = 1800 };
+        construtor.Configurar(conexao.ConnectionString, empresa);
         var opcoes = construtor.Options;
         try
         {
@@ -145,7 +148,9 @@ public sealed partial class MigracaoService(IConfiguration config)
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    await (tx ?? unica)!.RollbackAsync(CancellationToken.None);
+                    // conexão quebrada: o rollback também falha (o servidor desfaz sozinho) e não pode esconder o erro original
+                    try { await (tx ?? unica)!.RollbackAsync(CancellationToken.None); }
+                    catch (Exception rb) { relatorio.Log($"[{etapa.Codigo}] Rollback não executado ({rb.GetBaseException().Message}): o MySQL desfaz a transação ao perder a conexão."); }
                     estado.Situacao = SituacaoEtapa.Erro;
                     estado.Erro = ErrosMySql.MensagemDeNegocio(ex) ?? ex.GetBaseException().Message;
                     relatorio.Log($"[{etapa.Codigo}] ERRO: {estado.Erro}");
@@ -165,7 +170,7 @@ public sealed partial class MigracaoService(IConfiguration config)
                 await unica.CommitAsync(ct);
                 relatorio.Log($"Banco em uso {BancoEmUso} substituído pelos dados do legado. Entre de novo: ADMINISTRADOR / Admin123.");
             }
-            await db.Database.ExecuteSqlRawAsync("SET @LC_MIGRACAO = 0", CancellationToken.None);
+            if (!falhou) await db.Database.ExecuteSqlRawAsync("SET @LC_MIGRACAO = 0", CancellationToken.None); // com falha, a conexão é descartada
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

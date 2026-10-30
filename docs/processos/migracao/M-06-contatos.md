@@ -16,6 +16,8 @@
 - **Manter o dicionário de IDs dos e-mails**: são FKs de contato nas propostas (contato, contato do resultado, contato da NF).
 - `PRINCIPAL`, `ENVIAR_NFE`, `INATIVO` → 1/0; `ENVIAR_LAUDO` (novo) = 1 para o e-mail usado como contato do resultado em propostas.
 - E-mail repetido na mesma entidade: manter um e remapear o outro ID para ele.
+- Limpeza (`Conversoes.Email`): fica o primeiro trecho com "@", separando em vírgula, ponto e vírgula, espaço e `< >` (`ana casamasso' <ana@x.com>` → `ana@x.com`), em minúsculas.
+- Sem "@" (`x`, `lizandra souza`): não migrado (listado), **exceto** se for contato do resultado de alguma proposta. Nesse caso é migrado como está, listado para corrigir no cadastro, porque a proposta exige o contato. Cópia de 29/10/2026: 2 assim (`x` e `adriana nakagawa`) e 1 não migrado.
 
 ## Regras gerais (todas as etapas)
 - Conexão com `SET @LC_MIGRACAO = 1`; uma transação por etapa; `ID_LEGADO` + dicionário `idAntigo → idNovo`.
@@ -23,6 +25,6 @@
 - Anomalias vão para o relatório da migração (não interrompem a etapa, salvo violação de integridade).
 
 ## Conferência ao final da etapa
-- [x] 695 / 664.
+- [x] 695 / 664 (e-mails: os do legado menos os que não são e-mail e foram descartados).
 
 **Status:** ✅ implementada na tarefa 3.5 (21/10/2026) — `Services/Migracao/Etapas/M06*.cs`; conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`).

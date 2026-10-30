@@ -28,6 +28,14 @@ O script faz quatro coisas, nesta ordem:
 
 A saída e o cache dos pré-requisitos **não vão para o git**.
 
+**Ícone:** `LabControl.ico` é o frasco da barra do sistema, no azul da barra. Aparece:
+- no `setup.exe`;
+- no atalho da área de trabalho;
+- em "Adicionar ou remover programas";
+- na aba do navegador (`wwwroot/favicon.ico`).
+
+Ele é gerado por [`gerar-icone.ps1`](gerar-icone.ps1). Só precisa rodar de novo se o desenho mudar.
+
 | Pré-requisito | Versão | Como o setup confere |
 |---|---|---|
 | IIS | do Windows | registro `InetStp` (ativado como recurso do Windows, sem download) |

@@ -48,6 +48,7 @@ public sealed class M06Contatos : IEtapaMigracao
             """, ct);
         var porEntidade = new Dictionary<(int, string), EntidadeEmail>(); // UQ_ENTEML: o mesmo e-mail duas vezes na entidade
         var novosEmails = new List<(int Antigo, EntidadeEmail Novo)>();
+        var emailsDescartados = 0;
         foreach (var l in emails)
         {
             var antigo = l.IntObrigatorio("ID_ENTIDADES_EMAILS");
@@ -55,7 +56,13 @@ public sealed class M06Contatos : IEtapaMigracao
             if (c.Novo("ENTIDADES", l.Int("ID_ENTIDADES"), onde) is not { } entidade) continue;
             var original = l.Texto("EMAIL");
             var email = Conversoes.Email(original);
-            if (email is null) { c.Anomalia($"{onde}: \"{original}\" não é um e-mail — não migrado."); continue; }
+            if (email is null && contatosDoResultado.Contains(antigo) && !string.IsNullOrWhiteSpace(original))
+            {
+                // a proposta exige o contato do resultado: sem ele, a M-11 não grava a proposta
+                email = original.Trim().ToLowerInvariant();
+                c.Anomalia($"{onde}: \"{original}\" não é um e-mail, mas é contato do resultado de proposta — migrado como está (corrigir no cadastro).");
+            }
+            if (email is null) { c.Anomalia($"{onde}: \"{original}\" não é um e-mail — não migrado."); emailsDescartados++; continue; }
             if (!string.Equals(email, original, StringComparison.OrdinalIgnoreCase)) c.Anomalia($"{onde}: \"{original}\" corrigido para \"{email}\".");
             if (porEntidade.TryGetValue((entidade, email), out var mesmo))
             {
@@ -83,7 +90,7 @@ public sealed class M06Contatos : IEtapaMigracao
         foreach (var (antigo, m) in novosEmails) c.Mapa("ENTIDADES_EMAILS")[antigo] = m.IdEntidadesEmails;
 
         c.Conferir("telefones do legado", fones.Count, c.Mapa("ENTIDADES_FONES").Count);
-        c.Conferir("e-mails do legado", emails.Count, c.Mapa("ENTIDADES_EMAILS").Count);
+        c.Conferir("e-mails do legado (− os que não são e-mail)", emails.Count - emailsDescartados, c.Mapa("ENTIDADES_EMAILS").Count);
         return novosFones.Count + porEntidade.Count;
     }
 }

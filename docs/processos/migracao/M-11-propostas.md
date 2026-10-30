@@ -47,5 +47,8 @@
   - 13 contatos e 9 contatos da NF inexistentes → NULL;
   - 2 endereços de cobrança de outra entidade → NULL; o laudo dessas 2 também é de outra entidade e foi mantido (listado);
   - 1 validade anterior à solicitação → igual à solicitação (a trigger recusa mesmo na migração).
+- **Cópia do legado de 29/10/2026 (11.517 propostas):** a migração parava aqui. Ajustes:
+  - **3 propostas sem endereço do laudo** (IDs 5045, 8075 e 13153) → 1º endereço do cliente, como esta especificação já previa (listado). Cliente sem endereço continua parando a etapa, com a mensagem;
+  - o substituto do contato do resultado inexistente é o 1º e-mail **migrado** do cliente (antes era o 1º do legado, que podia ter sido descartado na M-06).
 
 **Status:** ✅ implementada na tarefa 4.1 (23/10/2026); conferências verdes contra o `DBMAIS.FDB` real (`MigracaoTests`).

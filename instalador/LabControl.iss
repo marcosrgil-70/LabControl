@@ -38,6 +38,9 @@ SolidCompression=yes
 WizardStyle=modern
 ShowLanguageDialog=no
 UninstallDisplayName=LabControl {#Versao}
+; ícone gerado por gerar-icone.ps1 (frasco da barra do sistema)
+SetupIconFile=LabControl.ico
+UninstallDisplayIcon={app}\LabControl.ico
 SetupLogging=yes
 
 [Languages]
@@ -52,12 +55,15 @@ Source: "..\Scripts\v2\backup.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversi
 Source: "..\Scripts\v2\recriar.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "..\Scripts\v2\0*.sql"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "..\Scripts\v2\inicial.sql"; DestDir: "{app}\scripts"; Flags: ignoreversion
+Source: "LabControl.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [INI]
 Filename: "{app}\LabControl.url"; Section: "InternetShortcut"; Key: "URL"; String: "{code:Endereco}"; Flags: uninsdeletesection
+Filename: "{app}\LabControl.url"; Section: "InternetShortcut"; Key: "IconFile"; String: "{app}\LabControl.ico"
+Filename: "{app}\LabControl.url"; Section: "InternetShortcut"; Key: "IconIndex"; String: "0"
 
 [Icons]
-Name: "{commondesktop}\LabControl"; Filename: "{app}\LabControl.url"
+Name: "{commondesktop}\LabControl"; Filename: "{app}\LabControl.url"; IconFilename: "{app}\LabControl.ico"
 
 [UninstallRun]
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\scripts\Desinstalar.ps1"""; Flags: runhidden waituntilterminated; RunOnceId: "RemoverIIS"

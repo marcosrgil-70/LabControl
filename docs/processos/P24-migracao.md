@@ -11,6 +11,8 @@
 3. Tudo vai para a **empresa 1** (`COD_EMPRESA = '001'`).
 4. `ID_LEGADO` em cada tabela + dicionário `idAntigo → idNovo` por tabela.
 5. Uma transação por etapa, log por etapa, relatório final com conferências e anomalias.
+   - Os comandos da migração têm limite de **30 min**, não os 30 s padrão. Com a cópia do legado de 29/10/2026 (55.710 amostras, cerca de 10× a da 9.1), a M-17 leva 158 s, e o limite padrão derrubava a conexão.
+   - Se a conexão cair, o erro original aparece na tela, e não "Connection must be Open".
 6. Strings ISO8859_1 → UTF-8 (`Charset=ISO8859_1` no FirebirdClient) com `Trim()`; booleanos 'S'/'N' → 1/0; cores `TColor` → `#RRGGBB`.
 
 ## Etapas
