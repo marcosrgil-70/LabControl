@@ -110,4 +110,15 @@
 - [x] Relatório de anomalias gerado (tela + CSV).
 - [x] Teste no navegador da tela (`CrudNavegadorTelasTests.Migracao_tela_valida_o_pedido_sem_executar`) — passou em 22/10/2026 (pendência 17).
 
-**Status:** ✅ M-01…M-18 prontas (3.5, 4.1 e 5.1), numa execução só.
+## Cópia nova do legado (29/10/2026)
+O usuário trocou o `DBMAIS.FDB` pela cópia do dia, com **11.517 propostas e 55.710 amostras**, cerca de 10× a da 9.1. A migração parava, e foi corrigida:
+- **M-11:** propostas sem endereço do laudo recebem o do cliente.
+- **M-06:** contato do resultado que não é e-mail é migrado como está, para corrigir no cadastro.
+- **Tempo dos comandos:** limite de 30 min por comando, porque a M-17 leva 158 s.
+- **Mensagem de erro:** a tela mostra o erro original, e não mais "Connection must be Open".
+
+Com a cópia nova: 18 etapas e todas as conferências verdes, em ~10 min. A tela mostra o progresso; a migração roda no servidor.
+
+O `MigracaoTests` usa a cópia fixa da 9.1 (`C:\Project\backup\DBMAIS-9.1.FDB`), porque confere as contagens do aceite.
+
+**Status:** ✅ M-01…M-18 prontas (3.5, 4.1 e 5.1), numa execução só; ajustadas para a cópia nova do legado (30/10/2026).

@@ -7,7 +7,7 @@ Sistema de gestão do laboratório (propostas, recebimento de amostras, resultad
 > **Onde estamos e o que vem a seguir:** [docs/00-PLANO-EXECUCAO.md](docs/00-PLANO-EXECUCAO.md) (bloco "Ponto de retorno",
 > checklist por fase, pendências e diário). Regras de trabalho: [CLAUDE.md](CLAUDE.md).
 
-## Situação (29/10/2026)
+## Situação (30/10/2026)
 | Fase | Entrega | Situação |
 |---|---|---|
 | 0 | Fundação: banco v2 pelos scripts, multiempresa, erros, auditoria, testes | ✅ |
@@ -19,7 +19,7 @@ Sistema de gestão do laboratório (propostas, recebimento de amostras, resultad
 | 6 | Proposta completa (revisão, PDF, contrato) e pedido de venda | ✅ |
 | 7 | Movimentação e localização de amostras | ✅ |
 | 8 | 6 relatórios gerenciais (tela, PDF, CSV), envio do boletim por e-mail, consulta de auditoria | ✅ (Relatório de Ensaio dispensado pelo usuário) |
-| 9 | Migração completa, homologação e virada | 🟨 9.1 migração em banco limpo ✅ (74/74 conferências); próxima: 9.2 homologação com o laboratório |
+| 9 | Migração completa, homologação e virada | 🟨 9.1 migração em banco limpo ✅ (74/74 conferências; a cópia nova do legado, de 29/10, ~10× maior, também migra com tudo verde). **Instalador** pronto e em teste pelo usuário (pendência 40). Próxima: 9.2 homologação com o laboratório |
 
 Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md).
 
@@ -51,7 +51,7 @@ Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md)
 3. Aponte o user-secret para `Database=labcontrol_migracao` e entre com `ADMINISTRADOR` / `Admin123` (ou um usuário migrado com a senha provisória digitada na T07).
 
 ## Testes
-`dotnet test tests/LabControl.Tests` — suíte inteira (**304 testes, ~3 min**, 29/10/2026), inclusive a migração real quando o legado existe na máquina e o serviço do Firebird está iniciado. A origem do teste é a cópia fixa da 9.1 (`C:\Project\backup\DBMAIS-9.1.FDB`, restaurada do `DBMAIS-20261029.fbk`), porque as contagens conferidas são as do aceite; o `DBMAIS.FDB` recebe as cópias novas do laboratório. Só as telas no navegador: `--filter "FullyQualifiedName~Navegador"`. Não rodar com o `dotnet run` aberto (trava o build). Ver [P26](docs/processos/P26-testes-ponta-a-ponta.md).
+`dotnet test tests/LabControl.Tests` — suíte inteira (**317 testes, ~5 min**, 30/10/2026), inclusive a migração real quando o legado existe na máquina e o serviço do Firebird está iniciado. A origem do teste é a cópia fixa da 9.1 (`C:\Project\backup\DBMAIS-9.1.FDB`, restaurada do `DBMAIS-20261029.fbk`), porque as contagens conferidas são as do aceite; o `DBMAIS.FDB` recebe as cópias novas do laboratório. Só as telas no navegador: `--filter "FullyQualifiedName~Navegador"`. Não rodar com o `dotnet run` aberto (trava o build). Ver [P26](docs/processos/P26-testes-ponta-a-ponta.md).
 
 ## Documentação
 - [docs/README.md](docs/README.md) — índice: arquitetura, banco (um MD por objeto), telas, processos, regras, migração.

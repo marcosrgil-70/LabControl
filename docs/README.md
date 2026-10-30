@@ -26,8 +26,11 @@ Migração do sistema **Delphi 7 + Firebird 2.5** (`C:\Project\Laboratorio`) par
     - chaves do Data Protection numa pasta configurável (pendência 27);
     - [`Scripts/v2/backup.ps1`](../Scripts/v2/README.md#backup-banco--boletins--chaves): banco, boletins e chaves, com conferência por restauração;
     - [checklist da virada](plano/CHECKLIST-VIRADA.md);
-    - [instalador do servidor](../instalador/README.md): `setup.exe` offline com assistente. Falta o teste numa VM com Windows Server (pendência 40).
-  - **Testes:** suíte inteira **317/317** (~3 min); roteiro SQL do banco **76/76**.
+    - [instalador do servidor](../instalador/README.md): `setup.exe` offline com assistente e ícone próprio.
+      - O usuário testou num Windows 10 (29–30/10/2026): 4 correções, e a instalação foi até o fim.
+      - Falta rodar o 2.0.117 e repetir a migração ali; depois, o teste numa VM com Windows Server (pendência 40).
+  - **Migração com a cópia nova do legado (29/10/2026, ~10× a da 9.1):** 4 correções e todas as conferências verdes ([P24](processos/P24-migracao.md), [M-06](processos/migracao/M-06-contatos.md), [M-11](processos/migracao/M-11-propostas.md)).
+  - **Testes:** suíte inteira **316/317** em ~5 min. O que falhou foi intermitente (tempo do navegador) e passou sozinho. Roteiro SQL do banco **76/76**.
 - **Dúvidas respondidas em 29/10/2026:**
   - 1: T28 dispensada;
   - 2: e-mail configurado pelo usuário em Parâmetros da Empresa;

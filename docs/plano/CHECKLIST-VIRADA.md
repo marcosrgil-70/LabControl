@@ -48,7 +48,9 @@ Configuração manual, só sem o instalador: [Scripts/v2/README.md](../../Script
    - destino: o próprio `labcontroldb`, que é o padrão da tela;
    - informar o caminho do `.FDB` congelado e uma **senha provisória** para os outros usuários.
 
-   Esperado: 18 etapas ok e **todas as conferências verdes** (na 9.1: 74/74). Se falhar, nada fica gravado e dá para repetir. Ao final, entrar de novo com ADMINISTRADOR / Admin123.
+   Esperado: 18 etapas ok e **todas as conferências verdes** (na 9.1: 74/74; com a cópia de 29/10/2026, ~10× maior, também tudo verde em ~10 min). Se falhar, nada fica gravado e dá para repetir. Ao final, entrar de novo com ADMINISTRADOR / Admin123.
+   - A tela pode ficar minutos numa etapa: a dos boletins leva ~2,5 min com esse volume. Não feche o navegador; a migração continua no servidor.
+   - O relatório traz anomalias novas para revisar (pendência 39): contatos que não são e-mail e propostas sem endereço do laudo.
 4. [ ] Relatório de anomalias salvo fora do repositório (`C:\Project\backup\migracao-<data>.csv`); conferir que as decisões da pendência 39 foram aplicadas.
 5. [ ] Se a homologação foi feita no mesmo servidor e banco, a migração da virada recusa o banco (já tem dados). Nesse caso:
    1. guardar um backup da homologação (tarefa "LabControl - Backup" › Executar);

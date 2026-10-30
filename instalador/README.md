@@ -140,7 +140,18 @@ Se a versão nova mudar o banco (`Scripts/v2`), o instalador ainda **não** apli
 
   Os detalhes do Windows ficam em `C:\Windows\Logs\DISM\dism.log`.
 
-## O que foi testado (29/10/2026)
+## O que foi testado (30/10/2026)
+
+**Teste real do usuário, num Windows 10 (29–30/10/2026):**
+
+| Versão | O que aconteceu | Correção |
+|---|---|---|
+| 2.0.111 | etapa 1: `Enable-WindowsOptionalFeature` falhou com "Não foi possível ler a chave do Registro de configuração" | 2.0.112: tenta pelo `dism.exe` |
+| 2.0.112 | o `dism.exe` também falhou (código 50), com reinício pendente do Windows | 2.0.115: se o IIS já estiver ativo (ativado à mão), não tenta de novo; a mensagem ensina a ativação à mão |
+| 2.0.115 | etapas 1 a 3 ok (IIS, VC++ e .NET já presentes; MySQL 8.0.46 baixado e instalado como serviço); etapa 4 parou com "Não há suporte para o formato do caminho dado" | 2.0.116: `@($pastas.Values)`, porque o PowerShell 5.1 juntava as pastas num texto só |
+| 2.0.116 | instalação concluída; a Migração (T07) deu erro com a cópia nova do legado | 2.0.117: correções na migração (ver [P24](../docs/processos/P24-migracao.md)) e ícone |
+
+Com o 2.0.116, a instalação foi até o fim e o usuário entrou no sistema como ADMINISTRADOR. **Falta:** executar o 2.0.117 nesse computador (atualização, mantém o banco), repetir a T07 e conferir os dados migrados.
 
 O instalador inteiro **ainda não rodou num servidor limpo**: a máquina de desenvolvimento é a do usuário, e instalar o IIS e o serviço do MySQL nela mudaria o ambiente. Teste numa máquina virtual com Windows Server antes do servidor do cliente (pendência 40).
 
