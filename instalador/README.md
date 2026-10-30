@@ -126,6 +126,11 @@ Se a versão nova mudar o banco (`Scripts/v2`), o instalador ainda **não** apli
 - O assistente mostra onde está o log.
 - Corrija a causa e **execute o setup de novo**: cada etapa confere o que já está pronto.
 - Uma restauração que falha apaga o banco criado pela metade.
+- **O IIS não ativa** ("Não foi possível ler a chave do Registro de configuração"): o setup tenta de novo pelo `dism.exe`. Se ainda falhar, quase sempre o Windows tem um reinício pendente ou uma atualização em andamento:
+  1. Reinicie o computador e execute o setup de novo.
+  2. Se persistir, ative "Serviços de Informações da Internet" em *Ativar ou desativar recursos do Windows* e execute o setup de novo.
+
+  Os detalhes do Windows ficam em `C:\Windows\Logs\DISM\dism.log`.
 
 ## O que foi testado (29/10/2026)
 
