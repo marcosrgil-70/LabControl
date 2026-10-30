@@ -25,7 +25,7 @@
   - pasta dos boletins: ______________________ (padrão `C:\LabControlDados\Boletins`)
   - pasta dos dados: ______________________ (padrão `C:\LabControlDados`; de preferência em outro disco)
   - endereço: https://______________________/
-  - senha do **root** do MySQL definida no assistente: guardar no cofre (pendência 12 — a do servidor nasce nova, diferente da do desenvolvimento).
+  - senha do **root** do MySQL definida no assistente: guardar no cofre (a do servidor nasce nova, diferente da do desenvolvimento, que não será trocada — pendência 12 fechada em 30/10/2026).
 - [ ] Conferir o `LEIA-ME.txt` da pasta dos dados e o atalho "LabControl" na área de trabalho do servidor.
 - [ ] **Estações:** executar `instalar-certificado-na-estacao.cmd` (pasta `certificado` dos dados) como administrador, uma vez por estação, e abrir o endereço no navegador **sem aviso de "não seguro"**.
 - [ ] Se o laboratório tiver domínio e certificado próprio: trocar o autoassinado pelo `.pfx` no IIS (o instalador mantém o certificado que já estiver no site).
