@@ -9,7 +9,7 @@
 | `LAB_PROPOSTAS_PRODUTOS` | 5.761 |
 | `LAB_PROPOSTAS_PRODANALISES` | 19.252 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`LAB_PROPOSTAS_PRODUTOS`](../../banco/objetos/tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`LAB_PROPOSTAS_PRODANALISES`](../../banco/objetos/tabelas/LAB_PROPOSTAS_PRODANALISES.md)
 
 ## Regras de transformação

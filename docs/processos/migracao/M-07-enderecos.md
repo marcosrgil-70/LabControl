@@ -10,7 +10,7 @@
 | `LOGRADOUROS` | 552 |
 | `CIDADES_BAIRROS` | 485 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`ENTIDADES_ENDERECOS`](../../banco/objetos/tabelas/ENTIDADES_ENDERECOS.md)
 
 ## Regras de transformação

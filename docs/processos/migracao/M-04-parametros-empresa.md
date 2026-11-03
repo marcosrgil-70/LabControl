@@ -8,7 +8,7 @@
 |---|---|
 | `EMPRESAS_PARAMETROS` | 1 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`EMPRESAS_PARAMETROS`](../../banco/objetos/tabelas/EMPRESAS_PARAMETROS.md)
 
 ## Regras de transformação

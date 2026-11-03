@@ -10,7 +10,7 @@
 | `LAB_BOLETIM_OBS` | 5.311 |
 | `LAB_BOLETIM_PARAMETROS` | 19.615 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`LAB_BOLETIM_ANALISES`](../../banco/objetos/tabelas/LAB_BOLETIM_ANALISES.md), [`LAB_BOLETIM_PARAMETROS`](../../banco/objetos/tabelas/LAB_BOLETIM_PARAMETROS.md)
 
 ## Regras de transformação

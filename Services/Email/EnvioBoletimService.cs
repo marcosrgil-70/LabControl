@@ -89,7 +89,7 @@ public sealed class EnvioBoletimService(LabDbContext db, BoletimService boletins
     {
         (vm.CodBoletim, vm.Revisao, vm.NrAmostra, vm.Cliente) = (d.CodBoletim, d.Revisao, d.NrAmostra, d.Cliente);
         (vm.Remetente, vm.CopiaOculta) = (c?.Remetente, c?.CopiaOculta);
-        vm.Anexo = BoletimService.NomeArquivo(d.CodBoletim, d.Revisao) + (d.TemArquivo ? "" : " (2ª via — boletim migrado)");
+        vm.Anexo = BoletimService.NomeArquivo(d.CodBoletim, d.Revisao) + (d.TemArquivo ? "" : " (boletim migrado, gerado dos dados gravados)");
         var id = vm.IdBoletim.ToString();
         vm.Envios = (await (from a in db.Auditoria.AsNoTracking()
                             where a.Tabela == Tabela && a.IdRegistro == id && a.Acao == AcoesAuditoria.EnvioEmail

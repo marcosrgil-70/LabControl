@@ -6,13 +6,13 @@
 .DESCRIPTION
   1. Apaga o banco informado (pede confirmação se ele já existir);
   2. executa 01_schema -> 02_funcoes_procedures -> 03_triggers -> 04_views -> 05_seed -> 06_cidades,
-     trocando "labcontrol_v2" pelo nome do banco, e PARA no primeiro erro;
-  3. confere as contagens de objetos (59 tabelas, 10 views, 8 funções,
-     26 procedures, 48 triggers, 109 permissões, 5.571 cidades);
+     trocando "LabControlDB" pelo nome do banco, e PARA no primeiro erro;
+  3. confere as contagens de objetos (59 tabelas, 10 views, 9 funções,
+     27 procedures, 48 triggers, 109 permissões, 5.571 cidades);
   4. com -Empresa "<nome>": roda inicial.sql (empresa 001 com esse nome + usuário ADMINISTRADOR / senha
      Admin123, sem troca — o instalador usa no banco zerado LabControlDB); -Dev é o mesmo com a empresa
      "LABORATÓRIO (DESENVOLVIMENTO)";
-  5. com -Teste: cria um banco temporário labcontrol_teste_<id>, roda
+  5. com -Teste: cria um banco temporário lc_teste_<data-hora>_rot<id>, roda
      teste/roteiro_12_7.sql e apaga o banco no final (a não ser que -Manter).
 
   Senha: MYSQL_PWD, se definida; senão a do user-secret ConnectionStrings:LabControl
@@ -20,15 +20,14 @@
   senão é pedida no console. Nunca fica em arquivo versionado.
 
 .EXAMPLE
-  .\Scripts\v2\recriar.ps1                       # recria labcontrol_v2
-  .\Scripts\v2\recriar.ps1 -Dev                  # recria labcontrol_v2 com empresa 001 + usuário ADMIN
+  .\Scripts\v2\recriar.ps1 -Teste                # banco temporário + roteiro 12 §7 (o uso do dia a dia)
+  .\Scripts\v2\recriar.ps1 -Dev                  # APAGA o LabControlDB e cria vazio (empresa 001 + ADMINISTRADOR) — para o legado, use carregar-legado.ps1
   .\Scripts\v2\recriar.ps1 -Banco LabControlDB -Empresa "LABORATÓRIO EXEMPLO LTDA"
-  .\Scripts\v2\recriar.ps1 -Teste                # banco temporário + roteiro 12 §7
-  .\Scripts\v2\recriar.ps1 -Banco labcontrol_v2_hml -Forcar
+  .\Scripts\v2\recriar.ps1 -Banco lc_homologacao -Forcar
 #>
 [CmdletBinding()]
 param(
-  [string]$Banco = 'labcontrol_v2',
+  [string]$Banco = 'LabControlDB',
   [string]$Servidor = '127.0.0.1',
   [int]$Porta = 3306,
   [string]$Usuario = 'root',
@@ -43,12 +42,12 @@ param(
 $ErrorActionPreference = 'Stop'
 $pasta = $PSScriptRoot
 $scripts = '01_schema', '02_funcoes_procedures', '03_triggers', '04_views', '05_seed', '06_cidades'
-$esperado = [ordered]@{ TABELAS = 59; VIEWS = 10; FUNCOES = 8; PROCEDURES = 27; TRIGGERS = 48; PERMISSOES = 109; CIDADES = 5571 }
+$esperado = [ordered]@{ TABELAS = 59; VIEWS = 10; FUNCOES = 9; PROCEDURES = 27; TRIGGERS = 48; PERMISSOES = 109; CIDADES = 5571 }
 
 function Falhar([string]$msg) { Write-Host "ERRO: $msg" -ForegroundColor Red; exit 1 }
 
 # --- banco ---------------------------------------------------------------
-if ($Teste) { $Banco = 'labcontrol_teste_' + [guid]::NewGuid().ToString('N').Substring(0, 8) }
+if ($Teste) { $Banco = 'lc_teste_' + (Get-Date -Format 'yyyyMMddHHmmss') + '_rot' + [guid]::NewGuid().ToString('N').Substring(0, 4) }
 if ($Banco -notmatch '^[A-Za-z0-9_]+$') { Falhar "nome de banco inválido: $Banco" }
 if ($Banco -in 'labcontrol', 'mysql', 'sys', 'information_schema', 'performance_schema') {
   Falhar "o banco '$Banco' não pode ser recriado por este script (labcontrol = v1)."
@@ -135,7 +134,7 @@ try {
   foreach ($s in $scripts) {
     $origem = Join-Path $pasta "$s.sql"
     $destino = Join-Path $tmp "$s.sql"
-    $texto = [IO.File]::ReadAllText($origem, $utf8) -replace '\blabcontrol_v2\b', $Banco
+    $texto = [IO.File]::ReadAllText($origem, $utf8) -replace '\bLabControlDB\b', $Banco
     [IO.File]::WriteAllText($destino, $texto, $utf8)
     $t = [Diagnostics.Stopwatch]::StartNew()
     try { [void](Sql '' $destino) } catch { Write-Host ("  {0,-26} ERRO" -f "$s.sql") -ForegroundColor Red; throw "$s.sql: $($_.Exception.Message)" }

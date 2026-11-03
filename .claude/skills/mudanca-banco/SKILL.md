@@ -5,7 +5,8 @@ description: Roteiro obrigatório para qualquer mudança no banco MySQL do LabCo
 
 # Mudança no banco (Scripts/v2)
 
-Responda em português do Brasil. O schema é **somente** `Scripts/v2/01..06*.sql` (banco `labcontrol_v2`).
+Responda em português do Brasil. O schema é **somente** `Scripts/v2/01..06*.sql` (banco `LabControlDB`).
+**Bancos (decisão do usuário, 30/10/2026):** o único banco permanente é o `LabControlDB`, com os dados do legado; testes e roteiro usam bancos temporários `lc_teste_*`. Não crie outros bancos permanentes.
 **Proibido:** EF migrations, `EnsureCreated`, "patches" de SQL no `Program.cs`, editar `*.g.cs` à mão.
 
 ## 0. Antes de mexer
@@ -43,16 +44,15 @@ Rode você mesmo (PowerShell): o `recriar.ps1` lê a senha do user-secret `Conne
 ```
 Se ele pedir a senha (user-secret ausente ou de outro usuário), peça ao usuário para rodar com o prefixo `!` na caixa de mensagem.
 - Regra nova → acrescente verificação OK/FALHA em `Scripts/v2/teste/roteiro_12_7.sql` (positiva **e** negativa, com a mensagem exata) e atualize a contagem no README.
-- Tudo OK → recriar o banco local: `.\Scripts\v2\recriar.ps1 -Dev -Forcar` (apaga e recria `labcontrol_v2` com a empresa 001 e `ADMIN`/`Admin123`). **Confirme com o usuário antes**: apaga os dados de desenvolvimento.
-- Bancos que não podem ser apagados (`labcontrol_migracao`, bancos migrados): `.\Scripts\v2\atualizar.ps1 -Banco <nome>` acrescenta o que mudou (o instalador usa o mesmo na atualização do servidor).
-- O script recusa `labcontrol` (v1). Nunca rode o roteiro no `labcontrol_v2` real.
+- Tudo OK → leve a mudança ao banco de trabalho **sem perder os dados do legado**: `.\Scripts\v2\atualizar.ps1 -Banco LabControlDB` (o instalador usa o mesmo na atualização do servidor). Só se a atualização não servir, recarregue tudo com `.\Scripts\v2\carregar-legado.ps1` (~11 min).
+- O script recusa `labcontrol` (v1). O roteiro roda sempre num banco temporário (`-Teste`), nunca no `LabControlDB`.
 
 ## 4. Regenerar o C#
 1. View nova/alterada: antes atualize `tools/gerador-csharp/views.json` (ver `tools/gerador-csharp/README.md`).
 2. `node tools/gerador-csharp/gerar.mjs` → `Models/*.g.cs`, `Data/Configurations/*.g.cs`, DbSets. Ajustes manuais só nos parciais sem `.g`.
 3. Procedure nova: método em `Infra/Procedures.cs` (único ponto de chamada; recusa dentro de transação do EF, confere a empresa); mensagens por `ErrosMySql` (ver `docs/processos/P22-erros-transacoes.md`).
 4. Tabela nova com auditoria obrigatória (P21)? Inclua em `AuditoriaAlteracoes.Tabelas` (`Data/AuditoriaAlteracoes.cs`). Tabela nova sem `ID_EMPRESAS`? Confira o filtro global.
-5. `dotnet build` (0 avisos) e `dotnet test tests/LabControl.Tests` — o banco `labcontrol_teste` se recria sozinho quando o hash de `Scripts/v2/0*.sql` muda (1º run ~3 min a mais). Acrescente teste C# para a regra nova (mensagem exata do 45000).
+5. `dotnet build` (0 avisos) e `dotnet test tests/LabControl.Tests` — cada execução cria um banco temporário `lc_teste_*` pelos scripts (~3 min) e o apaga no fim. Acrescente teste C# para a regra nova (mensagem exata do 45000).
 
 ## 5. Fechar
 - Registre no Diário (`docs/00-PLANO-EXECUCAO.md` §9) o que mudou no banco e por quê, com o resultado do roteiro (`n/n`) e dos testes.

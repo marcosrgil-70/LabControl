@@ -9,7 +9,7 @@
 | `ENTIDADES_FUNCIONARIOS` | 16 |
 | `ENTIDADES_FUNC_ASSINATURAS` | 0 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`ENTIDADES_FUNCIONARIOS`](../../banco/objetos/tabelas/ENTIDADES_FUNCIONARIOS.md)
 
 ## Regras de transformação

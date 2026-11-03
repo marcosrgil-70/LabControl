@@ -19,11 +19,11 @@
 --     (ID_USUARIOS). Preenchidas pela aplicação.
 -- =====================================================================
 
-CREATE DATABASE IF NOT EXISTS labcontrol_v2
+CREATE DATABASE IF NOT EXISTS LabControlDB
   DEFAULT CHARACTER SET utf8mb4
   DEFAULT COLLATE utf8mb4_0900_ai_ci;
 
-USE labcontrol_v2;
+USE LabControlDB;
 
 SET FOREIGN_KEY_CHECKS = 0;
 

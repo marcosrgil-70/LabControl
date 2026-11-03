@@ -9,7 +9,7 @@
 | `USUARIO` | 15 |
 | `SYS_*_ACESSOS` | 5.190 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`USUARIOS`](../../banco/objetos/tabelas/USUARIOS.md), [`USUARIOS_EMPRESAS`](../../banco/objetos/tabelas/USUARIOS_EMPRESAS.md), [`USUARIOS_PERFIS`](../../banco/objetos/tabelas/USUARIOS_PERFIS.md), [`PERFIS`](../../banco/objetos/tabelas/PERFIS.md)
 
 ## Regras de transformação

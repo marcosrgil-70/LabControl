@@ -11,7 +11,7 @@
 | `ENTIDADES_PJ` | 1 |
 | `ENTIDADES_ENDERECOS da empresa` | — |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`EMPRESAS`](../../banco/objetos/tabelas/EMPRESAS.md) + a entidade da empresa em [`ENTIDADES`](../../banco/objetos/tabelas/ENTIDADES.md) (`TIPO_EMPRESA_USUARIA = 1`) com os contatos em `ENTIDADES_ENDERECOS/FONES/EMAILS` (D-19, [P25](../P25-cadastro-entidades-contatos.md))
 
 ## Regras de transformação

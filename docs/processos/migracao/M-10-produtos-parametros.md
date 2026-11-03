@@ -10,7 +10,7 @@
 | `LAB_PARAMETROS_ANALISES` | 462 |
 | `SYS_TABELAS_ID` | 1 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`PRODUTOS`](../../banco/objetos/tabelas/PRODUTOS.md), [`LAB_PARAMETROS_ANALISES`](../../banco/objetos/tabelas/LAB_PARAMETROS_ANALISES.md)
 
 ## Regras de transformação

@@ -12,7 +12,7 @@
 | `LAB_LOCAL_AMOSTRAS` | 2.686 |
 | `LAB_HIST_AMOSTRAS_LOG` | 10.509 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`LAB_HIST_AMOSTRAS_TESTES`](../../banco/objetos/tabelas/LAB_HIST_AMOSTRAS_TESTES.md), [`LAB_MOV_AMOSTRAS`](../../banco/objetos/tabelas/LAB_MOV_AMOSTRAS.md), [`LAB_MOV_AMOSTRAS_PARAM`](../../banco/objetos/tabelas/LAB_MOV_AMOSTRAS_PARAM.md), [`LAB_LOCAL_AMOSTRAS`](../../banco/objetos/tabelas/LAB_LOCAL_AMOSTRAS.md), [`LAB_HIST_AMOSTRAS_SALDO`](../../banco/objetos/tabelas/LAB_HIST_AMOSTRAS_SALDO.md), [`LAB_HIST_AMOSTRAS_LOG`](../../banco/objetos/tabelas/LAB_HIST_AMOSTRAS_LOG.md)
 
 ## Regras de transformação

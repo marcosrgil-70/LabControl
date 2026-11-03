@@ -21,8 +21,8 @@
   senão é pedida no console.
 
 .EXAMPLE
-  .\Scripts\v2\atualizar.ps1 -Banco labcontrol_migracao -SoMostrar
-  .\Scripts\v2\atualizar.ps1 -Banco labcontrol_migracao
+  .\Scripts\v2\atualizar.ps1 -Banco LabControlDB -SoMostrar
+  .\Scripts\v2\atualizar.ps1 -Banco LabControlDB
   .\Scripts\v2\atualizar.ps1 -Banco LabControlDB -CopiaAntes D:\LabControl\backup\antes-da-atualizacao.sql   # instalador
 #>
 [CmdletBinding()]
@@ -221,7 +221,7 @@ try {
     if ($objetos.Trim()) { [void](Sql $objetos '' @("-D$Banco")) }
     foreach ($s in '02_funcoes_procedures', '03_triggers', '04_views', '05_seed') {
       $destino = Join-Path $tmp "$s.sql"
-      [IO.File]::WriteAllText($destino, ([IO.File]::ReadAllText((Join-Path $pasta "$s.sql"), $utf8) -replace '\blabcontrol_v2\b', $Banco), $utf8)
+      [IO.File]::WriteAllText($destino, ([IO.File]::ReadAllText((Join-Path $pasta "$s.sql"), $utf8) -replace '\bLabControlDB\b', $Banco), $utf8)
       try { [void](Sql '' $destino) } catch { throw "$s.sql: $($_.Exception.Message)" }
       Write-Host ("  {0,-26} ok" -f "$s.sql") -ForegroundColor Green
     }

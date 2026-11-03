@@ -9,7 +9,7 @@
 | `LAB_RESULTADOS_ANALISES` | 5.345 |
 | `LAB_RESULTADOS_PARAM` | 19.528 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`LAB_RESULTADOS_ANALISES`](../../banco/objetos/tabelas/LAB_RESULTADOS_ANALISES.md), [`LAB_RESULTADOS_PARAM`](../../banco/objetos/tabelas/LAB_RESULTADOS_PARAM.md)
 
 ## Regras de transformação

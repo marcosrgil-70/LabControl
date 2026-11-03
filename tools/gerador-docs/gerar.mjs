@@ -335,7 +335,7 @@ ${g.body}
 // --- ÍNDICE ---
 let idx = `# Objetos do banco v2 — um MD por objeto
 
-> Banco \`labcontrol_v2\` (MySQL 8). Fonte da verdade: \`Scripts/v2/01..05\`. Modelo e decisões: [../11-MODELO-MYSQL.md](../11-MODELO-MYSQL.md).
+> Banco \`LabControlDB\` (MySQL 8). Fonte da verdade: \`Scripts/v2/01..05\`. Modelo e decisões: [../11-MODELO-MYSQL.md](../11-MODELO-MYSQL.md).
 > Cada arquivo traz: finalidade, origem no legado, colunas, chaves, relacionamentos, triggers, quem usa, telas, processos, regras de negócio, cuidados no C# e o código SQL.
 > Legenda: 🔴 crítico · 🟠 importante · ⚪ normal.
 

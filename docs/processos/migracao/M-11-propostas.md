@@ -13,7 +13,7 @@
 | `LAB_PROPOSTAS_ITENS_ADQ` | 12 |
 | `LAB_PROPOSTAS_AUTORIZACAO` | 0 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`LAB_PROPOSTAS`](../../banco/objetos/tabelas/LAB_PROPOSTAS.md), [`LAB_PROPOSTAS_TEXTOS`](../../banco/objetos/tabelas/LAB_PROPOSTAS_TEXTOS.md)
 
 ## Regras de transformação

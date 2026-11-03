@@ -10,8 +10,10 @@ using MySqlConnector;
 namespace LabControl.Tests;
 
 /// <summary>
-/// Banco de testes <c>labcontrol_teste</c> (nunca o labcontrol_v2): criado por Scripts/v2/recriar.ps1 na
-/// primeira execução e recriado sozinho quando Scripts/v2/*.sql muda (hash gravado em _TESTE_VERSAO).
+/// Banco de testes <b>temporário</b> (decisão do usuário, 30/10/2026: o único banco permanente é o LabControlDB, com os
+/// dados do legado): cada execução do <c>dotnet test</c> cria <c>lc_teste_&lt;data-hora&gt;_&lt;id&gt;</c> por Scripts/v2/recriar.ps1
+/// (~3 min) e o apaga no fim, junto com os bancos dos testes de migração (<c>&lt;nome&gt;_mig</c>, <c>&lt;nome&gt;_inst</c>).
+/// Sobras de execuções interrompidas (mais de 12 h) são apagadas na próxima. Nunca usa o LabControlDB.
 /// Servidor/usuário/senha vêm de LABCONTROL_TESTE_CS (variável de ambiente) ou do user-secret
 /// ConnectionStrings:LabControl; o nome do banco é sempre trocado por <see cref="NomeBanco"/>.
 /// Isolamento: cada teste cria a própria empresa (<see cref="CriarEmpresaAsync"/>) — o filtro multiempresa
@@ -19,7 +21,10 @@ namespace LabControl.Tests;
 /// </summary>
 public static class BancoTeste
 {
-    public const string NomeBanco = "labcontrol_teste";
+    /// <summary>Prefixo dos bancos temporários dos testes (só eles são apagados pela limpeza).</summary>
+    public const string Prefixo = "lc_teste_";
+
+    public static string NomeBanco { get; } = $"{Prefixo}{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid().ToString("N")[..4]}";
 
     public static string ConnectionString { get; } = Montar();
 
@@ -82,27 +87,67 @@ public static class BancoTeste
         return emp;
     }
 
-    // COD_EMPRESA é VARCHAR(3) único: 36³ combinações (o banco de testes é recriado quando os scripts mudam)
+    // COD_EMPRESA é VARCHAR(3) único: 36³ combinações (o banco de testes é novo a cada execução)
     private static string CodigoAleatorio() =>
         new(Enumerable.Range(0, 3).Select(_ => "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[RandomNumberGenerator.GetInt32(36)]).ToArray());
 
     private static async Task PrepararAsync()
     {
-        var raiz = RaizDoRepositorio();
-        var scripts = Path.Combine(raiz, "Scripts", "v2");
-        var hash = Convert.ToHexString(SHA256.HashData(
-            Directory.GetFiles(scripts, "0*.sql").Order().SelectMany(File.ReadAllBytes).ToArray()));
-
-        if (await HashAtualAsync() == hash) return;
-
+        await ApagarSobrasAsync();
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => ApagarDestaExecucao();
         await RecriarAsync(NomeBanco);
+    }
 
-        await using var con = new MySqlConnection(ConnectionString);
+    // bancos lc_teste_* de execuções interrompidas há mais de 12 h (o nome traz a data e hora da criação)
+    private static async Task ApagarSobrasAsync()
+    {
+        await using var con = new MySqlConnection(new MySqlConnectionStringBuilder(ConnectionString) { Database = "" }.ConnectionString);
         await con.OpenAsync();
-        await using var cmd = con.CreateCommand();
-        cmd.CommandText = "CREATE TABLE _TESTE_VERSAO (HASH CHAR(64) NOT NULL); INSERT INTO _TESTE_VERSAO VALUES (@h);";
-        cmd.Parameters.AddWithValue("@h", hash);
-        await cmd.ExecuteNonQueryAsync();
+        var sobras = new List<string>();
+        await using (var cmd = con.CreateCommand())
+        {
+            cmd.CommandText = "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME LIKE 'lc\\_teste\\_%'";
+            await using var r = await cmd.ExecuteReaderAsync();
+            while (await r.ReadAsync())
+            {
+                var nome = r.GetString(0);
+                if (nome.Length >= Prefixo.Length + 14 &&
+                    DateTime.TryParseExact(nome.Substring(Prefixo.Length, 14), "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out var criado) &&
+                    criado < DateTime.Now.AddHours(-12))
+                    sobras.Add(nome);
+            }
+        }
+        foreach (var nome in sobras)
+        {
+            await using var cmd = con.CreateCommand();
+            cmd.CommandText = $"DROP DATABASE IF EXISTS `{nome}`";
+            await cmd.ExecuteNonQueryAsync();
+        }
+    }
+
+    // no fim do processo de testes: o banco desta execução e os dos testes de migração (<nome>_mig, <nome>_inst)
+    private static void ApagarDestaExecucao()
+    {
+        try
+        {
+            using var con = new MySqlConnection(new MySqlConnectionStringBuilder(ConnectionString) { Database = "" }.ConnectionString);
+            con.Open();
+            var nomes = new List<string>();
+            using (var cmd = con.CreateCommand())
+            {
+                cmd.CommandText = "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = @n OR SCHEMA_NAME LIKE CONCAT(@n, '\\_%')";
+                cmd.Parameters.AddWithValue("@n", NomeBanco);
+                using var r = cmd.ExecuteReader();
+                while (r.Read()) nomes.Add(r.GetString(0));
+            }
+            foreach (var nome in nomes)
+            {
+                using var cmd = con.CreateCommand();
+                cmd.CommandText = $"DROP DATABASE IF EXISTS `{nome}`";
+                cmd.ExecuteNonQuery();
+            }
+        }
+        catch (MySqlException) { } // servidor fora do ar no fim: a próxima execução apaga a sobra
     }
 
     /// <summary>
@@ -124,19 +169,6 @@ public static class BancoTeste
         await p.WaitForExitAsync();
         if (p.ExitCode != 0)
             throw new InvalidOperationException($"recriar.ps1 falhou ({p.ExitCode}):\n{await saida}\n{await erro}");
-    }
-
-    private static async Task<string?> HashAtualAsync()
-    {
-        try
-        {
-            await using var con = new MySqlConnection(ConnectionString);
-            await con.OpenAsync();
-            await using var cmd = con.CreateCommand();
-            cmd.CommandText = "SELECT HASH FROM _TESTE_VERSAO";
-            return (string?)await cmd.ExecuteScalarAsync();
-        }
-        catch (MySqlException) { return null; } // banco ou tabela ainda não existe
     }
 
     public static string RaizDoRepositorio()

@@ -23,7 +23,7 @@ fs.writeFileSync(saida, `-- ====================================================
 -- cidades do legado (sem código IBGE) a estas pelo nome + UF.
 -- =====================================================================
 
-USE labcontrol_v2;
+USE LabControlDB;
 
 ${lotes.join('\n\n')}
 `);

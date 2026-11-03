@@ -14,7 +14,7 @@ public sealed record PedidoMigracao(string CaminhoFirebird, string UsuarioFirebi
 /// <summary>
 /// Migração Firebird → MySQL v2 (M-01…M-18; docs/processos/P24-migracao.md). Dois destinos possíveis:
 /// <list type="bullet">
-/// <item>um banco <b>vazio</b> recém-criado pelos scripts (ex. <c>labcontrol_migracao</c>): uma transação por etapa (falha
+/// <item>um banco <b>vazio</b> recém-criado pelos scripts (ex. <c>lc_homologacao</c>): uma transação por etapa (falha
 /// desfaz só a etapa e para a execução); repetir = recriar o destino;</item>
 /// <item>o <b>banco em uso</b>, se ele só tiver o que o instalador criou (empresa 001 + ADMINISTRADOR do <c>inicial.sql</c>;
 /// decisão do usuário, 29/10/2026: um banco só, LabControlDB): esse conteúdo é apagado e as etapas rodam como num banco

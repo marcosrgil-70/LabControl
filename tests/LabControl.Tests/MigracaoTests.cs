@@ -11,7 +11,7 @@ namespace LabControl.Tests;
 
 /// <summary>
 /// Aceite da 3.5, da 4.1 e da 5.1: migração M-01…M-18 do Firebird real para um banco vazio recriado a cada execução
-/// (<c>labcontrol_migracao_teste</c>). A origem é a cópia fixa da 9.1 (<c>C:\Project\backup\DBMAIS-9.1.FDB</c>, restaurada
+/// (<c>&lt;banco temporário dos testes&gt;_mig</c>, apagado no fim). A origem é a cópia fixa da 9.1 (<c>C:\Project\backup\DBMAIS-9.1.FDB</c>, restaurada
 /// do <c>DBMAIS-20261029.fbk</c>), e não o <c>DBMAIS.FDB</c>, que recebe cópias novas do laboratório: as contagens abaixo são
 /// as do aceite. Sem o legado nesta máquina o teste só avisa.
 /// Roda na coleção <see cref="ColecaoMigracao"/>: sozinho, depois das outras (pendência 18).
@@ -19,14 +19,14 @@ namespace LabControl.Tests;
 [Collection(ColecaoMigracao.Nome)]
 public class MigracaoTests(ITestOutputHelper saida)
 {
-    private const string Banco = "labcontrol_migracao_teste";
+    private static readonly string Banco = BancoTeste.NomeBanco + "_mig";
     private const string Fdb = @"C:\Project\backup\DBMAIS-9.1.FDB";
     private const string SenhaProvisoria = "Migracao#2026";
 
     private static MigracaoService Servico() => new(new ConfigurationBuilder()
         .AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:LabControl"] = BancoTeste.ConnectionString }).Build());
 
-    private static PedidoMigracao Pedido(string banco = Banco, string senha = SenhaProvisoria) => new(Fdb, "SYSDBA", "masterkey", banco, senha, "127.0.0.1");
+    private static PedidoMigracao Pedido(string? banco = null, string senha = SenhaProvisoria) => new(Fdb, "SYSDBA", "masterkey", banco ?? Banco, senha, "127.0.0.1");
 
     [Fact]
     public async Task Migra_cadastros_e_movimento_do_legado_com_conferencias_verdes_e_login_com_troca_de_senha()
@@ -126,6 +126,7 @@ public class MigracaoTests(ITestOutputHelper saida)
         // o destino agora tem dados: uma 2ª migração no mesmo banco é recusada
         var denovo = await s.ValidarAsync(Pedido());
         Assert.Contains("não está vazio", denovo.Mensagem);
+        await ApagarAsync(Banco);
     }
 
     [Fact]
@@ -134,7 +135,7 @@ public class MigracaoTests(ITestOutputHelper saida)
         // instalador sem backup (decisão do usuário, 29/10/2026): um banco só, com a empresa digitada e o ADMINISTRADOR /
         // Admin123; a T07 migra o legado nele mesmo, substituindo esse conteúdo inicial
         if (!File.Exists(Fdb)) { saida.WriteLine($"Legado {Fdb} ausente: migração não testada."); return; }
-        const string banco = "labcontrol_instalacao_teste";
+        var banco = BancoTeste.NomeBanco + "_inst";
         await BancoTeste.RecriarAsync(banco, "Laboratório Instalado Ltda");
         var s = new MigracaoService(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
             { ["ConnectionStrings:LabControl"] = new MySqlConnector.MySqlConnectionStringBuilder(BancoTeste.ConnectionString) { Database = banco }.ConnectionString }).Build());
@@ -184,13 +185,17 @@ public class MigracaoTests(ITestOutputHelper saida)
 
         // agora o banco tem os dados do laboratório: não é substituído de novo
         Assert.Contains("já tem cadastros ou movimentos", (await s.ValidarAsync(Pedido(banco))).Mensagem);
-        await using (var con = new MySqlConnector.MySqlConnection(BancoTeste.ConnectionString))
-        {
-            await con.OpenAsync();
-            await using var cmd = con.CreateCommand();
-            cmd.CommandText = $"DROP DATABASE IF EXISTS {banco}";
-            await cmd.ExecuteNonQueryAsync();
-        }
+        await ApagarAsync(banco);
+    }
+
+    // o banco migrado é grande: apagado no fim do próprio teste, sem depender da limpeza do fim do processo
+    private static async Task ApagarAsync(string banco)
+    {
+        await using var con = new MySqlConnector.MySqlConnection(BancoTeste.ConnectionString);
+        await con.OpenAsync();
+        await using var cmd = con.CreateCommand();
+        cmd.CommandText = $"DROP DATABASE IF EXISTS `{banco}`";
+        await cmd.ExecuteNonQueryAsync();
     }
 
     [Fact]

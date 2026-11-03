@@ -193,7 +193,7 @@ public class BoletinsTests : IDisposable
     }
 
     [Fact]
-    public async Task Boletim_migrado_sem_arquivo_imprime_segunda_via_sem_gravar()
+    public async Task Boletim_migrado_sem_arquivo_imprime_segunda_via_identica_sem_gravar()
     {
         await using var c = await Cenario.CriarAsync();
         var s = Servico(c);
@@ -206,7 +206,8 @@ public class BoletinsTests : IDisposable
         var via = await s.ImprimirAsync(bol.IdLabBoletimAnalises);
         Assert.True(via.Sucesso, via.Mensagem);
         Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString(via.Valor.Conteudo, 0, 4));
-        Assert.StartsWith("2a via", via.Valor.Nome);
+        // idêntica à 1ª via: mesmo nome de arquivo, sem faixa de aviso (decisão do usuário, 30/10/2026)
+        Assert.Equal(BoletimService.NomeArquivo(bol.CodBoletim, bol.Revisao), via.Valor.Nome);
         Assert.False(Directory.Exists(_pasta));
     }
 

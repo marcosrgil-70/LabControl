@@ -9,7 +9,7 @@
 | `LAB_PROPOSTAS.ID_PEDIDOS_VENDAS` | 1.454 propostas |
 |  | ≈1.435 pedidos |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`PEDIDOS_VENDA`](../../banco/objetos/tabelas/PEDIDOS_VENDA.md), [`PEDIDOS_VENDA_ITENS`](../../banco/objetos/tabelas/PEDIDOS_VENDA_ITENS.md)
 
 ## Regras de transformação

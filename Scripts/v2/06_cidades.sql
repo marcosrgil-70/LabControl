@@ -6,7 +6,7 @@
 -- cidades do legado (sem código IBGE) a estas pelo nome + UF.
 -- =====================================================================
 
-USE labcontrol_v2;
+USE LabControlDB;
 
 INSERT IGNORE INTO CIDADES (ID_ESTADOS, CODIGO_IBGE, NOME)
 SELECT E.ID_ESTADOS, V.IBGE, V.NOME

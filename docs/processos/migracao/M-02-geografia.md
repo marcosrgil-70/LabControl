@@ -10,7 +10,7 @@
 | `ESTADOS` | 28 |
 | `CIDADES` | 190 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`PAISES`](../../banco/objetos/tabelas/PAISES.md), [`ESTADOS`](../../banco/objetos/tabelas/ESTADOS.md), [`CIDADES`](../../banco/objetos/tabelas/CIDADES.md)
 
 ## Regras de transformação

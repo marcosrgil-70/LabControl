@@ -43,9 +43,9 @@ Prazos de entrega das análises (com quantidade de dias).
 ## Usada por
 - **Views:** [`VW_LAB_PROPOSTAS_ANALISES`](../views/VW_LAB_PROPOSTAS_ANALISES.md)
 - **Rotinas que alteram:** —
-- **Rotinas que leem:** [`SP_AMOSTRA_GERAR_TESTES`](../rotinas/SP_AMOSTRA_GERAR_TESTES.md)
+- **Rotinas que leem:** [`FN_DATA_PREVISTA`](../rotinas/FN_DATA_PREVISTA.md)
 - **Triggers de outras tabelas que alteram:** —
-- **Triggers de outras tabelas que leem:** [`TG_TESTES_BI`](../triggers/TG_TESTES_BI.md)
+- **Triggers de outras tabelas que leem:** —
 
 ## Telas e processos
 - **Telas:** [T10-12 Prazos](../../../telas/T10-12-prazos.md) · [T10-00 Padrão dos cadastros auxiliares](../../../telas/T10-00-crud-auxiliares.md)
@@ -55,7 +55,8 @@ Prazos de entrega das análises (com quantidade de dias).
 - Por empresa (`ID_EMPRESAS`): cada empresa tem a sua lista; filtro global obrigatório.
 - `ATIVO = 0` some dos combos de inclusão, mas continua aparecendo nos registros antigos que o usam.
 - Excluir só se não houver uso (FK); havendo uso, oferecer "Inativar".
-- `QTDE_DIAS` calcula a `DT_PREVISTA` dos testes da amostra (entrega + dias).
+- `QTDE_DIAS` calcula a `DT_PREVISTA` dos testes da amostra (entrega + dias) por `FN_DATA_PREVISTA`.
+- `DIAS_UTEIS = 1`: conta só dias úteis (pula sábado e domingo; feriados não entram); 0 = dias corridos, como o legado (decisão do usuário, 30/10/2026).
 - Cadastro rápido "+" na proposta.
 
 ## Implementação no C# (EF Core)

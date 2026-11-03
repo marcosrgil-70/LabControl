@@ -22,7 +22,7 @@ var connectionString = builder.Configuration.GetConnectionString("LabControl");
 if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException(
         "ConnectionStrings:LabControl não configurada. Rode: dotnet user-secrets set \"ConnectionStrings:LabControl\" " +
-        "\"Server=localhost;Port=3306;Database=labcontrol_v2;User=root;Password=<senha>\"");
+        "\"Server=localhost;Port=3306;Database=LabControlDB;User=root;Password=<senha>\"");
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IEmpresaContexto, EmpresaContexto>();

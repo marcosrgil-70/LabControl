@@ -30,7 +30,7 @@
 - Envio por e-mail ao contato do resultado da proposta anexa o PDF gravado — **feito na 8.3 (29/10/2026)**: servidor configurado pela empresa na T05 › E-mail (D-26), PDF conferido pelo hash antes de anexar, evento `N` na auditoria. Ver [T27 › Envio por e-mail](../telas/T27-boletim.md#envio-por-e-mail-tarefa-83-29102026).
 
 ## Migração
-Todo boletim migrado recebe `DH_EMISSAO = DH_GERACAO` (histórico congelado); sem PDF (`ARQUIVO_PDF` nulo) — reimpressão dos antigos gera o PDF a partir dos dados gravados, com a indicação "2ª via — boletim migrado".
+Todo boletim migrado recebe `DH_EMISSAO = DH_GERACAO` (histórico congelado); sem PDF (`ARQUIVO_PDF` nulo) — reimpressão dos antigos gera o PDF a partir dos dados gravados, **idêntico à 1ª via** — sem faixa de aviso, com as assinaturas e o mesmo nome de arquivo (decisão do usuário, 30/10/2026: o papel pode ter se danificado e a reemissão vai para os órgãos competentes e para o cliente).
 
 ## Cenários de teste
 - Emitir sem Responsável 1 → "Informe o(s) responsável(is) técnico(s) do boletim."

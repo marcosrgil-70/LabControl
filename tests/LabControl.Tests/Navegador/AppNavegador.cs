@@ -12,7 +12,7 @@ namespace LabControl.Tests.Navegador;
 
 /// <summary>
 /// Testes de ponta a ponta no navegador (pedido do usuário, 20/10/2026: "teste se está realmente fazendo um CRUD"):
-/// o app real no Kestrel (porta livre, banco <c>labcontrol_teste</c>) + Edge sem janela (Playwright, canal msedge —
+/// o app real no Kestrel (porta livre, banco temporário <c>lc_teste_*</c>) + Edge sem janela (Playwright, canal msedge —
 /// usa o Edge instalado, sem baixar navegador). Exercita o que os testes HTTP não pegam: JavaScript das telas
 /// (modais, abas, combos de cidade, "principal", confirmações), cliques e mensagens como o usuário vê.
 /// </summary>

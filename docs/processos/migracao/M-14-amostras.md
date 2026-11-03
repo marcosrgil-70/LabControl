@@ -9,7 +9,7 @@
 | `LAB_HIST_AMOSTRAS` | 5.770 |
 | `LAB_HIST_AMOSTRAS_OBSERVACAO` | 6 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`LAB_HIST_AMOSTRAS`](../../banco/objetos/tabelas/LAB_HIST_AMOSTRAS.md)
 
 ## Regras de transformação

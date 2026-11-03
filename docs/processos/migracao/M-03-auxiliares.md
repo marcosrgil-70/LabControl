@@ -27,7 +27,7 @@
 | `LAB_PROPOSTAS_STATUS` | 3 |
 | `ANALISES_METODOS` | 176 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`TIPOS_LOGRADOURO`](../../banco/objetos/tabelas/TIPOS_LOGRADOURO.md), [`ENDERECOS_TIPOS`](../../banco/objetos/tabelas/ENDERECOS_TIPOS.md), [`FONES_TIPOS`](../../banco/objetos/tabelas/FONES_TIPOS.md), [`EMAILS_TIPOS`](../../banco/objetos/tabelas/EMAILS_TIPOS.md), [`TIPOS_REG_PROFISSIONAL`](../../banco/objetos/tabelas/TIPOS_REG_PROFISSIONAL.md), [`CARGOS_FUNCIONARIOS`](../../banco/objetos/tabelas/CARGOS_FUNCIONARIOS.md), [`IDIOMAS`](../../banco/objetos/tabelas/IDIOMAS.md), [`UNIDADES`](../../banco/objetos/tabelas/UNIDADES.md), [`EMBALAGENS_TIPOS`](../../banco/objetos/tabelas/EMBALAGENS_TIPOS.md), [`LAB_TIPOS_RESULTADOS`](../../banco/objetos/tabelas/LAB_TIPOS_RESULTADOS.md), [`CONDICOES_PAGTOS`](../../banco/objetos/tabelas/CONDICOES_PAGTOS.md), [`PRAZOS`](../../banco/objetos/tabelas/PRAZOS.md), [`MOEDAS`](../../banco/objetos/tabelas/MOEDAS.md), [`AMOSTRAS_TIPO`](../../banco/objetos/tabelas/AMOSTRAS_TIPO.md), [`AMOSTRAS_STATUS`](../../banco/objetos/tabelas/AMOSTRAS_STATUS.md), [`ANALISES_TIPO`](../../banco/objetos/tabelas/ANALISES_TIPO.md), [`ANALISES_STATUS`](../../banco/objetos/tabelas/ANALISES_STATUS.md), [`BOLETINS_STATUS`](../../banco/objetos/tabelas/BOLETINS_STATUS.md), [`LAB_PROPOSTAS_STATUS`](../../banco/objetos/tabelas/LAB_PROPOSTAS_STATUS.md), [`ANALISES_METODOS`](../../banco/objetos/tabelas/ANALISES_METODOS.md)
 
 ## Regras de transformação

@@ -19,7 +19,7 @@ Fases 0–8 concluídas, menos a 5.4 (layout do boletim, aguarda os 3 boletins r
 ### 9.1 Migração completa em banco limpo
 > ✅ **Concluída em 29/10/2026** — antes: decisões 33 (pesquisas pelo parâmetro da empresa), 34 (só o status em amostra com boletim emitido, D-27) e 36 (ano digitado errado corrigido na M-16), e a 37 (`MySqlConnector` 2.6.2). Cópia congelada do legado `C:\Project\backup\DBMAIS-20261029.fbk` (gbak); `labcontrol_migracao` recriado pelos scripts e migrado pela T07: 18 etapas ok, **74/74 conferências**, 695 anomalias no relatório `C:\Project\backup\migracao-9.1-20261029.csv` — revisão com o laboratório na 9.2 (pendência 39). Na virada (9.3) a migração é repetida com os dados do dia.
 
-- **Passos:** recriar `labcontrol_v2`; congelar o Firebird (cópia do `DBMAIS.FDB` da data); executar M-01 … M-18; todas as conferências do doc 13 §3; relatório de anomalias revisado com o usuário.
+- **Passos:** recriar o `LabControlDB`; congelar o Firebird (cópia do `DBMAIS.FDB` da data); executar M-01 … M-18; todas as conferências do doc 13 §3; relatório de anomalias revisado com o usuário.
 - **Aceite:** 100% das conferências verdes ou justificadas por escrito.
 - **Esforço:** M
 
@@ -42,7 +42,7 @@ Fases 0–8 concluídas, menos a 5.4 (layout do boletim, aguarda os 3 boletins r
 >
 > Falta a virada em si, que depende da 9.2 e da 5.4.
 
-- **Passos:** `/security-review`; backup final do Firebird e do MySQL (`mysqldump --routines --triggers`); última migração com os dados do dia; apontar `appsettings` (produção) para `labcontrol_v2`; publicar; criar senhas provisórias e entregar aos usuários; desligar o LabControl.exe (manter o Firebird somente leitura para consulta histórica por 6 meses).
+- **Passos:** `/security-review`; backup final do Firebird e do MySQL (`mysqldump --routines --triggers`); última migração com os dados do dia; apontar `appsettings` (produção) para o `LabControlDB`; publicar; criar senhas provisórias e entregar aos usuários; desligar o LabControl.exe (manter o Firebird somente leitura para consulta histórica por 6 meses).
 - **Plano de retorno:** se houver bloqueio grave no 1º dia, voltar ao Delphi com o Firebird intacto (o v2 não escreve no Firebird).
 - **Esforço:** S
 

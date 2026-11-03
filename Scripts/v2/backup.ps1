@@ -23,12 +23,12 @@
 
 .EXAMPLE
   .\Scripts\v2\backup.ps1 -Destino D:\Backup\LabControl -PastaApp C:\inetpub\LabControl -LoginPath labcontrol_backup
-  .\Scripts\v2\backup.ps1 -Destino C:\Project\backup -Banco labcontrol_migracao -Conferir
+  .\Scripts\v2\backup.ps1 -Destino C:\Project\backup -Banco LabControlDB -Conferir
 #>
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)] [string]$Destino,
-  [string]$Banco = 'labcontrol_v2',
+  [string]$Banco = 'LabControlDB',
   # pasta do app publicado: Boletins:Pasta e DataProtection:PastaChaves relativas são resolvidas a partir dela
   # (padrão: a raiz do repositório; resolvida abaixo, porque no -File do PowerShell 5.1 o $PSScriptRoot vem vazio aqui)
   [string]$PastaApp = '',

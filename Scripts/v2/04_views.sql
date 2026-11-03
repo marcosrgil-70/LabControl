@@ -3,7 +3,7 @@
 -- Toda consulta da aplicação filtra por ID_EMPRESAS (coluna presente em todas as views).
 -- =====================================================================
 
-USE labcontrol_v2;
+USE LabControlDB;
 
 -- Clientes (VW_CLIENTES do legado, sem UNION PF/PJ)
 CREATE OR REPLACE VIEW VW_CLIENTES AS

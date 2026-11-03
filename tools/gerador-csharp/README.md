@@ -16,7 +16,7 @@ node tools/gerador-csharp/gerar.mjs
 ```
 Se uma **view** mudou, atualize antes as colunas (o parser não deduz tipos de um SELECT), com o banco já recriado:
 ```bash
-mysql -u root -p -N --raw -D labcontrol_v2 < tools/gerador-csharp/colunas_views.sql > tools/gerador-csharp/views.json
+mysql -u root -p -N --raw -D LabControlDB < tools/gerador-csharp/colunas_views.sql > tools/gerador-csharp/views.json
 ```
 Depois: `dotnet build` e `dotnet test tests/LabControl.Tests` (o teste `ModeloTests` compara o modelo com o `information_schema`).
 

@@ -1,7 +1,7 @@
 # 13 — Migração de Dados Firebird → MySQL v2
 
 > Origem: `C:\Project\Laboratorio\DBMAIS.FDB` (Firebird 2.5, servidor local `localhost:3050`, SYSDBA).
-> Destino: `labcontrol_v2` criado pelos scripts `Scripts/v2/01..05`.
+> Destino: `LabControlDB` criado pelos scripts `Scripts/v2/01..06` (no desenvolvimento, `Scripts/v2/carregar-legado.ps1` faz tudo; no cliente, o instalador cria o banco e a T07 migra nele).
 > Implementação: reescrever `Controllers/MigracaoController.cs` como **serviço** (`Services/Migracao/MigracaoService.cs`) + tela `/Migracao` (só ADMIN_GLOBAL). A migração da v1 (doc `_obsoleto_v1/18-migracao.md`) está **errada** (achata produtos da proposta, não migra resultados/boletins, endereços incompletos) e será descartada.
 
 ## 1. Regras gerais
@@ -9,7 +9,7 @@
 1. Executar numa conexão com `SET @LC_MIGRACAO = 1;` (desliga numeração automática e validações; os números originais são preservados).
 2. Todo registro migrado vai para a **empresa 1** (`COD_EMPRESA = '001'`), a única do legado.
 3. Guardar o ID antigo em `ID_LEGADO` e manter dicionários em memória `idAntigo → idNovo` para cada tabela.
-4. Uma transação por **etapa** (não uma única transação gigante) com log de etapa; a migração pode ser repetida do zero (`DROP DATABASE labcontrol_v2` + scripts).
+4. Uma transação por **etapa** (não uma única transação gigante) com log de etapa; a migração pode ser repetida do zero (`carregar-legado.ps1`, ou `DROP DATABASE LabControlDB` + scripts).
 5. Ao final: `SET @LC_MIGRACAO = 0;`, inicializar `SEQUENCIAS_DOCUMENTOS` com os máximos por ano e rodar as **conferências** (seção 4).
 6. Strings: Firebird ISO8859_1 → UTF-8 (FirebirdSql.Data.FirebirdClient com `Charset=ISO8859_1`), aplicar `Trim()`.
 7. Booleanos `'S'/'N'` → 1/0 (nulo → 0).
@@ -77,4 +77,4 @@
 1. `SET @LC_MIGRACAO = 0`.
 2. Testar login com um usuário migrado (troca de senha obrigatória).
 3. Rodar o roteiro de teste do doc 12 §7 numa **cópia** do banco migrado.
-4. Backup `mysqldump --routines --triggers labcontrol_v2`.
+4. Backup `mysqldump --routines --triggers LabControlDB` (ou `Scripts/v2/backup.ps1`).

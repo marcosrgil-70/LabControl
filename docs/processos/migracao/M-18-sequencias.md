@@ -9,7 +9,7 @@
 | `(máximos dos documentos migrados)` | — |
 | `SYS_TABELAS_ID` | 1 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`SEQUENCIAS_DOCUMENTOS`](../../banco/objetos/tabelas/SEQUENCIAS_DOCUMENTOS.md)
 
 ## Regras de transformação

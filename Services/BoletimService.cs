@@ -394,7 +394,8 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
 
     /// <summary>
     /// Reimpressão do emitido: o PDF gravado, conferido pelo SHA-256 (divergente ou ausente = alerta de integridade).
-    /// Boletim migrado (emitido sem arquivo) sai como "2ª via" gerada dos dados gravados.
+    /// Boletim migrado (emitido sem arquivo): 2ª via gerada dos dados gravados, idêntica à 1ª via (sem faixa de aviso, com as
+    /// assinaturas e o mesmo nome de arquivo — decisão do usuário, 30/10/2026).
     /// </summary>
     public async Task<Resultado<ArquivoPdf>> ImprimirAsync(int id)
     {
@@ -404,8 +405,8 @@ public sealed class BoletimService(LabDbContext db, IEmpresaContexto ctx, Proced
         if (b.DhEmissao is null) return Resultado.Erro("Boletim ainda não emitido: use \"Visualizar\" para a prévia.");
         if (b.ArquivoPdf is null)
         {
-            var d = (await DocumentoAsync(id, ModoBoletim.SegundaViaMigrado))!;
-            return Resultado.Ok(new ArquivoPdf(BoletimPdf.Gerar(d), $"2a via {NomeArquivo(d)}"));
+            var d = (await DocumentoAsync(id, ModoBoletim.Emitido))!;
+            return Resultado.Ok(new ArquivoPdf(BoletimPdf.Gerar(d), NomeArquivo(d)));
         }
         byte[]? pdf;
         try { pdf = await armazem.LerAsync(b.ArquivoPdf); }

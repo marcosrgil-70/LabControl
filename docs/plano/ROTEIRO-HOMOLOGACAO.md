@@ -3,14 +3,14 @@
 **Para quem:** usuários do laboratório (recepção, analista, responsável técnico, comercial) com o apoio de quem conduz a implantação.
 **Duração:** um dia de uso em paralelo com o sistema antigo (Delphi), que continua valendo até a virada (9.3).
 **Objetivo:** fazer o trabalho de um dia normal no sistema novo, conferir que dá o mesmo resultado do antigo e anotar tudo que estranhar.
-**Base:** banco `labcontrol_migracao`, com **todos os dados do sistema antigo migrados** (9.1, 29/10/2026). O que for gravado no dia da homologação **não** vai para produção: na virada a migração é feita de novo, com os dados do dia.
+**Base:** banco `LabControlDB` (carregado por `Scripts/v2/carregar-legado.ps1` ou instalado e migrado pela T07), com **todos os dados do sistema antigo migrados** (9.1, 29/10/2026). O que for gravado no dia da homologação **não** vai para produção: na virada a migração é feita de novo, com os dados do dia.
 
 > Cada passo tem o **resultado esperado**. Marque ✅ se deu certo; se não, marque ❌ e anote na [tabela de ocorrências](#registro-de-ocorrências) (o que fez, o que esperava, o que aconteceu, se possível com um print).
 
 ---
 
 ## 0. Preparação (quem conduz, antes do dia)
-- [ ] Sistema publicado no servidor do laboratório apontando para o `labcontrol_migracao` (ou rodando numa máquina com acesso ao banco); endereço anotado: ______________________
+- [ ] Sistema publicado no servidor do laboratório apontando para o `LabControlDB` com o legado (ou rodando numa máquina com acesso ao banco); endereço anotado: ______________________
 - [ ] De preferência já como na produção ([checklist da virada](CHECKLIST-VIRADA.md), parte A): HTTPS, pastas dos boletins e das chaves fora da pasta do app, usuário MySQL próprio com as permissões mínimas.
 - [ ] Impressora **Argox** instalada no servidor e visível na lista de impressoras do Windows (pendência 21).
 - [ ] Em *Sistema › Parâmetros da Empresa › E-mail*: servidor, porta, segurança, usuário, senha e remetente do e-mail do laboratório preenchidos e **"Enviar e-mail de teste"** recebido (pendência 38).

@@ -32,12 +32,12 @@ Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md)
 | Autenticação | Cookie + senha PBKDF2, bloqueio após 5 tentativas, troca obrigatória no 1º acesso |
 | Impressão | comprovante como página de impressão; etiquetas PPLB em RAW na térmica (Argox); **boletim, proposta, pedido e relatórios em PDF (QuestPDF)**; o boletim emitido fica numa pasta do servidor com SHA-256 |
 | E-mail | envio do boletim emitido por SMTP (MailKit), configurado por empresa em Parâmetros da Empresa › E-mail (senha cifrada pelo ASP.NET Data Protection) |
-| Testes | xUnit (serviços + banco `labcontrol_teste`) e Playwright (Edge sem janela) para as telas |
+| Testes | xUnit (serviços + banco temporário `lc_teste_*`, criado e apagado a cada execução) e Playwright (Edge sem janela) para as telas |
 
 ## Como rodar (desenvolvimento)
 1. **Senha do MySQL** em user-secrets (nunca em arquivo versionado):
-   `dotnet user-secrets set "ConnectionStrings:LabControl" "Server=localhost;Port=3306;Database=labcontrol_v2;User=root;Password=<senha>"`
-2. **Banco** pelos scripts: `.\Scripts\v2\recriar.ps1 -Dev` (cria o `labcontrol_v2` com a empresa 001 e o usuário de desenvolvimento). Detalhes em [Scripts/v2/README.md](Scripts/v2/README.md).
+   `dotnet user-secrets set "ConnectionStrings:LabControl" "Server=localhost;Port=3306;Database=LabControlDB;User=root;Password=<senha>"`
+2. **Banco** — um só, o `LabControlDB`, com os dados do legado (decisão do usuário, 30/10/2026): `.\Scripts\v2\carregar-legado.ps1` (apaga, recria pelos scripts e migra o `DBMAIS.FDB` pela T07, ~11 min). Mudou um script? `.\Scripts\v2\atualizar.ps1 -Banco LabControlDB` (sem perder os dados). Detalhes em [Scripts/v2/README.md](Scripts/v2/README.md#bancos-de-dados--um-só-permanente-decisão-do-usuário-30102026).
 3. **Executar:** `dotnet run` (ou `rodar.bat`) → http://localhost:5180.
 4. **Login:** `ADMINISTRADOR` / `Admin123` (acesso a tudo, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA"). Vale no desenvolvimento e, por decisão do usuário (29/10/2026), também no banco novo criado pelo instalador.
 5. **PDFs dos boletins emitidos:** pasta `Boletins:Pasta` do `appsettings.json` (padrão `storage/boletins`, fora do git). Em produção, uma pasta do servidor que **entra no backup** junto com o banco (o banco guarda só o caminho e o SHA-256).
@@ -45,10 +45,8 @@ Telas por situação: [matriz Delphi → C#](docs/plano/MATRIZ-DELPHI-CSHARP.md)
 7. **Backup:** `.\Scripts\v2\backup.ps1 -Destino <pasta>` junta num zip o banco, os boletins e as chaves ([Scripts/v2/README.md](Scripts/v2/README.md#backup-banco--boletins--chaves)). Para a produção, siga o [checklist da virada](docs/plano/CHECKLIST-VIRADA.md).
 8. **Instalar no servidor do cliente:** `.\instalador\construir.ps1` gera o `LabControl-Setup-<versão>.exe` (~43 MB). O assistente pede a empresa e as pastas, confere o que o servidor já tem e baixa o que faltar (IIS, VC++, .NET, MySQL). O banco é o `LabControlDB` zerado (com `ADMINISTRADOR` / `Admin123`) ou um backup. Depois é só migrar o sistema antigo pela tela de Migração, no próprio banco. Detalhes em [instalador/README.md](instalador/README.md).
 
-### Com os dados reais do legado
-1. `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`
-2. No app (banco `labcontrol_v2`), tela **Migração** (T07): executa M-01 → M-18 (cadastros, propostas, pedidos, amostras, resultados e boletins; ~5 min) com conferências e anomalias. Os boletins do legado entram **emitidos** (congelados) e reimprimem como "2ª via".
-3. Aponte o user-secret para `Database=labcontrol_migracao` e entre com `ADMINISTRADOR` / `Admin123` (ou um usuário migrado com a senha provisória digitada na T07).
+### Dados reais do legado
+O `carregar-legado.ps1` faz o mesmo que o cliente fará depois do instalador: banco com a empresa e o `ADMINISTRADOR`, e a **Migração** (T07) M-01 → M-18 no próprio banco (cadastros, propostas, pedidos, amostras, resultados e boletins) com conferências e anomalias. Os boletins do legado entram **emitidos** (congelados) e reimprimem como 2ª via, idêntica à 1ª. Login `ADMINISTRADOR` / `Admin123`; os outros usuários migrados entram com a senha provisória `Mudar@2026` e trocam no 1º acesso.
 
 ## Testes
 `dotnet test tests/LabControl.Tests` — suíte inteira (**317 testes, ~5 min**, 30/10/2026), inclusive a migração real quando o legado existe na máquina e o serviço do Firebird está iniciado. A origem do teste é a cópia fixa da 9.1 (`C:\Project\backup\DBMAIS-9.1.FDB`, restaurada do `DBMAIS-20261029.fbk`), porque as contagens conferidas são as do aceite; o `DBMAIS.FDB` recebe as cópias novas do laboratório. Só as telas no navegador: `--filter "FullyQualifiedName~Navegador"`. Não rodar com o `dotnet run` aberto (trava o build). Ver [P26](docs/processos/P26-testes-ponta-a-ponta.md).

@@ -27,7 +27,7 @@
 2. Conferências obrigatórias (doc 13 §3) todas verdes.
 3. Login com um usuário migrado (troca de senha obrigatória).
 4. Roteiro do doc 12 §7 numa **cópia** do banco migrado.
-5. `mysqldump --routines --triggers labcontrol_v2`.
+5. `mysqldump --routines --triggers LabControlDB` (ou `Scripts/v2/backup.ps1`).
 
 ## Riscos e mitigação
 | Risco | Mitigação |
@@ -39,7 +39,7 @@
 | Encoding | conferir acentos em 20 nomes sorteados |
 
 ## Decisões do usuário e implementação (parte 1, tarefa 3.5 — 21/10/2026)
-- **Destino:** banco **separado e vazio** (ex. `labcontrol_migracao`, `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`), executado pela T07 a partir do app no `labcontrol_v2`. Para usar o banco migrado, aponte o user-secret `ConnectionStrings:LabControl` para ele.
+- **Destino:** banco **separado e vazio** (ex. `lc_homologacao`, `.\Scripts\v2\recriar.ps1 -Banco lc_homologacao -Forcar`), executado pela T07 a partir do app no `LabControlDB`, ou o próprio banco recém-instalado (29/10/2026). No desenvolvimento, `Scripts/v2/carregar-legado.ps1` recria o `LabControlDB` e migra nele (decisão do usuário, 30/10/2026: um só banco permanente).
 - **Ou o próprio banco em uso, recém-instalado (29/10/2026):** o instalador cria o `LabControlDB` com a empresa e o ADMINISTRADOR / Admin123; a T07 aceita esse banco como destino, apaga o conteúdo inicial e migra **numa transação só** (falha desfaz tudo). Regra completa em [T07](../telas/T07-migracao.md).
 - **Usuários:**
   - **senha provisória única** para todos (dúvida 7 do plano), digitada na tela e nunca gravada em claro;

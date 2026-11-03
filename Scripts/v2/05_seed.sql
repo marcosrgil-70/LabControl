@@ -4,7 +4,7 @@
 -- ou do cadastro de nova empresa (que chama SP_INICIALIZAR_EMPRESA).
 -- =====================================================================
 
-USE labcontrol_v2;
+USE LabControlDB;
 
 -- ---------------------------------------------------------------------
 -- Brasil + 27 UFs (códigos IBGE). Cidades: importar a tabela IBGE completa

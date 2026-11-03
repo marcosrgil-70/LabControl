@@ -5,8 +5,12 @@ using QuestPDF.Infrastructure;
 
 namespace LabControl.Services.Boletins;
 
-/// <summary>Para que o PDF é gerado: prévia (marca d'água, sem assinaturas), emissão (definitivo) ou 2ª via de boletim migrado.</summary>
-public enum ModoBoletim { Previa, Emitido, SegundaViaMigrado }
+/// <summary>
+/// Para que o PDF é gerado: prévia (marca d'água, sem assinaturas) ou emitido (definitivo, com as assinaturas). A 2ª via do
+/// boletim migrado sai como emitido, idêntica à 1ª via, sem faixa de aviso (decisão do usuário, 30/10/2026: o papel pode
+/// ter se danificado e a reemissão vai para os órgãos competentes e para o cliente).
+/// </summary>
+public enum ModoBoletim { Previa, Emitido }
 
 /// <summary>Uma linha da tabela; <paramref name="Resultado"/> e <paramref name="Especificacao"/> já com a unidade ("7,6e1 UFC/mL").</summary>
 public sealed record LinhaBoletim(string Parametro, string? Resultado, string? Especificacao, bool Acreditado);
@@ -130,9 +134,6 @@ public static class BoletimPdf
                 else if (d.NrAcreditacao is not null) x.AlignCenter().AlignMiddle().Text($"Acreditação {d.NrAcreditacao}").Bold();
             });
         });
-        if (d.Modo == ModoBoletim.SegundaViaMigrado)
-            col.Item().PaddingTop(4).Background("#F2F2F2").Padding(3).AlignCenter()
-                .Text("2ª VIA — BOLETIM MIGRADO DO SISTEMA ANTERIOR (reimpresso a partir dos dados gravados)").FontSize(8).Bold();
         col.Item().Height(14);
     });
 

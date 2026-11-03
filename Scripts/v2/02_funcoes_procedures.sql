@@ -18,7 +18,7 @@
 --            NÃO chamar SP_* dentro de uma transação já aberta pela aplicação.
 -- =====================================================================
 
-USE labcontrol_v2;
+USE LabControlDB;
 
 DROP FUNCTION IF EXISTS FN_FORMATA_DECIMAL;
 DROP FUNCTION IF EXISTS FN_FORMATA_RESULTADO;
@@ -26,6 +26,7 @@ DROP FUNCTION IF EXISTS FN_NR_AMOSTRA;
 DROP FUNCTION IF EXISTS FN_NR_AMOSTRA_ID;
 DROP FUNCTION IF EXISTS FN_NR_PROPOSTA;
 DROP FUNCTION IF EXISTS FN_DATA_PARCIAL;
+DROP FUNCTION IF EXISTS FN_DATA_PREVISTA;
 DROP FUNCTION IF EXISTS FN_ACREDITADO;
 DROP FUNCTION IF EXISTS FN_OBS_METODOS;
 DROP PROCEDURE IF EXISTS SP_PROXIMO_NUMERO;
@@ -164,6 +165,35 @@ BEGIN
   RETURN CONCAT(IF(p_dia IS NOT NULL AND p_mes IS NOT NULL, CONCAT(LPAD(p_dia, 2, '0'), '/'), ''),
                 IF(p_mes IS NOT NULL, CONCAT(LPAD(p_mes, 2, '0'), '/'), ''),
                 p_ano);
+END$$
+
+-- ---------------------------------------------------------------------
+-- FN_DATA_PREVISTA — data prevista do teste: entrega + QTDE_DIAS do prazo.
+-- PRAZOS.DIAS_UTEIS = 1 conta só dias úteis (pula sábado e domingo; feriados
+-- não entram — não há cadastro de feriados); 0 = dias corridos, como o legado
+-- (decisão do usuário, 30/10/2026). Sem prazo: a própria data.
+-- ---------------------------------------------------------------------
+CREATE FUNCTION FN_DATA_PREVISTA(p_data DATE, p_id_prazo INT)
+RETURNS DATE READS SQL DATA
+BEGIN
+  DECLARE v_dias INT DEFAULT 0;
+  DECLARE v_uteis TINYINT DEFAULT 0;
+  DECLARE v_dt DATE;
+  IF p_data IS NULL THEN
+    RETURN NULL;
+  END IF;
+  SELECT COALESCE(MAX(QTDE_DIAS), 0), COALESCE(MAX(DIAS_UTEIS), 0) INTO v_dias, v_uteis FROM PRAZOS WHERE ID_PRAZOS = p_id_prazo;
+  IF v_uteis = 0 THEN
+    RETURN DATE_ADD(p_data, INTERVAL v_dias DAY);
+  END IF;
+  SET v_dt = p_data;
+  WHILE v_dias > 0 DO
+    SET v_dt = DATE_ADD(v_dt, INTERVAL 1 DAY);
+    IF DAYOFWEEK(v_dt) NOT IN (1, 7) THEN   -- 1 = domingo, 7 = sábado
+      SET v_dias = v_dias - 1;
+    END IF;
+  END WHILE;
+  RETURN v_dt;
 END$$
 
 -- ---------------------------------------------------------------------
@@ -380,10 +410,9 @@ BEGIN
          ID_ANALISES_TIPO, ID_ANALISES_METODOS, ID_IDIOMAS, ID_PRAZOS, DT_PREVISTA)
   SELECT v_emp, p_id_amostra, PA.ID_LAB_PROPOSTAS_PRODANALISES, PA.ID_LAB_PARAMETROS_ANALISES,
          P.ID_ANALISES_TIPO, PA.ID_ANALISES_METODOS, PA.ID_IDIOMAS, PA.ID_PRAZOS,
-         DATE_ADD(v_dt, INTERVAL COALESCE(Z.QTDE_DIAS, 0) DAY)
+         FN_DATA_PREVISTA(v_dt, PA.ID_PRAZOS)
     FROM LAB_PROPOSTAS_PRODANALISES PA
     JOIN LAB_PARAMETROS_ANALISES P ON P.ID_LAB_PARAMETROS_ANALISES = PA.ID_LAB_PARAMETROS_ANALISES
-    LEFT JOIN PRAZOS Z ON Z.ID_PRAZOS = PA.ID_PRAZOS
    WHERE PA.ID_LAB_PROPOSTAS_PRODUTOS = v_item
    ORDER BY PA.ID_LAB_PROPOSTAS_PRODANALISES;
 END$$

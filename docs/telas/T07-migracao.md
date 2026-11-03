@@ -6,7 +6,7 @@
 **Processos:** [P24 Migração](../processos/P24-migracao.md) e as etapas [M-01 … M-18](../processos/migracao/README.md) · **Documento base:** [banco/13-MIGRACAO-DADOS.md](../banco/13-MIGRACAO-DADOS.md)
 
 ## Tela
-1. **Conexões**: string do Firebird (`localhost:3050`, `C:\Project\Laboratorio\DBMAIS.FDB`, SYSDBA, charset ISO8859_1) e confirmação do banco destino (`labcontrol_v2`, deve estar **vazio** — recém-criado pelos scripts).
+1. **Conexões**: string do Firebird (`localhost:3050`, `C:\Project\Laboratorio\DBMAIS.FDB`, SYSDBA, charset ISO8859_1) e confirmação do banco destino (o próprio `LabControlDB` recém-instalado ou um banco **vazio** recém-criado pelos scripts).
 2. **Etapas**: lista M-01 … M-18 com checkbox, estado (pendente / executando / ok / erro), registros lidos × gravados e tempo. Botões "Executar selecionadas" e "Executar todas". Etapas dependentes ficam desabilitadas até as anteriores terminarem.
 3. **Log em tempo real** (SignalR ou polling): mensagens por etapa, avisos de anomalia (doc 10 §8) e erros.
 4. **Conferências** (doc 13 §3): tabela esperado × encontrado com ✅/❌ — contagens, somas de valores por ano, amostras por ano, 20 números de amostra sorteados, uma `ULTIMA_REVISAO = 1` por documento, saldos.
@@ -31,7 +31,7 @@
   - `Etapas/M01…M10`;
   - `Controllers/MigracaoController.cs`, `ViewModels/MigracaoVM.cs`, `Views/Migracao/Index.cshtml`.
 - **Decisões do usuário:**
-  - destino = **banco separado e vazio** (ex. `labcontrol_migracao`, criado por `.\Scripts\v2\recriar.ps1 -Banco labcontrol_migracao -Forcar`), executado a partir do app logado no `labcontrol_v2`;
+  - destino = **banco separado e vazio** (ex. `lc_homologacao`, criado por `.\Scripts\v2\recriar.ps1 -Banco lc_homologacao -Forcar`), executado a partir do app logado no `LabControlDB` — ou o próprio banco instalado (29/10/2026); no desenvolvimento, `Scripts/v2/carregar-legado.ps1` (30/10/2026);
   - **ou o próprio banco em uso, recém-instalado** (29/10/2026, decisão do usuário: instalação com um banco só, `LabControlDB`). É o destino padrão da tela. Aceito só se tiver apenas o que o `inicial.sql` cria: no máximo 1 empresa, só o ADMINISTRADOR sem `USUCOD_LEGADO`, até 2 entidades, nenhuma proposta ou amostra. A migração apaga esse conteúdo (menos `PAISES`, `ESTADOS`, `CIDADES` e `PERMISSOES`, dos scripts) e roda M-01…M-18 **numa transação só**: falha ou interrupção desfaz tudo e o banco volta como o instalador deixou. O ADMINISTRADOR migrado fica com `Admin123`, sem troca. Ao final, entra-se de novo (o usuário logado foi substituído). Teste: `MigracaoTests.Instalacao_nova_migra_no_proprio_banco_e_falha_desfaz_tudo`;
   - **senha provisória única** para todos (digitada na tela, nunca gravada em claro nem exibida; troca obrigatória no 1º acesso);
   - **todos os usuários com o perfil ADMINISTRADOR** (USUCOD 1 → ADMIN_GLOBAL).
@@ -42,7 +42,7 @@
   - etapas (situação, gravados, tempo, erro), conferências esperado (lido no Firebird na hora) × encontrado, anomalias, log e **relatório CSV**.
 - **Diferença do desenho original:** executa a parte inteira em sequência (M-01 → M-10), parando na 1ª falha. Cada etapa tem a sua transação, então a falha desfaz só ela. Não há escolha de etapas soltas: os dicionários `idAntigo → idNovo` vivem em memória e o destino é recriado a cada execução. A parte 2 (4.1) reconstrói os mapas por `ID_LEGADO` e chaves únicas.
 - **Conexão destino:** própria, aberta à mão com `SET @LC_MIGRACAO = 1`; contexto sem usuário (o logado é do banco do app), empresa = a criada na M-01.
-- **Resultado contra o `DBMAIS.FDB` real** (`MigracaoTests`, banco `labcontrol_migracao_teste`):
+- **Resultado contra o `DBMAIS.FDB` real** (`MigracaoTests`, banco temporário `lc_teste_*_mig`):
   - todas as conferências verdes;
   - 527 entidades / 664 e-mails / 695 fones / 538 endereços / 1.915 produtos / 462 parâmetros (52 acreditados) / 176 métodos / 15 usuários;
   - login de usuário migrado exige troca de senha;

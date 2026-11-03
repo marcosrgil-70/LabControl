@@ -9,7 +9,7 @@
 | `ENTIDADES_FONES` | 695 |
 | `ENTIDADES_EMAILS` | 664 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`ENTIDADES_FONES`](../../banco/objetos/tabelas/ENTIDADES_FONES.md), [`ENTIDADES_EMAILS`](../../banco/objetos/tabelas/ENTIDADES_EMAILS.md)
 
 ## Regras de transformação

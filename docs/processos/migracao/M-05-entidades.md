@@ -11,7 +11,7 @@
 | `ENTIDADES_PJ` | 483 |
 | `ENTIDADES_OBSERVACOES` | 1 |
 
-## Destino (MySQL `labcontrol_v2`)
+## Destino (MySQL `LabControlDB`)
 [`ENTIDADES`](../../banco/objetos/tabelas/ENTIDADES.md)
 
 ## Regras de transformação
