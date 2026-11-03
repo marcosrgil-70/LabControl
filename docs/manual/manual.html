@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>LabControl — Manual do Usuário</title>
+<!--
+  Fonte do Manual.pdf (raiz do repositório). Para gerar de novo: .\docs\manual\gerar-manual.ps1
+  (tira as imagens das telas com dados fictícios e imprime este arquivo em PDF). Só o texto mudou: -SoPdf.
+  Escrito para quem opera o sistema, não para programadores: sem termos técnicos, passo a passo.
+-->
+<style>
+  @page { size: A4; }
+  :root { --azul: #1a2f4e; --azul2: #0d6efd; --cinza: #6c757d; --borda: #dee2e6; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: #212529; margin: 0; }
+  h1, h2, h3 { color: var(--azul); line-height: 1.25; }
+  h1 { font-size: 21pt; margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 3px solid var(--azul); break-before: page; }
+  h1 .num { color: var(--azul2); margin-right: 3mm; }
+  h2 { font-size: 13.5pt; margin: 7mm 0 2mm; break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 5mm 0 1.5mm; break-after: avoid; }
+  p { margin: 0 0 2.5mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin-bottom: 1mm; }
+  b, strong { color: #111; }
+  .botao { display: inline-block; padding: 0 2mm; border: 1px solid #adb5bd; border-radius: 3px; background: #f8f9fa; font-size: 9.5pt; white-space: nowrap; }
+  .menu { color: var(--azul2); font-weight: 600; white-space: nowrap; }
+  figure { margin: 3mm 0 5mm; break-inside: avoid; text-align: center; }
+  figure img { max-width: 100%; max-height: 225mm; object-fit: contain; border: 1px solid var(--borda); border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  figure.media img { max-width: 60%; }
+  figcaption { font-size: 9pt; color: var(--cinza); margin-top: 1.5mm; }
+  .caixa { border-left: 4px solid; border-radius: 4px; padding: 2.5mm 4mm; margin: 3mm 0 4mm; break-inside: avoid; }
+  .caixa p:last-child, .caixa ul:last-child { margin-bottom: 0; }
+  .dica { border-color: #198754; background: #eef8f2; }
+  .atencao { border-color: #e0a800; background: #fff8e1; }
+  .importante { border-color: #dc3545; background: #fdeeee; }
+  .caixa .titulo { font-weight: 700; display: block; margin-bottom: 1mm; }
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 9.5pt; break-inside: auto; }
+  th, td { border: 1px solid var(--borda); padding: 1.5mm 2mm; text-align: left; vertical-align: top; }
+  th { background: #eef2f7; color: var(--azul); }
+  tr { break-inside: avoid; }
+  .passos { counter-reset: passo; list-style: none; padding-left: 0; }
+  .passos > li { counter-increment: passo; position: relative; padding-left: 9mm; margin-bottom: 2mm; }
+  .passos > li::before { content: counter(passo); position: absolute; left: 0; top: 0; width: 6mm; height: 6mm; border-radius: 50%; background: var(--azul2); color: #fff; font-weight: 700; font-size: 9pt; text-align: center; line-height: 6mm; }
+  /* capa */
+  .capa { height: 255mm; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(160deg, #1a2f4e, #2c5282); color: #fff; border-radius: 6px; }
+  .capa .logo { font-size: 44pt; font-weight: 700; letter-spacing: 1px; }
+  .capa .sub { font-size: 14pt; opacity: .85; margin-bottom: 18mm; }
+  .capa .titulo { font-size: 26pt; font-weight: 600; }
+  .capa .para { font-size: 12pt; opacity: .85; margin-top: 4mm; }
+  .capa .versao { margin-top: 30mm; font-size: 10pt; opacity: .75; }
+  /* sumário */
+  .sumario { break-before: page; }
+  .sumario h2 { font-size: 18pt; border-bottom: 3px solid var(--azul); padding-bottom: 2mm; margin-top: 0; }
+  .sumario ol { list-style: none; padding: 0; columns: 2; column-gap: 10mm; }
+  .sumario li { break-inside: avoid; margin-bottom: 1.6mm; }
+  .sumario a { color: #212529; text-decoration: none; }
+  .sumario a .n { display: inline-block; width: 8mm; color: var(--azul2); font-weight: 700; }
+  /* fluxo */
+  .fluxo { display: flex; flex-wrap: wrap; gap: 2mm; align-items: center; justify-content: center; margin: 4mm 0 5mm; break-inside: avoid; }
+  .fluxo .etapa { border: 2px solid var(--azul2); border-radius: 6px; padding: 2mm 3mm; text-align: center; width: 34mm; background: #f3f7ff; }
+  .fluxo .etapa b { display: block; color: var(--azul); }
+  .fluxo .etapa span { font-size: 8.5pt; color: var(--cinza); }
+  .fluxo .seta { color: var(--azul2); font-size: 16pt; font-weight: 700; }
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  dl.glossario dt { font-weight: 700; color: var(--azul); margin-top: 2mm; }
+  dl.glossario dd { margin: 0 0 1mm 5mm; }
+</style>
+</head>
+<body>
+
+<!-- ================================================================ CAPA -->
+<section class="capa">
+  <div class="logo">LabControl</div>
+  <div class="sub">Sistema de Gestão Laboratorial</div>
+  <div class="titulo">Manual do Usuário</div>
+  <div class="para">Como operar o sistema, tela por tela</div>
+  <div class="versao">Versão 2 · Novembro de 2026<br>As imagens usam um laboratório fictício: nomes, CNPJs e números são apenas exemplos.</div>
+</section>
+
+<!-- ================================================================ SUMÁRIO -->
+<nav class="sumario">
+  <h2>Sumário</h2>
+  <ol>
+    <li><a href="#c1"><span class="n">1</span>Antes de começar</a></li>
+    <li><a href="#c2"><span class="n">2</span>Entrar e sair do sistema</a></li>
+    <li><a href="#c3"><span class="n">3</span>Conhecendo a tela</a></li>
+    <li><a href="#c4"><span class="n">4</span>O caminho de uma amostra</a></li>
+    <li><a href="#c5"><span class="n">5</span>Propostas</a></li>
+    <li><a href="#c6"><span class="n">6</span>Pedidos de venda</a></li>
+    <li><a href="#c7"><span class="n">7</span>Recebimento de amostras</a></li>
+    <li><a href="#c8"><span class="n">8</span>Etiquetas</a></li>
+    <li><a href="#c9"><span class="n">9</span>Movimentação (estoque da amostra)</a></li>
+    <li><a href="#c10"><span class="n">10</span>Localização (arquivo e descarte)</a></li>
+    <li><a href="#c11"><span class="n">11</span>Resultados</a></li>
+    <li><a href="#c12"><span class="n">12</span>Boletins</a></li>
+    <li><a href="#c13"><span class="n">13</span>Revisões: como corrigir o que já foi feito</a></li>
+    <li><a href="#c14"><span class="n">14</span>Clientes e fornecedores</a></li>
+    <li><a href="#c15"><span class="n">15</span>Profissionais</a></li>
+    <li><a href="#c16"><span class="n">16</span>Produtos</a></li>
+    <li><a href="#c17"><span class="n">17</span>Parâmetros de análise</a></li>
+    <li><a href="#c18"><span class="n">18</span>Cadastros auxiliares</a></li>
+    <li><a href="#c19"><span class="n">19</span>Países, estados e cidades</a></li>
+    <li><a href="#c20"><span class="n">20</span>Relatórios</a></li>
+    <li><a href="#c21"><span class="n">21</span>Empresa usuária do sistema</a></li>
+    <li><a href="#c22"><span class="n">22</span>Parâmetros da empresa</a></li>
+    <li><a href="#c23"><span class="n">23</span>Usuários</a></li>
+    <li><a href="#c24"><span class="n">24</span>Perfis de acesso</a></li>
+    <li><a href="#c25"><span class="n">25</span>Auditoria</a></li>
+    <li><a href="#c26"><span class="n">26</span>Migração de dados do sistema antigo</a></li>
+    <li><a href="#c27"><span class="n">27</span>Dúvidas frequentes</a></li>
+    <li><a href="#c28"><span class="n">28</span>Glossário</a></li>
+  </ol>
+</nav>
+
+<!-- ================================================================ 1 -->
+<h1 id="c1"><span class="num">1</span>Antes de começar</h1>
+<p>O <b>LabControl</b> controla o trabalho do laboratório do começo ao fim: a proposta enviada ao cliente, o pedido, o recebimento da amostra, as análises, o boletim com os resultados e o arquivo da contraprova. Ele substitui o sistema antigo e já traz todos os dados dele.</p>
+
+<h2>Como acessar</h2>
+<ul>
+  <li>O sistema funciona pelo <b>navegador</b> (Microsoft Edge, Google Chrome ou Firefox). Não é preciso instalar nada no seu computador.</li>
+  <li>O endereço é fornecido pelo responsável pela informática do laboratório. Salve-o nos favoritos do navegador.</li>
+  <li>Cada pessoa tem o seu <b>usuário</b> e a sua <b>senha</b>. Não empreste o seu acesso: tudo o que é gravado fica registrado com o nome de quem gravou.</li>
+</ul>
+
+<h2>O que você vê depende do seu perfil</h2>
+<p>Cada usuário recebe um ou mais <b>perfis de acesso</b> (por exemplo: Recepção, Analista, Responsável Técnico, Comercial). O perfil define quais telas aparecem no menu e o que você pode fazer em cada uma: consultar, incluir, alterar, excluir ou imprimir. Se uma tela ou um botão deste manual não aparecer para você, é porque o seu perfil não dá esse acesso. Fale com o administrador do sistema.</p>
+
+<h2>Várias empresas no mesmo sistema</h2>
+<p>O sistema pode atender mais de uma empresa (por exemplo, a matriz e uma filial). Os dados de cada empresa ficam separados: clientes, amostras, boletins e numeração. Você trabalha sempre em uma empresa por vez, mostrada no canto superior direito da tela.</p>
+
+<!-- ================================================================ 2 -->
+<h1 id="c2"><span class="num">2</span>Entrar e sair do sistema</h1>
+<h2>Entrar</h2>
+<ol class="passos">
+  <li>Abra o endereço do LabControl no navegador.</li>
+  <li>Digite o seu <b>Usuário</b> e a sua <b>Senha</b>.</li>
+  <li>Clique em <span class="botao">Entrar</span>.</li>
+</ol>
+<figure class="media"><img src="img/01-login.png"><figcaption>Tela de entrada.</figcaption></figure>
+
+<div class="caixa atencao"><span class="titulo">Senha errada várias vezes</span>
+<p>Depois de <b>5 tentativas erradas seguidas</b>, o usuário fica <b>bloqueado por 15 minutos</b>. Espere esse tempo ou peça ao administrador para desbloquear.</p></div>
+
+<h2>Escolher a empresa</h2>
+<p>Se você tem acesso a mais de uma empresa, o sistema pergunta em qual delas quer trabalhar. Marque a empresa e clique em <span class="botao">Entrar</span>. Quem tem acesso a uma empresa só entra direto.</p>
+<figure class="media"><img src="img/02-escolher-empresa.png"><figcaption>Escolha da empresa (aparece só para quem tem mais de uma).</figcaption></figure>
+<p>Para mudar de empresa depois de entrar, clique no seu nome no canto superior direito e escolha <b>Trocar empresa</b> (ou clique no nome da empresa, no alto).</p>
+
+<h2>Primeiro acesso: trocar a senha</h2>
+<p>Quando o administrador cria o seu usuário (ou redefine a sua senha), você recebe uma <b>senha provisória</b>. No primeiro acesso o sistema pede que você crie a sua própria senha:</p>
+<ol class="passos">
+  <li>Digite a senha provisória em <b>Senha atual</b>.</li>
+  <li>Digite a nova senha duas vezes. Ela precisa ter <b>pelo menos 8 caracteres, com letras e números</b>.</li>
+  <li>Clique em <span class="botao">Gravar</span>.</li>
+</ol>
+<figure class="media"><img src="img/04-trocar-senha.png"><figcaption>Troca de senha no primeiro acesso.</figcaption></figure>
+
+<h2>Trocar a sua senha quando quiser</h2>
+<p>Clique no seu nome no canto superior direito e escolha <b>Trocar senha</b>.</p>
+
+<h2>Sair</h2>
+<p>Clique no seu nome no canto superior direito e escolha <b>Sair</b>. Faça isso sempre ao deixar o computador, principalmente se ele é usado por outras pessoas.</p>
+<div class="caixa dica"><span class="titulo">Sessão encerrada sozinha</span>
+<p>Se o servidor do sistema for reiniciado (por exemplo, numa atualização), todos precisam entrar de novo. Isso é normal: basta digitar usuário e senha outra vez.</p></div>
+
+<!-- ================================================================ 3 -->
+<h1 id="c3"><span class="num">3</span>Conhecendo a tela</h1>
+<p>Depois de entrar, aparece o <b>Painel</b>. À esquerda fica o <b>menu</b>, dividido em grupos; no alto, a empresa em que você está e o seu nome.</p>
+<figure><img src="img/03-painel.png"><figcaption>Painel com o menu completo (um usuário com todas as permissões).</figcaption></figure>
+
+<h2>O Painel</h2>
+<table>
+  <tr><th>Quadro</th><th>O que mostra</th></tr>
+  <tr><td>Amostras recebidas hoje</td><td>Quantas amostras entraram hoje e no mês.</td></tr>
+  <tr><td>Testes pendentes</td><td>Análises que ainda não têm resultado e quantas estão com o prazo vencido.</td></tr>
+  <tr><td>Boletins não emitidos</td><td>Boletins montados que ainda não foram emitidos.</td></tr>
+  <tr><td>Propostas aguardando cliente</td><td>Propostas enviadas ao cliente e ainda sem resposta.</td></tr>
+</table>
+<p>Clique em um quadro para abrir a tela correspondente.</p>
+
+<h2>O menu</h2>
+<table>
+  <tr><th>Grupo</th><th>Telas</th></tr>
+  <tr><td><b>Laboratório</b></td><td>Propostas, Pedidos de Venda, Recebimento de Amostras, Movimentação, Localização, Etiquetas, Resultados, Boletins</td></tr>
+  <tr><td><b>Cadastros</b></td><td>Clientes/Fornecedores, Profissionais, Produtos, Parâmetros de Análise, Auxiliares, Países, Estados, Cidades</td></tr>
+  <tr><td><b>Relatórios</b></td><td>Faturamento, Amostras por período, Amostras por cliente, Parâmetros analisados, Tempo de análise, Produção por período</td></tr>
+  <tr><td><b>Sistema</b></td><td>Empresas Usuárias do Sistema, Parâmetros da Empresa, Usuários, Perfis de Acesso, Auditoria e, só para o administrador geral, Migração de Dados</td></tr>
+</table>
+
+<h2>Como as telas funcionam</h2>
+<p>Quase todas as telas seguem o mesmo jeito de trabalhar:</p>
+<ul>
+  <li><b>Lista com pesquisa.</b> A tela abre com os filtros no alto e a lista embaixo. Preencha um ou mais filtros e clique em <span class="botao">Pesquisar</span>. As listas de movimento (amostras, resultados, boletins) mostram, de início, só o período mais recente; para ver registros antigos, mude a data de <b>"a partir de"</b>.</li>
+  <li><b>Incluir.</b> O botão <span class="botao">+ Incluir</span>, no canto superior direito, abre um formulário em branco.</li>
+  <li><b>Abrir.</b> O botão <span class="botao">Abrir</span> (ou o número em azul) abre o registro para consultar ou alterar.</li>
+  <li><b>Gravar.</b> Nada é salvo até você clicar em <span class="botao">Gravar</span>. O botão <span class="botao">Voltar</span> sai sem gravar.</li>
+  <li><b>Campos obrigatórios</b> têm um <b style="color:#dc3545">*</b> vermelho ao lado do nome. Se faltar algo, o sistema mostra a mensagem em vermelho embaixo do campo.</li>
+  <li><b>Abas.</b> Telas com muitas informações são divididas em abas (por exemplo: Dados básicos, Endereços, Telefones). Clique no nome da aba para trocar. O número ao lado da aba mostra quantos itens ela tem.</li>
+  <li><b>Cadastro rápido (+).</b> Alguns campos de escolha têm um botão <span class="botao">+</span> ao lado. Ele cadastra um item novo sem sair da tela (por exemplo, uma unidade de medida que ainda não existe).</li>
+  <li><b>Inativar em vez de excluir.</b> Um cadastro que já foi usado não pode ser excluído, mas pode ser <b>inativado</b>: ele some das listas de escolha, e os registros antigos continuam mostrando o nome. As listas avisam quando há itens inativos escondidos.</li>
+</ul>
+<div class="caixa dica"><span class="titulo">Mensagens do sistema</span>
+<p>Mensagens em <b style="color:#198754">verde</b> confirmam que deu certo. Mensagens em <b style="color:#dc3545">vermelho</b> explicam por que algo não pode ser feito (por exemplo: "Este boletim foi emitido. Não é permitido alterar ou excluir."). Leia a mensagem: ela diz o que fazer.</p></div>
+
+<h2>Números gerados pelo sistema</h2>
+<p>Os números de proposta, pedido e amostra são <b>dados pelo sistema na hora de gravar</b>, sempre com o ano do servidor. Você não precisa (e não consegue) digitá-los. Enquanto o registro não é gravado, o número aparece como "INCLUSÃO".</p>
+<table>
+  <tr><th>Documento</th><th>Formato</th><th>Exemplo</th></tr>
+  <tr><td>Proposta</td><td>número / ano − revisão</td><td><b>000123/26-R0</b> (R1, R2… nas revisões)</td></tr>
+  <tr><td>Pedido de venda</td><td>número sequencial</td><td><b>000000045</b></td></tr>
+  <tr><td>Amostra</td><td>TT-CCCCC-AA/YY</td><td><b>04-00123-01/26</b>: tipo da amostra 04, número 00123, tipo de análise 01, ano 26</td></tr>
+  <tr><td>Boletim</td><td>o mesmo número da amostra</td><td><b>04-00123-01/26</b> (revisões: R01, R02…)</td></tr>
+</table>
+
+<!-- ================================================================ 4 -->
+<h1 id="c4"><span class="num">4</span>O caminho de uma amostra</h1>
+<p>Este é o fluxo normal do laboratório. Cada etapa tem um capítulo próprio neste manual.</p>
+<div class="fluxo">
+  <div class="etapa"><b>1. Proposta</b><span>produtos, análises e valores</span></div><div class="seta">→</div>
+  <div class="etapa"><b>2. Pedido de venda</b><span>cliente autorizou</span></div><div class="seta">→</div>
+  <div class="etapa"><b>3. Recebimento</b><span>a amostra chega</span></div><div class="seta">→</div>
+  <div class="etapa"><b>4. Etiquetas</b><span>identificação física</span></div>
+</div>
+<div class="fluxo">
+  <div class="etapa"><b>5. Resultados</b><span>o analista lança</span></div><div class="seta">→</div>
+  <div class="etapa"><b>6. Boletim</b><span>montar, conferir, emitir</span></div><div class="seta">→</div>
+  <div class="etapa"><b>7. Envio</b><span>imprimir ou e-mail</span></div><div class="seta">→</div>
+  <div class="etapa"><b>8. Arquivo</b><span>contraprova guardada ou descartada</span></div>
+</div>
+<ul>
+  <li>Ao receber a amostra, o sistema cria sozinho os <b>testes</b> a fazer (as análises da proposta para aquele produto) e calcula a <b>data prevista</b> de cada um pelo prazo.</li>
+  <li>Os testes aparecem na <b>Fila de análises</b> (tela Resultados) até receberem resultado.</li>
+  <li>O <b>estoque</b> da amostra (quantas embalagens restam) é controlado na Movimentação: a entrada é automática no recebimento.</li>
+  <li>Quando todos os itens do pedido foram recebidos e todos os boletins emitidos, o <b>pedido é concluído sozinho</b>.</li>
+</ul>
+
+<!-- ================================================================ 5 -->
+<h1 id="c5"><span class="num">5</span>Propostas</h1>
+<p><span class="menu">Laboratório › Propostas</span> — A proposta comercial enviada ao cliente: quais produtos serão analisados, quais análises em cada produto, os valores e as condições. É a partir dela que as amostras são recebidas.</p>
+<figure><img src="img/10-propostas-lista.png"><figcaption>Lista de propostas com os filtros.</figcaption></figure>
+<p>Pesquise pelo cliente (nome ou CPF/CNPJ), pelo número da proposta, pelo número do pedido, pelo status ou pelo período. A opção <b>Só a última revisão</b> esconde as versões antigas das propostas revisadas.</p>
+
+<h2>Criar uma proposta</h2>
+<ol class="passos">
+  <li>Clique em <span class="botao">+ Incluir</span>.</li>
+  <li>Na aba <b>Proposta</b>, escolha o <b>Cliente</b>. O sistema sugere o endereço e o contato do resultado e os dados de cobrança a partir do cadastro do cliente; confira e ajuste.</li>
+  <li>Informe a <b>validade</b>, a <b>condição de pagamento</b> e, se houver, o desconto geral (% ou R$).</li>
+  <li>Clique em <span class="botao">Gravar</span>. O número da proposta é gerado agora.</li>
+  <li>Vá à aba <b>Análises</b> e inclua os produtos e as análises de cada produto (veja abaixo).</li>
+</ol>
+<figure><img src="img/12-proposta-editar.png"><figcaption>Aba Proposta: cliente, endereços do resultado e da nota fiscal, valores e condição de pagamento.</figcaption></figure>
+<div class="caixa dica"><span class="titulo">Os valores são calculados sozinhos</span>
+<p>Valor das análises, descontos e valor total são somados pelo sistema a cada mudança. Você só informa a quantidade, o valor unitário (que já vem do cadastro do parâmetro) e os descontos.</p></div>
+
+<h2>Aba Análises: produtos e parâmetros</h2>
+<figure><img src="img/13-proposta-analises.png"><figcaption>Produtos da proposta (em cima) e as análises do produto selecionado (embaixo).</figcaption></figure>
+<ol class="passos">
+  <li>Clique em <span class="botao">+ Incluir produto</span>, escolha o produto e a quantidade de amostras. Se o produto ainda não existe, use o <span class="botao">+</span> para cadastrá-lo ali mesmo.</li>
+  <li>Com o produto selecionado na lista de cima, clique em <span class="botao">Selecionar parâmetros</span> para marcar vários de uma vez, ou em <span class="botao">+ Incluir análise</span> para incluir um por um.</li>
+  <li>Para cada análise, confira o <b>método</b>, a <b>quantidade</b>, o <b>valor unitário</b>, o <b>prazo</b>, o <b>idioma</b> e o <b>documento</b> (boletim).</li>
+</ol>
+<div class="caixa atencao"><span class="titulo">Prazo em dias úteis ou corridos</span>
+<p>O prazo escolhido define a data prevista de cada teste quando a amostra chega. Se o prazo estiver marcado como <b>"Dias úteis"</b> no cadastro de prazos, o sistema conta só de segunda a sexta (por exemplo, sexta-feira + 5 dias úteis = sexta-feira seguinte). Caso contrário, conta dias corridos. Feriados não são descontados.</p></div>
+
+<h2>Outras abas</h2>
+<ul>
+  <li><b>Informações gerais:</b> textos livres da proposta (observações, informações ao cliente).</li>
+  <li><b>Contrato:</b> o texto do contrato que acompanha a proposta. O botão <b>Usar contrato padrão</b> traz o texto cadastrado nos Parâmetros da Empresa; também é possível importar um arquivo do Word, HTML ou texto.</li>
+  <li><b>Revisões:</b> as versões anteriores da proposta e o motivo de cada revisão.</li>
+</ul>
+
+<h2>Botões da proposta</h2>
+<table>
+  <tr><th>Botão</th><th>Para que serve</th></tr>
+  <tr><td><span class="botao">Imprimir</span></td><td>Gera o PDF da proposta (com a Autorização de Serviço) para enviar ao cliente.</td></tr>
+  <tr><td><span class="botao">Gerar pedido</span></td><td>Quando o cliente aprova: cria o pedido de venda (capítulo 6).</td></tr>
+  <tr><td><span class="botao">Gerar revisão</span></td><td>Cria uma nova versão (R1, R2…) para alterar uma proposta que já não pode ser mudada diretamente. Pede o motivo.</td></tr>
+  <tr><td><span class="botao">Trocar produto</span></td><td>Troca o produto de um item, mantendo as análises.</td></tr>
+  <tr><td><span class="botao">Excluir</span></td><td>Só para propostas sem amostra e sem pedido.</td></tr>
+</table>
+
+<h2>Proposta travada</h2>
+<p>Quando a proposta já tem <b>pedido de venda</b>, <b>amostras recebidas</b> ou foi <b>enviada ao cliente</b>, ela aparece com uma faixa amarela e os campos ficam cinza. Para mudar algo, use <span class="botao">Gerar revisão</span>: a versão atual fica guardada como histórico e a nova versão pode ser alterada.</p>
+<figure><img src="img/11-proposta-com-pedido.png"><figcaption>Proposta com pedido: só pode ser alterada por uma revisão.</figcaption></figure>
+
+<!-- ================================================================ 6 -->
+<h1 id="c6"><span class="num">6</span>Pedidos de venda</h1>
+<p><span class="menu">Laboratório › Pedidos de Venda</span> — O pedido registra que o cliente <b>autorizou</b> o serviço da proposta. Ele mostra o que foi contratado e o que já foi recebido, e acompanha as amostras até a emissão dos boletins.</p>
+<figure><img src="img/15-pedidos-lista.png"><figcaption>Lista de pedidos de venda.</figcaption></figure>
+<h2>Gerar o pedido</h2>
+<ol class="passos">
+  <li>Abra a proposta aprovada e clique em <span class="botao">Gerar pedido</span>.</li>
+  <li>Informe a <b>data da autorização</b>, <b>quem autorizou</b> e, se o cliente mandou, o <b>número do pedido do cliente</b> (PO).</li>
+  <li>Confirme. Cada proposta tem no máximo um pedido.</li>
+</ol>
+<figure><img src="img/16-pedido-editar.png"><figcaption>Pedido: itens contratados × recebidos e as amostras com a situação do boletim.</figcaption></figure>
+<h2>Acompanhar</h2>
+<ul>
+  <li><b>Itens — contratado × recebido:</b> quantas amostras de cada produto o cliente contratou, quantas já chegaram e quantas faltam.</li>
+  <li><b>Amostras do pedido:</b> cada amostra recebida, com o status e a situação do boletim (sem boletim, em montagem, emitido).</li>
+  <li><b>Situação:</b> <i>Em execução</i> enquanto há amostra a receber ou boletim a emitir; <i>Concluído</i> quando tudo foi entregue (automático); <i>Cancelado</i>.</li>
+</ul>
+<table>
+  <tr><th>Botão</th><th>Para que serve</th></tr>
+  <tr><td><span class="botao">Concluir</span></td><td>Encerra o pedido à mão, mesmo com item faltando (por exemplo, o cliente desistiu de enviar uma amostra).</td></tr>
+  <tr><td><span class="botao">Reabrir</span></td><td>Volta um pedido concluído para "em execução". Pede o motivo.</td></tr>
+  <tr><td><span class="botao">Cancelar</span></td><td>Cancela o pedido. Só é possível se nenhuma amostra foi recebida.</td></tr>
+  <tr><td><span class="botao">Imprimir</span></td><td>PDF do pedido.</td></tr>
+  <tr><td><span class="botao">Gravar observação</span></td><td>Grava um texto livre no pedido.</td></tr>
+</table>
+<div class="caixa dica"><span class="titulo">Revisão da proposta depois do pedido</span>
+<p>Se a proposta for revisada depois do pedido, abra o pedido e use <span class="botao">Atualizar para a revisão vigente</span> para que ele passe a seguir a nova versão (valor, cobrança, condição de pagamento e itens). Uma revisão de boletim reabre o pedido concluído; ele volta a concluir sozinho quando o boletim revisado for emitido.</p></div>
+
+<!-- ================================================================ 7 -->
+<h1 id="c7"><span class="num">7</span>Recebimento de amostras</h1>
+<p><span class="menu">Laboratório › Recebimento de Amostras</span> — Registro da amostra física que chegou ao laboratório. Toda amostra está ligada a um item (produto) de uma proposta.</p>
+<figure><img src="img/20-amostras-lista.png"><figcaption>Lista de amostras recebidas.</figcaption></figure>
+
+<h2>Receber uma amostra</h2>
+<ol class="passos">
+  <li>Clique em <span class="botao">+ Incluir</span>.</li>
+  <li>Escolha o <b>Cliente</b>. Em seguida escolha a <b>Proposta</b> (só aparecem as propostas do cliente que permitem receber amostras) e o <b>Produto</b> (item da proposta). O <b>pedido de venda</b>, se houver, é preenchido sozinho.</li>
+  <li>Escolha o <b>Tipo da amostra</b> e o <b>Tipo de análise</b> — eles formam o número da amostra.</li>
+  <li>Confira a <b>data e hora da entrega</b> (vêm com o momento atual).</li>
+  <li>Informe o <b>local de recebimento</b>, o <b>tipo de embalagem</b> e a <b>quantidade de embalagens</b>.</li>
+  <li>Preencha o que houver: lote, fabricação, validade, aspecto, cor, temperatura, nota do rótulo, coletor e data da coleta.</li>
+  <li>Confira o <b>Responsável</b> e o <b>Status</b> (normalmente "Liberada para análise").</li>
+  <li>Clique em <span class="botao">Gravar</span>. O número da amostra é gerado agora.</li>
+</ol>
+<figure><img src="img/21-amostra-nova.png"><figcaption>Formulário de recebimento (amostra nova).</figcaption></figure>
+
+<div class="caixa dica"><span class="titulo">Fabricação e validade incompletas</span>
+<p>Quando a embalagem traz só o ano, ou só o mês e o ano, preencha apenas o que existe e deixe o resto como "dia"/"mês". O sistema guarda e imprime exatamente o que foi informado (por exemplo, "12/2026").</p></div>
+
+<div class="caixa atencao"><span class="titulo">Data de entrega antiga</span>
+<p>Se a data de entrega for mais antiga que o limite configurado (normalmente 7 dias), o sistema pede uma confirmação — isso evita erros como digitar o ano errado. Gravar com data antiga também exige uma permissão especial no perfil.</p></div>
+
+<h2>Depois de gravar</h2>
+<figure><img src="img/22-amostra-editar.png"><figcaption>Amostra gravada: número gerado e as abas Testes e Histórico.</figcaption></figure>
+<ul>
+  <li><b>Aba Testes:</b> as análises que serão feitas nesta amostra, criadas a partir da proposta, com a <b>data prevista</b> de cada uma.</li>
+  <li><b>Aba Histórico:</b> o registro de tudo o que aconteceu com a amostra (inclusão, alterações, revisões), com data e usuário.</li>
+  <li><b>Aba Observação:</b> texto livre sobre a amostra.</li>
+</ul>
+<figure><img src="img/22b-amostra-testes.png"><figcaption>Testes criados para a amostra, com a data prevista calculada pelo prazo.</figcaption></figure>
+<table>
+  <tr><th>Botão</th><th>Para que serve</th></tr>
+  <tr><td><span class="botao">Comprovante</span></td><td>Abre o comprovante de recebimento para imprimir e entregar a quem trouxe a amostra.</td></tr>
+  <tr><td><span class="botao">Etiquetas</span></td><td>Vai direto para a impressão das etiquetas desta amostra.</td></tr>
+  <tr><td><span class="botao">Excluir</span></td><td>Só para amostra sem resultado.</td></tr>
+  <tr><td><span class="botao">Criar revisão</span></td><td>Para alterar uma amostra que já tem boletim emitido (capítulo 13).</td></tr>
+</table>
+<figure><img src="img/23-amostra-comprovante.png"><figcaption>Comprovante de recebimento (use o Imprimir do navegador).</figcaption></figure>
+<div class="caixa importante"><span class="titulo">Amostra com boletim emitido</span>
+<p>Depois que o boletim da amostra foi emitido, só o <b>status</b> da amostra pode ser alterado. Para corrigir qualquer outro dado, crie uma revisão.</p></div>
+
+<h2>Pesquisa avançada</h2>
+<p>O botão <span class="botao">Pesquisa avançada</span> abre uma janela com todos os filtros de amostra (cliente, produto, número, proposta, lote, período de entrega, status). A mesma janela aparece em outras telas para escolher uma amostra: dê <b>duplo clique</b> na linha ou use <b>Selecionar</b>.</p>
+<figure><img src="img/24-pesquisa-avancada.png"><figcaption>Janela de pesquisa de amostras.</figcaption></figure>
+
+<!-- ================================================================ 8 -->
+<h1 id="c8"><span class="num">8</span>Etiquetas</h1>
+<p><span class="menu">Laboratório › Etiquetas</span> — Imprime as etiquetas de identificação das amostras (80 × 50 mm, com código de barras do número da amostra) direto na impressora térmica do laboratório.</p>
+<figure><img src="img/29-etiquetas.png"><figcaption>Seleção das amostras e da impressora.</figcaption></figure>
+<ol class="passos">
+  <li>Pesquise as amostras (por padrão aparecem as recebidas nos últimos dias).</li>
+  <li>Marque as amostras desejadas e ajuste a <b>quantidade de etiquetas</b> de cada uma (vem com o número de embalagens).</li>
+  <li>Escolha a <b>Impressora de destino</b>. O sistema lembra a última usada.</li>
+  <li>Se o nome do produto for sigiloso, marque <b>Não imprimir o nome do produto</b>.</li>
+  <li>Clique em <span class="botao">Imprimir etiquetas</span>.</li>
+</ol>
+<div class="caixa dica"><span class="titulo">Atalho</span>
+<p>Na tela da amostra, o botão <span class="botao">Etiquetas</span> abre esta tela já com a amostra selecionada. Só aparecem amostras com status que permite resultado.</p></div>
+
+<!-- ================================================================ 9 -->
+<h1 id="c9"><span class="num">9</span>Movimentação (estoque da amostra)</h1>
+<p><span class="menu">Laboratório › Movimentação</span> — Controla quantas embalagens da amostra existem no laboratório. A <b>entrada</b> é feita sozinha no recebimento; aqui você registra as <b>saídas</b> (consumo na análise, envio a outro laboratório, devolução ao cliente) e, se for o caso, uma <b>entrada complementar</b>.</p>
+<figure><img src="img/26-movimentacao-amostra.png"><figcaption>Saldo atual e histórico de entradas e saídas da amostra.</figcaption></figure>
+<ol class="passos">
+  <li>Pesquise e abra a amostra.</li>
+  <li>Clique em <span class="botao">+ Nova movimentação</span>.</li>
+  <li>Escolha <b>Saída</b> ou <b>Entrada complementar</b>, informe a <b>quantidade</b> e a <b>justificativa</b>.</li>
+  <li>Numa saída, marque os <b>parâmetros atendidos</b> por ela (opcional).</li>
+  <li>Clique em <span class="botao">Gravar</span>. O saldo é recalculado na hora.</li>
+</ol>
+<figure><img src="img/26b-movimentacao-nova.png"><figcaption>Nova movimentação.</figcaption></figure>
+<div class="caixa atencao"><span class="titulo">Saldo nunca fica negativo</span>
+<p>O sistema não aceita uma saída maior que o saldo, nem a exclusão de uma entrada que deixaria o saldo negativo. A entrada automática do recebimento não pode ser excluída.</p></div>
+
+<!-- ================================================================ 10 -->
+<h1 id="c10"><span class="num">10</span>Localização (arquivo e descarte)</h1>
+<p><span class="menu">Laboratório › Localização</span> — Registra onde a amostra (contraprova) está guardada e quando foi descartada.</p>
+<figure><img src="img/28-localizacao-amostra.png"><figcaption>Amostra arquivada: armário, prateleira e caixa.</figcaption></figure>
+<h2>Arquivar</h2>
+<ol class="passos">
+  <li>Pesquise e abra a amostra.</li>
+  <li>Em <b>Situação</b>, deixe <b>Arquivada</b>; confira a data e hora.</li>
+  <li>Informe o <b>armário</b>, a <b>prateleira</b>, a <b>caixa</b> e, se quiser, uma observação.</li>
+  <li>Clique em <span class="botao">Gravar</span>.</li>
+</ol>
+<p>Na lista, é possível marcar várias amostras e arquivá-las de uma vez no mesmo local.</p>
+<figure><img src="img/27-localizacao-lista.png"><figcaption>Lista de localização: situação de cada amostra e arquivamento em lote.</figcaption></figure>
+<h2>Descartar</h2>
+<p>Abra a amostra arquivada, mude a <b>Situação</b> para <b>Descartada</b>, informe a data do descarte e o profissional responsável e grave.</p>
+
+<!-- ================================================================ 11 -->
+<h1 id="c11"><span class="num">11</span>Resultados</h1>
+<p><span class="menu">Laboratório › Resultados</span> — Lançamento dos resultados das análises. Cada amostra tem um resultado, com uma linha por teste (parâmetro).</p>
+
+<h2>Consulta</h2>
+<p>A aba <b>Consulta</b> lista os resultados já lançados (um por amostra e revisão), com o número de parâmetros. Use <span class="botao">Abrir</span> para ver ou continuar o lançamento.</p>
+<figure><img src="img/30-resultados-lista.png"><figcaption>Consulta de resultados.</figcaption></figure>
+
+<h2>Fila de análises</h2>
+<p>A aba <b>Fila de análises</b> mostra todos os testes que ainda não têm resultado, ordenados pela <b>data prevista</b>. Os testes com prazo <b style="color:#dc3545">vencido aparecem em vermelho</b>. O botão <span class="botao">Lançar</span> abre o resultado da amostra.</p>
+<figure><img src="img/30b-fila-analises.png"><figcaption>Fila de análises: o que falta fazer, pela data prevista.</figcaption></figure>
+
+<h2>Lançar um resultado</h2>
+<ol class="passos">
+  <li>Use <span class="botao">Lançar</span> na fila, ou <span class="botao">+ Novo resultado</span> e escolha a amostra na pesquisa.</li>
+  <li>Em cada parâmetro, informe o <b>responsável (analista)</b>, a <b>data de início</b> e a <b>data do resultado</b>.</li>
+  <li>Preencha o <b>Resultado</b> e, se houver, a <b>Especificação</b> (o limite que o produto deve atender).</li>
+  <li>Em <b>Conforme?</b>, indique se o resultado atende à especificação.</li>
+  <li>Clique em <span class="botao">Gravar</span>.</li>
+</ol>
+<figure><img src="img/31-resultado-editar.png"><figcaption>Resultado com três parâmetros: dois numéricos e um descritivo.</figcaption></figure>
+
+<h2>Resultado numérico ou descritivo</h2>
+<table>
+  <tr><th>Tipo</th><th>Como preencher</th><th>Como sai no boletim</th></tr>
+  <tr><td><b>Numérico</b> (chave ligada)</td><td><b>Símbolo</b> (&lt;, &gt;, ≤…), se houver; <b>Valor</b> (ex.: 2,3); <b>× 10ⁿ</b> — o expoente, se houver (ex.: 3); <b>Unidade</b> (ex.: UFC/g).</td><td>2,3 × 10³ UFC/g</td></tr>
+  <tr><td><b>Descritivo</b> (chave desligada)</td><td>Escolha o <b>tipo de resultado</b> (ex.: "Ausência em 25 g"). Use o <span class="botao">+</span> para cadastrar um texto novo.</td><td>Ausência em 25 g</td></tr>
+</table>
+<p>No alto de cada parâmetro aparece a <b>prévia</b> exatamente como sairá no boletim. As etiquetas <b>acreditado</b> e <b>no boletim</b> indicam se o parâmetro é acreditado e se já está em um boletim.</p>
+<div class="caixa importante"><span class="titulo">Resultado em boletim emitido</span>
+<p>Se o boletim da amostra já foi emitido, o resultado não pode mais ser alterado. Use <span class="botao">Criar revisão</span> (capítulo 13): o sistema cria a revisão do resultado e, se você quiser, também a do boletim.</p></div>
+
+<!-- ================================================================ 12 -->
+<h1 id="c12"><span class="num">12</span>Boletins</h1>
+<p><span class="menu">Laboratório › Boletins</span> — O boletim (laudo) com os resultados para o cliente. Ele é montado a partir do resultado da amostra, conferido e então <b>emitido</b>. Depois de emitido, fica congelado: o PDF é guardado no servidor e não muda mais.</p>
+<figure><img src="img/35-boletins-lista.png"><figcaption>Lista de boletins.</figcaption></figure>
+
+<h2>Montar o boletim</h2>
+<ol class="passos">
+  <li>Clique em <span class="botao">+ Incluir</span> e escolha a amostra (que já precisa ter resultado).</li>
+  <li>Confira a <b>data do boletim</b> e escolha o <b>Responsável 1</b> (obrigatório para emitir) e, se houver, o <b>Responsável 2</b>.</li>
+  <li>Em <b>Resultados da amostra</b> (à esquerda), marque os parâmetros que vão para o boletim e clique em <span class="botao">Concluir seleção</span>. Eles passam para <b>Parâmetros do boletim</b> (à direita).</li>
+  <li>Use as setas ↑ ↓ para mudar a <b>ordem</b> e <span class="botao">Retirar</span> para tirar um parâmetro.</li>
+  <li>Clique em <span class="botao">Atualizar textos</span> para preencher as <b>metodologias</b> (acreditadas e não acreditadas) a partir dos métodos. Ajuste as <b>observações</b> e a <b>legenda</b>.</li>
+  <li>Clique em <span class="botao">Gravar</span>.</li>
+</ol>
+<figure><img src="img/36-boletim-editar.png"><figcaption>Boletim em montagem: responsáveis, textos e parâmetros.</figcaption></figure>
+
+<h2>Conferir e emitir</h2>
+<ol class="passos">
+  <li>Clique em <span class="botao">Visualizar</span>: abre a prévia do PDF com a marca d'água "PRÉVIA" e sem assinaturas. Confira tudo.</li>
+  <li>Estando correto, clique em <span class="botao">Emitir</span> e confirme.</li>
+</ol>
+<div class="caixa importante"><span class="titulo">Emitir é definitivo</span>
+<p>Ao emitir, o sistema gera o PDF oficial (com as assinaturas dos responsáveis e o selo da acreditação nas páginas dos parâmetros acreditados), guarda o arquivo no servidor e congela o boletim. A partir daí <b>não é possível alterar nem excluir</b>; só o status pode mudar. Para corrigir, crie uma revisão.</p></div>
+<figure><img src="img/37-boletim-emitido.png"><figcaption>Boletim emitido: somente leitura, com Imprimir, Enviar por e-mail e Criar revisão.</figcaption></figure>
+
+<h2>Imprimir e reimprimir (2ª via)</h2>
+<p>No boletim emitido, <span class="botao">Imprimir</span> abre o PDF guardado na emissão. A 2ª via é <b>idêntica à 1ª</b> — mesmo conteúdo, mesmas assinaturas, mesmo nome de arquivo — e pode ser entregue ao cliente ou aos órgãos competentes se o papel original se perder ou estragar. Os boletins vindos do sistema antigo também reimprimem iguais, montados a partir dos dados gravados.</p>
+<div class="caixa atencao"><span class="titulo">Alerta de integridade</span>
+<p>Antes de abrir o PDF, o sistema confere se o arquivo é exatamente o que foi emitido. Se o arquivo tiver sido alterado ou apagado no servidor, aparece um <b>ALERTA DE INTEGRIDADE</b> e o PDF não é entregue. Avise o administrador.</p></div>
+
+<h2>Enviar por e-mail</h2>
+<p>No boletim emitido, <span class="botao">Enviar por e-mail</span> abre o envio já com o contato do resultado definido na proposta, o assunto e o texto padrão (configurados nos Parâmetros da Empresa) e o PDF emitido em anexo. Confira os destinatários e envie. O envio fica registrado no histórico e na auditoria.</p>
+
+<!-- ================================================================ 13 -->
+<h1 id="c13"><span class="num">13</span>Revisões: como corrigir o que já foi feito</h1>
+<p>Documentos que já foram entregues ao cliente não são apagados nem alterados por cima: o sistema cria uma <b>revisão</b> (uma nova versão) e guarda a anterior como histórico, só para consulta. Isso vale para <b>proposta, amostra, resultado e boletim</b>.</p>
+<table>
+  <tr><th>Documento</th><th>Quando precisa de revisão</th><th>Como aparece</th></tr>
+  <tr><td>Proposta</td><td>Já tem pedido, amostra ou foi enviada ao cliente.</td><td>000123/26-<b>R1</b></td></tr>
+  <tr><td>Amostra</td><td>Já tem boletim emitido (exceto troca de status).</td><td>04-00123-01/26 <b>R01</b></td></tr>
+  <tr><td>Resultado</td><td>Está em um boletim emitido.</td><td>Revisão 1, 2…</td></tr>
+  <tr><td>Boletim</td><td>Já foi emitido.</td><td>04-00123-01/26 <b>R01</b></td></tr>
+</table>
+<ol class="passos">
+  <li>Abra o documento e clique em <span class="botao">Criar revisão</span> (ou <span class="botao">Gerar revisão</span> na proposta).</li>
+  <li>Informe o <b>motivo</b> — ele fica registrado e aparece no histórico.</li>
+  <li>O sistema abre a nova versão, já com os dados da anterior. Faça as correções e grave. No caso do boletim, emita a revisão.</li>
+</ol>
+<div class="caixa dica"><span class="titulo">Desfazer a última revisão</span>
+<p>Enquanto a revisão do resultado ou do boletim ainda não foi emitida, ela pode ser desfeita (botão <span class="botao">Desfazer última revisão</span>): a revisão é apagada e a anterior volta a valer. É preciso ter essa permissão no perfil.</p></div>
+<p>As listas mostram só a versão atual quando a opção <b>Só a última revisão</b> está marcada. Desmarque para ver também as versões antigas.</p>
+
+<!-- ================================================================ 14 -->
+<h1 id="c14"><span class="num">14</span>Clientes e fornecedores</h1>
+<p><span class="menu">Cadastros › Clientes/Fornecedores</span> — Cadastro de clientes, fornecedores, vendedores (comercial) e transportadores, pessoa física ou jurídica. O mesmo cadastro pode ter mais de um tipo (por exemplo, cliente e fornecedor).</p>
+<figure><img src="img/40-clientes-lista.png"><figcaption>Lista de clientes e fornecedores.</figcaption></figure>
+<h2>Incluir ou alterar</h2>
+<ol class="passos">
+  <li>Clique em <span class="botao">+ Incluir</span> (ou <span class="botao">Abrir</span> num existente).</li>
+  <li>Escolha a categoria: <b>Pessoa jurídica</b> ou <b>Pessoa física</b>.</li>
+  <li>Preencha a razão social (ou nome), o CNPJ/CPF e os demais dados. O sistema confere se o CNPJ/CPF é válido e avisa se ele já está cadastrado.</li>
+  <li>Marque o <b>Tipo de cadastro</b>: Cliente, Fornecedor, Comercial (vendedor) ou Transportador.</li>
+  <li>Clique em <span class="botao">Gravar dados</span>.</li>
+  <li>Depois de gravar, use as abas <b>Endereços</b>, <b>Telefones</b> e <b>E-mails</b>.</li>
+</ol>
+<figure><img src="img/41-cliente-editar.png"><figcaption>Dados básicos do cliente.</figcaption></figure>
+<h2>Endereços, telefones e e-mails</h2>
+<p>Cada aba tem a sua lista e o botão para incluir. Endereços, telefones e e-mails são <b>gravados na hora</b>, dentro da própria aba — não é preciso clicar em "Gravar dados" depois.</p>
+<figure><img src="img/41b-cliente-enderecos.png"><figcaption>Aba Endereços.</figcaption></figure>
+<ul>
+  <li><b>Endereço:</b> digite o <b>CEP</b> e o sistema preenche rua, bairro, cidade e estado. Pode haver só um endereço <b>ativo</b> de cada tipo (nota fiscal, cobrança, entrega…); para trocar, inative o antigo — ele fica guardado no histórico.</li>
+  <li><b>Telefone:</b> DDD, número, tipo e contato. Marque um como <b>principal</b>.</li>
+  <li><b>E-mail:</b> endereço, contato e departamento. Marque <b>Enviar laudo</b> nos e-mails que recebem boletins; um deles pode ser o <b>principal</b>.</li>
+</ul>
+<div class="caixa dica"><span class="titulo">Cliente que não é mais atendido</span>
+<p>Use <b>Inativo</b>: ele some das listas de escolha (proposta, recebimento), mas o histórico continua completo.</p></div>
+
+<!-- ================================================================ 15 -->
+<h1 id="c15"><span class="num">15</span>Profissionais</h1>
+<p><span class="menu">Cadastros › Profissionais</span> — As pessoas do laboratório: analistas, responsáveis técnicos e quem recebe amostras. O profissional aparece como responsável na amostra, analista no resultado e signatário no boletim.</p>
+<figure><img src="img/43-profissional-editar.png"><figcaption>Cadastro do profissional.</figcaption></figure>
+<ul>
+  <li><b>Cargo</b> e <b>registro profissional</b> (tipo, número e UF — ex.: CRBio 12345/01-D, SP): saem no boletim junto com a assinatura.</li>
+  <li><b>Assina boletim:</b> marque para quem pode ser responsável pelo boletim. Envie a imagem da <b>assinatura</b> (ela é impressa no boletim emitido).</li>
+  <li><b>Executa análise:</b> marque para quem aparece como analista nos resultados.</li>
+  <li>Os contatos (endereços, telefones, e-mails) funcionam como no cadastro de clientes.</li>
+</ul>
+<div class="caixa atencao"><span class="titulo">Usuário e profissional</span>
+<p>Para gravar propostas e amostras, o seu <b>usuário</b> precisa estar ligado a um <b>profissional</b> (isso é feito na tela de Usuários). Se aparecer uma mensagem pedindo o vínculo, fale com o administrador.</p></div>
+
+<!-- ================================================================ 16 -->
+<h1 id="c16"><span class="num">16</span>Produtos</h1>
+<p><span class="menu">Cadastros › Produtos</span> — Os produtos que os clientes enviam para análise (ex.: queijo minas frescal, água mineral).</p>
+<figure><img src="img/45-produto-editar.png"><figcaption>Cadastro de produto.</figcaption></figure>
+<ul>
+  <li>O <b>código</b> é gerado sozinho (6 dígitos) se você deixar em branco, ou pode ser digitado.</li>
+  <li>Informe a <b>descrição</b>, a <b>unidade</b> e o tipo de <b>embalagem</b>. Use o <span class="botao">+</span> para cadastrar uma unidade ou embalagem que falte.</li>
+  <li>Depois de gravar, o sistema volta para a lista, pronto para incluir o próximo.</li>
+  <li>Produtos também podem ser cadastrados direto na proposta, pelo <span class="botao">+</span>.</li>
+</ul>
+
+<!-- ================================================================ 17 -->
+<h1 id="c17"><span class="num">17</span>Parâmetros de análise</h1>
+<p><span class="menu">Cadastros › Parâmetros de Análise</span> — As análises que o laboratório faz (ex.: Contagem de aeróbios mesófilos, Pesquisa de Salmonella spp.).</p>
+<figure><img src="img/47-parametro-editar.png"><figcaption>Cadastro de parâmetro de análise.</figcaption></figure>
+<table>
+  <tr><th>Campo</th><th>Uso</th></tr>
+  <tr><td>Descrição</td><td>Nome completo do parâmetro.</td></tr>
+  <tr><td>Descrição reduzida</td><td>Nome curto, que sai no boletim. Obrigatório.</td></tr>
+  <tr><td>Tipo de análise</td><td>Microbiológica, físico-química…</td></tr>
+  <tr><td>Método padrão</td><td>A norma usada (ex.: ISO 4833-1:2013). Sugerido na proposta e usado nas metodologias do boletim.</td></tr>
+  <tr><td>Valor (R$)</td><td>Preço unitário sugerido na proposta.</td></tr>
+  <tr><td>Acreditado</td><td>Marque se o parâmetro é acreditado. No boletim ele recebe o selo da acreditação.</td></tr>
+</table>
+<p>Na lista, filtre por tipo de análise ou só os acreditados.</p>
+
+<!-- ================================================================ 18 -->
+<h1 id="c18"><span class="num">18</span>Cadastros auxiliares</h1>
+<p><span class="menu">Cadastros › Auxiliares</span> — As listas de apoio usadas nas outras telas. Clique em um quadro para abrir a lista daquele cadastro.</p>
+<figure><img src="img/48-auxiliares.png"><figcaption>Os cadastros auxiliares.</figcaption></figure>
+<p>Todos funcionam do mesmo jeito: lista com pesquisa, <span class="botao">+ Incluir</span>, <span class="botao">Abrir</span> para alterar, e <b>Inativar</b> para tirar das listas de escolha sem perder o histórico.</p>
+<figure><img src="img/49-auxiliar-prazos.png"><figcaption>Exemplo: a lista de prazos.</figcaption></figure>
+<h2>Cuidados especiais</h2>
+<table>
+  <tr><th>Cadastro</th><th>Cuidado</th></tr>
+  <tr><td>Tipos de amostra e Tipos de análise</td><td>O <b>código</b> (1 a 99) faz parte do número da amostra. Depois de usado, <b>não pode mudar</b>.</td></tr>
+  <tr><td>Status da amostra</td><td>Só amostras num status com <b>"Permite resultado"</b> aparecem em Resultados, Boletins, Etiquetas e na fila. Deve existir pelo menos um status assim.</td></tr>
+  <tr><td>Status da proposta</td><td>Só propostas num status que permite amostra aparecem no recebimento.</td></tr>
+  <tr><td>Prazos</td><td>Quantidade de dias e a opção <b>Dias úteis</b>: marcada, conta só de segunda a sexta; desmarcada, dias corridos.</td></tr>
+  <tr><td>Condições de pagamento</td><td>O botão <b>Parcelas</b> define as parcelas; a soma precisa dar 100%.</td></tr>
+  <tr><td>Tipos de resultado</td><td>Os textos dos resultados descritivos (ex.: "Ausência em 25 g"), impressos no boletim.</td></tr>
+  <tr><td>Unidades de medida</td><td>A <b>sigla</b> (ex.: UFC/g) é a que sai no resultado.</td></tr>
+</table>
+<figure><img src="img/50-auxiliar-prazo-editar.png"><figcaption>Alterar um prazo: a opção "Dias úteis".</figcaption></figure>
+
+<!-- ================================================================ 19 -->
+<h1 id="c19"><span class="num">19</span>Países, estados e cidades</h1>
+<p><span class="menu">Cadastros › Países / Estados / Cidades</span> — Já vêm com todos os 5.571 municípios do IBGE, usados na busca de endereço pelo CEP. Todos podem consultar; só o administrador geral pode incluir ou alterar. Normalmente não é preciso mexer aqui.</p>
+<figure><img src="img/51-cidades.png"><figcaption>Consulta de cidades.</figcaption></figure>
+
+<!-- ================================================================ 20 -->
+<h1 id="c20"><span class="num">20</span>Relatórios</h1>
+<p><span class="menu">Relatórios</span> — Todos os relatórios funcionam do mesmo jeito:</p>
+<ol class="passos">
+  <li>Informe o <b>período</b> (de / até) e os filtros desejados.</li>
+  <li>Clique em <span class="botao">Visualizar</span> para ver na tela, <span class="botao">PDF</span> para imprimir ou <span class="botao">CSV (Excel)</span> para abrir numa planilha.</li>
+</ol>
+<figure><img src="img/56-rel-amostras-periodo.png"><figcaption>Exemplo: Nº de amostras por período.</figcaption></figure>
+<table>
+  <tr><th>Relatório</th><th>O que mostra</th></tr>
+  <tr><td>Faturamento</td><td>Pedidos de venda autorizados no período (não cancelados), um por pedido, com os valores da revisão atual da proposta. Filtros: cliente, empresa de cobrança, situação do pedido.</td></tr>
+  <tr><td>Amostras por período</td><td>Por cliente: amostras entregues e amostras analisadas no período, e o percentual analisado.</td></tr>
+  <tr><td>Amostras por cliente</td><td>Como o anterior, mas separado por cliente <b>e produto</b>; pode ser filtrado por um cliente.</td></tr>
+  <tr><td>Parâmetros analisados</td><td>Quantas vezes cada parâmetro foi analisado (com resultado) no período.</td></tr>
+  <tr><td>Tempo de análise</td><td>Quantos dias cada análise levou, da data de início à data do resultado (contando os dois dias); pode ser filtrado por um parâmetro.</td></tr>
+  <tr><td>Produção por período</td><td>As análises concluídas no período, pela data do resultado: quantidade analisada, parâmetro e produto.</td></tr>
+</table>
+<figure><img src="img/55-rel-faturamento.png"><figcaption>Faturamento.</figcaption></figure>
+<div class="caixa dica"><span class="titulo">Somente amostras com pedido de venda</span>
+<p>Nos relatórios de amostras, essa opção vem marcada. Desmarque para incluir também as amostras recebidas sem pedido.</p></div>
+
+<!-- ================================================================ 21 -->
+<h1 id="c21"><span class="num">21</span>Empresa usuária do sistema</h1>
+<p><span class="menu">Sistema › Empresas Usuárias do Sistema</span> — Os dados da sua empresa (o laboratório), usados no cabeçalho e no rodapé dos boletins, propostas e pedidos.</p>
+<figure><img src="img/65-empresa.png"><figcaption>Dados da empresa usuária.</figcaption></figure>
+<ul>
+  <li><b>Identificação:</b> razão social, nome fantasia (aparece no topo do sistema), CNPJ e inscrições.</li>
+  <li><b>Laudos e boletins:</b> o <b>logo</b> (impresso no boletim, na proposta, no pedido e no comprovante), o <b>nº de acreditação</b>, o <b>selo da acreditação</b> (sai só nas páginas dos parâmetros acreditados), o cabeçalho e o rodapé do laudo.</li>
+  <li><b>Endereços, Telefones e E-mails:</b> como no cadastro de clientes.</li>
+</ul>
+<h2>Nova empresa (administrador geral)</h2>
+<p>O administrador geral vê a lista de todas as empresas e o botão <span class="botao">+ Incluir</span>. Ao criar uma empresa, o sistema já prepara os status, os perfis sugeridos e a numeração dela, e pode copiar os cadastros de outra empresa.</p>
+<figure><img src="img/75-empresas-admin.png"><figcaption>Lista de empresas (visão do administrador geral).</figcaption></figure>
+<figure><img src="img/76-empresa-nova.png"><figcaption>Nova empresa usuária.</figcaption></figure>
+
+<!-- ================================================================ 22 -->
+<h1 id="c22"><span class="num">22</span>Parâmetros da empresa</h1>
+<p><span class="menu">Sistema › Parâmetros da Empresa</span> — As regras de funcionamento da empresa ativa.</p>
+<figure><img src="img/66-parametros-empresa.png"><figcaption>Aba Parâmetros.</figcaption></figure>
+<table>
+  <tr><th>Grupo</th><th>O que define</th></tr>
+  <tr><td>Status padrão</td><td>O status com que nascem a proposta, a amostra e o boletim; o status "Enviado ao cliente" da proposta; o status do boletim emitido.</td></tr>
+  <tr><td>Prazos e regras</td><td><b>Dias retroativos</b> para a data de entrega (acima disso, pede confirmação); <b>validade padrão</b> da proposta; <b>período padrão de pesquisa</b> (de quantos dias para trás as listas mostram); se o boletim exige 2º responsável.</td></tr>
+  <tr><td>Textos padrão</td><td>A legenda sugerida no boletim e o contrato padrão da proposta.</td></tr>
+</table>
+<h2>Aba Numeração</h2>
+<p>Mostra o último número usado de cada documento (amostra, proposta, pedido, produto) por ano. Só o administrador geral pode ajustar, e nunca para menos do que o maior número já usado. O motivo do ajuste fica registrado.</p>
+<figure><img src="img/66b-parametros-numeracao.png"><figcaption>Aba Numeração.</figcaption></figure>
+<h2>Aba E-mail</h2>
+<p>Configuração do envio de boletins por e-mail: servidor, porta, segurança, usuário e senha da conta, remetente, cópia oculta e os modelos de assunto e texto (com marcadores como o número do boletim e o nome do cliente). Use <span class="botao">Enviar e-mail de teste</span> para conferir a configuração.</p>
+<figure><img src="img/66c-parametros-email.png"><figcaption>Aba E-mail.</figcaption></figure>
+
+<!-- ================================================================ 23 -->
+<h1 id="c23"><span class="num">23</span>Usuários</h1>
+<p><span class="menu">Sistema › Usuários</span> — Quem pode entrar no sistema.</p>
+<figure><img src="img/67-usuarios-lista.png"><figcaption>Lista de usuários.</figcaption></figure>
+<h2>Criar um usuário</h2>
+<ol class="passos">
+  <li>Clique em <span class="botao">+ Incluir</span>.</li>
+  <li>Informe o <b>login</b> (o nome usado para entrar), o <b>nome</b> e o e-mail.</li>
+  <li>Em <b>Empresas do usuário</b>, marque o acesso, escolha o <b>profissional vinculado</b> e marque os <b>perfis</b>. Um usuário pode ter <b>vários perfis</b>: ele pode fazer tudo o que qualquer um dos seus perfis permite.</li>
+  <li>Clique em <span class="botao">Gravar</span>. O sistema mostra a <b>senha provisória</b> uma única vez: anote e entregue ao usuário. Ele troca no primeiro acesso.</li>
+</ol>
+<figure><img src="img/68b-usuario-novo.png"><figcaption>Novo usuário.</figcaption></figure>
+<figure><img src="img/68-usuario-editar.png"><figcaption>Usuário com o perfil RECEPÇÃO e o profissional vinculado.</figcaption></figure>
+<table>
+  <tr><th>Botão</th><th>Para que serve</th></tr>
+  <tr><td><span class="botao">Resetar senha</span></td><td>Gera uma nova senha provisória (para quem esqueceu a senha).</td></tr>
+  <tr><td><span class="botao">Desbloquear</span></td><td>Libera o usuário bloqueado por tentativas erradas.</td></tr>
+  <tr><td>Ativo</td><td>Desmarcado, o usuário não entra mais, mas o histórico dele continua.</td></tr>
+  <tr><td><span class="botao">Excluir</span></td><td>Só para quem nunca gravou nada.</td></tr>
+</table>
+
+<!-- ================================================================ 24 -->
+<h1 id="c24"><span class="num">24</span>Perfis de acesso</h1>
+<p><span class="menu">Sistema › Perfis de Acesso</span> — Um perfil é um conjunto de permissões. Em vez de configurar cada usuário, você monta perfis (Recepção, Analista, Responsável Técnico, Comercial…) e dá a cada usuário os perfis que ele precisa.</p>
+<figure><img src="img/69-perfis-lista.png"><figcaption>Perfis da empresa.</figcaption></figure>
+<figure><img src="img/70-perfil-editar.png"><figcaption>Perfil RECEPÇÃO: as permissões de cada tela.</figcaption></figure>
+<ul>
+  <li>Cada linha é uma tela; as colunas são as ações: <b>Consultar</b> (entrar na tela e ver), <b>Incluir</b>, <b>Alterar</b>, <b>Excluir</b> e <b>Imprimir</b> (relatórios, PDFs, etiquetas).</li>
+  <li><b>Ações especiais</b> são permissões além dessas: gerar revisão, emitir boletim, desfazer revisão, gerar ou cancelar pedido, aceitar data de entrega antiga.</li>
+  <li>Clique no nome de uma coluna para marcar a coluna toda; no nome da tela para marcar a linha toda. <span class="botao">Somente consulta</span> marca só "Consultar" em todas; <span class="botao">Limpar</span> desmarca tudo.</li>
+  <li>Sem <b>Consultar</b>, a tela nem aparece no menu.</li>
+</ul>
+<div class="caixa dica"><span class="titulo">Perfis sugeridos</span>
+<p>Toda empresa nova já vem com os perfis ADMINISTRADOR, RECEPÇÃO, ANALISTA, RESPONSÁVEL TÉCNICO e COMERCIAL. Ajuste-os ao seu laboratório. O perfil ADMINISTRADOR tem tudo e não pode ser alterado. Use <b>Copiar</b> para levar um perfil para outra empresa.</p></div>
+
+<!-- ================================================================ 25 -->
+<h1 id="c25"><span class="num">25</span>Auditoria</h1>
+<p><span class="menu">Sistema › Auditoria</span> — O registro de tudo o que foi feito no sistema: quem, quando, o quê e de onde. Inclui inclusões, alterações, exclusões, revisões, emissões de boletim, envios de e-mail e entradas no sistema.</p>
+<figure><img src="img/71-auditoria.png"><figcaption>Eventos com filtros por período, usuário, tela e ação.</figcaption></figure>
+<p>Clique em um evento para ver o <b>detalhe</b>: os campos que mudaram, com o valor de antes e o de depois.</p>
+<figure><img src="img/72-auditoria-detalhe.png"><figcaption>Detalhe de um evento: antes e depois.</figcaption></figure>
+<p>O botão <span class="botao">CSV</span> exporta a lista para uma planilha.</p>
+
+<!-- ================================================================ 26 -->
+<h1 id="c26"><span class="num">26</span>Migração de dados do sistema antigo</h1>
+<p><span class="menu">Sistema › Migração de Dados</span> — Só para o <b>administrador geral</b>, normalmente feita uma única vez, na implantação. Traz <b>todos os dados</b> do sistema antigo: empresa, cadastros, propostas, pedidos, amostras (com os mesmos números), estoque, arquivo, resultados e boletins (que chegam emitidos e reimprimem iguais). O sistema antigo só é lido; nada é alterado nele.</p>
+<figure><img src="img/77-migracao.png"><figcaption>Tela da migração.</figcaption></figure>
+<ol class="passos">
+  <li>Informe o caminho do banco do sistema antigo e a senha dele.</li>
+  <li>Escolha o banco de destino (normalmente o próprio banco recém-instalado) e a <b>senha provisória</b> que os usuários migrados usarão no primeiro acesso.</li>
+  <li>Clique em <span class="botao">Executar migração</span> e acompanhe as etapas. No final, confira as <b>conferências</b> (devem ficar todas verdes) e baixe o relatório de anomalias (dados do sistema antigo que precisaram de ajuste).</li>
+</ol>
+<div class="caixa importante"><span class="titulo">Antes de migrar</span>
+<p>A migração grava num banco vazio ou recém-instalado. Num banco que já tem cadastros ou movimentos ela é recusada, para não misturar dados. Faça um backup antes.</p></div>
+
+<!-- ================================================================ 27 -->
+<h1 id="c27"><span class="num">27</span>Dúvidas frequentes</h1>
+<h3>Esqueci a minha senha.</h3>
+<p>Peça ao administrador: em Usuários, ele usa <b>Resetar senha</b> e passa a você uma senha provisória. No primeiro acesso, você cria a nova senha.</p>
+<h3>Aparece "usuário bloqueado".</h3>
+<p>Foram 5 tentativas erradas. Espere 15 minutos ou peça ao administrador para desbloquear.</p>
+<h3>Uma tela deste manual não aparece no meu menu.</h3>
+<p>O seu perfil não tem a permissão "Consultar" dessa tela. Fale com o administrador.</p>
+<h3>Não encontro uma amostra (ou resultado, boletim) antigo.</h3>
+<p>As listas mostram de início só o período recente. Mude a data <b>"a partir de"</b> para mais longe e pesquise de novo. Confira também a opção "Só a última revisão".</p>
+<h3>A proposta não aparece no recebimento da amostra.</h3>
+<p>Confira se ela é do cliente escolhido e se o status dela permite receber amostras (cadastro auxiliar Status da proposta).</p>
+<h3>A amostra não aparece em Resultados, Boletins ou Etiquetas.</h3>
+<p>O status da amostra precisa ser um status que <b>permite resultado</b> (ex.: "Liberada para análise").</p>
+<h3>Preciso corrigir um boletim já emitido.</h3>
+<p>Abra o boletim e use <b>Criar revisão</b> (capítulo 13). Se a correção é no resultado, crie a revisão pelo resultado e marque para revisar também o boletim.</p>
+<h3>O cliente perdeu o boletim.</h3>
+<p>Abra o boletim emitido e clique em <b>Imprimir</b> ou <b>Enviar por e-mail</b>. A 2ª via é idêntica à original.</p>
+<h3>A data prevista do teste está diferente do que eu esperava.</h3>
+<p>Ela é a data de entrega mais os dias do prazo da análise na proposta. Se o prazo for de <b>dias úteis</b>, sábados e domingos não contam; feriados contam.</p>
+<h3>O sistema pediu para eu entrar de novo.</h3>
+<p>O servidor foi reiniciado ou você trocou de empresa. Entre normalmente.</p>
+<h3>Posso usar no celular?</h3>
+<p>Sim, pelo navegador do celular ou do tablet. As telas se ajustam, mas o uso é mais confortável no computador.</p>
+
+<!-- ================================================================ 28 -->
+<h1 id="c28"><span class="num">28</span>Glossário</h1>
+<dl class="glossario">
+  <dt>Acreditado</dt><dd>Parâmetro reconhecido pelo órgão de acreditação (ex.: CGCRE/Inmetro). Sai no boletim com o selo da acreditação.</dd>
+  <dt>Amostra</dt><dd>O material recebido do cliente para análise. Tem número próprio (TT-CCCCC-AA/YY).</dd>
+  <dt>Boletim (laudo)</dt><dd>O documento com os resultados entregue ao cliente.</dd>
+  <dt>Contraprova</dt><dd>Parte da amostra guardada para uma eventual nova análise.</dd>
+  <dt>Emitir</dt><dd>Tornar o boletim oficial e definitivo: gera o PDF, guarda e congela.</dd>
+  <dt>Empresa ativa</dt><dd>A empresa em que você está trabalhando agora (canto superior direito).</dd>
+  <dt>Especificação</dt><dd>O limite que o resultado deve atender (ex.: máximo 5,0 × 10⁵ UFC/g).</dd>
+  <dt>Fila de análises</dt><dd>Os testes que ainda não têm resultado, pela data prevista.</dd>
+  <dt>Inativar</dt><dd>Tirar um cadastro das listas de escolha sem apagá-lo.</dd>
+  <dt>Parâmetro de análise</dt><dd>Uma análise que o laboratório faz (ex.: Pesquisa de Salmonella spp.).</dd>
+  <dt>Pedido de venda</dt><dd>O registro da autorização do cliente para o serviço da proposta.</dd>
+  <dt>Perfil</dt><dd>Conjunto de permissões dado aos usuários.</dd>
+  <dt>Prazo</dt><dd>Quantidade de dias (úteis ou corridos) para a análise ficar pronta.</dd>
+  <dt>Proposta</dt><dd>O orçamento enviado ao cliente: produtos, análises, valores e condições.</dd>
+  <dt>Revisão</dt><dd>Nova versão de um documento já entregue; a anterior fica guardada só para consulta.</dd>
+  <dt>Status</dt><dd>A situação de um registro (ex.: Em elaboração, Liberada para análise, Enviado ao cliente).</dd>
+  <dt>Teste</dt><dd>Uma análise a ser feita numa amostra específica, com data prevista.</dd>
+</dl>
+
+</body>
+</html>

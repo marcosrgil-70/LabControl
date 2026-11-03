@@ -52,6 +52,7 @@ O `carregar-legado.ps1` faz o mesmo que o cliente fará depois do instalador: ba
 `dotnet test tests/LabControl.Tests` — suíte inteira (**317 testes, ~5 min**, 30/10/2026), inclusive a migração real quando o legado existe na máquina e o serviço do Firebird está iniciado. A origem do teste é a cópia fixa da 9.1 (`C:\Project\backup\DBMAIS-9.1.FDB`, restaurada do `DBMAIS-20261029.fbk`), porque as contagens conferidas são as do aceite; o `DBMAIS.FDB` recebe as cópias novas do laboratório. Só as telas no navegador: `--filter "FullyQualifiedName~Navegador"`. Não rodar com o `dotnet run` aberto (trava o build). Ver [P26](docs/processos/P26-testes-ponta-a-ponta.md).
 
 ## Documentação
+- **[Manual.pdf](Manual.pdf) — Manual do Usuário**, tela por tela, para quem opera o sistema (fonte em `docs/manual/manual.html`; para gerar de novo: `.\docs\manual\gerar-manual.ps1`).
 - [docs/README.md](docs/README.md) — índice: arquitetura, banco (um MD por objeto), telas, processos, regras, migração.
 - [docs/01-ARQUITETURA-V2.md](docs/01-ARQUITETURA-V2.md) — stack, multiempresa, segurança, padrões de UI e de código.
 - `Legacy/` — código da primeira versão (v1, modelo de dados errado), fora da compilação, só como referência.

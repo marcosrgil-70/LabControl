@@ -11,6 +11,9 @@ body {
   font-size: 0.92rem;
 }
 
+/* resumo de validação sem erro: o ASP.NET gera a caixa vazia (validation-summary-valid); só aparece com erro */
+.validation-summary-valid.alert { display: none; }
+
 /* Topo */
 .topbar { background: var(--lc-azul); }
 .topbar .navbar-brand { color: #fff; font-weight: 700; font-size: 1.2rem; }

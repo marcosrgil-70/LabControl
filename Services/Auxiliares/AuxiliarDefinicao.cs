@@ -169,7 +169,7 @@ public static class CatalogoAuxiliares
             Tabela = "PRAZOS", Titulo = "Prazos", Singular = "prazo", Icone = "bi-hourglass-split",
             Ajuda = "Prazo da análise na proposta: a data prevista do teste é a entrega + os dias (úteis ou corridos).",
             Campos = [Descricao, new("QtdeDias", "Qtde. de dias", TipoCampo.Inteiro, Minimo: 0, Maximo: 3650),
-                new("DiasUteis", "Dias úteis", TipoCampo.Logico, Ajuda: "Marcado: conta só dias úteis (pula sábado e domingo; feriados não entram). Desmarcado: dias corridos, como o legado (decisão do usuário, 30/10/2026).")],
+                new("DiasUteis", "Dias úteis", TipoCampo.Logico, Ajuda: "Marcado: conta só dias úteis (pula sábado e domingo; feriados não entram). Desmarcado: dias corridos (como no sistema anterior).")],
         },
         new AuxiliarDefinicao<Moeda>
         {
