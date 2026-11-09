@@ -1,15 +1,15 @@
 # FN_DATA_PREVISTA
 
-Data prevista do teste: entrega + `QTDE_DIAS` do prazo. `PRAZOS.DIAS_UTEIS = 1` conta só dias úteis (pula sábado e domingo; feriados não entram — não há cadastro de feriados); 0 = dias corridos, como o legado. Sem prazo: a própria data.
+Data prevista do teste: entrega + `QTDE_DIAS` do prazo. `PRAZOS.DIAS_UTEIS = 1` conta só dias úteis (pula sábado e domingo; feriados não entram — não há cadastro de feriados); 0 = dias corridos. Sem prazo: a própria data; prazo negativo conta como 0 dias.
 
 **Tipo:** Função · **Criticidade:** 🟠 Importante · **Script:** `Scripts/v2/02_funcoes_procedures.sql`
 
 > Seções técnicas geradas a partir de `Scripts/v2/*.sql` (fonte da verdade). Mudou o script? Rode `node tools/gerador-docs/gerar.mjs` (regras de negócio ficam em `tools/gerador-docs/meta_*.mjs`).
 
 ## Substitui no legado
-soma de dias corridos no Delphi (`Grava_Hist_Amostra_Testes`)
+— (o legado não gravava data prevista: `Grava_Hist_Amostra_Testes` não a calculava)
 
-Comentário do script: _FN_DATA_PREVISTA — data prevista do teste: entrega + QTDE_DIAS do prazo. PRAZOS.DIAS_UTEIS = 1 conta só dias úteis (pula sábado e domingo; feriados não entram — não há cadastro de feriados); 0 = dias corridos, como o legado (decisão do usuário, 30/10/2026). Sem prazo: a própria data._
+Comentário do script: _FN_DATA_PREVISTA — data prevista do teste: entrega + QTDE_DIAS do prazo. PRAZOS.DIAS_UTEIS = 1 conta só dias úteis (pula sábado e domingo; feriados não entram — não há cadastro de feriados); 0 = dias corridos (decisão do usuário, 30/10/2026; o legado não gravava data prevista). Sem prazo: a própria data; prazo negativo (só por SQL direto — a tela aceita 0 a 3650) conta como 0._
 
 ## Assinatura
 ```sql
@@ -43,7 +43,7 @@ RETURNS DATE READS SQL DATA
 ## Como chamar no C#
 ```csharp
 // Função escalar: usada por views/triggers. Se precisar na aplicação, chamar dentro de um SELECT:
-var valor = await db.Database.SqlQueryRaw<string>("SELECT FN_DATA_PREVISTA({0}, {1}) AS Value", data, id_prazo).FirstAsync();
+var valor = await db.Database.SqlQueryRaw<DateOnly?>("SELECT FN_DATA_PREVISTA({0}, {1}) AS Value", data, id_prazo).FirstAsync();
 ```
 
 ## Código
@@ -58,6 +58,7 @@ BEGIN
     RETURN NULL;
   END IF;
   SELECT COALESCE(MAX(QTDE_DIAS), 0), COALESCE(MAX(DIAS_UTEIS), 0) INTO v_dias, v_uteis FROM PRAZOS WHERE ID_PRAZOS = p_id_prazo;
+  SET v_dias = GREATEST(v_dias, 0);
   IF v_uteis = 0 THEN
     RETURN DATE_ADD(p_data, INTERVAL v_dias DAY);
   END IF;

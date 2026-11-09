@@ -47,6 +47,9 @@ $esperado = [ordered]@{ TABELAS = 59; VIEWS = 10; FUNCOES = 9; PROCEDURES = 27; 
 function Falhar([string]$msg) { Write-Host "ERRO: $msg" -ForegroundColor Red; exit 1 }
 
 # --- banco ---------------------------------------------------------------
+# -Forcar apaga sem perguntar: exige o banco escrito na linha de comando, para o padrão (LabControlDB, o banco
+# de trabalho com o legado) nunca ser apagado por esquecimento
+if ($Forcar -and -not $PSBoundParameters.ContainsKey('Banco')) { Falhar '-Forcar exige -Banco <nome> explícito.' }
 if ($Teste) { $Banco = 'lc_teste_' + (Get-Date -Format 'yyyyMMddHHmmss') + '_rot' + [guid]::NewGuid().ToString('N').Substring(0, 4) }
 if ($Banco -notmatch '^[A-Za-z0-9_]+$') { Falhar "nome de banco inválido: $Banco" }
 if ($Banco -in 'labcontrol', 'mysql', 'sys', 'information_schema', 'performance_schema') {

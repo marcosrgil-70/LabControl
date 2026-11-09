@@ -10,13 +10,13 @@
 |---|---|---|
 | Descrição* | `DESCRICAO` | até 150, única (ex.: "15 DIAS") |
 | Qtde. de dias* | `QTDE_DIAS` | ≥ 0 (legado `QTDE`) |
-| Dias úteis | `DIAS_UTEIS` | **novo**, padrão não. Marcado = conta só dias úteis; desmarcado = dias corridos, como o legado (decisão do usuário, 30/10/2026) |
+| Dias úteis | `DIAS_UTEIS` | **novo**, padrão não. Marcado = conta só dias úteis; desmarcado = dias corridos (decisão do usuário, 30/10/2026; o legado não gravava data prevista) |
 | Ativo | `ATIVO` | inativo some dos combos de inclusão |
 
 ## Regras específicas
 - `DT_PREVISTA` do teste = data de entrega + `QTDE_DIAS`, calculada pelo banco em [`FN_DATA_PREVISTA`](../banco/objetos/rotinas/FN_DATA_PREVISTA.md) (chamada por `SP_AMOSTRA_GERAR_TESTES` / `TG_TESTES_BI`) — D-29:
   - **"Dias úteis" marcado:** conta só dias úteis — pula sábado e domingo (feriados não entram: não há cadastro de feriados). Ex.: sexta 30/10 + 5 úteis = sexta 06/11; entrega no sábado conta a partir de segunda.
-  - **Desmarcado:** dias corridos, como o legado (sexta 30/10 + 10 = segunda 09/11).
+  - **Desmarcado:** dias corridos (sexta 30/10 + 10 = segunda 09/11).
 - A migração traz todos os prazos como dias corridos (o legado não tinha o campo).
 - Cadastro rápido "+" na proposta.
 

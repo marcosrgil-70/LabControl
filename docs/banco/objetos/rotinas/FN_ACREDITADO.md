@@ -42,7 +42,7 @@ RETURNS TINYINT READS SQL DATA
 ## Como chamar no C#
 ```csharp
 // Função escalar: usada por views/triggers. Se precisar na aplicação, chamar dentro de um SELECT:
-var valor = await db.Database.SqlQueryRaw<string>("SELECT FN_ACREDITADO({0}) AS Value", id_amostra).FirstAsync();
+var valor = await db.Database.SqlQueryRaw<int?>("SELECT FN_ACREDITADO({0}) AS Value", id_amostra).FirstAsync();
 ```
 
 ## Código

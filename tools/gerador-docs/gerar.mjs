@@ -204,9 +204,19 @@ function params(sig) {
   const inside = sig.slice(ini + 1, fim);
   return inside.split(/,(?![^(]*\))/).map(p => p.trim()).filter(Boolean).map(p => { const mm = p.match(/^(IN|OUT|INOUT)?\s*(\w+)\s+(.+)$/i); return mm ? { dir: (mm[1] || 'IN').toUpperCase(), name: mm[2], type: mm[3] } : { dir: 'IN', name: p, type: '' }; });
 }
+// tipo C# do RETURNS da função (DATE → DateOnly?, inteiros → int?, decimal → decimal?, texto → string)
+function tipoRetorno(body) {
+  const t = (body.match(/RETURNS\s+(\w+)/i)?.[1] ?? '').toUpperCase();
+  if (t === 'DATE') return 'DateOnly?';
+  if (t === 'DATETIME' || t === 'TIMESTAMP') return 'DateTime?';
+  if (['TINYINT', 'SMALLINT', 'INT', 'INTEGER', 'MEDIUMINT'].includes(t)) return 'int?';
+  if (t === 'BIGINT') return 'long?';
+  if (t === 'DECIMAL' || t === 'NUMERIC') return 'decimal?';
+  return 'string';
+}
 function csharp(r, ps) {
   const ins = ps.filter(p => p.dir === 'IN'), outs = ps.filter(p => p.dir !== 'IN');
-  if (r.kind === 'FUNCTION') return `// Função escalar: usada por views/triggers. Se precisar na aplicação, chamar dentro de um SELECT:\nvar valor = await db.Database.SqlQueryRaw<string>("SELECT ${r.name}(${ins.map((_, i) => '{' + i + '}').join(', ')}) AS Value", ${ins.map(p => p.name.replace(/^p_/, '')).join(', ')}).FirstAsync();`;
+  if (r.kind === 'FUNCTION') return `// Função escalar: usada por views/triggers. Se precisar na aplicação, chamar dentro de um SELECT:\nvar valor = await db.Database.SqlQueryRaw<${tipoRetorno(r.body)}>("SELECT ${r.name}(${ins.map((_, i) => '{' + i + '}').join(', ')}) AS Value", ${ins.map(p => p.name.replace(/^p_/, '')).join(', ')}).FirstAsync();`;
   const lines = [];
   lines.push(`// ${r.name.startsWith('SP_') && !['SP_PROXIMO_NUMERO', 'SP_RECALCULAR_PROPOSTA', 'SP_AMOSTRA_GERAR_TESTES', 'SP_INICIALIZAR_EMPRESA'].includes(r.name) ? 'Abre a própria transação: NÃO chamar dentro de db.Database.BeginTransaction().' : 'Sem transação própria: pode ser chamada dentro da transação da aplicação.'}`);
   lines.push('await using var cmd = db.Database.GetDbConnection().CreateCommand();');

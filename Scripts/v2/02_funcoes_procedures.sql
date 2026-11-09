@@ -170,8 +170,9 @@ END$$
 -- ---------------------------------------------------------------------
 -- FN_DATA_PREVISTA — data prevista do teste: entrega + QTDE_DIAS do prazo.
 -- PRAZOS.DIAS_UTEIS = 1 conta só dias úteis (pula sábado e domingo; feriados
--- não entram — não há cadastro de feriados); 0 = dias corridos, como o legado
--- (decisão do usuário, 30/10/2026). Sem prazo: a própria data.
+-- não entram — não há cadastro de feriados); 0 = dias corridos (decisão do
+-- usuário, 30/10/2026; o legado não gravava data prevista). Sem prazo: a própria
+-- data; prazo negativo (só por SQL direto — a tela aceita 0 a 3650) conta como 0.
 -- ---------------------------------------------------------------------
 CREATE FUNCTION FN_DATA_PREVISTA(p_data DATE, p_id_prazo INT)
 RETURNS DATE READS SQL DATA
@@ -183,6 +184,7 @@ BEGIN
     RETURN NULL;
   END IF;
   SELECT COALESCE(MAX(QTDE_DIAS), 0), COALESCE(MAX(DIAS_UTEIS), 0) INTO v_dias, v_uteis FROM PRAZOS WHERE ID_PRAZOS = p_id_prazo;
+  SET v_dias = GREATEST(v_dias, 0);
   IF v_uteis = 0 THEN
     RETURN DATE_ADD(p_data, INTERVAL v_dias DAY);
   END IF;

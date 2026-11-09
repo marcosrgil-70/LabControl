@@ -135,8 +135,11 @@ public static class BancoTeste
             var nomes = new List<string>();
             using (var cmd = con.CreateCommand())
             {
-                cmd.CommandText = "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = @n OR SCHEMA_NAME LIKE CONCAT(@n, '\\_%')";
+                // nomes exatos (o banco da execução e os derivados da MigracaoTests): LIKE trataria os "_" como curinga
+                cmd.CommandText = "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME IN (@n, @mig, @inst)";
                 cmd.Parameters.AddWithValue("@n", NomeBanco);
+                cmd.Parameters.AddWithValue("@mig", NomeBanco + "_mig");
+                cmd.Parameters.AddWithValue("@inst", NomeBanco + "_inst");
                 using var r = cmd.ExecuteReader();
                 while (r.Read()) nomes.Add(r.GetString(0));
             }

@@ -154,10 +154,12 @@ function RestaurarBanco([string]$Mysql, [string]$SenhaRoot, [string]$Zip, [strin
     AtualizarBanco -Mysql $Mysql -SenhaRoot $SenhaRoot -Banco $Banco -Script (Join-Path (Split-Path $Recriar) 'atualizar.ps1')
 
     # confere os objetos com as contagens do recriar.ps1 (a mesma fonte do schema)
-    $esperado = @{ TABELAS = 59; VIEWS = 10; FUNCOES = 8; PROCEDURES = 27; TRIGGERS = 48 }
-    if ((Test-Path $Recriar) -and ((Get-Content $Recriar -Raw) -match '\$esperado = \[ordered\]@\{([^}]+)\}')) {
-      foreach ($par in $Matches[1] -split ';') { $k, $v = $par -split '='; if ($k.Trim() -in $esperado.Keys) { $esperado[$k.Trim()] = [int]$v.Trim() } }
+    # sem o recriar.ps1 não há contagem confiável: falha em vez de usar números fixos (que ficam desatualizados)
+    $esperado = @{ TABELAS = 0; VIEWS = 0; FUNCOES = 0; PROCEDURES = 0; TRIGGERS = 0 }
+    if (-not ((Test-Path $Recriar) -and ((Get-Content $Recriar -Raw) -match '\$esperado = \[ordered\]@\{([^}]+)\}'))) {
+      throw "Não foi possível ler as contagens esperadas em $Recriar."
     }
+    foreach ($par in $Matches[1] -split ';') { $k, $v = $par -split '='; if ($k.Trim() -in $esperado.Keys) { $esperado[$k.Trim()] = [int]$v.Trim() } }
     $contagem = (MySql $Mysql $SenhaRoot @"
     SELECT (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$Banco' AND TABLE_TYPE = 'BASE TABLE'),
        (SELECT COUNT(*) FROM information_schema.VIEWS WHERE TABLE_SCHEMA = '$Banco'),
