@@ -42,6 +42,14 @@ Reescrita do sistema de laboratório **Delphi 7 + Firebird** (`C:\Project\Labora
 - **2ª via do boletim é idêntica à 1ª** — decisão do usuário (30/10/2026): sem faixa de aviso, com as assinaturas e o mesmo nome de arquivo (o papel pode ter se danificado e a reemissão vai para os órgãos competentes e para o cliente).
 - **Antes de começar uma nova tarefa, commit + push** do que estiver pendente (`git status`; nada pendente = seguir) — pedido do usuário (23/10/2026). Assim cada tarefa começa sobre um ponto salvo no remoto.
 
+## Auditoria SABOTADOR (pedido do usuário, 09/11/2026)
+Toda tarefa com impacto funcional passa pelo subagente `sabotador` antes de ser concluída (fluxo na skill global `auditoria-sabotador`; passo do `concluir-tarefa`). O que ele precisa atacar aqui, além do roteiro geral:
+- **Multiempresa:** ler, alterar ou excluir registro de outra empresa trocando o id na URL/formulário; consulta que escapa do Global Query Filter (`IgnoreQueryFilters`, SQL cru, procedure, view).
+- **Permissões:** action de escrita sem `[Permissao]`/`[SomenteAdminGlobal]`, item de menu e action com permissões diferentes, chamada direta ao endpoint por usuário sem o perfil.
+- **Banco:** numeração (`SP_PROXIMO_NUMERO`) em paralelo, revisões fora das `SP_GERAR_REVISAO_*`, edição de revisão antiga ou de boletim emitido, mensagens `45000` engolidas ou trocadas por erro genérico.
+- **Ambiente:** testes só em bancos temporários `lc_teste_*` (criados pelos testes); **nunca gravar no `LabControlDB`** (consulta de leitura pode). Não rodar testes com o `dotnet run` aberto.
+- **Testes de reprodução/regressão** em `tests/LabControl.Tests/` no padrão da classe do módulo; relatório completo pode ir em `docs/auditorias/aaaa-mm-dd-<assunto>.md`.
+
 ## Comandos
 - Carregar o legado no banco de trabalho: `.\Scripts\v2\carregar-legado.ps1` (**apaga** o `LabControlDB`, recria como o instalador e migra o `DBMAIS.FDB` pela T07, ~11 min; login `ADMINISTRADOR` / `Admin123`).
 - Recriar banco: `.\Scripts\v2\recriar.ps1` (senha lida do user-secret da connection string, sem pergunta; `-Teste` = banco temporário + roteiro do doc 12 §7 — **o uso do dia a dia**; `-Dev` = **apaga** o `LabControlDB` e cria vazio com a empresa 001 + usuário `ADMINISTRADOR` / `Admin123`, sem troca de senha, vinculado ao profissional "USUÁRIO ESPECIAL DO SISTEMA"; `-Empresa "<nome>"` = o mesmo com o nome da empresa, usado pelo instalador). Detalhes em `Scripts/v2/README.md`.

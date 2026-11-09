@@ -21,6 +21,7 @@ Responda em português do Brasil. Datas no formato `dd/mm/aaaa` (data de hoje).
    - botões das listas com ícone **e texto**; "Inativar" com confirmação; aviso de inativos ocultos na pesquisa (padrão do P26 §5);
    - **manual do usuário** (pedido do usuário, 03/11/2026): a mudança aparece para quem opera o sistema (tela, botão, regra, mensagem)? Atualize o capítulo da tela em `docs/manual/manual.html` (linguagem simples, sem termos técnicos), acrescente a imagem em `tests/LabControl.Tests/Manual/ManualTests.cs` se for tela nova e rode `.\docs\manual\gerar-manual.ps1` (ou `-SoPdf` se as telas não mudaram); confira as páginas do `Manual.pdf`.
 4. Mudou o banco nesta tarefa? Então a skill `mudanca-banco` precisa ter sido seguida (roteiro SQL, MDs dos objetos, entidades regeneradas).
+5. **Auditoria SABOTADOR** (pedido do usuário, 09/11/2026): tarefa com impacto funcional → seguir a skill `auditoria-sabotador` (subagente `sabotador`, correções, nova auditoria) até não restar CRÍTICO/ALTO aberto. Os testes de reprodução dele viram regressão e entram na suíte do item 2 (rodar de novo depois da última correção). Só documentação → dispensar e dizer. **Sem aprovação do SABOTADOR, não marque a tarefa.** No Diário, registre as rodadas, os defeitos por gravidade e o resultado.
 
 ## 2. Atualizar a documentação (sempre os 5 lugares)
 | Onde | O que fazer |
