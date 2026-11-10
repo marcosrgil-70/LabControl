@@ -29,6 +29,7 @@ Convenções:
 - Erro de negócio: `SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = '<frase pronta para o usuário>'` (a aplicação mostra o texto como está).
 - Procedure com transação própria grava auditoria com `PR_AUDITAR` **dentro** da transação.
 - Número de documento só por `SP_PROXIMO_NUMERO` dentro da trigger; revisões só pelas `SP_GERAR_REVISAO_*` (`@LC_REVISAO`).
+- Travas (D-23, D-30): `UPDATE`/`DELETE` com JOIN numa rotina parte do documento com ordem e índice fixos (`STRAIGHT_JOIN` + `FORCE INDEX`); nunca `OR`/`COALESCE` na coluna que escolhe as linhas travadas. Confira com `EXPLAIN` no `LabControlDB` (volume real) **e** num banco temporário (poucos dados — é onde o plano ruim aparece).
 - Ao editar SQL por script (Node/sed), cuidado: `String.replace` do JS com `$$` no texto novo vira `$` e quebra os `END$$` — use função de substituição.
 
 ## 2. Documentar

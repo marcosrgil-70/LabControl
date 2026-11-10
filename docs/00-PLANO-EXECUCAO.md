@@ -3,8 +3,13 @@
 > **Leia este arquivo no início de toda sessão.** Ele diz onde paramos e o que vem a seguir.
 > Ao terminar uma tarefa: marque `[x]` aqui **e** no arquivo da fase, atualize o "Status" do MD da tela, a [matriz Delphi → C#](plano/MATRIZ-DELPHI-CSHARP.md) e registre no §8 (Diário).
 
-## ▶ PONTO DE RETORNO (03/11/2026)
+## ▶ PONTO DE RETORNO (09/11/2026)
 > **Resumo:**
+> - **09/11/2026:**
+>   - **Auditoria SABOTADOR** (pedido do usuário, vale para todos os projetos): agente `~/.claude/agents/sabotador.md` + guarda + skill `auditoria-sabotador`; aqui, seção no `CLAUDE.md` e passo 5 do `concluir-tarefa` — **tarefa com impacto funcional só é concluída com a aprovação dele**. 1ª auditoria (commit `f71f138`) aprovada; relatório em `docs/auditorias/2026-11-09-f71f138.md`.
+>   - **Decisão do usuário:** prazo de 0 dias úteis com entrega no sábado/domingo = segunda-feira (D-29).
+>   - **Deadlock intermitente dos testes resolvido** (D-30): pedido de venda, revisão de resultado e troca de produto travam só o próprio documento; 1213/1205 → "Tente de novo" + log.
+>   - Próxima tarefa continua a **9.2** (abaixo).
 > - **Decisões do usuário de 30/10/2026, aplicadas em 03/11/2026:**
 >   - **um só banco permanente, o `LabControlDB`, com os dados do legado** — para programar, rodar e testar à mão; os testes usam bancos temporários `lc_teste_*` (criados e apagados a cada execução); os bancos antigos (`labcontrol_v2`, `labcontrol_teste`, `labcontrol_migracao`…) foram apagados; carga: `Scripts/v2/carregar-legado.ps1`;
 >   - **prazo com "Dias úteis" marcado conta dias úteis** (pula sábado e domingo); desmarcado, dias corridos — `FN_DATA_PREVISTA` (D-29);
