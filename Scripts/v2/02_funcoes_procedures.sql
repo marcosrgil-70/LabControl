@@ -173,6 +173,8 @@ END$$
 -- não entram — não há cadastro de feriados); 0 = dias corridos (decisão do
 -- usuário, 30/10/2026; o legado não gravava data prevista). Sem prazo: a própria
 -- data; prazo negativo (só por SQL direto — a tela aceita 0 a 3650) conta como 0.
+-- Dias úteis com 0 dias e entrega no sábado/domingo: a segunda-feira seguinte
+-- (decisão do usuário, 09/11/2026 — a data prevista nunca cai em fim de semana).
 -- ---------------------------------------------------------------------
 CREATE FUNCTION FN_DATA_PREVISTA(p_data DATE, p_id_prazo INT)
 RETURNS DATE READS SQL DATA
@@ -194,6 +196,9 @@ BEGIN
     IF DAYOFWEEK(v_dt) NOT IN (1, 7) THEN   -- 1 = domingo, 7 = sábado
       SET v_dias = v_dias - 1;
     END IF;
+  END WHILE;
+  WHILE DAYOFWEEK(v_dt) IN (1, 7) DO       -- só acontece com 0 dias a partir do fim de semana
+    SET v_dt = DATE_ADD(v_dt, INTERVAL 1 DAY);
   END WHILE;
   RETURN v_dt;
 END$$
@@ -616,11 +621,13 @@ BEGIN
   VALUES (v_emp, v_dest, p_revisao, p_id_origem, 1, p_motivo, p_id_func, p_id_usuario);
   SET p_id_novo = LAST_INSERT_ID();
 
-  UPDATE LAB_RESULTADOS_ANALISES R
-    JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = R.ID_LAB_HIST_AMOSTRAS
+  -- amostras da família primeiro (derivada), depois os resultados delas pelo UQ_RES_REV: o JOIN com OR não usava
+  -- índice e travava resultados de outras amostras, causando deadlock entre revisões simultâneas (auditoria 09/11/2026)
+  UPDATE (SELECT ID_LAB_HIST_AMOSTRAS FROM LAB_HIST_AMOSTRAS FORCE INDEX (FK_AMO_RAIZ) WHERE ID_AMOSTRA_RAIZ = v_raiz
+           UNION SELECT v_raiz) F
+    STRAIGHT_JOIN LAB_RESULTADOS_ANALISES R FORCE INDEX (UQ_RES_REV) ON R.ID_LAB_HIST_AMOSTRAS = F.ID_LAB_HIST_AMOSTRAS
      SET R.ULTIMA_REVISAO = 0
-   WHERE (A.ID_AMOSTRA_RAIZ = v_raiz OR A.ID_LAB_HIST_AMOSTRAS = v_raiz)
-     AND R.ID_LAB_RESULTADOS_ANALISES <> p_id_novo AND R.ULTIMA_REVISAO = 1;
+   WHERE R.ID_LAB_RESULTADOS_ANALISES <> p_id_novo AND R.ULTIMA_REVISAO = 1;
 
   -- Mapeamento de testes pela coluna ID_TESTE_ORIGEM (o legado casava por
   -- tipo de análise + parâmetro com SELECT singleton e quebrava quando a amostra
@@ -1076,9 +1083,11 @@ BEGIN
                     WHERE PA.ID_LAB_PROPOSTAS_PRODUTOS = PP.ID_LAB_PROPOSTAS_PRODUTOS), 0)
     FROM LAB_PROPOSTAS_PRODUTOS PP WHERE PP.ID_LAB_PROPOSTAS = p_id_proposta;
 
-  -- amostras já recebidas desta proposta (qualquer revisão) passam a apontar para o pedido
-  UPDATE LAB_HIST_AMOSTRAS A
-    JOIN LAB_PROPOSTAS P ON P.ID_LAB_PROPOSTAS = A.ID_LAB_PROPOSTAS
+  -- amostras já recebidas desta proposta (qualquer revisão) passam a apontar para o pedido.
+  -- Ordem fixa (proposta → amostras pelo IX_AMO_PROP): com poucos dados o otimizador começava pelas amostras sem
+  -- pedido de TODAS as empresas e as travava, causando deadlock com revisões simultâneas (auditoria 09/11/2026, D-1)
+  UPDATE LAB_PROPOSTAS P
+    STRAIGHT_JOIN LAB_HIST_AMOSTRAS A FORCE INDEX (IX_AMO_PROP) ON A.ID_LAB_PROPOSTAS = P.ID_LAB_PROPOSTAS
      SET A.ID_PEDIDOS_VENDA = p_id_pedido
    WHERE P.ID_EMPRESAS = v_emp AND P.ANO_PROPOSTA = v_ano AND P.COD_PROPOSTA = v_cod
      AND A.ID_PEDIDOS_VENDA IS NULL AND A.ULTIMA_REVISAO = 1;
@@ -1154,11 +1163,12 @@ BEGIN
   UPDATE LAB_PROPOSTAS_PRODUTOS SET ID_PRODUTOS = p_id_prod_novo
    WHERE ID_LAB_PROPOSTAS = p_id_proposta AND ID_PRODUTOS = p_id_prod_velho;
   -- só a revisão vigente da amostra: as antigas são somente leitura (TG_AMOSTRAS_BU recusava a troca inteira — 6.3)
-  UPDATE LAB_HIST_AMOSTRAS SET ID_PRODUTOS = p_id_prod_novo
+  -- índices fixos (mesmo motivo do SP_GERAR_PEDIDO_VENDA): produto muito usado levava a travar amostras de outras propostas
+  UPDATE LAB_HIST_AMOSTRAS FORCE INDEX (IX_AMO_PROP) SET ID_PRODUTOS = p_id_prod_novo
    WHERE ID_LAB_PROPOSTAS = p_id_proposta AND ID_PRODUTOS = p_id_prod_velho AND ULTIMA_REVISAO = 1;
   -- itens do pedido desta revisão (a T21 mostra o produto do item — 6.3)
-  UPDATE PEDIDOS_VENDA_ITENS PI
-    JOIN LAB_PROPOSTAS_PRODUTOS PP ON PP.ID_LAB_PROPOSTAS_PRODUTOS = PI.ID_LAB_PROPOSTAS_PRODUTOS
+  UPDATE LAB_PROPOSTAS_PRODUTOS PP
+    STRAIGHT_JOIN PEDIDOS_VENDA_ITENS PI FORCE INDEX (FK_PEDITEM_PROPPROD) ON PI.ID_LAB_PROPOSTAS_PRODUTOS = PP.ID_LAB_PROPOSTAS_PRODUTOS
      SET PI.ID_PRODUTOS = p_id_prod_novo
    WHERE PP.ID_LAB_PROPOSTAS = p_id_proposta AND PI.ID_PRODUTOS = p_id_prod_velho;
   CALL PR_AUDITAR(v_emp, 'LAB_PROPOSTAS', p_id_proposta, 'A', JSON_OBJECT('ID_PRODUTOS', p_id_prod_velho),

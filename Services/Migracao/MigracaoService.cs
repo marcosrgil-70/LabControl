@@ -152,7 +152,8 @@ public sealed partial class MigracaoService(IConfiguration config)
                     try { await (tx ?? unica)!.RollbackAsync(CancellationToken.None); }
                     catch (Exception rb) { relatorio.Log($"[{etapa.Codigo}] Rollback não executado ({rb.GetBaseException().Message}): o MySQL desfaz a transação ao perder a conexão."); }
                     estado.Situacao = SituacaoEtapa.Erro;
-                    estado.Erro = ErrosMySql.MensagemDeNegocio(ex) ?? ex.GetBaseException().Message;
+                    // concorrência (1213/1205): o relatório da migração guarda o texto técnico, não a frase para o usuário
+                    estado.Erro = (ErrosMySql.EhConcorrencia(ex) ? null : ErrosMySql.MensagemDeNegocio(ex)) ?? ex.GetBaseException().Message;
                     relatorio.Log($"[{etapa.Codigo}] ERRO: {estado.Erro}");
                     if (unica is not null) relatorio.Log("Tudo desfeito: o banco em uso voltou como o instalador deixou. Corrija e execute de novo.");
                     falhou = true;

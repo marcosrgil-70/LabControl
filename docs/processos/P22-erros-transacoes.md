@@ -22,7 +22,7 @@
 | Sessão | `Data/Interceptors/SessaoMySqlInterceptor.cs` | em toda abertura: `SET SESSION transaction_isolation = 'READ-COMMITTED', @LC_ID_USUARIOS = <usuário do request>, @LC_IP = <IP>, @LC_REVISAO = NULL, @LC_MIGRACAO = 0, @LC_PERMITE_RETROATIVO = 0, @LC_DESFAZENDO = NULL` |
 | Isolamento | `Data/Interceptors/IsolamentoInterceptor.cs` | `BeginTransaction()` sem nível abre em READ COMMITTED (o MySqlConnector mandaria `REPEATABLE READ`) |
 | Resultado | `Infra/Resultado.cs` | `Resultado.Ok()`, `Resultado.Ok(valor)`, `Resultado.Erro(msg, campo?)` (serve para `Resultado` e `Resultado<T>`) |
-| Erros | `Infra/ErrosMySql.cs` | `MensagemDeNegocio(ex)` (45000 = texto da trigger; 1062 por constraint; 1451; 1452), `CapturarAsync(...)` |
+| Erros | `Infra/ErrosMySql.cs` | `MensagemDeNegocio(ex)` (45000 = texto da trigger; 1062 por constraint; 1451; 1452; 1213/1205 = gravação simultânea: "Tente de novo" + `LogWarning` com o texto técnico, sem repetição automática — a transação já foi desfeita; auditoria 09/11/2026), `CapturarAsync(...)` |
 | Procedures | `Infra/Procedures.cs` (scoped) | um método por `SP_*`; confere que a origem é da empresa ativa; usuário/profissional do contexto; lê OUT params; 45000 → `Resultado.Erro`; **recusa** procedure com transação própria dentro de `BeginTransaction`; `DefinirPermiteRetroativoAsync` só dentro de transação |
 | MVC | `Infra/ResultadoMvc.cs` | `this.AplicarNoFormulario(r)` (ModelState) / `this.AplicarNoTempData(r)`; `ErroNegocioFilter` global: erro de negócio que escapou vira mensagem (TempData + volta à página; AJAX → 422 `{ erro }`) em vez de página 500 |
 

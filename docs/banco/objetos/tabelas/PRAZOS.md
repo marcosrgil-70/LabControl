@@ -56,7 +56,7 @@ Prazos de entrega das análises (com quantidade de dias).
 - `ATIVO = 0` some dos combos de inclusão, mas continua aparecendo nos registros antigos que o usam.
 - Excluir só se não houver uso (FK); havendo uso, oferecer "Inativar".
 - `QTDE_DIAS` calcula a `DT_PREVISTA` dos testes da amostra (entrega + dias) por `FN_DATA_PREVISTA`.
-- `DIAS_UTEIS = 1`: conta só dias úteis (pula sábado e domingo; feriados não entram); 0 = dias corridos (decisão do usuário, 30/10/2026; o legado não gravava data prevista).
+- `DIAS_UTEIS = 1`: conta só dias úteis (pula sábado e domingo; feriados não entram; 0 dias com entrega no fim de semana = segunda-feira, 09/11/2026); 0 = dias corridos (decisão do usuário, 30/10/2026; o legado não gravava data prevista).
 - Cadastro rápido "+" na proposta.
 
 ## Implementação no C# (EF Core)

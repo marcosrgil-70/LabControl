@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 using MySqlConnector;
 
 namespace LabControl.Infra;
@@ -18,6 +19,13 @@ public static partial class ErrosMySql
 {
     public const string SqlStateNegocio = "45000";
 
+    /// <summary>Log dos erros de concorrência (1213/1205): ligado no Program.cs; sem ele (testes) não registra.</summary>
+    public static ILogger? Log { get; set; }
+
+    /// <summary>Deadlock (1213) ou espera de trava esgotada (1205): gravação simultânea; a transação foi desfeita.</summary>
+    public static bool EhConcorrencia(Exception ex) =>
+        Encontrar(ex) is { ErrorCode: MySqlErrorCode.LockDeadlock or MySqlErrorCode.LockWaitTimeout };
+
     /// <summary>FK recusou a exclusão (1451) — <see cref="TipoFalha.EmUso"/>.</summary>
     private const string MensagemEmUso = "Registro em uso por outros cadastros ou movimentos: não pode ser excluído (inative-o em vez de excluir).";
 
@@ -35,11 +43,22 @@ public static partial class ErrosMySql
             MySqlErrorCode.RowIsReferenced2 or MySqlErrorCode.RowIsReferenced => MensagemEmUso,
             MySqlErrorCode.NoReferencedRow2 or MySqlErrorCode.NoReferencedRow =>
                 "Registro relacionado não encontrado (pode ter sido excluído). Atualize a tela e tente de novo.",
+            // gravação simultânea de outro usuário (1213/1205): a transação foi desfeita inteira, repetir resolve
+            MySqlErrorCode.LockDeadlock or MySqlErrorCode.LockWaitTimeout => Concorrencia(my),
             _ => null,
         };
     }
 
     public static bool EhErroDeNegocio(Exception ex) => MensagemDeNegocio(ex) is not null;
+
+    // o usuário vê a mensagem amigável; o texto técnico vai para o log (1205/1213 recorrentes = transação presa ou plano ruim)
+    private static string Concorrencia(MySqlException my)
+    {
+        // chamado dentro de filtros "catch … when": exceção do logger seria engolida e o erro viraria página 500
+        try { Log?.LogWarning(my, "Concorrência no MySQL ({Codigo}): {Mensagem}", (int)my.ErrorCode, my.Message); }
+        catch (Exception) { }
+        return "Outro usuário estava gravando os mesmos dados ao mesmo tempo e nada foi gravado. Tente de novo.";
+    }
 
     /// <summary>Tipo do erro de negócio (para a tela decidir sem comparar a mensagem).</summary>
     public static TipoFalha TipoDe(Exception ex) => Encontrar(ex) switch

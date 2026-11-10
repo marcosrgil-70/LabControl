@@ -1,6 +1,6 @@
 # FN_DATA_PREVISTA
 
-Data prevista do teste: entrega + `QTDE_DIAS` do prazo. `PRAZOS.DIAS_UTEIS = 1` conta só dias úteis (pula sábado e domingo; feriados não entram — não há cadastro de feriados); 0 = dias corridos. Sem prazo: a própria data; prazo negativo conta como 0 dias.
+Data prevista do teste: entrega + `QTDE_DIAS` do prazo. `PRAZOS.DIAS_UTEIS = 1` conta só dias úteis (pula sábado e domingo; feriados não entram — não há cadastro de feriados); 0 = dias corridos. Em dias úteis a data prevista nunca cai em fim de semana (0 dias com entrega no sábado/domingo = segunda-feira). Sem prazo: a própria data; prazo negativo conta como 0 dias.
 
 **Tipo:** Função · **Criticidade:** 🟠 Importante · **Script:** `Scripts/v2/02_funcoes_procedures.sql`
 
@@ -9,7 +9,7 @@ Data prevista do teste: entrega + `QTDE_DIAS` do prazo. `PRAZOS.DIAS_UTEIS = 1` 
 ## Substitui no legado
 — (o legado não gravava data prevista: `Grava_Hist_Amostra_Testes` não a calculava)
 
-Comentário do script: _FN_DATA_PREVISTA — data prevista do teste: entrega + QTDE_DIAS do prazo. PRAZOS.DIAS_UTEIS = 1 conta só dias úteis (pula sábado e domingo; feriados não entram — não há cadastro de feriados); 0 = dias corridos (decisão do usuário, 30/10/2026; o legado não gravava data prevista). Sem prazo: a própria data; prazo negativo (só por SQL direto — a tela aceita 0 a 3650) conta como 0._
+Comentário do script: _FN_DATA_PREVISTA — data prevista do teste: entrega + QTDE_DIAS do prazo. PRAZOS.DIAS_UTEIS = 1 conta só dias úteis (pula sábado e domingo; feriados não entram — não há cadastro de feriados); 0 = dias corridos (decisão do usuário, 30/10/2026; o legado não gravava data prevista). Sem prazo: a própria data; prazo negativo (só por SQL direto — a tela aceita 0 a 3650) conta como 0. Dias úteis com 0 dias e entrega no sábado/domingo: a segunda-feira seguinte (decisão do usuário, 09/11/2026 — a data prevista nunca cai em fim de semana)._
 
 ## Assinatura
 ```sql
@@ -68,6 +68,9 @@ BEGIN
     IF DAYOFWEEK(v_dt) NOT IN (1, 7) THEN   -- 1 = domingo, 7 = sábado
       SET v_dias = v_dias - 1;
     END IF;
+  END WHILE;
+  WHILE DAYOFWEEK(v_dt) IN (1, 7) DO       -- só acontece com 0 dias a partir do fim de semana
+    SET v_dt = DATE_ADD(v_dt, INTERVAL 1 DAY);
   END WHILE;
   RETURN v_dt;
 END

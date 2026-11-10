@@ -118,11 +118,13 @@ BEGIN
   VALUES (v_emp, v_dest, p_revisao, p_id_origem, 1, p_motivo, p_id_func, p_id_usuario);
   SET p_id_novo = LAST_INSERT_ID();
 
-  UPDATE LAB_RESULTADOS_ANALISES R
-    JOIN LAB_HIST_AMOSTRAS A ON A.ID_LAB_HIST_AMOSTRAS = R.ID_LAB_HIST_AMOSTRAS
+  -- amostras da família primeiro (derivada), depois os resultados delas pelo UQ_RES_REV: o JOIN com OR não usava
+  -- índice e travava resultados de outras amostras, causando deadlock entre revisões simultâneas (auditoria 09/11/2026)
+  UPDATE (SELECT ID_LAB_HIST_AMOSTRAS FROM LAB_HIST_AMOSTRAS FORCE INDEX (FK_AMO_RAIZ) WHERE ID_AMOSTRA_RAIZ = v_raiz
+           UNION SELECT v_raiz) F
+    STRAIGHT_JOIN LAB_RESULTADOS_ANALISES R FORCE INDEX (UQ_RES_REV) ON R.ID_LAB_HIST_AMOSTRAS = F.ID_LAB_HIST_AMOSTRAS
      SET R.ULTIMA_REVISAO = 0
-   WHERE (A.ID_AMOSTRA_RAIZ = v_raiz OR A.ID_LAB_HIST_AMOSTRAS = v_raiz)
-     AND R.ID_LAB_RESULTADOS_ANALISES <> p_id_novo AND R.ULTIMA_REVISAO = 1;
+   WHERE R.ID_LAB_RESULTADOS_ANALISES <> p_id_novo AND R.ULTIMA_REVISAO = 1;
 
   -- Mapeamento de testes pela coluna ID_TESTE_ORIGEM (o legado casava por
   -- tipo de análise + parâmetro com SELECT singleton e quebrava quando a amostra

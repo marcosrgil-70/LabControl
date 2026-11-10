@@ -38,8 +38,8 @@ CREATE PROCEDURE SP_GERAR_PEDIDO_VENDA(IN p_id_proposta INT, IN p_dt_autorizacao
 **Com transação própria.**
 
 ## O que acessa
-- **Altera:** [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md), [`PEDIDOS_VENDA`](../tabelas/PEDIDOS_VENDA.md), [`PEDIDOS_VENDA_ITENS`](../tabelas/PEDIDOS_VENDA_ITENS.md), [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md)
-- **Lê:** [`LAB_PROPOSTAS_PRODUTOS`](../tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`LAB_PROPOSTAS_PRODANALISES`](../tabelas/LAB_PROPOSTAS_PRODANALISES.md)
+- **Altera:** [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md), [`PEDIDOS_VENDA`](../tabelas/PEDIDOS_VENDA.md), [`PEDIDOS_VENDA_ITENS`](../tabelas/PEDIDOS_VENDA_ITENS.md)
+- **Lê:** [`LAB_PROPOSTAS_PRODUTOS`](../tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`LAB_PROPOSTAS_PRODANALISES`](../tabelas/LAB_PROPOSTAS_PRODANALISES.md), [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md)
 - **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md), [`PR_ATUALIZAR_SITUACAO_PEDIDO`](../rotinas/PR_ATUALIZAR_SITUACAO_PEDIDO.md)
 - **Variáveis de sessão:** —
 
@@ -124,9 +124,11 @@ BEGIN
                     WHERE PA.ID_LAB_PROPOSTAS_PRODUTOS = PP.ID_LAB_PROPOSTAS_PRODUTOS), 0)
     FROM LAB_PROPOSTAS_PRODUTOS PP WHERE PP.ID_LAB_PROPOSTAS = p_id_proposta;
 
-  -- amostras já recebidas desta proposta (qualquer revisão) passam a apontar para o pedido
-  UPDATE LAB_HIST_AMOSTRAS A
-    JOIN LAB_PROPOSTAS P ON P.ID_LAB_PROPOSTAS = A.ID_LAB_PROPOSTAS
+  -- amostras já recebidas desta proposta (qualquer revisão) passam a apontar para o pedido.
+  -- Ordem fixa (proposta → amostras pelo IX_AMO_PROP): com poucos dados o otimizador começava pelas amostras sem
+  -- pedido de TODAS as empresas e as travava, causando deadlock com revisões simultâneas (auditoria 09/11/2026, D-1)
+  UPDATE LAB_PROPOSTAS P
+    STRAIGHT_JOIN LAB_HIST_AMOSTRAS A FORCE INDEX (IX_AMO_PROP) ON A.ID_LAB_PROPOSTAS = P.ID_LAB_PROPOSTAS
      SET A.ID_PEDIDOS_VENDA = p_id_pedido
    WHERE P.ID_EMPRESAS = v_emp AND P.ANO_PROPOSTA = v_ano AND P.COD_PROPOSTA = v_cod
      AND A.ID_PEDIDOS_VENDA IS NULL AND A.ULTIMA_REVISAO = 1;

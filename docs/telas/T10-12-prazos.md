@@ -15,7 +15,7 @@
 
 ## Regras específicas
 - `DT_PREVISTA` do teste = data de entrega + `QTDE_DIAS`, calculada pelo banco em [`FN_DATA_PREVISTA`](../banco/objetos/rotinas/FN_DATA_PREVISTA.md) (chamada por `SP_AMOSTRA_GERAR_TESTES` / `TG_TESTES_BI`) — D-29:
-  - **"Dias úteis" marcado:** conta só dias úteis — pula sábado e domingo (feriados não entram: não há cadastro de feriados). Ex.: sexta 30/10 + 5 úteis = sexta 06/11; entrega no sábado conta a partir de segunda.
+  - **"Dias úteis" marcado:** conta só dias úteis — pula sábado e domingo (feriados não entram: não há cadastro de feriados). Ex.: sexta 30/10 + 5 úteis = sexta 06/11; entrega no sábado conta a partir de segunda; prazo de 0 dias úteis com entrega no sábado ou domingo = segunda-feira (decisão do usuário, 09/11/2026).
   - **Desmarcado:** dias corridos (sexta 30/10 + 10 = segunda 09/11).
 - A migração traz todos os prazos como dias corridos (o legado não tinha o campo).
 - Cadastro rápido "+" na proposta.

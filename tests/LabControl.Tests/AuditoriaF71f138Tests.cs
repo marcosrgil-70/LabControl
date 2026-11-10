@@ -71,7 +71,7 @@ public class AuditoriaF71f138Tests : IDisposable
             {
                 var d = inicio.AddDays(i);
                 var p = (await PrevistaAsync(c, d.ToString("yyyy-MM-dd"), uteis.IdPrazos))!.Value;
-                if (n == 0) Assert.Equal(d, p);
+                if (n == 0) Assert.Equal(Util(d) ? d : d.AddDays(d.DayOfWeek == DayOfWeek.Saturday ? 2 : 1), p); // fim de semana → segunda (09/11/2026)
                 else
                 {
                     Assert.True(Util(p), $"{d} + {n} úteis = {p} ({p.DayOfWeek})");

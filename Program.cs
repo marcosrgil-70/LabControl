@@ -104,6 +104,7 @@ builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
 var app = builder.Build();
+ErrosMySql.Log = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("LabControl.ErrosMySql");
 
 if (!app.Environment.IsDevelopment())
 {

@@ -114,7 +114,7 @@
 | [`FN_NR_AMOSTRA_ID`](rotinas/FN_NR_AMOSTRA_ID.md) | Função | 🔴 | Igual a `FN_NR_AMOSTRA`, mas recebe os IDs dos tipos e resolve os `CODIGO`s. |
 | [`FN_NR_PROPOSTA`](rotinas/FN_NR_PROPOSTA.md) | Função | 🟠 | Formata o número da proposta `000123/26-R0`. |
 | [`FN_DATA_PARCIAL`](rotinas/FN_DATA_PARCIAL.md) | Função | 🟠 | Data parcial para exibição: `dd/mm/aaaa`, `mm/aaaa` ou `aaaa` (fabricação/validade). |
-| [`FN_DATA_PREVISTA`](rotinas/FN_DATA_PREVISTA.md) | Função | 🟠 | Data prevista do teste: entrega + `QTDE_DIAS` do prazo. `PRAZOS.DIAS_UTEIS = 1` conta só dias úteis (pula sábado e domingo; feriados não entram — não há cadastro de feriados); 0 = dias corridos. Sem prazo: a própria data; prazo negativo conta como 0 dias. |
+| [`FN_DATA_PREVISTA`](rotinas/FN_DATA_PREVISTA.md) | Função | 🟠 | Data prevista do teste: entrega + `QTDE_DIAS` do prazo. `PRAZOS.DIAS_UTEIS = 1` conta só dias úteis (pula sábado e domingo; feriados não entram — não há cadastro de feriados); 0 = dias corridos. Em dias úteis a data prevista nunca cai em fim de semana (0 dias com entrega no sábado/domingo = segunda-feira). Sem prazo: a própria data; prazo negativo conta como 0 dias. |
 | [`FN_ACREDITADO`](rotinas/FN_ACREDITADO.md) | Função | 🟠 | 0 = nenhum parâmetro acreditado, 1 = todos, 2 = misto, NULL = sem testes. |
 | [`FN_OBS_METODOS`](rotinas/FN_OBS_METODOS.md) | Função | 🟠 | Texto das metodologias do boletim ("DESCR_METODO: método"), separado por acreditado (1) e não acreditado (0). |
 | [`SP_PROXIMO_NUMERO`](rotinas/SP_PROXIMO_NUMERO.md) | Pública | 🔴 | Numeração segura por (empresa, tipo, ano): `INSERT … ON DUPLICATE KEY UPDATE` com trava exclusiva até o COMMIT (sem deadlock em gravações simultâneas). |

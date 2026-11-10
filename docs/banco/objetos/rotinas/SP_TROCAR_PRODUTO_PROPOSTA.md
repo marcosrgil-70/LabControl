@@ -32,8 +32,8 @@ CREATE PROCEDURE SP_TROCAR_PRODUTO_PROPOSTA(IN p_id_proposta INT, IN p_id_prod_v
 **Com transação própria.**
 
 ## O que acessa
-- **Altera:** [`LAB_PROPOSTAS_PRODUTOS`](../tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`PEDIDOS_VENDA_ITENS`](../tabelas/PEDIDOS_VENDA_ITENS.md), [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md)
-- **Lê:** [`PRODUTOS`](../tabelas/PRODUTOS.md), [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md)
+- **Altera:** [`LAB_PROPOSTAS_PRODUTOS`](../tabelas/LAB_PROPOSTAS_PRODUTOS.md), [`LAB_HIST_AMOSTRAS`](../tabelas/LAB_HIST_AMOSTRAS.md)
+- **Lê:** [`PRODUTOS`](../tabelas/PRODUTOS.md), [`LAB_PROPOSTAS`](../tabelas/LAB_PROPOSTAS.md), [`PEDIDOS_VENDA_ITENS`](../tabelas/PEDIDOS_VENDA_ITENS.md)
 - **Chama:** [`PR_AUDITAR`](../rotinas/PR_AUDITAR.md)
 - **Variáveis de sessão:** —
 
@@ -75,11 +75,12 @@ BEGIN
   UPDATE LAB_PROPOSTAS_PRODUTOS SET ID_PRODUTOS = p_id_prod_novo
    WHERE ID_LAB_PROPOSTAS = p_id_proposta AND ID_PRODUTOS = p_id_prod_velho;
   -- só a revisão vigente da amostra: as antigas são somente leitura (TG_AMOSTRAS_BU recusava a troca inteira — 6.3)
-  UPDATE LAB_HIST_AMOSTRAS SET ID_PRODUTOS = p_id_prod_novo
+  -- índices fixos (mesmo motivo do SP_GERAR_PEDIDO_VENDA): produto muito usado levava a travar amostras de outras propostas
+  UPDATE LAB_HIST_AMOSTRAS FORCE INDEX (IX_AMO_PROP) SET ID_PRODUTOS = p_id_prod_novo
    WHERE ID_LAB_PROPOSTAS = p_id_proposta AND ID_PRODUTOS = p_id_prod_velho AND ULTIMA_REVISAO = 1;
   -- itens do pedido desta revisão (a T21 mostra o produto do item — 6.3)
-  UPDATE PEDIDOS_VENDA_ITENS PI
-    JOIN LAB_PROPOSTAS_PRODUTOS PP ON PP.ID_LAB_PROPOSTAS_PRODUTOS = PI.ID_LAB_PROPOSTAS_PRODUTOS
+  UPDATE LAB_PROPOSTAS_PRODUTOS PP
+    STRAIGHT_JOIN PEDIDOS_VENDA_ITENS PI FORCE INDEX (FK_PEDITEM_PROPPROD) ON PI.ID_LAB_PROPOSTAS_PRODUTOS = PP.ID_LAB_PROPOSTAS_PRODUTOS
      SET PI.ID_PRODUTOS = p_id_prod_novo
    WHERE PP.ID_LAB_PROPOSTAS = p_id_proposta AND PI.ID_PRODUTOS = p_id_prod_velho;
   CALL PR_AUDITAR(v_emp, 'LAB_PROPOSTAS', p_id_proposta, 'A', JSON_OBJECT('ID_PRODUTOS', p_id_prod_velho),

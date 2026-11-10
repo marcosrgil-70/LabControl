@@ -42,7 +42,7 @@ public static class ResultadoMvcExtensions
 }
 
 /// <summary>
-/// Rede de segurança para erro de negócio do MySQL que escapou do serviço (45000, 1062, 1451, 1452):
+/// Rede de segurança para erro de negócio do MySQL que escapou do serviço (45000, 1062, 1451, 1452, 1213/1205):
 /// não é erro técnico — mostra a mensagem em vez da página 500. AJAX recebe 422 + JSON <c>{ erro }</c>;
 /// navegação volta para a página anterior com a mensagem no TempData. Erros técnicos seguem para o handler padrão.
 /// </summary>
